@@ -9,7 +9,7 @@ export type Task = {
   module: string;
 };
 
-const MODULE_PIPELINE = ["architecture", "specification", "test", "coding"];
+const MODULE_PIPELINE = ["architecture", "specification", "test", "coding", "reviewer"];
 
 export function route(work: AcceptedWork): Task[] {
   const next = MODULE_PIPELINE.indexOf(work.fromRole) + 1;

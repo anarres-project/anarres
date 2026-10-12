@@ -20,6 +20,12 @@ describe("routing accepted work", () => {
     ]);
   });
 
+  it("makes a Reviewer task when the module's code passes", () => {
+    expect(route({ fromRole: "coding", module: "parser", verdict: "pass" })).toEqual([
+      { role: "reviewer", module: "parser" },
+    ]);
+  });
+
   it("keeps the next task in the same module as the accepted work", () => {
     expect(route({ fromRole: "specification", module: "ledger", verdict: "pass" })).toEqual([
       { role: "test", module: "ledger" },
