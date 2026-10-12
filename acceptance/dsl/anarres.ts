@@ -75,6 +75,16 @@ export class Anarres {
     );
   }
 
+  async moduleIsDone(module: string) {
+    const done = await this.driver.doneModules(this.project);
+    assert.ok(done.includes(module), `expected ${module} to be done`);
+  }
+
+  async moduleIsNotDone(module: string) {
+    const done = await this.driver.doneModules(this.project);
+    assert.ok(!done.includes(module), `expected ${module} not to be done`);
+  }
+
   async pdcCoordinatorIsAlerted() {
     const alerts = await this.driver.coordinatorAlerts(this.project);
     assert.equal(alerts.length, 1, "expected one alert to the PDC coordinators");

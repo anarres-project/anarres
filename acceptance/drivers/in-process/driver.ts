@@ -32,6 +32,10 @@ export class InProcessDriver implements Driver {
     );
   }
 
+  async doneModules(project: string): Promise<string[]> {
+    return this.github.doneModules(project);
+  }
+
   async coordinatorAlerts(project: string): Promise<CoordinatorAlert[]> {
     return this.github.coordinatorAlerts(project).map((alert) => ({ module: alert.module }));
   }

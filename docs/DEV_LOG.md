@@ -18,11 +18,36 @@ now the AutoPM table, and a failure no rule covers alerts a PDC coordinator inst
 guessed at. A revision task carries the feedback signal that sent the work back; a task for the
 next role does not. An interface impediment from any module role goes to the Programme Architect.
 A knowledge gap makes a Research task ready, ahead of anything else reported; when the research
-passes, the role that reported the gap gets a revision task. Next in section 1: module completion;
-escalation; events. Divlab as a real
+passes, the role that reported the gap gets a revision task; Research failing alerts a PDC
+coordinator. A Security & Quality pass marks the module done. Next in section 1: escalation;
+events. Divlab as a real
 Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-12: A passed Security & Quality check marks the module done
+
+- AutoPM: Security & Quality *pass* → "pipeline complete"; *conditional pass* → "complete with
+  caveats" (routes as a pass, per Bernard's earlier rule). Until now a Security & Quality pass
+  silently posted nothing.
+- Acceptance: `features/routing/module-completion.feature`, red with `NotYetImplemented` at the
+  driver until Divlab could mark a module done.
+- Cycles:
+
+  ```
+  RED:      completes the module when its Security & Quality check passes
+            -> expected { tasks: [] } to deeply equal { moduleDone: true }
+  GREEN:    (53 passed)
+  REFACTOR: none
+  PASSED FIRST TIME: completes the module when its Security & Quality check passes conditionally
+            (`advance` ignores the verdict). Checked by planting a pass-only condition (1 red).
+  ```
+
+- Divlab's `TaskBoard` port gains `markModuleDone`; the fake GitHub records it. The scenario "A
+  module is not done before its security and quality check" was only ever red with
+  `NotYetImplemented`, so checked by planting completion one role early: it failed (as did the
+  Reviewer row of the pipeline outline).
+- Gate: 54 unit tests, 45 scenarios; `@wip` judge clean; mutation 125 of 125 killed.
 
 ## 2026-10-12: Research that fails alerts a PDC coordinator
 

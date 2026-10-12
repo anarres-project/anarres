@@ -89,6 +89,14 @@ Then(
   },
 );
 
+Then("the module {string} is done", function (this: AnarresWorld, module: string) {
+  return this.anarres.moduleIsDone(module);
+});
+
+Then("the module {string} is not done", function (this: AnarresWorld, module: string) {
+  return this.anarres.moduleIsNotDone(module);
+});
+
 Then("a PDC coordinator is alerted", function (this: AnarresWorld) {
   return this.anarres.pdcCoordinatorIsAlerted();
 });

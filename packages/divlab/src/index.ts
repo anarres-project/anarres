@@ -29,6 +29,7 @@ export type CoordinatorAlert = {
 export interface TaskBoard {
   post(task: PostedTask): Promise<void>;
   alertCoordinators(alert: CoordinatorAlert): Promise<void>;
+  markModuleDone(module: { project: string; module: string }): Promise<void>;
 }
 
 export async function onWorkAccepted(event: WorkAccepted, board: TaskBoard): Promise<void> {
@@ -39,6 +40,10 @@ export async function onWorkAccepted(event: WorkAccepted, board: TaskBoard): Pro
       module: event.module,
       reason: decision.alert.reason,
     });
+    return;
+  }
+  if ("moduleDone" in decision) {
+    await board.markModuleDone({ project: event.project, module: event.module });
     return;
   }
   for (const task of decision.tasks) {

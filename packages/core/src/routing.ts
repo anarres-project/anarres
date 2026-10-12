@@ -29,7 +29,10 @@ const MODULE_PIPELINE: readonly Role[] = [
   "security-and-quality",
 ];
 
-export type RoutingDecision = { tasks: Task[] } | { alert: { reason: "no_matching_rule" } };
+export type RoutingDecision =
+  | { tasks: Task[] }
+  | { moduleDone: true }
+  | { alert: { reason: "no_matching_rule" } };
 
 const NO_MATCHING_RULE = { alert: { reason: "no_matching_rule" } } as const;
 
@@ -54,9 +57,10 @@ function returnResearch(work: AcceptedWork): RoutingDecision {
   return { tasks: [{ role: reporter, module: work.module, feedbackSignal: work.feedbackSignal }] };
 }
 
-/** A task for the next role in the module pipeline. */
+/** A task for the next role in the module pipeline; past its end, the module is done. */
 function advance(work: AcceptedWork): RoutingDecision {
   const next = (MODULE_PIPELINE as readonly string[]).indexOf(work.fromRole) + 1;
+  if (next === MODULE_PIPELINE.length) return { moduleDone: true };
   return {
     tasks: MODULE_PIPELINE.slice(next, next + 1).map((role) => ({ role, module: work.module })),
   };

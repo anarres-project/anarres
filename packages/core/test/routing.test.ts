@@ -66,6 +66,30 @@ describe("routing accepted work", () => {
     ).toEqual({ tasks: [{ role: "security-and-quality", module: "parser" }] });
   });
 
+  it("completes the module when its Security & Quality check passes", () => {
+    expect(
+      route({
+        fromRole: "security-and-quality",
+        module: "parser",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+      }),
+    ).toEqual({ moduleDone: true });
+  });
+
+  it("completes the module when its Security & Quality check passes conditionally", () => {
+    expect(
+      route({
+        fromRole: "security-and-quality",
+        module: "parser",
+        verdict: "conditional_pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+      }),
+    ).toEqual({ moduleDone: true });
+  });
+
   it("advances a conditional pass just as it does a pass", () => {
     expect(
       route({

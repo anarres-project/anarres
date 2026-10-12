@@ -24,4 +24,5 @@ export interface Driver {
   acceptWork(work: AcceptedWork): Promise<void>;
   readyTasks(project: string): Promise<ReadyTask[]>;
   coordinatorAlerts(project: string): Promise<CoordinatorAlert[]>;
+  doneModules(project: string): Promise<string[]>;
 }

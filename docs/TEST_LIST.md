@@ -67,8 +67,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       question (Bernard, 2026-10-12; no AutoPM row). Pinned by a test.
 - [ ] The revision task after research lists the research brief among its inputs (needs input
       artefacts on tasks).
-- [ ] Security & Quality *pass* completes the module. (Reviewer *pass* → Security & Quality is
-      done, with the rest of the pipeline.)
+- [x] Security & Quality *pass* or *conditional pass* marks the module done, posting no task
+      (AutoPM: "pipeline complete", "complete with caveats"; the caveats belong in the event
+      record).
+- [ ] Work accepted for a module that is already done → ? (ask Bernard: alert, or reopen?)
+- [ ] All module pipelines done → the integration pipeline starts (concept §9; Phase 2).
 - [ ] Escalation: the same role is re-run more than three times → a PDC coordinator is alerted and
       no further task is posted.
 - [ ] Every routing decision is recorded as an event that names its inputs and its reason.
