@@ -292,6 +292,10 @@ The March AutoPM spec had a Claude session apply a fixed routing table. A fixed 
   - `interface_impediment` → Programme Architect
   - a contract revision → revision tasks for every module that uses the contract
   - all module pipelines done → integration pipeline
+  - a `conditional_pass` routes exactly as a `pass` does; its open questions and assumptions are
+    kept in the event record
+  - **v1 difference:** the AutoPM table advances a pass only while ρ > 0. Until Divlab computes
+    metrics, a pass always advances; the ρ-based escalation arrives with the metrics
 - computes the state space metrics d(t), ρ(t) and ω(t) for each module and for the programme, using code
 - writes event files
 - escalates by opening an `escalation` issue for PDC coordinators whenever an escalation trigger from the AutoPM spec fires

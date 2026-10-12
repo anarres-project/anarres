@@ -1,3 +1,4 @@
+import { ROLE_NAMES, type Role } from "@anarres/core";
 import { onWorkAccepted } from "@anarres/divlab";
 import type { AcceptedWork, Driver, ReadyTask } from "../driver.ts";
 import { FakeGitHub } from "./fake-github.ts";
@@ -29,7 +30,11 @@ export class InProcessDriver implements Driver {
   }
 }
 
-// Until core names the roles (see the test list), the driver maps between the scenario's
-// role names ("Specification") and the system's role ids ("specification").
-const roleId = (name: string) => name.toLowerCase();
-const roleName = (id: string) => id.charAt(0).toUpperCase() + id.slice(1);
+// Scenarios speak of roles by name ("Security & Quality"); Divlab by id ("security-and-quality").
+const roleName = (role: Role) => ROLE_NAMES[role];
+
+function roleId(name: string): Role {
+  const role = (Object.keys(ROLE_NAMES) as Role[]).find((role) => ROLE_NAMES[role] === name);
+  if (!role) throw new Error(`No role is called "${name}"`);
+  return role;
+}

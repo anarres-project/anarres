@@ -24,7 +24,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 
 ## 1. Routing (Divlab)
 
-- [ ] Each *pass* verdict advances to the next role in the module pipeline (in progress).
+- [x] Each *pass* verdict advances to the next role in the module pipeline.
 - [ ] A *conditional pass* advances exactly as a *pass* does (Bernard, 2026-10-12); its open
       questions and assumptions are kept in the routing decision's event record.
 - [ ] A *fail* verdict reporting an upstream ambiguity sends a revision task to the role that
@@ -32,7 +32,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [ ] A revision task carries the feedback signal that triggered it.
 - [ ] An interface impediment goes to the Programme Architect, never to another module.
 - [ ] A knowledge gap creates a Research task.
-- [ ] Reviewer *pass* starts Security & Quality; Security & Quality *pass* completes the module.
+- [ ] Security & Quality *pass* completes the module. (Reviewer *pass* → Security & Quality is
+      done, with the rest of the pipeline.)
 - [ ] Escalation: the same role is re-run more than three times → a PDC coordinator is alerted and
       no further task is posted.
 - [ ] Every routing decision is recorded as an event that names its inputs and its reason.
@@ -80,7 +81,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 
 ## Unsorted
 
-- Role names and ids are defined once, in `core` (the in-process driver maps them by hand for now).
 - Divlab reads the accepted work's module, role and verdict from the merged feedback signal
   header (today the in-process driver hands them straight to Divlab).
+- Work from a role Divlab does not recognise is rejected, not routed (today `route` treats an
+  unknown role as the start of the pipeline; untested, so section 4 must cover it).
 - (add new cases here, then place them)

@@ -1,4 +1,4 @@
-import { route } from "@anarres/core";
+import { type Role, route } from "@anarres/core";
 
 export type WorkAccepted = {
   project: string;
@@ -9,7 +9,7 @@ export type WorkAccepted = {
 
 export type PostedTask = {
   project: string;
-  role: string;
+  role: Role;
   module: string;
 };
 

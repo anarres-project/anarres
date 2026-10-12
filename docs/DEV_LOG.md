@@ -8,10 +8,49 @@ Running history and current status. Newest entry first.
 
 Walking skeleton green: the first scenario ("a passed specification makes a test task ready")
 runs through the in-process driver, the `npm test` gate and `npm run test:wip` run in CI. Mutation
-testing is set up (`npm run mutate`, weekly in CI). Next: section 1 (routing). Divlab as a real
+testing is set up (`npm run mutate`, weekly in CI). Section 1 (routing) under way: a pass advances
+through the whole module pipeline. Next: a conditional pass advances like a pass. Divlab as a real
 Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-12: A pass advances through the module pipeline
+
+- Decisions (Bernard): a pass always advances, ignoring ρ until metrics exist; a conditional pass
+  routes as a pass. Both recorded in the concept document, §9, and the test list.
+- `@wip` rule widened (Bernard): a scenario failing on an assertion in a Then step is honest ("not
+  yet right"). Judge and `CLAUDE.md` updated; checked that crashes in When or Then still fail it.
+- Acceptance: the skeleton's scenario became an outline over the whole pipeline; new rows went in
+  a `@wip` Examples block, red on their Then, then green and untagged.
+- Cycles:
+
+  ```
+  RED:      makes a Specification task when the module's architecture passes
+            -> expected [ { role: 'test', … } ] to deeply equal [ { role: 'specification', … } ]
+  GREEN:    (3 passed), conditional on architecture
+  REFACTOR: none
+  RED:      makes a Coding task when the module's tests pass
+            -> expected [ { role: 'test', … } ] to deeply equal [ Array(1) ]
+  GREEN:    (4 passed), generalised to the pipeline order
+  REFACTOR: none
+  RED:      makes a Reviewer task when the module's code passes -> expected [] to deeply equal …
+  GREEN:    (5 passed)
+  REFACTOR: none
+  RED:      makes a Security & Quality task when the module's review passes -> expected [] …
+  GREEN:    (6 passed)
+  REFACTOR: none
+  RED:      names the Security & Quality role as members know it
+            -> expected undefined to be 'Security & Quality'
+  GREEN:    (7 passed)
+  REFACTOR: none
+  RED:      names the <role> role <name> (one table test, 5 cases)
+            -> expected undefined to be 'Architecture' (and 4 more)
+  GREEN:    (12 passed)
+  REFACTOR: typed `Role`; the pipeline and posted tasks can only name real roles
+  ```
+
+- The in-process driver now takes role names from core's `ROLE_NAMES`, not a hand mapping.
+- Mutation testing: 13 of 13 mutants killed.
 
 ## 2026-10-12: Tool versions pinned for contributors
 

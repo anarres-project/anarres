@@ -11,13 +11,9 @@ Feature: Divlab posts the next task
     Then a <next role> task for "parser" is ready to claim
 
     Examples:
-      | role          | next role |
-      | Specification | Test      |
-
-    @wip
-    Examples:
-      | role         | next role          |
-      | Architecture | Specification      |
-      | Test         | Coding             |
-      | Coding       | Reviewer           |
-      | Reviewer     | Security & Quality |
+      | role          | next role          |
+      | Architecture  | Specification      |
+      | Specification | Test               |
+      | Test          | Coding             |
+      | Coding        | Reviewer           |
+      | Reviewer      | Security & Quality |
