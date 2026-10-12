@@ -5,31 +5,33 @@ describe("routing accepted work", () => {
   it("makes a Test task for the module when its specification passes", () => {
     expect(
       route({ fromRole: "specification", module: "parser", verdict: "pass", impediments: [] }),
-    ).toEqual([{ role: "test", module: "parser" }]);
+    ).toEqual({ tasks: [{ role: "test", module: "parser" }] });
   });
 
   it("makes a Specification task when the module's architecture passes", () => {
     expect(
       route({ fromRole: "architecture", module: "parser", verdict: "pass", impediments: [] }),
-    ).toEqual([{ role: "specification", module: "parser" }]);
+    ).toEqual({ tasks: [{ role: "specification", module: "parser" }] });
   });
 
   it("makes a Coding task when the module's tests pass", () => {
     expect(route({ fromRole: "test", module: "parser", verdict: "pass", impediments: [] })).toEqual(
-      [{ role: "coding", module: "parser" }],
+      {
+        tasks: [{ role: "coding", module: "parser" }],
+      },
     );
   });
 
   it("makes a Reviewer task when the module's code passes", () => {
     expect(
       route({ fromRole: "coding", module: "parser", verdict: "pass", impediments: [] }),
-    ).toEqual([{ role: "reviewer", module: "parser" }]);
+    ).toEqual({ tasks: [{ role: "reviewer", module: "parser" }] });
   });
 
   it("makes a Security & Quality task when the module's review passes", () => {
     expect(
       route({ fromRole: "reviewer", module: "parser", verdict: "pass", impediments: [] }),
-    ).toEqual([{ role: "security-and-quality", module: "parser" }]);
+    ).toEqual({ tasks: [{ role: "security-and-quality", module: "parser" }] });
   });
 
   it("advances a conditional pass just as it does a pass", () => {
@@ -40,7 +42,7 @@ describe("routing accepted work", () => {
         verdict: "conditional_pass",
         impediments: [],
       }),
-    ).toEqual([{ role: "test", module: "parser" }]);
+    ).toEqual({ tasks: [{ role: "test", module: "parser" }] });
   });
 
   it("sends a failed test back to Specification when it reports an upstream ambiguity", () => {
@@ -51,7 +53,7 @@ describe("routing accepted work", () => {
         verdict: "fail",
         impediments: [{ type: "upstream_ambiguity" }],
       }),
-    ).toEqual([{ role: "specification", module: "parser" }]);
+    ).toEqual({ tasks: [{ role: "specification", module: "parser" }] });
   });
 
   it("sends a failed specification back to the Programme Architect when it reports an upstream ambiguity", () => {
@@ -62,7 +64,7 @@ describe("routing accepted work", () => {
         verdict: "fail",
         impediments: [{ type: "upstream_ambiguity" }],
       }),
-    ).toEqual([{ role: "programme-architect", module: "parser" }]);
+    ).toEqual({ tasks: [{ role: "programme-architect", module: "parser" }] });
   });
 
   it("sends a failed architecture back to the Programme Architect when it reports an upstream ambiguity", () => {
@@ -73,7 +75,7 @@ describe("routing accepted work", () => {
         verdict: "fail",
         impediments: [{ type: "upstream_ambiguity" }],
       }),
-    ).toEqual([{ role: "programme-architect", module: "parser" }]);
+    ).toEqual({ tasks: [{ role: "programme-architect", module: "parser" }] });
   });
 
   it("sends a failed specification back to Architecture when it reports an architecture impediment", () => {
@@ -84,7 +86,7 @@ describe("routing accepted work", () => {
         verdict: "fail",
         impediments: [{ type: "architecture_impediment" }],
       }),
-    ).toEqual([{ role: "architecture", module: "parser" }]);
+    ).toEqual({ tasks: [{ role: "architecture", module: "parser" }] });
   });
 
   it("sends a failure with several impediments to the most upstream role that owns one", () => {
@@ -95,7 +97,7 @@ describe("routing accepted work", () => {
         verdict: "fail",
         impediments: [{ type: "upstream_ambiguity" }, { type: "architecture_impediment" }],
       }),
-    ).toEqual([{ role: "programme-architect", module: "parser" }]);
+    ).toEqual({ tasks: [{ role: "programme-architect", module: "parser" }] });
   });
 
   it("sends failed code back to Coding when it reports test failures", () => {
@@ -106,7 +108,7 @@ describe("routing accepted work", () => {
         verdict: "fail",
         impediments: [{ type: "test_failures" }],
       }),
-    ).toEqual([{ role: "coding", module: "parser" }]);
+    ).toEqual({ tasks: [{ role: "coding", module: "parser" }] });
   });
 
   it("ranks an architecture impediment above test failures", () => {
@@ -117,13 +119,13 @@ describe("routing accepted work", () => {
         verdict: "fail",
         impediments: [{ type: "test_failures" }, { type: "architecture_impediment" }],
       }),
-    ).toEqual([{ role: "architecture", module: "parser" }]);
+    ).toEqual({ tasks: [{ role: "architecture", module: "parser" }] });
   });
 
   it("sends a failed review back to Coding", () => {
     expect(
       route({ fromRole: "reviewer", module: "parser", verdict: "fail", impediments: [] }),
-    ).toEqual([{ role: "coding", module: "parser" }]);
+    ).toEqual({ tasks: [{ role: "coding", module: "parser" }] });
   });
 
   it("sends a review that finds a scope gap to the Programme Architect", () => {
@@ -134,7 +136,7 @@ describe("routing accepted work", () => {
         verdict: "fail",
         impediments: [{ type: "scope_gap" }],
       }),
-    ).toEqual([{ role: "programme-architect", module: "parser" }]);
+    ).toEqual({ tasks: [{ role: "programme-architect", module: "parser" }] });
   });
 
   it("sends a failed Security & Quality check back to Coding", () => {
@@ -145,7 +147,7 @@ describe("routing accepted work", () => {
         verdict: "fail",
         impediments: [],
       }),
-    ).toEqual([{ role: "coding", module: "parser" }]);
+    ).toEqual({ tasks: [{ role: "coding", module: "parser" }] });
   });
 
   it("routes blocked work just as it routes failed work", () => {
@@ -156,12 +158,12 @@ describe("routing accepted work", () => {
         verdict: "blocked",
         impediments: [{ type: "upstream_ambiguity" }],
       }),
-    ).toEqual([{ role: "specification", module: "parser" }]);
+    ).toEqual({ tasks: [{ role: "specification", module: "parser" }] });
   });
 
   it("keeps the next task in the same module as the accepted work", () => {
     expect(
       route({ fromRole: "specification", module: "ledger", verdict: "pass", impediments: [] }),
-    ).toEqual([{ role: "test", module: "ledger" }]);
+    ).toEqual({ tasks: [{ role: "test", module: "ledger" }] });
   });
 });

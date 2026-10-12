@@ -20,7 +20,7 @@ export interface TaskBoard {
 }
 
 export async function onWorkAccepted(event: WorkAccepted, board: TaskBoard): Promise<void> {
-  for (const task of route(event)) {
+  for (const task of route(event).tasks) {
     await board.post({ project: event.project, ...task });
   }
 }

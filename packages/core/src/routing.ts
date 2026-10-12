@@ -21,11 +21,16 @@ const MODULE_PIPELINE: readonly Role[] = [
   "security-and-quality",
 ];
 
-export function route(work: AcceptedWork): Task[] {
-  if (work.verdict === "fail" || work.verdict === "blocked")
-    return [{ role: ownerOfFailure(work), module: work.module }];
+export type RoutingDecision = { tasks: Task[] };
+
+export function route(work: AcceptedWork): RoutingDecision {
+  if (work.verdict === "fail" || work.verdict === "blocked") {
+    return { tasks: [{ role: ownerOfFailure(work), module: work.module }] };
+  }
   const next = (MODULE_PIPELINE as readonly string[]).indexOf(work.fromRole) + 1;
-  return MODULE_PIPELINE.slice(next, next + 1).map((role) => ({ role, module: work.module }));
+  return {
+    tasks: MODULE_PIPELINE.slice(next, next + 1).map((role) => ({ role, module: work.module })),
+  };
 }
 
 /** The role that can fix what a failed piece of work reports. */
