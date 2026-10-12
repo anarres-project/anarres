@@ -138,12 +138,20 @@ run. It must still **fail honestly**:
 
 - with `NotYetImplemented`, raised at the driver, when the system can't yet do it; or
 - with `HarnessNotYetBuilt` when the _test harness_ can't yet arrange or observe it. This is honest
-  too, but counted separately, because it says nothing about the system.
+  too, but counted separately, because it says nothing about the system; or
+- **not yet right:** the system answers, but an assertion in a **Then** step fails. Once a path
+  through the system exists, this is the usual red: the scenario fails on the behaviour it
+  describes, as a unit test must.
 
 `npm run test:wip` judges the `@wip` set:
 
 - a `@wip` scenario that **passes** has been built and must lose its tag in that commit;
-- a `@wip` scenario that fails for **any other reason** is a defect hiding behind a tag.
+- a `@wip` scenario that fails for **any other reason** (an error or a failed assertion in a Given
+  or When, an exception other than an assertion in a Then, an undefined step) is a defect hiding
+  behind a tag.
+
+A scenario outline may carry `@wip` on one `Examples` block, so rows that already pass stay in the
+blocking run.
 
 ---
 

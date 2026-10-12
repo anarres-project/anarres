@@ -24,7 +24,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 
 ## 1. Routing (Divlab)
 
-- [ ] Each *pass* verdict advances to the next role in the module pipeline.
+- [ ] Each *pass* verdict advances to the next role in the module pipeline (in progress).
+- [ ] A *conditional pass* advances exactly as a *pass* does (Bernard, 2026-10-12); its open
+      questions and assumptions are kept in the routing decision's event record.
 - [ ] A *fail* verdict reporting an upstream ambiguity sends a revision task to the role that
       owns the ambiguous artefact.
 - [ ] A revision task carries the feedback signal that triggered it.
@@ -34,6 +36,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [ ] Escalation: the same role is re-run more than three times → a PDC coordinator is alerted and
       no further task is posted.
 - [ ] Every routing decision is recorded as an event that names its inputs and its reason.
+- [ ] Once metrics exist: ρ negative for two consecutive steps alerts a PDC coordinator. Until
+      then a pass advances regardless of ρ (Bernard, 2026-10-12; differs from the AutoPM table).
 
 ## 2. Claiming and leases
 
