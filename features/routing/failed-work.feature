@@ -16,7 +16,6 @@ Feature: Divlab sends failed work back to the role that can fix it
       | Specification | Programme Architect |
       | Architecture  | Programme Architect |
 
-  @wip
   Scenario Outline: An architecture impediment goes back to Architecture
     Given a project with a module "parser"
     When a member's <role> work on "parser" is accepted with a fail verdict, reporting an architecture impediment

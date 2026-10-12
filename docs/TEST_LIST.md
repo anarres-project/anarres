@@ -33,7 +33,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] from Architecture or Specification → Programme Architect, who owns the module's
         requirement slice (Bernard, 2026-10-12; the AutoPM says Requirements, which predates
         modules). If the slice is fine, the Programme Architect fails upward to Requirements.
-- [ ] An architecture impediment from Architecture, Specification or Coding → Architecture.
+- [x] An architecture impediment from Architecture, Specification or Coding → Architecture.
 - [ ] Coding failing with test failures → Coding again (Bernard, 2026-10-12). Once run history
       exists: failures stable for more than two runs → Specification.
 - [ ] A failed review → Coding; a review reporting a scope gap → Programme Architect.
@@ -41,7 +41,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [ ] *Blocked* routes exactly as *fail*.
 - [ ] Several impediments → one revision task, for the most upstream owning role; the others ride
       along in the feedback it carries (Bernard, 2026-10-12).
-- [ ] A failure that matches no rule is never guessed at: a PDC coordinator is alerted.
+- [ ] A failure that matches no rule is never guessed at: a PDC coordinator is alerted. Known
+      guesses to remove: a fail with no impediments goes to the Programme Architect (or to
+      Specification from Test); an architecture impediment from Test or Reviewer goes to
+      Architecture.
 - [ ] A revision task carries the feedback signal that triggered it.
 - [ ] An interface impediment goes to the Programme Architect, never to another module.
 - [ ] A knowledge gap creates a Research task.

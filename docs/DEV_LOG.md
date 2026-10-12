@@ -10,10 +10,33 @@ Walking skeleton green: the first scenario ("a passed specification makes a test
 runs through the in-process driver, the `npm test` gate and `npm run test:wip` run in CI. Mutation
 testing is set up (`npm run mutate`, weekly in CI). Section 1 (routing) under way: a pass advances
 through the whole module pipeline. A conditional pass advances like a pass. Fail routes under way: an upstream
-ambiguity goes back to its owner. Next: an architecture impediment goes to Architecture. Divlab as a real
+ambiguity goes back to its owner. An architecture impediment goes to
+Architecture. Next: several impediments route on the most upstream one (kills a surviving mutant
+and fixes a wrong route for mixed impediments). Divlab as a real
 Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-12: An architecture impediment goes back to Architecture
+
+- Acceptance: a second outline in `failed-work.feature` (Architecture, Specification, Coding).
+- Refactor first, while green: `impediments` is required on accepted work (feedback signals
+  always carry the list) and now flows from the driver through Divlab to core.
+- Cycle:
+
+  ```
+  RED:      sends a failed specification back to Architecture when it reports an architecture impediment
+            -> expected [ { role: 'programme-architect', … } ] to deeply equal [ { role: 'architecture', … } ]
+  GREEN:    (18 passed)
+  REFACTOR: none
+  ```
+
+- The check ignores the failing role, so Test or Reviewer reporting an architecture impediment
+  also goes to Architecture: a guess the AutoPM table doesn't make. Listed under "a failure that
+  matches no rule" on the test list, with the other known guesses.
+- Mutation testing: 1 survivor (`some` → `every` on the impediments). No test mixes impediments,
+  and today a mix of upstream ambiguity and architecture impediment wrongly goes to Architecture
+  rather than the more upstream Programme Architect. Next item ("several impediments") fixes it.
 
 ## 2026-10-12: An upstream ambiguity goes back to its owner
 
