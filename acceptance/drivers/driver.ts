@@ -4,6 +4,7 @@ export type AcceptedWork = {
   role: string;
   member: string;
   verdict: string;
+  impediments: string[];
 };
 
 export type ReadyTask = {

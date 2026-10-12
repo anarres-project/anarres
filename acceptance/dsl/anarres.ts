@@ -20,8 +20,14 @@ export class Anarres {
     await this.driver.createProject(this.project, [module]);
   }
 
-  async memberHasWorkAccepted(work: { role: string; module: string; verdict: string }) {
+  async memberHasWorkAccepted(work: {
+    role: string;
+    module: string;
+    verdict: string;
+    impediments?: string[];
+  }) {
     await this.driver.acceptWork({
+      impediments: [],
       ...work,
       project: this.project,
       member: this.aliases.of(DEFAULT_MEMBER),
@@ -34,6 +40,15 @@ export class Anarres {
       ready.filter((t) => t.role === task.role && t.module === task.module),
       [task],
       `expected one ready ${task.role} task for ${task.module}`,
+    );
+  }
+
+  async divlabHasPostedOnlyReadyTask(task: { role: string; module: string }) {
+    const ready = await this.driver.readyTasks(this.project);
+    assert.deepEqual(
+      ready.filter((t) => t.module === task.module),
+      [task],
+      `expected the only ready task for ${task.module} to be a ${task.role} task`,
     );
   }
 }
