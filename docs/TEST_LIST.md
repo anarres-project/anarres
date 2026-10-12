@@ -16,7 +16,7 @@ with the gate (`npm test`) and CI running.
 
 Still to finish the skeleton's pipeline (not behaviour, but the route to production):
 
-- [ ] `npm run mutate`: Stryker on `packages/core`, weekly in CI.
+- [x] `npm run mutate`: Stryker on `packages/core`, weekly in CI (decision 0002).
 - [ ] Divlab runs as a GitHub Action: bundled entry point, triggered when a pull request is merged,
       posting tasks as issues through `packages/github`.
 - [ ] GitHub sandbox driver: the same scenarios against real repositories in the sandbox

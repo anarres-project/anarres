@@ -18,7 +18,8 @@ eligibility, the feedback signal schema), which must be defined once.
   GitHub's runners with no container start-up; one language lets Divlab and the CLI share
   `packages/core`; Netlify supports it directly.
 - **npm workspaces** for the monorepo. No extra tooling.
-- **Vitest** for unit tests and coverage; **Stryker** for mutation testing.
+- **Vitest** for unit tests and coverage; **Stryker** for mutation testing. (Vitest is pinned to
+  4.1 for Stryker's sake: see decision 0002.)
 - **Cucumber.js** for executable specifications, so all drivers sit behind one DSL. **Playwright**
   inside the browser driver when the site exists.
 - **Biome** for linting and formatting: one fast tool, little configuration.

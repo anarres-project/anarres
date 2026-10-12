@@ -7,11 +7,23 @@ Running history and current status. Newest entry first.
 ## Current status
 
 Walking skeleton green: the first scenario ("a passed specification makes a test task ready")
-runs through the in-process driver, the `npm test` gate and `npm run test:wip` run in CI. Next:
-finish the skeleton's pipeline (mutation testing, Divlab as a real Action, sandbox driver; see
-`docs/TEST_LIST.md`, section 0), or start section 1 (routing), as Bernard prefers.
+runs through the in-process driver, the `npm test` gate and `npm run test:wip` run in CI. Mutation
+testing is set up (`npm run mutate`, weekly in CI). Next: section 1 (routing). Divlab as a real
+Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-12: Mutation testing
+
+- Stryker 10 with the Vitest runner on `packages/core`, break threshold 100%, weekly CI job and
+  `npm run mutate`; not in the blocking gate. Details and reasons: decision 0002.
+- Two incompatibilities found. TypeScript 7 lacks the compiler API Stryker uses to rewrite the
+  tsconfig (worked around: skip the rewrite, which we don't need). On Vitest 5 the runner reports
+  every mutant as surviving (stryker-js#6210, open), so **Vitest is pinned to `~4.1`**.
+- Checked: 4 of 4 mutants killed on `route`; an untested branch added by hand gave survivors and
+  a non-zero exit.
+- npm 11 holds back the install scripts of `esbuild` and `fsevents`; everything works without them,
+  so they stay unapproved.
 
 ## 2026-10-12: Walking skeleton
 

@@ -15,15 +15,18 @@
     "test:acceptance": "NODE_OPTIONS=\"--import tsx\" cucumber-js",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
-    "test:wip": "tsx scripts/wip-judge.ts"
+    "test:wip": "tsx scripts/wip-judge.ts",
+    "mutate": "stryker run"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
     "@cucumber/cucumber": "^13.3.0",
+    "@stryker-mutator/core": "^10.0.0",
+    "@stryker-mutator/vitest-runner": "^10.0.0",
     "@types/node": "^24.19.2",
-    "@vitest/coverage-v8": "^5.0.4",
+    "@vitest/coverage-v8": "~4.1.11",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
-    "vitest": "^5.0.4"
+    "vitest": "~4.1.11"
   }
 }
