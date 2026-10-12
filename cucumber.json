@@ -1,0 +1,8 @@
+{
+  "default": {
+    "paths": ["features/**/*.feature"],
+    "import": ["acceptance/**/*.ts"],
+    "tags": "not @wip",
+    "format": ["progress"]
+  }
+}
