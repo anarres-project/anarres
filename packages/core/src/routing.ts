@@ -10,5 +10,6 @@ export type Task = {
 };
 
 export function route(work: AcceptedWork): Task[] {
-  return [{ role: "test", module: work.module }];
+  const role = work.fromRole === "architecture" ? "specification" : "test";
+  return [{ role, module: work.module }];
 }
