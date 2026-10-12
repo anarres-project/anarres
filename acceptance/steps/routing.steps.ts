@@ -6,7 +6,8 @@ defineParameterType({ name: "verdict", regexp: /pass|conditional pass|fail|block
 defineParameterType({
   name: "impediment",
   regexp:
-    /upstream ambiguity|architecture impediment|interface impediment|implementation impediment|knowledge gap|scope gap|test failures/,
+    /(?:an? )?(upstream ambiguity|architecture impediment|interface impediment|implementation impediment|knowledge gap|scope gap|test failures)/,
+  transformer: (impediment: string) => impediment,
 });
 
 Given("a project with a module {string}", function (this: AnarresWorld, module: string) {
@@ -21,14 +22,14 @@ When(
 );
 
 When(
-  "a member's {role} work on {string} is accepted with a {verdict} verdict, reporting a(n) {impediment}",
+  "a member's {role} work on {string} is accepted with a {verdict} verdict, reporting {impediment}",
   function (this: AnarresWorld, role: string, module: string, verdict: string, impediment: string) {
     return this.anarres.memberHasWorkAccepted({ role, module, verdict, impediments: [impediment] });
   },
 );
 
 When(
-  "a member's {role} work on {string} is accepted with a {verdict} verdict, reporting a(n) {impediment} and a(n) {impediment}",
+  "a member's {role} work on {string} is accepted with a {verdict} verdict, reporting {impediment} and {impediment}",
   function (
     this: AnarresWorld,
     role: string,
