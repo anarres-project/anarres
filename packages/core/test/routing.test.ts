@@ -26,6 +26,12 @@ describe("routing accepted work", () => {
     ]);
   });
 
+  it("makes a Security & Quality task when the module's review passes", () => {
+    expect(route({ fromRole: "reviewer", module: "parser", verdict: "pass" })).toEqual([
+      { role: "security-and-quality", module: "parser" },
+    ]);
+  });
+
   it("keeps the next task in the same module as the accepted work", () => {
     expect(route({ fromRole: "specification", module: "ledger", verdict: "pass" })).toEqual([
       { role: "test", module: "ledger" },
