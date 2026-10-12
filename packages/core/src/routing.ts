@@ -38,7 +38,13 @@ export function route(work: AcceptedWork): RoutingDecision {
 /** The role that can fix what a failed piece of work reports. */
 function ownerOfFailure(work: AcceptedWork): Role | undefined {
   const reports = (type: string) => work.impediments.some((impediment) => impediment.type === type);
-  if (reports("architecture_impediment") && !reports("upstream_ambiguity")) return "architecture";
+  if (
+    ["architecture", "specification", "coding"].includes(work.fromRole) &&
+    reports("architecture_impediment") &&
+    !reports("upstream_ambiguity")
+  ) {
+    return "architecture";
+  }
   if (reports("scope_gap")) return "programme-architect";
   if (reports("test_failures")) return "coding";
   if (work.fromRole === "reviewer" || work.fromRole === "security-and-quality") return "coding";
