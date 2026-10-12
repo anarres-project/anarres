@@ -11,12 +11,29 @@ runs through the in-process driver, the `npm test` gate and `npm run test:wip` r
 testing is set up (`npm run mutate`, weekly in CI). Section 1 (routing) under way: a pass advances
 through the whole module pipeline. A conditional pass advances like a pass. Fail routes under way: an upstream
 ambiguity goes back to its owner. An architecture impediment goes to
-Architecture. An upstream ambiguity outranks an architecture impediment. Next: Coding test
-failures re-run Coding, then "an architecture impediment outranks test failures", which kills the
-one surviving mutant. Divlab as a real
+Architecture. Upstream ambiguity, architecture impediments and Coding's test failures are routed,
+with the most upstream winning when several are reported. Next: failed review and failed
+Security & Quality go back to Coding. Divlab as a real
 Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-12: Failing tests send the code back to Coding
+
+- Step glue: the impediment parameter carries its own article, so "reporting test failures"
+  reads naturally (the judge caught the undefined step first).
+- Cycles:
+
+  ```
+  RED:      sends failed code back to Coding when it reports test failures
+            -> expected [ { role: 'programme-architect', … } ] to deeply equal [ Array(1) ]
+  GREEN:    (20 passed)
+  REFACTOR: none
+  PASSED FIRST TIME: ranks an architecture impediment above test failures. Written to kill the
+            surviving `some` → `every` mutant, not to drive code; Stryker confirms it does.
+  ```
+
+- The "several problems" scenario became an outline with the new row. Mutation testing: 48 of 48.
 
 ## 2026-10-12: Several impediments: the most upstream wins (first case)
 

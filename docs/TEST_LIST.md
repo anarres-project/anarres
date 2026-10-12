@@ -34,7 +34,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         requirement slice (Bernard, 2026-10-12; the AutoPM says Requirements, which predates
         modules). If the slice is fine, the Programme Architect fails upward to Requirements.
 - [x] An architecture impediment from Architecture, Specification or Coding → Architecture.
-- [ ] Coding failing with test failures → Coding again (Bernard, 2026-10-12). Once run history
+- [x] Coding failing with test failures → Coding again (Bernard, 2026-10-12). Once run history
       exists: failures stable for more than two runs → Specification.
 - [ ] A failed review → Coding; a review reporting a scope gap → Programme Architect.
 - [ ] A failed Security & Quality check → Coding.
@@ -42,7 +42,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [ ] Several impediments → one revision task, for the most upstream owning role; the others ride
       along in the feedback it carries (Bernard, 2026-10-12).
   - [x] an upstream ambiguity outranks an architecture impediment;
-  - [ ] an architecture impediment outranks Coding's test failures (kills the surviving
+  - [x] an architecture impediment outranks Coding's test failures (killed the surviving
         `some` → `every` mutant);
   - [ ] where a knowledge gap ranks among the others (ask Bernard when Research routing is built).
 - [ ] A failure that matches no rule is never guessed at: a PDC coordinator is alerted. Known

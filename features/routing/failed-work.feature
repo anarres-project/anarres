@@ -27,13 +27,17 @@ Feature: Divlab sends failed work back to the role that can fix it
       | Specification |
       | Coding        |
 
-  @wip
   Scenario: Failing tests send the code back to Coding
     Given a project with a module "parser"
     When a member's Coding work on "parser" is accepted with a fail verdict, reporting test failures
     Then the only task ready for "parser" is a Coding task
 
-  Scenario: Several problems go back to the most upstream role that owns one
+  Scenario Outline: Several problems go back to the most upstream role that owns one
     Given a project with a module "parser"
-    When a member's Specification work on "parser" is accepted with a fail verdict, reporting an upstream ambiguity and an architecture impediment
-    Then the only task ready for "parser" is a Programme Architect task
+    When a member's <role> work on "parser" is accepted with a fail verdict, reporting <first> and <second>
+    Then the only task ready for "parser" is a <revising role> task
+
+    Examples:
+      | role          | first                 | second                     | revising role       |
+      | Specification | an upstream ambiguity | an architecture impediment | Programme Architect |
+      | Coding        | test failures         | an architecture impediment | Architecture        |

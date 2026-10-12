@@ -109,6 +109,17 @@ describe("routing accepted work", () => {
     ).toEqual([{ role: "coding", module: "parser" }]);
   });
 
+  it("ranks an architecture impediment above test failures", () => {
+    expect(
+      route({
+        fromRole: "coding",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "test_failures" }, { type: "architecture_impediment" }],
+      }),
+    ).toEqual([{ role: "architecture", module: "parser" }]);
+  });
+
   it("keeps the next task in the same module as the accepted work", () => {
     expect(
       route({ fromRole: "specification", module: "ledger", verdict: "pass", impediments: [] }),
