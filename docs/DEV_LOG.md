@@ -16,11 +16,40 @@ with the most upstream winning when several are reported. Failed review and Secu
 to Coding; a scope gap goes to the Programme Architect. *Blocked* routes as *fail*. Failure routing is
 now the AutoPM table, and a failure no rule covers alerts a PDC coordinator instead of being
 guessed at. A revision task carries the feedback signal that sent the work back; a task for the
-next role does not. Next in section 1: interface impediments; knowledge gaps; module completion;
-escalation; events. Divlab as a real
+next role does not. An interface impediment from any module role goes to the Programme Architect.
+Next in section 1: knowledge gaps; module completion; escalation; events. Divlab as a real
 Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-12: An interface impediment goes to the Programme Architect
+
+- Concept §5 and §9: a module agent whose contract does not work raises an interface impediment;
+  Divlab sends it to the Programme Architect, never to the other module. A rule for every module
+  role, so it also overrides the Reviewer's and Security & Quality's "otherwise → Coding", and,
+  the Programme Architect being most upstream, it outranks anything reported with it.
+- Acceptance (`@wip`, all 8 red as *not yet right*: alerted with no task, or Coding / Architecture
+  instead of the Programme Architect): an outline over the six module roles; a two-module project
+  where the module on the other side gets no task; and a "several problems" row (Coding, an
+  architecture and an interface impediment → Programme Architect).
+- Cycles:
+
+  ```
+  RED:      sends a failed test reporting an interface impediment to the Programme Architect
+            -> expected { Object (alert) } to deeply equal { tasks: [ { …(3) } ] }
+  GREEN:    (35 passed), one table row
+  RED:      sends a review reporting an interface impediment to the Programme Architect, not Coding
+            -> expected { tasks: [ { role: 'coding', …(2) } ] } to deeply equal { tasks: [ { …(3) } ] }
+  GREEN:    (36 passed), by generalising: one row per module role
+  REFACTOR: none
+  PASSED FIRST TIME: the same for Architecture, Specification, Coding and Security & Quality
+            (`it.each`), as the generalisation implied. Checked by planting a gap that dropped two
+            roles from the rule (2 red).
+  ```
+
+- The "other module gets no task" scenario guards against a future change; nothing today could
+  post a task for another module, so it went red only on its Programme Architect step.
+- Gate: 40 unit tests, 35 scenarios; `@wip` judge clean; mutation 98 of 98 killed.
 
 ## 2026-10-12: A revision task carries its feedback signal
 

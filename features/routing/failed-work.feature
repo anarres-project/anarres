@@ -57,6 +57,26 @@ Feature: Divlab sends failed work back to the role that can fix it
     When a member's Reviewer work on "parser" is accepted with a fail verdict, reporting a scope gap
     Then the only task ready for "parser" is a Programme Architect task
 
+  Scenario Outline: A contract that does not work goes to the Programme Architect
+    Given a project with a module "parser"
+    When a member's <role> work on "parser" is accepted with a fail verdict, reporting an interface impediment
+    Then the only task ready for "parser" is a Programme Architect task
+
+    Examples:
+      | role               |
+      | Architecture       |
+      | Specification      |
+      | Test               |
+      | Coding             |
+      | Reviewer           |
+      | Security & Quality |
+
+  Scenario: A contract problem never goes to the module on the other side of the contract
+    Given a project with modules "parser" and "ledger"
+    When a member's Test work on "parser" is accepted with a fail verdict, reporting an interface impediment
+    Then the only task ready for "parser" is a Programme Architect task
+    And no task is ready for "ledger"
+
   Scenario: Blocked work goes back just as failed work does
     Given a project with a module "parser"
     When a member's Test work on "parser" is accepted with a blocked verdict, reporting an upstream ambiguity
@@ -71,6 +91,10 @@ Feature: Divlab sends failed work back to the role that can fix it
       | role          | first                 | second                     | revising role       |
       | Specification | an upstream ambiguity | an architecture impediment | Programme Architect |
       | Coding        | test failures         | an architecture impediment | Architecture        |
+
+    Examples: interface impediments
+      | role          | first                      | second                  | revising role       |
+      | Coding        | an architecture impediment | an interface impediment | Programme Architect |
 
   Scenario: A failure that reports no problem is never guessed at
     Given a project with a module "parser"

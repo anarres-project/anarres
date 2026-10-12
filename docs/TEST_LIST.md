@@ -58,7 +58,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       better.
 - [x] A revision task carries the feedback signal that triggered it; a task for the next role
       carries none (only revision tasks receive feedback, concept §8).
-- [ ] An interface impediment goes to the Programme Architect, never to another module.
+- [x] An interface impediment goes to the Programme Architect, never to another module, whichever
+      module role reports it and whatever else it reports.
 - [ ] A knowledge gap creates a Research task.
 - [ ] Security & Quality *pass* completes the module. (Reviewer *pass* → Security & Quality is
       done, with the rest of the pipeline.)

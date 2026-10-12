@@ -11,8 +11,15 @@ defineParameterType({
 });
 
 Given("a project with a module {string}", function (this: AnarresWorld, module: string) {
-  return this.anarres.projectWithModule(module);
+  return this.anarres.projectWithModules(module);
 });
+
+Given(
+  "a project with modules {string} and {string}",
+  function (this: AnarresWorld, first: string, second: string) {
+    return this.anarres.projectWithModules(first, second);
+  },
+);
 
 When(
   "a member's {role} work on {string} is accepted with a {verdict} verdict",

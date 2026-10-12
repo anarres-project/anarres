@@ -206,6 +206,51 @@ describe("routing accepted work", () => {
     ).toEqual({ tasks: [{ role: "coding", module: "parser", feedbackSignal: FEEDBACK }] });
   });
 
+  it("sends a failed test reporting an interface impediment to the Programme Architect", () => {
+    expect(
+      route({
+        fromRole: "test",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "interface_impediment" }],
+        feedbackSignal: FEEDBACK,
+      }),
+    ).toEqual({
+      tasks: [{ role: "programme-architect", module: "parser", feedbackSignal: FEEDBACK }],
+    });
+  });
+
+  it("sends a review reporting an interface impediment to the Programme Architect, not Coding", () => {
+    expect(
+      route({
+        fromRole: "reviewer",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "interface_impediment" }],
+        feedbackSignal: FEEDBACK,
+      }),
+    ).toEqual({
+      tasks: [{ role: "programme-architect", module: "parser", feedbackSignal: FEEDBACK }],
+    });
+  });
+
+  it.each(["architecture", "specification", "coding", "security-and-quality"])(
+    "sends %s reporting an interface impediment to the Programme Architect",
+    (fromRole) => {
+      expect(
+        route({
+          fromRole,
+          module: "parser",
+          verdict: "fail",
+          impediments: [{ type: "interface_impediment" }],
+          feedbackSignal: FEEDBACK,
+        }),
+      ).toEqual({
+        tasks: [{ role: "programme-architect", module: "parser", feedbackSignal: FEEDBACK }],
+      });
+    },
+  );
+
   it("routes blocked work just as it routes failed work", () => {
     expect(
       route({

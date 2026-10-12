@@ -18,8 +18,8 @@ export class Anarres {
     return this.aliases.of(DEFAULT_PROJECT);
   }
 
-  async projectWithModule(module: string): Promise<void> {
-    await this.driver.createProject(this.project, [module]);
+  async projectWithModules(...modules: string[]): Promise<void> {
+    await this.driver.createProject(this.project, modules);
   }
 
   async memberHasWorkAccepted(work: {

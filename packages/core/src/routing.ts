@@ -41,7 +41,8 @@ export function route(work: AcceptedWork): RoutingDecision {
 
 /**
  * Who can fix what a failed piece of work reports: the CSD AutoPM routing table, adapted for
- * modules. A row without `reporting` applies whatever else the work reports.
+ * modules. A row without `reporting` applies whatever else the work reports. A contract that does
+ * not work goes to the Programme Architect, never to the module on its other side.
  */
 const FAILURE_ROUTES: readonly { from: Role; reporting?: string; to: Role }[] = [
   { from: "architecture", reporting: "upstream_ambiguity", to: "programme-architect" },
@@ -54,6 +55,11 @@ const FAILURE_ROUTES: readonly { from: Role; reporting?: string; to: Role }[] = 
   { from: "reviewer", reporting: "scope_gap", to: "programme-architect" },
   { from: "reviewer", to: "coding" },
   { from: "security-and-quality", to: "coding" },
+  ...MODULE_PIPELINE.map((from) => ({
+    from,
+    reporting: "interface_impediment",
+    to: "programme-architect" as const,
+  })),
 ];
 
 /** Most upstream first: when several rules match, the most upstream owner wins. */
