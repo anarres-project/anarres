@@ -38,6 +38,17 @@ describe("routing accepted work", () => {
     ).toEqual([{ role: "test", module: "parser" }]);
   });
 
+  it("sends a failed test back to Specification when it reports an upstream ambiguity", () => {
+    expect(
+      route({
+        fromRole: "test",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "upstream_ambiguity" }],
+      }),
+    ).toEqual([{ role: "specification", module: "parser" }]);
+  });
+
   it("keeps the next task in the same module as the accepted work", () => {
     expect(route({ fromRole: "specification", module: "ledger", verdict: "pass" })).toEqual([
       { role: "test", module: "ledger" },
