@@ -12,9 +12,14 @@ export type ReadyTask = {
   module: string;
 };
 
+export type CoordinatorAlert = {
+  module: string;
+};
+
 /** How the DSL reaches Anarres. Each driver invokes the system its own way. */
 export interface Driver {
   createProject(project: string, modules: string[]): Promise<void>;
   acceptWork(work: AcceptedWork): Promise<void>;
   readyTasks(project: string): Promise<ReadyTask[]>;
+  coordinatorAlerts(project: string): Promise<CoordinatorAlert[]>;
 }

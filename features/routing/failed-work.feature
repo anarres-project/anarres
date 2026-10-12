@@ -42,6 +42,17 @@ Feature: Divlab sends failed work back to the role that can fix it
       | Reviewer           |
       | Security & Quality |
 
+  @wip
+  Scenario Outline: A failed review or security check goes to Coding whatever else it reports
+    Given a project with a module "parser"
+    When a member's <role> work on "parser" is accepted with a fail verdict, reporting an architecture impediment
+    Then the only task ready for "parser" is a Coding task
+
+    Examples:
+      | role               |
+      | Reviewer           |
+      | Security & Quality |
+
   Scenario: A review that finds a gap in scope goes to the Programme Architect
     Given a project with a module "parser"
     When a member's Reviewer work on "parser" is accepted with a fail verdict, reporting a scope gap
@@ -61,3 +72,23 @@ Feature: Divlab sends failed work back to the role that can fix it
       | role          | first                 | second                     | revising role       |
       | Specification | an upstream ambiguity | an architecture impediment | Programme Architect |
       | Coding        | test failures         | an architecture impediment | Architecture        |
+
+  @wip
+  Scenario: A failure that reports no problem is never guessed at
+    Given a project with a module "parser"
+    When a member's Specification work on "parser" is accepted with a fail verdict
+    Then a PDC coordinator is alerted
+    And no task is ready for "parser"
+
+  @wip
+  Scenario Outline: A problem that no rule covers is never guessed at
+    Given a project with a module "parser"
+    When a member's <role> work on "parser" is accepted with a fail verdict, reporting <problem>
+    Then a PDC coordinator is alerted
+    And no task is ready for "parser"
+
+    Examples:
+      | role          | problem                      |
+      | Test          | an architecture impediment   |
+      | Test          | test failures                |
+      | Specification | an implementation impediment |

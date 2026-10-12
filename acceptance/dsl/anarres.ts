@@ -51,4 +51,18 @@ export class Anarres {
       `expected the only ready task for ${task.module} to be a ${task.role} task`,
     );
   }
+
+  async pdcCoordinatorIsAlerted() {
+    const alerts = await this.driver.coordinatorAlerts(this.project);
+    assert.equal(alerts.length, 1, "expected one alert to the PDC coordinators");
+  }
+
+  async noTaskIsReady(module: string) {
+    const ready = await this.driver.readyTasks(this.project);
+    assert.deepEqual(
+      ready.filter((t) => t.module === module),
+      [],
+      `expected no ready task for ${module}`,
+    );
+  }
 }

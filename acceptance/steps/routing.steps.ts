@@ -60,3 +60,11 @@ Then(
     return this.anarres.divlabHasPostedReadyTask({ role, module });
   },
 );
+
+Then("a PDC coordinator is alerted", function (this: AnarresWorld) {
+  return this.anarres.pdcCoordinatorIsAlerted();
+});
+
+Then("no task is ready for {string}", function (this: AnarresWorld, module: string) {
+  return this.anarres.noTaskIsReady(module);
+});
