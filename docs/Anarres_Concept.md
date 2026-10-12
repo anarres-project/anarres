@@ -293,6 +293,9 @@ The March AutoPM spec had a Claude session apply a fixed routing table. A fixed 
   - when a failure reports several problems, one revision task goes to the most upstream role that
     owns one, except that a `knowledge_gap` goes to Research first: what is learnt may change any
     other fix. The Research task belongs to the module that reported the gap
+  - **escalation:** within one module, each revision task for a role counts as a re-run of that
+    role, and the count starts again when that role's work passes. A fourth re-run is not posted:
+    a PDC coordinator is alerted instead (the AutoPM's "same agent re-run > 3 times")
   - a contract revision → revision tasks for every module that uses the contract
   - all module pipelines done → integration pipeline
   - a `conditional_pass` routes exactly as a `pass` does; its open questions and assumptions are

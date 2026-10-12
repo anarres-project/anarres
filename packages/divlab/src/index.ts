@@ -38,6 +38,8 @@ export type RoutingEvent = { project: string } & RoutingRecord;
 /** Where Divlab records its decisions: one file per event in the project repository. */
 export interface EventLog {
   append(event: RoutingEvent): Promise<void>;
+  /** The project's events, oldest first. */
+  read(project: string): Promise<RoutingEvent[]>;
 }
 
 export async function onWorkAccepted(
@@ -46,7 +48,8 @@ export async function onWorkAccepted(
   log: EventLog,
 ): Promise<void> {
   const { project, ...work } = event;
-  const record = routingRecord(work);
+  const history = await log.read(project);
+  const record = routingRecord(work, history);
   await log.append({ project, ...record });
   const { decision } = record;
   if ("alert" in decision) {

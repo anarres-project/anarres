@@ -48,6 +48,20 @@ export class Anarres {
     );
   }
 
+  async memberHasWorkSentBack(
+    work: { role: string; module: string; impediment: string },
+    times: number,
+  ) {
+    for (let i = 0; i < times; i++) {
+      await this.memberHasWorkAccepted({
+        role: work.role,
+        module: work.module,
+        verdict: "fail",
+        impediments: [work.impediment],
+      });
+    }
+  }
+
   async divlabHasPostedReadyTask(task: { role: string; module: string }) {
     const ready = await this.driver.readyTasks(this.project);
     assert.deepEqual(
@@ -89,8 +103,10 @@ export class Anarres {
     work: { role: string; module: string },
     outcome: RoutingRecord["outcome"],
     reason: RoutingRecord["reason"],
+    which: { latest?: boolean } = {},
   ) {
-    const records = await this.recordsOf(work);
+    const all = await this.recordsOf(work);
+    const records = which.latest ? all.slice(-1) : all;
     assert.deepEqual(
       records.map((record) => ({ outcome: record.outcome, reason: record.reason })),
       [{ outcome, reason }],

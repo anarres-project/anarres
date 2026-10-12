@@ -28,7 +28,7 @@ export type RoutingRecord = {
     feedbackSignal: string;
   };
   outcome: { tasksFor: string[] } | { alert: true } | { moduleDone: true };
-  reason: { rule: string; impediment?: string };
+  reason: { rule: string; impediment?: string; role?: string };
 };
 
 /** How the DSL reaches Anarres. Each driver invokes the system its own way. */

@@ -29,6 +29,20 @@ When(
 );
 
 Given(
+  "a member's {role} work on {string} was accepted with a {verdict} verdict",
+  function (this: AnarresWorld, role: string, module: string, verdict: string) {
+    return this.anarres.memberHasWorkAccepted({ role, module, verdict });
+  },
+);
+
+Given(
+  "a member's {role} work on {string} has been sent back for {impediment} {int} times",
+  function (this: AnarresWorld, role: string, module: string, impediment: string, times: number) {
+    return this.anarres.memberHasWorkSentBack({ role, module, impediment }, times);
+  },
+);
+
+Given(
   "a member's {role} work on {string} was accepted with a {verdict} verdict, reporting {impediment}",
   function (this: AnarresWorld, role: string, module: string, verdict: string, impediment: string) {
     return this.anarres.memberHasWorkAccepted({ role, module, verdict, impediments: [impediment] });
@@ -122,6 +136,18 @@ Then(
       { role, module },
       { alert: true },
       { rule: "no_matching_rule" },
+    );
+  },
+);
+
+Then(
+  "Divlab records that the {role} work on {string} went to a PDC coordinator because {role} was re-run more than three times",
+  function (this: AnarresWorld, role: string, module: string, rerun: string) {
+    return this.anarres.divlabRecorded(
+      { role, module },
+      { alert: true },
+      { rule: "re_run_limit", role: rerun },
+      { latest: true },
     );
   },
 );

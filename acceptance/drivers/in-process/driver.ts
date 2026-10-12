@@ -23,6 +23,7 @@ export class InProcessDriver implements Driver {
     const task = this.github
       .readyTasks(work.project)
       .find((task) => task.role === fromRole && task.module === work.module);
+    if (task) this.github.close(task);
     await onWorkAccepted(
       {
         project: work.project,
@@ -40,7 +41,7 @@ export class InProcessDriver implements Driver {
   }
 
   async routingRecords(project: string): Promise<RoutingRecord[]> {
-    return this.github.eventLog(project).map(({ work, decision, reason }) => ({
+    return (await this.github.read(project)).map(({ work, decision, reason }) => ({
       work: {
         role: roleNameOf(work.fromRole),
         module: work.module,
@@ -54,7 +55,12 @@ export class InProcessDriver implements Driver {
           : "alert" in decision
             ? { alert: true }
             : { moduleDone: true },
-      reason: "impediment" in reason ? { ...reason, impediment: words(reason.impediment) } : reason,
+      reason:
+        "impediment" in reason
+          ? { ...reason, impediment: words(reason.impediment) }
+          : "role" in reason
+            ? { ...reason, role: roleName(reason.role) }
+            : reason,
     }));
   }
 

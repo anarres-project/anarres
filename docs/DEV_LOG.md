@@ -20,11 +20,50 @@ next role does not. An interface impediment from any module role goes to the Pro
 A knowledge gap makes a Research task ready, ahead of anything else reported; when the research
 passes, the role that reported the gap gets a revision task; Research failing alerts a PDC
 coordinator. A Security & Quality pass marks the module done. Every routing decision is recorded
-with its inputs and the rule that decided it. Next in section 1: escalation, counted from the
-event log. Divlab as a real
+with its inputs and the rule that decided it. A role re-run more than three times for a module is
+escalated to a PDC coordinator. Section 1's remaining items wait on later work (alert detail,
+metrics, input artefacts); next is to choose between them and section 0's GitHub Action. Divlab as a real
 Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-12: A role re-run more than three times is escalated
+
+- Bernard, 2026-10-12: within one module, each revision task for a role is a re-run; the count
+  starts again when that role's work passes (a conditional pass too); the fourth re-run alerts a
+  PDC coordinator and posts nothing. Recorded in concept §9.
+- Divlab reads the project's event log and hands it to core: `routingRecord(work, history)`.
+  Revision tasks are recognised by carrying a feedback signal.
+- Harness: the fake GitHub now closes the task a merged pull request was for, as GitHub does.
+  Existing scenarios unaffected.
+- Acceptance: `features/routing/escalation.feature`. "A fourth re-run…" red as *not yet right* (no
+  alert). The other two ("a third re-run is still sent back", "the count starts again") passed
+  first time, since nothing escalated yet; checked once built by planting a limit of 2 and a
+  count that never resets (each failed as it should).
+- Cycles:
+
+  ```
+  RED:      alerts a PDC coordinator instead of re-running a role a fourth time
+            -> expected { …(3) } to deeply equal { …(3) }
+  GREEN:    (62 passed), `history.length >= 3` with Coding hard-coded; then the seven earlier
+            record tests given an empty history (signature change only)
+  PASSED FIRST TIME: still re-runs a role the third time (boundary)
+  RED:      counts only the re-runs of the role being sent back -> { alert: re_run_limit }
+  GREEN:    (64 passed), counted per role
+  RED:      does not count the task that first brought the work to the role as a re-run
+  GREEN:    (65 passed), revision tasks only
+  RED:      starts counting again once the role's work passes
+  GREEN:    (66 passed), "pass" only
+  RED:      starts counting again once the role's work passes conditionally
+  GREEN:    (67 passed), via routing's own `failed` (one definition of passing)
+  RED:      counts only the re-runs in the module the work belongs to
+  GREEN:    (68 passed)
+  REFACTOR: module history named; doc comment corrected
+  PASSED FIRST TIME (to kill 2 surviving mutants): keeps counting when another role's work passes
+            in between; keeps alerting for what no rule covers, however often it happens
+  ```
+
+- Gate: 70 unit tests, 53 scenarios; `@wip` judge clean; mutation 201 of 201 killed.
 
 ## 2026-10-12: Every routing decision is recorded
 

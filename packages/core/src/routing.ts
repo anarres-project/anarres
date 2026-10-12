@@ -32,7 +32,7 @@ const MODULE_PIPELINE: readonly Role[] = [
 export type RoutingDecision =
   | { tasks: Task[] }
   | { moduleDone: true }
-  | { alert: { reason: "no_matching_rule" } };
+  | { alert: { reason: "no_matching_rule" | "re_run_limit" } };
 
 /** The rule that decided a routing decision. */
 export type Reason =
@@ -41,7 +41,8 @@ export type Reason =
   | { rule: "reported"; impediment: string }
   | { rule: "failed" }
   | { rule: "research_returned" }
-  | { rule: "no_matching_rule" };
+  | { rule: "no_matching_rule" }
+  | { rule: "re_run_limit"; role: Role };
 
 /** A routing decision and the reason for it. */
 export type Ruling = { decision: RoutingDecision; reason: Reason };
@@ -55,8 +56,11 @@ export function route(work: AcceptedWork): RoutingDecision {
   return rule(work).decision;
 }
 
+/** Blocked work is routed just as failed work is. */
+export const failed = (work: AcceptedWork) => work.verdict === "fail" || work.verdict === "blocked";
+
 export function rule(work: AcceptedWork): Ruling {
-  if (work.verdict === "fail" || work.verdict === "blocked") return revise(work);
+  if (failed(work)) return revise(work);
   if (work.fromRole === "research") return returnResearch(work);
   return advance(work);
 }

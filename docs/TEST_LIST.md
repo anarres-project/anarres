@@ -72,8 +72,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       record).
 - [ ] Work accepted for a module that is already done → ? (ask Bernard: alert, or reopen?)
 - [ ] All module pipelines done → the integration pipeline starts (concept §9; Phase 2).
-- [ ] Escalation: the same role is re-run more than three times → a PDC coordinator is alerted and
-      no further task is posted.
+- [x] Escalation: the same role is re-run more than three times → a PDC coordinator is alerted and
+      no further task is posted (Bernard, 2026-10-12: per module, revision tasks only, the count
+      starting again when that role's work passes).
+- [ ] The escalation alert says which role is stuck and how often it was re-run (with "the alert
+      says what was reported").
+- [ ] Other AutoPM escalations once metrics exist: ω(t) oscillation, d(t) stall, an open question
+      unresolved for more than three steps.
 - [x] Every routing decision is recorded as an event that names its inputs (the accepted work as
       Divlab received it) and its reason (the rule that decided it).
   - [ ] the event records when Divlab decided (injected clock, UTC);
@@ -134,4 +139,6 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   unknown role as the start of the pipeline; untested, so section 4 must cover it).
 - The task posted on GitHub links to its feedback signal at the merged commit (needs Divlab as an
   Action and `packages/github`).
+- Merging a member's pull request closes the task it was for (the in-process driver emulates
+  GitHub doing this; the GitHub adapter and sandbox driver must show it really happens).
 - (add new cases here, then place them)

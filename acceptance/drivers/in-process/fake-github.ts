@@ -26,7 +26,7 @@ export class FakeGitHub implements TaskBoard, EventLog {
     this.events.push(event);
   }
 
-  eventLog(project: string): RoutingEvent[] {
+  async read(project: string): Promise<RoutingEvent[]> {
     return this.events.filter((event) => event.project === project);
   }
 
@@ -40,6 +40,11 @@ export class FakeGitHub implements TaskBoard, EventLog {
 
   coordinatorAlerts(project: string): CoordinatorAlert[] {
     return this.alerts.filter((alert) => alert.project === project);
+  }
+
+  /** Merging a pull request that names a task closes it. */
+  close(task: PostedTask): void {
+    this.openTasks.splice(this.openTasks.indexOf(task), 1);
   }
 
   readyTasks(project: string): PostedTask[] {
