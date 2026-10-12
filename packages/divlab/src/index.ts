@@ -5,6 +5,7 @@ export type WorkAccepted = {
   module: string;
   fromRole: string;
   verdict: string;
+  impediments: { type: string }[];
 };
 
 export type PostedTask = {

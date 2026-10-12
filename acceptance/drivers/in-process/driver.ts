@@ -19,6 +19,7 @@ export class InProcessDriver implements Driver {
         fromRole: roleId(work.role),
         // Scenarios say "conditional pass"; feedback signals carry "conditional_pass".
         verdict: work.verdict.replace(" ", "_"),
+        impediments: work.impediments.map((name) => ({ type: name.replace(" ", "_") })),
       },
       this.github,
     );

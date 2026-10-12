@@ -4,7 +4,7 @@ export type AcceptedWork = {
   fromRole: string;
   module: string;
   verdict: string;
-  impediments?: { type: string }[];
+  impediments: { type: string }[];
 };
 
 export type Task = {
