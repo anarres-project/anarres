@@ -22,7 +22,10 @@ const MODULE_PIPELINE: readonly Role[] = [
 ];
 
 export function route(work: AcceptedWork): Task[] {
-  if (work.verdict === "fail") return [{ role: "specification", module: work.module }];
+  if (work.verdict === "fail") {
+    const owner = work.fromRole === "test" ? "specification" : "programme-architect";
+    return [{ role: owner, module: work.module }];
+  }
   const next = (MODULE_PIPELINE as readonly string[]).indexOf(work.fromRole) + 1;
   return MODULE_PIPELINE.slice(next, next + 1).map((role) => ({ role, module: work.module }));
 }
