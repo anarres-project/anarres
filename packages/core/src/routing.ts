@@ -1,3 +1,5 @@
+import type { Role } from "./roles.ts";
+
 export type AcceptedWork = {
   fromRole: string;
   module: string;
@@ -5,11 +7,11 @@ export type AcceptedWork = {
 };
 
 export type Task = {
-  role: string;
+  role: Role;
   module: string;
 };
 
-const MODULE_PIPELINE = [
+const MODULE_PIPELINE: readonly Role[] = [
   "architecture",
   "specification",
   "test",
@@ -19,6 +21,6 @@ const MODULE_PIPELINE = [
 ];
 
 export function route(work: AcceptedWork): Task[] {
-  const next = MODULE_PIPELINE.indexOf(work.fromRole) + 1;
+  const next = (MODULE_PIPELINE as readonly string[]).indexOf(work.fromRole) + 1;
   return MODULE_PIPELINE.slice(next, next + 1).map((role) => ({ role, module: work.module }));
 }

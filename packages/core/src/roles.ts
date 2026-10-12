@@ -1,4 +1,11 @@
 /** Each role's name as members know it. */
-export const ROLE_NAMES: Record<string, string> = {
+export const ROLE_NAMES = {
+  architecture: "Architecture",
+  specification: "Specification",
+  test: "Test",
+  coding: "Coding",
+  reviewer: "Reviewer",
   "security-and-quality": "Security & Quality",
-};
+} as const;
+
+export type Role = keyof typeof ROLE_NAMES;
