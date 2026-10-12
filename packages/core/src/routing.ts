@@ -22,19 +22,17 @@ const MODULE_PIPELINE: readonly Role[] = [
 ];
 
 export function route(work: AcceptedWork): Task[] {
-  if (work.verdict === "fail") {
-    const reports = (type: string) =>
-      work.impediments.some((impediment) => impediment.type === type);
-    if (reports("architecture_impediment") && !reports("upstream_ambiguity")) {
-      return [{ role: "architecture", module: work.module }];
-    }
-    if (reports("scope_gap")) return [{ role: "programme-architect", module: work.module }];
-    if (reports("test_failures") || work.fromRole === "reviewer") {
-      return [{ role: "coding", module: work.module }];
-    }
-    const owner = work.fromRole === "test" ? "specification" : "programme-architect";
-    return [{ role: owner, module: work.module }];
-  }
+  if (work.verdict === "fail") return [{ role: ownerOfFailure(work), module: work.module }];
   const next = (MODULE_PIPELINE as readonly string[]).indexOf(work.fromRole) + 1;
   return MODULE_PIPELINE.slice(next, next + 1).map((role) => ({ role, module: work.module }));
+}
+
+/** The role that can fix what a failed piece of work reports. */
+function ownerOfFailure(work: AcceptedWork): Role {
+  const reports = (type: string) => work.impediments.some((impediment) => impediment.type === type);
+  if (reports("architecture_impediment") && !reports("upstream_ambiguity")) return "architecture";
+  if (reports("scope_gap")) return "programme-architect";
+  if (reports("test_failures")) return "coding";
+  if (work.fromRole === "reviewer" || work.fromRole === "security-and-quality") return "coding";
+  return work.fromRole === "test" ? "specification" : "programme-architect";
 }

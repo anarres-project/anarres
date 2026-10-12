@@ -12,11 +12,39 @@ testing is set up (`npm run mutate`, weekly in CI). Section 1 (routing) under wa
 through the whole module pipeline. A conditional pass advances like a pass. Fail routes under way: an upstream
 ambiguity goes back to its owner. An architecture impediment goes to
 Architecture. Upstream ambiguity, architecture impediments and Coding's test failures are routed,
-with the most upstream winning when several are reported. Next: failed review and failed
-Security & Quality go back to Coding. Divlab as a real
+with the most upstream winning when several are reported. Failed review and Security & Quality go back
+to Coding; a scope gap goes to the Programme Architect. Next: *blocked* routes as *fail*, then "no
+rule matches → alert a PDC coordinator", which replaces the known guesses with the routing table. Divlab as a real
 Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-12: Failed review and Security & Quality go back to Coding
+
+- Acceptance: outline for Reviewer and Security & Quality → Coding (red), and a scope-gap
+  scenario that **passed at once** through the no-rule fallback. Put straight into the blocking
+  run as a guard, and it worked: the least-code Reviewer change sent scope gaps to Coding and the
+  guard went red, which drove the scope-gap unit test. Nothing committed while it was red.
+- Cycles:
+
+  ```
+  RED:      sends a failed review back to Coding
+            -> expected [ { role: 'programme-architect', … } ] to deeply equal [ Array(1) ]
+  GREEN:    (22 passed), but the scope-gap acceptance guard went red
+  RED:      sends a review that finds a scope gap to the Programme Architect
+            -> expected [ { role: 'coding', … } ] to deeply equal [ { …(2) } ]
+  GREEN:    (23 passed; acceptance green)
+  REFACTOR: none
+  RED:      sends a failed Security & Quality check back to Coding
+            -> expected [ { role: 'programme-architect', … } ] to deeply equal [ Array(1) ]
+  GREEN:    (24 passed)
+  REFACTOR: extracted `ownerOfFailure`, one rule per line
+  ```
+
+- Not refactored into a routing table yet: a table would drop the untested guesses, which changes
+  behaviour. That is the "no rule matches" item, so the table is built there, test-first.
+- The refactor exposed one more guess: test failures from any role go to Coding. Listed.
+- Mutation testing: 57 of 57.
 
 ## 2026-10-12: Failing tests send the code back to Coding
 

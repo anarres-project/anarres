@@ -32,7 +32,6 @@ Feature: Divlab sends failed work back to the role that can fix it
     When a member's Coding work on "parser" is accepted with a fail verdict, reporting test failures
     Then the only task ready for "parser" is a Coding task
 
-  @wip
   Scenario Outline: A failed review or security check sends the code back to Coding
     Given a project with a module "parser"
     When a member's <role> work on "parser" is accepted with a fail verdict

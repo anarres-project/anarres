@@ -137,6 +137,17 @@ describe("routing accepted work", () => {
     ).toEqual([{ role: "programme-architect", module: "parser" }]);
   });
 
+  it("sends a failed Security & Quality check back to Coding", () => {
+    expect(
+      route({
+        fromRole: "security-and-quality",
+        module: "parser",
+        verdict: "fail",
+        impediments: [],
+      }),
+    ).toEqual([{ role: "coding", module: "parser" }]);
+  });
+
   it("keeps the next task in the same module as the accepted work", () => {
     expect(
       route({ fromRole: "specification", module: "ledger", verdict: "pass", impediments: [] }),

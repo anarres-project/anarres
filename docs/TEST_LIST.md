@@ -36,8 +36,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [x] An architecture impediment from Architecture, Specification or Coding → Architecture.
 - [x] Coding failing with test failures → Coding again (Bernard, 2026-10-12). Once run history
       exists: failures stable for more than two runs → Specification.
-- [ ] A failed review → Coding; a review reporting a scope gap → Programme Architect.
-- [ ] A failed Security & Quality check → Coding.
+- [x] A failed review → Coding; a review reporting a scope gap → Programme Architect.
+- [x] A failed Security & Quality check → Coding.
 - [ ] *Blocked* routes exactly as *fail*.
 - [ ] Several impediments → one revision task, for the most upstream owning role; the others ride
       along in the feedback it carries (Bernard, 2026-10-12).
@@ -47,8 +47,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] where a knowledge gap ranks among the others (ask Bernard when Research routing is built).
 - [ ] A failure that matches no rule is never guessed at: a PDC coordinator is alerted. Known
       guesses to remove: a fail with no impediments goes to the Programme Architect (or to
-      Specification from Test); an architecture impediment from Test or Reviewer goes to
-      Architecture.
+      Specification from Test); an architecture impediment from Test, Reviewer or Security & Quality
+      goes to Architecture; test failures from any role go to Coding. Replace the if-chain in
+      `ownerOfFailure` with the routing table here: dropping the guesses is this item's behaviour.
 - [ ] A revision task carries the feedback signal that triggered it.
 - [ ] An interface impediment goes to the Programme Architect, never to another module.
 - [ ] A knowledge gap creates a Research task.
