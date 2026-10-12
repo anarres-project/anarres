@@ -13,6 +13,14 @@ Action and the sandbox driver are still open in section 0.
 
 ---
 
+## 2026-10-12: Tool versions pinned for contributors
+
+- `CONTRIBUTING.md` says what to install and how. `package.json` + `package-lock.json` play the
+  part of a `requirements.txt`: dev tools now pinned to exact versions, and `.npmrc` sets
+  `save-exact=true` so new ones are too.
+- `engines.node` is now `^24` with `engine-strict=true`, so `npm ci` refuses Node 25 with
+  `EBADENGINE` (checked) instead of failing later inside Cucumber.
+
 ## 2026-10-12: Mutation testing
 
 - Stryker 10 with the Vitest runner on `packages/core`, break threshold 100%, weekly CI job and
