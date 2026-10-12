@@ -13,11 +13,52 @@ through the whole module pipeline. A conditional pass advances like a pass. Fail
 ambiguity goes back to its owner. An architecture impediment goes to
 Architecture. Upstream ambiguity, architecture impediments and Coding's test failures are routed,
 with the most upstream winning when several are reported. Failed review and Security & Quality go back
-to Coding; a scope gap goes to the Programme Architect. *Blocked* routes as *fail*. Next: "no rule
-matches → alert a PDC coordinator", which replaces the known guesses with the routing table. Divlab as a real
+to Coding; a scope gap goes to the Programme Architect. *Blocked* routes as *fail*. Failure routing is
+now the AutoPM table, and a failure no rule covers alerts a PDC coordinator instead of being
+guessed at. Next in section 1: a revision task carries its feedback signal; interface
+impediments; knowledge gaps; module completion; escalation; events. Divlab as a real
 Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-12: A failure no rule covers alerts a PDC coordinator
+
+- Reading of the AutoPM table: each role has rules keyed by impediment; only Reviewer and
+  Security & Quality have an unconditional "otherwise → Coding". So a Reviewer or Security &
+  Quality fail reporting an architecture impediment now goes to Coding (it used to go to
+  Architecture). Flagged to Bernard.
+- Acceptance: four alert scenarios (no problem reported; Test reporting an architecture impediment
+  or test failures; an implementation impediment), red with `NotYetImplemented` at the driver
+  until Divlab could alert; plus the Reviewer / Security & Quality → Coding outline.
+- Refactor first: `route` returns a routing decision (`{ tasks }` or `{ alert }`).
+- Cycles:
+
+  ```
+  RED:      alerts a PDC coordinator, posting no task, when a failure reports no problem
+            -> expected { tasks: [ … ] } to deeply equal { alert: … }
+  GREEN:    (26 passed)
+  RED:      alerts … when a failed test reports an architecture impediment -> { tasks: [ architecture ] }
+  GREEN:    (27 passed)
+  RED:      alerts … when a failed test reports test failures -> { tasks: [ coding ] }
+  GREEN:    (28 passed)
+  RED:      alerts … when a failure other than a review reports a scope gap -> { tasks: [ … ] }
+  GREEN:    (29 passed)
+  RED:      alerts … when failed code reports an upstream ambiguity -> { tasks: [ … ] }
+  GREEN:    (30 passed)
+  RED:      routes on the impediments a rule covers, letting the others ride along
+            -> expected { alert: … } to deeply equal { tasks: [ architecture ] }
+  GREEN:    (31 passed), by generalising to the routing table (`FAILURE_ROUTES`)
+  REFACTOR: none
+  PASSED FIRST TIME: sends a failed architecture back to Architecture when it reports an
+            architecture impediment. Written because Stryker found that table row untested at unit
+            level (4 survivors); now 95 of 95 killed.
+  ```
+
+- Table rows are matched by exact string, never by object key: role and impediment names come
+  from untrusted feedback signals, and keys like `constructor` would hit an object's built-ins.
+- Divlab's `TaskBoard` port gains `alertCoordinators`; the fake GitHub records alerts. Checked that
+  the alert scenarios fail when Divlab doesn't raise the alert.
+- A refactor edit missed a spot that Biome had reformatted; the gate caught it before commit.
 
 ## 2026-10-12: Blocked routes as fail
 

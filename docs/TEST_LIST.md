@@ -44,12 +44,15 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] an upstream ambiguity outranks an architecture impediment;
   - [x] an architecture impediment outranks Coding's test failures (killed the surviving
         `some` → `every` mutant);
-  - [ ] where a knowledge gap ranks among the others (ask Bernard when Research routing is built).
-- [ ] A failure that matches no rule is never guessed at: a PDC coordinator is alerted. Known
-      guesses to remove: a fail with no impediments goes to the Programme Architect (or to
-      Specification from Test); an architecture impediment from Test, Reviewer or Security & Quality
-      goes to Architecture; test failures from any role go to Coding. Replace the if-chain in
-      `ownerOfFailure` with the routing table here: dropping the guesses is this item's behaviour.
+  - [ ] where a knowledge gap ranks among the others (ask Bernard when Research routing is built;
+        until then a knowledge gap alone alerts a PDC coordinator).
+- [x] A failure that matches no rule is never guessed at: a PDC coordinator is alerted and no
+      task is posted. Failure routing is now the AutoPM table, adapted for modules
+      (`FAILURE_ROUTES` in core); impediments no rule covers ride along.
+- [ ] The PDC coordinator's alert says what was reported and why no rule matched (today it
+      carries only `no_matching_rule`).
+- [ ] Candidate rule, ask Bernard: Coding reporting an upstream ambiguity → Specification? (The
+      AutoPM has no such row, so today it alerts a PDC coordinator.)
 - [ ] A revision task carries the feedback signal that triggered it.
 - [ ] An interface impediment goes to the Programme Architect, never to another module.
 - [ ] A knowledge gap creates a Research task.

@@ -1,7 +1,6 @@
 import { ROLE_NAMES, type Role } from "@anarres/core";
 import { onWorkAccepted } from "@anarres/divlab";
 import type { AcceptedWork, CoordinatorAlert, Driver, ReadyTask } from "../driver.ts";
-import { NotYetImplemented } from "../errors.ts";
 import { FakeGitHub } from "./fake-github.ts";
 
 /** Feeds events straight into Divlab, with an in-memory fake of GitHub. */
@@ -26,8 +25,8 @@ export class InProcessDriver implements Driver {
     );
   }
 
-  async coordinatorAlerts(_project: string): Promise<CoordinatorAlert[]> {
-    throw new NotYetImplemented("alerting PDC coordinators");
+  async coordinatorAlerts(project: string): Promise<CoordinatorAlert[]> {
+    return this.github.coordinatorAlerts(project).map((alert) => ({ module: alert.module }));
   }
 
   async readyTasks(project: string): Promise<ReadyTask[]> {
