@@ -1,5 +1,5 @@
 import { type IWorldOptions, setWorldConstructor, World } from "@cucumber/cucumber";
-import { InProcessDriver } from "../drivers/in-process.ts";
+import { InProcessDriver } from "../drivers/in-process/driver.ts";
 import { Aliases } from "../dsl/aliases.ts";
 import { Anarres } from "../dsl/anarres.ts";
 

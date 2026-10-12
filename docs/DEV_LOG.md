@@ -6,10 +6,43 @@ Running history and current status. Newest entry first.
 
 ## Current status
 
-Design stage. No code yet. Next: build the walking skeleton (`docs/TEST_LIST.md`, section 0): the
-first acceptance scenario through the in-process driver, the `npm test` gate and CI.
+Walking skeleton green: the first scenario ("a passed specification makes a test task ready")
+runs through the in-process driver, the `npm test` gate and `npm run test:wip` run in CI. Next:
+finish the skeleton's pipeline (mutation testing, Divlab as a real Action, sandbox driver; see
+`docs/TEST_LIST.md`, section 0), or start section 1 (routing), as Bernard prefers.
 
 ---
+
+## 2026-10-12: Walking skeleton
+
+- Scaffolding: npm workspaces (`packages/core`, `packages/divlab`), strict TypeScript 7, Biome,
+  Vitest with 100% coverage thresholds on core, Cucumber.js 13 loaded through `tsx`. CI runs the
+  gate on Node 24 (`.nvmrc`).
+- **Use Node 24 locally.** Cucumber 13 refuses to run on Node 25 (it supports 22, 24 and ≥26).
+- Four Layer harness: `features/` → `acceptance/steps/` → `acceptance/dsl/` (the `Anarres` DSL,
+  with per-scenario aliases) → `acceptance/drivers/` (in-process driver, fake GitHub at Divlab's
+  `TaskBoard` port).
+- `npm run test:wip` (`scripts/wip-judge.ts`) reads Cucumber's message stream and fails if a
+  `@wip` scenario passes or fails with anything other than `NotYetImplemented` or
+  `HarnessNotYetBuilt`. Checked by hand against a dishonest failure and against a passing
+  scenario.
+- Cycles:
+
+  ```
+  RED:      routing > makes a Test task for the module when its specification passes
+            -> AssertionError: expected [] to deeply equal [ { role: 'test', module: 'parser' } ]
+  GREEN:    (1 passed), hard-coded
+  REFACTOR: none
+  RED:      routing > keeps the next task in the same module as the accepted work
+            -> expected [ { role: 'test', module: 'parser' } ] to deeply equal [ { ..., module: 'ledger' } ]
+  GREEN:    (2 passed)
+  REFACTOR: none
+  ```
+
+- Acceptance: red with `NotYetImplemented` at the driver; green after wiring Divlab's
+  `onWorkAccepted` to core's `route`; `@wip` removed. Confirmed the scenario fails when routing is
+  wrong.
+- `route` ignores role and verdict for now: no test demands them yet (section 1 will).
 
 ## 2026-10-12: Decisions confirmed
 

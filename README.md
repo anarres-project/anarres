@@ -8,7 +8,10 @@ The name comes from the anarchist moon world in Ursula K. Le Guin's *The Disposs
 
 ## Status
 
-Design stage. Nothing to install yet.
+Walking skeleton: the first routing scenario runs end to end in the test harness. Nothing for
+members to install yet.
+
+For contributors: Node.js 24 (see `.nvmrc`), then `npm install` and `npm test`.
 
 - [Concept document](docs/Anarres_Concept.md): architecture, roles, safety governance, scaling plan and roadmap
 

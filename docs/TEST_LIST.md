@@ -11,8 +11,16 @@ Source: `docs/Anarres_Concept.md` (Phase 1: Divlab and plugin). Order agreed wit
 The thinnest slice that goes end to end: one acceptance scenario through the in-process driver,
 with the gate (`npm test`) and CI running.
 
-- [ ] Divlab posts the next task when work is accepted: after a Specification task for a module is
+- [x] Divlab posts the next task when work is accepted: after a Specification task for a module is
       merged with a *pass* verdict, a Test task for that module is ready to claim.
+
+Still to finish the skeleton's pipeline (not behaviour, but the route to production):
+
+- [ ] `npm run mutate`: Stryker on `packages/core`, weekly in CI.
+- [ ] Divlab runs as a GitHub Action: bundled entry point, triggered when a pull request is merged,
+      posting tasks as issues through `packages/github`.
+- [ ] GitHub sandbox driver: the same scenarios against real repositories in the sandbox
+      organisation (`npm run test:acceptance:sandbox`).
 
 ## 1. Routing (Divlab)
 
@@ -68,4 +76,7 @@ with the gate (`npm test`) and CI running.
 
 ## Unsorted
 
+- Role names and ids are defined once, in `core` (the in-process driver maps them by hand for now).
+- Divlab reads the accepted work's module, role and verdict from the merged feedback signal
+  header (today the in-process driver hands them straight to Divlab).
 - (add new cases here, then place them)
