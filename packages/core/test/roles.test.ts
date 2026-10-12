@@ -6,6 +6,10 @@ describe("role names", () => {
     expect(ROLE_NAMES["security-and-quality"]).toBe("Security & Quality");
   });
 
+  it("names the Programme Architect role as members know it", () => {
+    expect(ROLE_NAMES["programme-architect"]).toBe("Programme Architect");
+  });
+
   it.each<[Role, string]>([
     ["architecture", "Architecture"],
     ["specification", "Specification"],

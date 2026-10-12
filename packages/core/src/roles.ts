@@ -1,5 +1,6 @@
 /** Each role's name as members know it. */
 export const ROLE_NAMES = {
+  "programme-architect": "Programme Architect",
   architecture: "Architecture",
   specification: "Specification",
   test: "Test",
