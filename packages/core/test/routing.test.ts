@@ -384,6 +384,19 @@ describe("routing accepted work", () => {
     ).toEqual({ alert: { reason: "no_matching_rule" } });
   });
 
+  it("alerts a PDC coordinator when research fails, to decide what to do with the question", () => {
+    expect(
+      route({
+        fromRole: "research",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "knowledge_gap" }],
+        feedbackSignal: FEEDBACK,
+        researchFor: "test",
+      }),
+    ).toEqual({ alert: { reason: "no_matching_rule" } });
+  });
+
   it("routes blocked work just as it routes failed work", () => {
     expect(
       route({

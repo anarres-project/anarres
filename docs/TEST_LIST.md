@@ -63,8 +63,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       that module (a Reviewer's or Security & Quality's goes to Coding, as the AutoPM table reads).
 - [x] Research *pass* → a revision task for the role that reported the gap, carrying Research's
       feedback signal (Bernard, 2026-10-12). Research naming no such role alerts a PDC coordinator.
-- [ ] Research *fail* or *blocked* → ? No AutoPM row, so today it alerts a PDC coordinator (no
-      rule matches). Ask Bernard; pin with a test either way.
+- [x] Research *fail* or *blocked* alerts a PDC coordinator, who decides what to do with the
+      question (Bernard, 2026-10-12; no AutoPM row). Pinned by a test.
 - [ ] The revision task after research lists the research brief among its inputs (needs input
       artefacts on tasks).
 - [ ] Security & Quality *pass* completes the module. (Reviewer *pass* → Security & Quality is

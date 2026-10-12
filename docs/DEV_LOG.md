@@ -24,6 +24,11 @@ Action and the sandbox driver are still open in section 0.
 
 ---
 
+## 2026-10-12: Research that fails alerts a PDC coordinator
+
+- Bernard: keep the alert. Pinned with a unit test, which passed first time (no rule covers
+  Research failing); checked by planting a knowledge-gap row for Research (1 red).
+
 ## 2026-10-12: Research that passes goes back to the role that reported the gap
 
 - A Research task records which role reported the gap (`researchFor`), as the GitHub issue will.
