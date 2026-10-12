@@ -11,11 +11,29 @@ runs through the in-process driver, the `npm test` gate and `npm run test:wip` r
 testing is set up (`npm run mutate`, weekly in CI). Section 1 (routing) under way: a pass advances
 through the whole module pipeline. A conditional pass advances like a pass. Fail routes under way: an upstream
 ambiguity goes back to its owner. An architecture impediment goes to
-Architecture. Next: several impediments route on the most upstream one (kills a surviving mutant
-and fixes a wrong route for mixed impediments). Divlab as a real
+Architecture. An upstream ambiguity outranks an architecture impediment. Next: Coding test
+failures re-run Coding, then "an architecture impediment outranks test failures", which kills the
+one surviving mutant. Divlab as a real
 Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-12: Several impediments: the most upstream wins (first case)
+
+- Acceptance: Specification failing with an upstream ambiguity *and* an architecture impediment
+  leaves only a Programme Architect task.
+- Cycle:
+
+  ```
+  RED:      sends a failure with several impediments to the most upstream role that owns one
+            -> expected [ { role: 'architecture', … } ] to deeply equal [ { …(2) } ]
+  GREEN:    (19 passed)
+  REFACTOR: none yet; a general ranking would be ahead of the tests with two impediment types
+  ```
+
+- Fixed the wrong route that the previous mutant pointed at. The `some` → `every` mutant still
+  survives: only a mix of an architecture impediment with a *non*-ambiguity impediment tells them
+  apart, and those types (test failures, knowledge gap) have no routes yet. Planned next.
 
 ## 2026-10-12: An architecture impediment goes back to Architecture
 

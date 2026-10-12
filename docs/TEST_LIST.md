@@ -41,6 +41,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [ ] *Blocked* routes exactly as *fail*.
 - [ ] Several impediments → one revision task, for the most upstream owning role; the others ride
       along in the feedback it carries (Bernard, 2026-10-12).
+  - [x] an upstream ambiguity outranks an architecture impediment;
+  - [ ] an architecture impediment outranks Coding's test failures (kills the surviving
+        `some` → `every` mutant);
+  - [ ] where a knowledge gap ranks among the others (ask Bernard when Research routing is built).
 - [ ] A failure that matches no rule is never guessed at: a PDC coordinator is alerted. Known
       guesses to remove: a fail with no impediments goes to the Programme Architect (or to
       Specification from Test); an architecture impediment from Test or Reviewer goes to
