@@ -173,6 +173,23 @@ Then(
   },
 );
 
+Then(
+  "a PDC coordinator is alerted that no rule covers the {role} work on {string}, which failed reporting {impediment}",
+  function (this: AnarresWorld, role: string, module: string, impediment: string) {
+    return this.anarres.pdcCoordinatorIsAlertedThatNoRuleCovers(
+      { role, module },
+      { verdict: "fail", impediments: [impediment] },
+    );
+  },
+);
+
+Then(
+  "a PDC coordinator is alerted that {role} has been re-run more than three times on {string}",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.pdcCoordinatorIsAlertedThatRoleIsStuck(role, module);
+  },
+);
+
 Then("a PDC coordinator is alerted", function (this: AnarresWorld) {
   return this.anarres.pdcCoordinatorIsAlerted();
 });

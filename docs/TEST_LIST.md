@@ -48,8 +48,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [x] A failure that matches no rule is never guessed at: a PDC coordinator is alerted and no
       task is posted. Failure routing is now the AutoPM table, adapted for modules
       (`FAILURE_ROUTES` in core); impediments no rule covers ride along.
-- [ ] The PDC coordinator's alert says what was reported and why no rule matched (today it
-      carries only `no_matching_rule`).
+- [x] The PDC coordinator's alert says what was reported and why no rule matched: the alert is
+      the routing record (the work as reported, with its feedback signal, and the reason).
 - [ ] Candidate rule: Coding reporting an upstream ambiguity → Specification? (The AutoPM has no
       such row; Bernard, 2026-10-12: alert a PDC coordinator for now.)
 - [ ] Revisit (Bernard, 2026-10-12): a Reviewer or Security & Quality fail reporting an
@@ -75,8 +75,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [x] Escalation: the same role is re-run more than three times → a PDC coordinator is alerted and
       no further task is posted (Bernard, 2026-10-12: per module, revision tasks only, the count
       starting again when that role's work passes).
-- [ ] The escalation alert says which role is stuck and how often it was re-run (with "the alert
-      says what was reported").
+- [x] The escalation alert names the role that is stuck. (How often is always the limit, three.)
 - [ ] Other AutoPM escalations once metrics exist: ω(t) oscillation, d(t) stall, an open question
       unresolved for more than three steps.
 - [x] Every routing decision is recorded as an event that names its inputs (the accepted work as

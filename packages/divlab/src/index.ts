@@ -19,11 +19,11 @@ export type PostedTask = {
   researchFor?: string;
 };
 
-export type CoordinatorAlert = {
-  project: string;
-  module: string;
-  reason: string;
-};
+/** A routing decision as recorded in a project's event log. */
+export type RoutingEvent = { project: string } & RoutingRecord;
+
+/** An alert carries the whole decision: what the work reported, and why routing stopped. */
+export type CoordinatorAlert = RoutingEvent;
 
 /** Where Divlab posts tasks and alerts: GitHub issues in production, a fake in fast tests. */
 export interface TaskBoard {
@@ -31,9 +31,6 @@ export interface TaskBoard {
   alertCoordinators(alert: CoordinatorAlert): Promise<void>;
   markModuleDone(module: { project: string; module: string }): Promise<void>;
 }
-
-/** A routing decision as recorded in a project's event log. */
-export type RoutingEvent = { project: string } & RoutingRecord;
 
 /** Where Divlab records its decisions: one file per event in the project repository. */
 export interface EventLog {
@@ -53,11 +50,7 @@ export async function onWorkAccepted(
   await log.append({ project, ...record });
   const { decision } = record;
   if ("alert" in decision) {
-    await board.alertCoordinators({
-      project: event.project,
-      module: event.module,
-      reason: decision.alert.reason,
-    });
+    await board.alertCoordinators({ project, ...record });
     return;
   }
   if ("moduleDone" in decision) {

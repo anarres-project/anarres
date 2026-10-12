@@ -133,6 +133,33 @@ export class Anarres {
     );
   }
 
+  async pdcCoordinatorIsAlertedThatNoRuleCovers(
+    work: { role: string; module: string },
+    reported: { verdict: string; impediments: string[] },
+  ) {
+    const alerts = await this.driver.coordinatorAlerts(this.project);
+    assert.deepEqual(
+      alerts,
+      [
+        {
+          module: work.module,
+          work: { ...work, ...reported, feedbackSignal: this.feedbackSignals.get(workOn(work)) },
+          reason: { rule: "no_matching_rule" },
+        },
+      ],
+      "expected one alert saying what was reported and that no rule covers it",
+    );
+  }
+
+  async pdcCoordinatorIsAlertedThatRoleIsStuck(role: string, module: string) {
+    const alerts = await this.driver.coordinatorAlerts(this.project);
+    assert.deepEqual(
+      alerts.map((alert) => ({ module: alert.module, reason: alert.reason })),
+      [{ module, reason: { rule: "re_run_limit", role } }],
+      `expected one alert saying ${role} is stuck on ${module}`,
+    );
+  }
+
   async pdcCoordinatorIsAlerted() {
     const alerts = await this.driver.coordinatorAlerts(this.project);
     assert.equal(alerts.length, 1, "expected one alert to the PDC coordinators");

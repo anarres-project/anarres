@@ -21,11 +21,23 @@ A knowledge gap makes a Research task ready, ahead of anything else reported; wh
 passes, the role that reported the gap gets a revision task; Research failing alerts a PDC
 coordinator. A Security & Quality pass marks the module done. Every routing decision is recorded
 with its inputs and the rule that decided it. A role re-run more than three times for a module is
-escalated to a PDC coordinator. Section 1's remaining items wait on later work (alert detail,
-metrics, input artefacts); next is to choose between them and section 0's GitHub Action. Divlab as a real
+escalated to a PDC coordinator, and a coordinator's alert says what was reported and why routing
+stopped. Section 1's remaining items wait on later work (metrics, input artefacts). Next: section
+0, Divlab as a real GitHub Action with the sandbox driver. Divlab as a real
 Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-12: A PDC coordinator's alert says what happened
+
+- The alert is now the routing event itself: the work as reported (role, verdict, impediments,
+  feedback signal) and the reason (no rule covers it, or which role hit the re-run limit). One
+  definition, no new decisions, so no core change and no unit cycle: driven by acceptance alone.
+- Acceptance: `features/routing/coordinator-alerts.feature`, 2 scenarios, red as *not yet right*
+  (alerts carried only the module).
+- Driver: one translation from routing records into scenario words, shared by the event log and
+  the alerts.
+- Gate: 70 unit tests, 55 scenarios; `@wip` judge clean; core unchanged (mutation 201 of 201).
 
 ## 2026-10-12: A role re-run more than three times is escalated
 

@@ -16,6 +16,8 @@ export type ReadyTask = {
 
 export type CoordinatorAlert = {
   module: string;
+  work: RoutingRecord["work"];
+  reason: RoutingRecord["reason"];
 };
 
 /** What Divlab decided about a piece of accepted work, and which rule decided it. */

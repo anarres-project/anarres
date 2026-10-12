@@ -1,5 +1,5 @@
 import { ROLE_NAMES, type Role } from "@anarres/core";
-import { onWorkAccepted } from "@anarres/divlab";
+import { onWorkAccepted, type RoutingEvent } from "@anarres/divlab";
 import type {
   AcceptedWork,
   CoordinatorAlert,
@@ -41,27 +41,7 @@ export class InProcessDriver implements Driver {
   }
 
   async routingRecords(project: string): Promise<RoutingRecord[]> {
-    return (await this.github.read(project)).map(({ work, decision, reason }) => ({
-      work: {
-        role: roleNameOf(work.fromRole),
-        module: work.module,
-        verdict: words(work.verdict),
-        impediments: work.impediments.map((impediment) => words(impediment.type)),
-        feedbackSignal: work.feedbackSignal,
-      },
-      outcome:
-        "tasks" in decision
-          ? { tasksFor: decision.tasks.map((task) => roleName(task.role)) }
-          : "alert" in decision
-            ? { alert: true }
-            : { moduleDone: true },
-      reason:
-        "impediment" in reason
-          ? { ...reason, impediment: words(reason.impediment) }
-          : "role" in reason
-            ? { ...reason, role: roleName(reason.role) }
-            : reason,
-    }));
+    return (await this.github.read(project)).map(inScenarioWords);
   }
 
   async doneModules(project: string): Promise<string[]> {
@@ -69,7 +49,10 @@ export class InProcessDriver implements Driver {
   }
 
   async coordinatorAlerts(project: string): Promise<CoordinatorAlert[]> {
-    return this.github.coordinatorAlerts(project).map((alert) => ({ module: alert.module }));
+    return this.github.coordinatorAlerts(project).map((alert) => {
+      const { work, reason } = inScenarioWords(alert);
+      return { module: work.module, work, reason };
+    });
   }
 
   async readyTasks(project: string): Promise<ReadyTask[]> {
@@ -79,6 +62,31 @@ export class InProcessDriver implements Driver {
       ...(feedbackSignal === undefined ? {} : { feedbackSignal }),
     }));
   }
+}
+
+/** A routing record as the scenarios speak of it: role names and plain words, not ids. */
+function inScenarioWords({ work, decision, reason }: RoutingEvent): RoutingRecord {
+  return {
+    work: {
+      role: roleNameOf(work.fromRole),
+      module: work.module,
+      verdict: words(work.verdict),
+      impediments: work.impediments.map((impediment) => words(impediment.type)),
+      feedbackSignal: work.feedbackSignal,
+    },
+    outcome:
+      "tasks" in decision
+        ? { tasksFor: decision.tasks.map((task) => roleName(task.role)) }
+        : "alert" in decision
+          ? { alert: true }
+          : { moduleDone: true },
+    reason:
+      "impediment" in reason
+        ? { ...reason, impediment: words(reason.impediment) }
+        : "role" in reason
+          ? { ...reason, role: roleName(reason.role) }
+          : reason,
+  };
 }
 
 // Scenarios speak of roles by name ("Security & Quality"); Divlab by id ("security-and-quality").
