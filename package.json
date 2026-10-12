@@ -14,7 +14,8 @@
     "test:unit": "vitest run --coverage",
     "test:acceptance": "NODE_OPTIONS=\"--import tsx\" cucumber-js",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check ."
+    "lint": "biome check .",
+    "test:wip": "tsx scripts/wip-judge.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",

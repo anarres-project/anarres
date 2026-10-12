@@ -13,7 +13,8 @@
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["packages/*/src", "packages/*/test", "acceptance", "*.ts"]
+  "include": ["packages/*/src", "packages/*/test", "acceptance", "scripts", "*.ts"]
 }

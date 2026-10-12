@@ -1,8 +1,14 @@
 {
   "default": {
     "paths": ["features/**/*.feature"],
-    "import": ["acceptance/**/*.ts"],
+    "import": ["acceptance/support/**/*.ts", "acceptance/steps/**/*.ts"],
     "tags": "not @wip",
     "format": ["progress"]
+  },
+  "wip": {
+    "paths": ["features/**/*.feature"],
+    "import": ["acceptance/support/**/*.ts", "acceptance/steps/**/*.ts"],
+    "tags": "@wip",
+    "format": ["progress", "message:reports/wip.ndjson"]
   }
 }
