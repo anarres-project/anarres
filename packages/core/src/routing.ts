@@ -9,7 +9,9 @@ export type Task = {
   module: string;
 };
 
+const MODULE_PIPELINE = ["architecture", "specification", "test", "coding"];
+
 export function route(work: AcceptedWork): Task[] {
-  const role = work.fromRole === "architecture" ? "specification" : "test";
-  return [{ role, module: work.module }];
+  const next = MODULE_PIPELINE.indexOf(work.fromRole) + 1;
+  return MODULE_PIPELINE.slice(next, next + 1).map((role) => ({ role, module: work.module }));
 }
