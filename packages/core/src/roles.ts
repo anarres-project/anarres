@@ -7,6 +7,7 @@ export const ROLE_NAMES = {
   coding: "Coding",
   reviewer: "Reviewer",
   "security-and-quality": "Security & Quality",
+  research: "Research",
 } as const;
 
 export type Role = keyof typeof ROLE_NAMES;

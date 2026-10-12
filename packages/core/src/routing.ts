@@ -60,10 +60,18 @@ const FAILURE_ROUTES: readonly { from: Role; reporting?: string; to: Role }[] = 
     reporting: "interface_impediment",
     to: "programme-architect" as const,
   })),
+  ...(["architecture", "specification", "test", "coding"] as const).map((from) => ({
+    from,
+    reporting: "knowledge_gap",
+    to: "research" as const,
+  })),
 ];
 
-/** Most upstream first: when several rules match, the most upstream owner wins. */
-const UPSTREAM_ORDER: readonly Role[] = ["programme-architect", ...MODULE_PIPELINE];
+/**
+ * When several rules match, the first owner here wins: Research, since what is learnt may change
+ * any other fix, then the most upstream role.
+ */
+const PRECEDENCE: readonly Role[] = ["research", "programme-architect", ...MODULE_PIPELINE];
 
 /** The role that can fix what a failed piece of work reports, if any rule covers it. */
 function ownerOfFailure(work: AcceptedWork): Role | undefined {
@@ -72,5 +80,5 @@ function ownerOfFailure(work: AcceptedWork): Role | undefined {
     .filter((route) => work.impediments.some((impediment) => impediment.type === route.reporting))
     .map((route) => route.to);
   const otherwise = routes.find((route) => route.reporting === undefined)?.to;
-  return UPSTREAM_ORDER.find((role) => owners.includes(role)) ?? otherwise;
+  return PRECEDENCE.find((role) => owners.includes(role)) ?? otherwise;
 }

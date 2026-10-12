@@ -44,8 +44,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] an upstream ambiguity outranks an architecture impediment;
   - [x] an architecture impediment outranks Coding's test failures (killed the surviving
         `some` → `every` mutant);
-  - [ ] where a knowledge gap ranks among the others (ask Bernard when Research routing is built;
-        until then a knowledge gap alone alerts a PDC coordinator).
+  - [x] a knowledge gap outranks everything: Research first (Bernard, 2026-10-12).
 - [x] A failure that matches no rule is never guessed at: a PDC coordinator is alerted and no
       task is posted. Failure routing is now the AutoPM table, adapted for modules
       (`FAILURE_ROUTES` in core); impediments no rule covers ride along.
@@ -60,7 +59,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       carries none (only revision tasks receive feedback, concept §8).
 - [x] An interface impediment goes to the Programme Architect, never to another module, whichever
       module role reports it and whatever else it reports.
-- [ ] A knowledge gap creates a Research task.
+- [x] A knowledge gap from Architecture, Specification, Test or Coding creates a Research task for
+      that module (a Reviewer's or Security & Quality's goes to Coding, as the AutoPM table reads).
+- [ ] Research *pass* → a revision task for the role that reported the gap, carrying the research
+      brief (Bernard, 2026-10-12). Today it wrongly advances to Architecture.
+- [ ] Research *fail* or *blocked* → ? (no AutoPM row; alerts a PDC coordinator today? check)
 - [ ] Security & Quality *pass* completes the module. (Reviewer *pass* → Security & Quality is
       done, with the rest of the pipeline.)
 - [ ] Escalation: the same role is re-run more than three times → a PDC coordinator is alerted and

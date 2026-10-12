@@ -251,6 +251,69 @@ describe("routing accepted work", () => {
     },
   );
 
+  it("makes a Research task when a failed test reports a knowledge gap", () => {
+    expect(
+      route({
+        fromRole: "test",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "knowledge_gap" }],
+        feedbackSignal: FEEDBACK,
+      }),
+    ).toEqual({ tasks: [{ role: "research", module: "parser", feedbackSignal: FEEDBACK }] });
+  });
+
+  it("makes a Research task when failed code reports a knowledge gap", () => {
+    expect(
+      route({
+        fromRole: "coding",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "knowledge_gap" }],
+        feedbackSignal: FEEDBACK,
+      }),
+    ).toEqual({ tasks: [{ role: "research", module: "parser", feedbackSignal: FEEDBACK }] });
+  });
+
+  it.each(["architecture", "specification"])(
+    "makes a Research task when %s reports a knowledge gap",
+    (fromRole) => {
+      expect(
+        route({
+          fromRole,
+          module: "parser",
+          verdict: "fail",
+          impediments: [{ type: "knowledge_gap" }],
+          feedbackSignal: FEEDBACK,
+        }),
+      ).toEqual({ tasks: [{ role: "research", module: "parser", feedbackSignal: FEEDBACK }] });
+    },
+  );
+
+  it("sends a review reporting a knowledge gap back to Coding, as the AutoPM table reads", () => {
+    expect(
+      route({
+        fromRole: "reviewer",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "knowledge_gap" }],
+        feedbackSignal: FEEDBACK,
+      }),
+    ).toEqual({ tasks: [{ role: "coding", module: "parser", feedbackSignal: FEEDBACK }] });
+  });
+
+  it("puts research before anything else a failure reports", () => {
+    expect(
+      route({
+        fromRole: "test",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "interface_impediment" }, { type: "knowledge_gap" }],
+        feedbackSignal: FEEDBACK,
+      }),
+    ).toEqual({ tasks: [{ role: "research", module: "parser", feedbackSignal: FEEDBACK }] });
+  });
+
   it("routes blocked work just as it routes failed work", () => {
     expect(
       route({

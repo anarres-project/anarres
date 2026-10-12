@@ -290,6 +290,9 @@ The March AutoPM spec had a Claude session apply a fixed routing table. A fixed 
 - manages leases and eligibility
 - applies the routing table from the CSD AutoPM spec, extended with module and interface rules:
   - `interface_impediment` → Programme Architect
+  - when a failure reports several problems, one revision task goes to the most upstream role that
+    owns one, except that a `knowledge_gap` goes to Research first: what is learnt may change any
+    other fix. The Research task belongs to the module that reported the gap
   - a contract revision → revision tasks for every module that uses the contract
   - all module pipelines done → integration pipeline
   - a `conditional_pass` routes exactly as a `pass` does; its open questions and assumptions are

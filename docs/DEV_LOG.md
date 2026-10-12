@@ -17,10 +17,45 @@ to Coding; a scope gap goes to the Programme Architect. *Blocked* routes as *fai
 now the AutoPM table, and a failure no rule covers alerts a PDC coordinator instead of being
 guessed at. A revision task carries the feedback signal that sent the work back; a task for the
 next role does not. An interface impediment from any module role goes to the Programme Architect.
-Next in section 1: knowledge gaps; module completion; escalation; events. Divlab as a real
+A knowledge gap makes a Research task ready, ahead of anything else reported. Next in section 1:
+Research passing sends the revision back to the role that reported the gap; module completion;
+escalation; events. Divlab as a real
 Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-12: A knowledge gap makes a Research task ready
+
+- Bernard, 2026-10-12: a Research task belongs to the module that reported the gap; Research
+  outranks every other owner; when Research passes, the role that reported the gap gets a revision
+  task carrying the brief (next slice). Precedence recorded in concept §9.
+- The AutoPM table sends a knowledge gap to Research from Architecture, Specification, Test and
+  Coding only. Reviewer and Security & Quality keep their "otherwise → Coding", the same literal
+  reading Bernard accepted for architecture impediments; pinned by a test.
+- Acceptance: `features/routing/knowledge-gaps.feature`, 5 scenarios, all red as *not yet right*
+  (alerted with no task, or the Programme Architect instead of Research).
+- Cycles:
+
+  ```
+  RED:      names the Research role as members know it -> expected undefined to be 'Research'
+  GREEN:    (41 passed)
+  RED:      makes a Research task when a failed test reports a knowledge gap
+            -> expected { Object (alert) } to deeply equal { tasks: [ { …(3) } ] }
+  GREEN:    (42 passed), one row; Research placed last in the order
+  RED:      puts research before anything else a failure reports
+            -> expected { tasks: [ { …(3) } ] } to deeply equal { tasks: [ { …(3) } ] }
+               (went to the Programme Architect)
+  GREEN:    (43 passed), Research first
+  REFACTOR: `UPSTREAM_ORDER` → `PRECEDENCE`: Research is not upstream of anyone
+  RED:      makes a Research task when failed code reports a knowledge gap -> { Object (alert) }
+  GREEN:    (44 passed), by generalising to the AutoPM's four roles
+  PASSED FIRST TIME: Architecture and Specification (`it.each`), and a Reviewer's knowledge gap
+            → Coding. Checked by planting a wrong role list (3 red).
+  ```
+
+- Known wrong guess, next slice: a Research *pass* today advances to Architecture, because
+  Research is not in the module pipeline.
+- Gate: 47 unit tests, 40 scenarios; `@wip` judge clean; mutation 102 of 102 killed.
 
 ## 2026-10-12: An interface impediment goes to the Programme Architect
 
