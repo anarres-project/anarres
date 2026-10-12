@@ -120,6 +120,23 @@ describe("routing accepted work", () => {
     ).toEqual([{ role: "architecture", module: "parser" }]);
   });
 
+  it("sends a failed review back to Coding", () => {
+    expect(
+      route({ fromRole: "reviewer", module: "parser", verdict: "fail", impediments: [] }),
+    ).toEqual([{ role: "coding", module: "parser" }]);
+  });
+
+  it("sends a review that finds a scope gap to the Programme Architect", () => {
+    expect(
+      route({
+        fromRole: "reviewer",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "scope_gap" }],
+      }),
+    ).toEqual([{ role: "programme-architect", module: "parser" }]);
+  });
+
   it("keeps the next task in the same module as the accepted work", () => {
     expect(
       route({ fromRole: "specification", module: "ledger", verdict: "pass", impediments: [] }),
