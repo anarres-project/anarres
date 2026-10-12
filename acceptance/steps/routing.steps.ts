@@ -61,6 +61,20 @@ Then(
   },
 );
 
+Then(
+  "the {role} task for {string} carries the feedback signal from the {role} work",
+  function (this: AnarresWorld, role: string, module: string, fromRole: string) {
+    return this.anarres.taskCarriesFeedbackFrom({ role, module }, fromRole);
+  },
+);
+
+Then(
+  "the {role} task for {string} carries no feedback signal",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.taskCarriesNoFeedback({ role, module });
+  },
+);
+
 Then("a PDC coordinator is alerted", function (this: AnarresWorld) {
   return this.anarres.pdcCoordinatorIsAlerted();
 });

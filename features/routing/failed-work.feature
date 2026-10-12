@@ -89,3 +89,8 @@ Feature: Divlab sends failed work back to the role that can fix it
       | Test          | an architecture impediment   |
       | Test          | test failures                |
       | Specification | an implementation impediment |
+
+  Scenario: A revision task carries the feedback signal that sent the work back
+    Given a project with a module "parser"
+    When a member's Test work on "parser" is accepted with a fail verdict, reporting an upstream ambiguity
+    Then the Specification task for "parser" carries the feedback signal from the Test work

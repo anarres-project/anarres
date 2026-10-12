@@ -51,9 +51,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       (`FAILURE_ROUTES` in core); impediments no rule covers ride along.
 - [ ] The PDC coordinator's alert says what was reported and why no rule matched (today it
       carries only `no_matching_rule`).
-- [ ] Candidate rule, ask Bernard: Coding reporting an upstream ambiguity → Specification? (The
-      AutoPM has no such row, so today it alerts a PDC coordinator.)
-- [ ] A revision task carries the feedback signal that triggered it.
+- [ ] Candidate rule: Coding reporting an upstream ambiguity → Specification? (The AutoPM has no
+      such row; Bernard, 2026-10-12: alert a PDC coordinator for now.)
+- [ ] Revisit (Bernard, 2026-10-12): a Reviewer or Security & Quality fail reporting an
+      architecture impediment goes to Coding, as the AutoPM table reads; Architecture may suit
+      better.
+- [x] A revision task carries the feedback signal that triggered it; a task for the next role
+      carries none (only revision tasks receive feedback, concept §8).
 - [ ] An interface impediment goes to the Programme Architect, never to another module.
 - [ ] A knowledge gap creates a Research task.
 - [ ] Security & Quality *pass* completes the module. (Reviewer *pass* → Security & Quality is
@@ -109,4 +113,6 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   header (today the in-process driver hands them straight to Divlab).
 - Work from a role Divlab does not recognise is rejected, not routed (today `route` treats an
   unknown role as the start of the pipeline; untested, so section 4 must cover it).
+- The task posted on GitHub links to its feedback signal at the merged commit (needs Divlab as an
+  Action and `packages/github`).
 - (add new cases here, then place them)

@@ -6,12 +6,14 @@ export type WorkAccepted = {
   fromRole: string;
   verdict: string;
   impediments: { type: string }[];
+  feedbackSignal: string;
 };
 
 export type PostedTask = {
   project: string;
   role: Role;
   module: string;
+  feedbackSignal?: string;
 };
 
 export type CoordinatorAlert = {

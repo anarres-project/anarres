@@ -20,6 +20,7 @@ export class InProcessDriver implements Driver {
         // Scenarios say "conditional pass"; feedback signals carry "conditional_pass".
         verdict: work.verdict.replace(" ", "_"),
         impediments: work.impediments.map((name) => ({ type: name.replace(" ", "_") })),
+        feedbackSignal: work.feedbackSignal,
       },
       this.github,
     );
@@ -30,9 +31,11 @@ export class InProcessDriver implements Driver {
   }
 
   async readyTasks(project: string): Promise<ReadyTask[]> {
-    return this.github
-      .readyTasks(project)
-      .map((task) => ({ role: roleName(task.role), module: task.module }));
+    return this.github.readyTasks(project).map(({ role, module, feedbackSignal }) => ({
+      role: roleName(role),
+      module,
+      ...(feedbackSignal === undefined ? {} : { feedbackSignal }),
+    }));
   }
 }
 

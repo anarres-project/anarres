@@ -15,11 +15,42 @@ Architecture. Upstream ambiguity, architecture impediments and Coding's test fai
 with the most upstream winning when several are reported. Failed review and Security & Quality go back
 to Coding; a scope gap goes to the Programme Architect. *Blocked* routes as *fail*. Failure routing is
 now the AutoPM table, and a failure no rule covers alerts a PDC coordinator instead of being
-guessed at. Next in section 1: a revision task carries its feedback signal; interface
-impediments; knowledge gaps; module completion; escalation; events. Divlab as a real
+guessed at. A revision task carries the feedback signal that sent the work back; a task for the
+next role does not. Next in section 1: interface impediments; knowledge gaps; module completion;
+escalation; events. Divlab as a real
 Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-12: A revision task carries its feedback signal
+
+- Bernard confirmed for now: Reviewer / Security & Quality fails go to Coding whatever else they
+  report (may be revisited); Coding reporting an upstream ambiguity alerts a PDC coordinator;
+  knowledge gaps and interface impediments alert until their own items are built.
+- Concept §8: only Divlab and PDC coordinators read feedback signals; agents receive feedback as
+  an input to a revision task. So a revision task carries the signal, and a task for the next role
+  must not.
+- Accepted work now names its feedback signal (an opaque reference; in GitHub it will be the
+  merged signal's location). Core puts it on revision tasks only; Divlab passes it through.
+- Acceptance: "A revision task carries the feedback signal that sent the work back", red as *not
+  yet right* (a Specification task was posted, without a signal); green once Divlab carried it.
+- Cycles:
+
+  ```
+  RED:      gives a revision task the feedback signal that sent the work back
+            -> expected { tasks: [ { …(2) } ] } to deeply equal { tasks: [ { …(3) } ] }
+  GREEN:    (33 passed)
+  REFACTOR: every routing test's input names a feedback signal (now required), and the expected
+            revision tasks in the failure tests carry it: those expectations were incomplete once
+            the input had a signal (13 went red, as they should).
+  PASSED FIRST TIME: keeps the feedback signal from the next role, which only revision tasks
+            receive. Guards the access rule; checked by planting the leak in `route` (8 red).
+  ```
+
+- Acceptance guard "The next role does not see the feedback signal" also passed first time;
+  checked by planting the same leak (it was the only scenario to fail). The DSL's "only task"
+  checks now compare role and module only.
+- Gate: 34 unit tests, 27 scenarios; `@wip` judge clean; mutation 95 of 95 killed.
 
 ## 2026-10-12: A failure no rule covers alerts a PDC coordinator
 

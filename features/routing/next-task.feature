@@ -22,3 +22,10 @@ Feature: Divlab posts the next task
     Given a project with a module "parser"
     When a member's Specification work on "parser" is accepted with a conditional pass verdict
     Then a Test task for "parser" is ready to claim
+
+  Scenario: The next role does not see the feedback signal
+    Feedback signals are read only by Divlab, PDC coordinators and a member revising the work.
+
+    Given a project with a module "parser"
+    When a member's Test work on "parser" is accepted with a pass verdict
+    Then the Coding task for "parser" carries no feedback signal

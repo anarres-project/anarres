@@ -5,11 +5,15 @@ export type AcceptedWork = {
   module: string;
   verdict: string;
   impediments: { type: string }[];
+  /** Where the feedback signal that reported this work can be found. */
+  feedbackSignal: string;
 };
 
 export type Task = {
   role: Role;
   module: string;
+  /** For a revision task: the feedback signal that sent the work back. */
+  feedbackSignal?: string;
 };
 
 const MODULE_PIPELINE: readonly Role[] = [
@@ -27,7 +31,7 @@ export function route(work: AcceptedWork): RoutingDecision {
   if (work.verdict === "fail" || work.verdict === "blocked") {
     const owner = ownerOfFailure(work);
     if (!owner) return { alert: { reason: "no_matching_rule" } };
-    return { tasks: [{ role: owner, module: work.module }] };
+    return { tasks: [{ role: owner, module: work.module, feedbackSignal: work.feedbackSignal }] };
   }
   const next = (MODULE_PIPELINE as readonly string[]).indexOf(work.fromRole) + 1;
   return {

@@ -3,6 +3,7 @@ export type AcceptedWork = {
   module: string;
   role: string;
   member: string;
+  feedbackSignal: string;
   verdict: string;
   impediments: string[];
 };
@@ -10,6 +11,7 @@ export type AcceptedWork = {
 export type ReadyTask = {
   role: string;
   module: string;
+  feedbackSignal?: string;
 };
 
 export type CoordinatorAlert = {
