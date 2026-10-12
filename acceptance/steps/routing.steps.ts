@@ -27,6 +27,25 @@ When(
   },
 );
 
+When(
+  "a member's {role} work on {string} is accepted with a {verdict} verdict, reporting a(n) {impediment} and a(n) {impediment}",
+  function (
+    this: AnarresWorld,
+    role: string,
+    module: string,
+    verdict: string,
+    first: string,
+    second: string,
+  ) {
+    return this.anarres.memberHasWorkAccepted({
+      role,
+      module,
+      verdict,
+      impediments: [first, second],
+    });
+  },
+);
+
 Then(
   "the only task ready for {string} is a(n) {role} task",
   function (this: AnarresWorld, module: string, role: string) {

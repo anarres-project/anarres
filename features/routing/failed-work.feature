@@ -26,3 +26,9 @@ Feature: Divlab sends failed work back to the role that can fix it
       | Architecture  |
       | Specification |
       | Coding        |
+
+  @wip
+  Scenario: Several problems go back to the most upstream role that owns one
+    Given a project with a module "parser"
+    When a member's Specification work on "parser" is accepted with a fail verdict, reporting an upstream ambiguity and an architecture impediment
+    Then the only task ready for "parser" is a Programme Architect task
