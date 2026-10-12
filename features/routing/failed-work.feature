@@ -5,7 +5,6 @@ Feature: Divlab sends failed work back to the role that can fix it
   A module's requirements come from the Programme Architect's requirement slice, so an
   ambiguity in them goes to the Programme Architect.
 
-  @wip
   Scenario Outline: An upstream ambiguity goes back to the role that owns the ambiguous artefact
     Given a project with a module "parser"
     When a member's <role> work on "parser" is accepted with a fail verdict, reporting an upstream ambiguity

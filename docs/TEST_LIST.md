@@ -27,10 +27,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [x] Each *pass* verdict advances to the next role in the module pipeline.
 - [x] A *conditional pass* advances exactly as a *pass* does (Bernard, 2026-10-12); its open
       questions and assumptions are kept in the routing decision's event record.
-- [ ] A *fail* verdict reporting an upstream ambiguity sends a revision task to the role that
+- [x] A *fail* verdict reporting an upstream ambiguity sends a revision task to the role that
       owns the ambiguous artefact:
-  - [ ] from Test → Specification;
-  - [ ] from Architecture or Specification → Programme Architect, who owns the module's
+  - [x] from Test → Specification;
+  - [x] from Architecture or Specification → Programme Architect, who owns the module's
         requirement slice (Bernard, 2026-10-12; the AutoPM says Requirements, which predates
         modules). If the slice is fine, the Programme Architect fails upward to Requirements.
 - [ ] An architecture impediment from Architecture, Specification or Coding → Architecture.

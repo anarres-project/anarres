@@ -9,10 +9,45 @@ Running history and current status. Newest entry first.
 Walking skeleton green: the first scenario ("a passed specification makes a test task ready")
 runs through the in-process driver, the `npm test` gate and `npm run test:wip` run in CI. Mutation
 testing is set up (`npm run mutate`, weekly in CI). Section 1 (routing) under way: a pass advances
-through the whole module pipeline. A conditional pass advances like a pass. Next: the fail and impediment routes. Divlab as a real
+through the whole module pipeline. A conditional pass advances like a pass. Fail routes under way: an upstream
+ambiguity goes back to its owner. Next: an architecture impediment goes to Architecture. Divlab as a real
 Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-12: An upstream ambiguity goes back to its owner
+
+- Decisions (Bernard): an ambiguity in a module's requirements goes to the Programme Architect
+  (owner of the requirement slice), not Requirements; several impediments route on the most
+  upstream one only; Coding test failures re-run Coding until run history exists. The fail table
+  is now concrete items on the test list.
+- Acceptance: `features/routing/failed-work.feature`, an outline (Test → Specification;
+  Specification and Architecture → Programme Architect) asserting the revision is the *only* ready
+  task. Red showed the bug: a failed Test was advancing to Coding.
+- Cycles:
+
+  ```
+  RED:      sends a failed test back to Specification when it reports an upstream ambiguity
+            -> expected [ { role: 'coding', … } ] to deeply equal [ { role: 'specification', … } ]
+  GREEN:    (14 passed), hard-coded
+  REFACTOR: none
+  RED:      names the Programme Architect role as members know it
+            -> expected undefined to be 'Programme Architect'
+  GREEN:    (15 passed)
+  REFACTOR: none
+  RED:      sends a failed specification back to the Programme Architect …
+            -> expected [ { role: 'specification', … } ] to deeply equal [ { …(2) } ]
+  GREEN:    (16 passed)
+  REFACTOR: none
+  PASSED FIRST TIME: sends a failed architecture back to the Programme Architect … (the ternary
+            already covered it; kept to pin the decision for Architecture)
+  ```
+
+- **Impediments are not read yet**: core ignores them and the driver doesn't pass them through
+  Divlab. With one impediment type nothing demanded it; the architecture impediment item will.
+- A stray `cat` in a compound shell command hung; killing it let the rest of the command run and
+  insert a test twice. Removed the duplicate before going on.
+- Mutation testing: 26 of 26 killed.
 
 ## 2026-10-12: A conditional pass advances like a pass
 

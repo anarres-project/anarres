@@ -60,6 +60,17 @@ describe("routing accepted work", () => {
     ).toEqual([{ role: "programme-architect", module: "parser" }]);
   });
 
+  it("sends a failed architecture back to the Programme Architect when it reports an upstream ambiguity", () => {
+    expect(
+      route({
+        fromRole: "architecture",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "upstream_ambiguity" }],
+      }),
+    ).toEqual([{ role: "programme-architect", module: "parser" }]);
+  });
+
   it("keeps the next task in the same module as the accepted work", () => {
     expect(route({ fromRole: "specification", module: "ledger", verdict: "pass" })).toEqual([
       { role: "test", module: "ledger" },
