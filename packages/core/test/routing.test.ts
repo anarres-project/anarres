@@ -211,6 +211,28 @@ describe("routing accepted work", () => {
     ).toEqual({ alert: { reason: "no_matching_rule" } });
   });
 
+  it("routes on the impediments a rule covers, letting the others ride along", () => {
+    expect(
+      route({
+        fromRole: "coding",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "upstream_ambiguity" }, { type: "architecture_impediment" }],
+      }),
+    ).toEqual({ tasks: [{ role: "architecture", module: "parser" }] });
+  });
+
+  it("sends a failed architecture back to Architecture when it reports an architecture impediment", () => {
+    expect(
+      route({
+        fromRole: "architecture",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "architecture_impediment" }],
+      }),
+    ).toEqual({ tasks: [{ role: "architecture", module: "parser" }] });
+  });
+
   it("keeps the next task in the same module as the accepted work", () => {
     expect(
       route({ fromRole: "specification", module: "ledger", verdict: "pass", impediments: [] }),

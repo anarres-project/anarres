@@ -35,22 +35,32 @@ export function route(work: AcceptedWork): RoutingDecision {
   };
 }
 
-/** The role that can fix what a failed piece of work reports. */
+/**
+ * Who can fix what a failed piece of work reports: the CSD AutoPM routing table, adapted for
+ * modules. A row without `reporting` applies whatever else the work reports.
+ */
+const FAILURE_ROUTES: readonly { from: Role; reporting?: string; to: Role }[] = [
+  { from: "architecture", reporting: "upstream_ambiguity", to: "programme-architect" },
+  { from: "architecture", reporting: "architecture_impediment", to: "architecture" },
+  { from: "specification", reporting: "upstream_ambiguity", to: "programme-architect" },
+  { from: "specification", reporting: "architecture_impediment", to: "architecture" },
+  { from: "test", reporting: "upstream_ambiguity", to: "specification" },
+  { from: "coding", reporting: "test_failures", to: "coding" },
+  { from: "coding", reporting: "architecture_impediment", to: "architecture" },
+  { from: "reviewer", reporting: "scope_gap", to: "programme-architect" },
+  { from: "reviewer", to: "coding" },
+  { from: "security-and-quality", to: "coding" },
+];
+
+/** Most upstream first: when several rules match, the most upstream owner wins. */
+const UPSTREAM_ORDER: readonly Role[] = ["programme-architect", ...MODULE_PIPELINE];
+
+/** The role that can fix what a failed piece of work reports, if any rule covers it. */
 function ownerOfFailure(work: AcceptedWork): Role | undefined {
-  const reports = (type: string) => work.impediments.some((impediment) => impediment.type === type);
-  if (
-    ["architecture", "specification", "coding"].includes(work.fromRole) &&
-    reports("architecture_impediment") &&
-    !reports("upstream_ambiguity")
-  ) {
-    return "architecture";
-  }
-  if (work.fromRole === "reviewer" && reports("scope_gap")) return "programme-architect";
-  if (work.fromRole === "coding" && reports("test_failures")) return "coding";
-  if (work.fromRole === "reviewer" || work.fromRole === "security-and-quality") return "coding";
-  if (reports("upstream_ambiguity")) {
-    if (work.fromRole === "test") return "specification";
-    if (["architecture", "specification"].includes(work.fromRole)) return "programme-architect";
-  }
-  return undefined;
+  const routes = FAILURE_ROUTES.filter((route) => route.from === work.fromRole);
+  const owners = routes
+    .filter((route) => work.impediments.some((impediment) => impediment.type === route.reporting))
+    .map((route) => route.to);
+  const otherwise = routes.find((route) => route.reporting === undefined)?.to;
+  return UPSTREAM_ORDER.find((role) => owners.includes(role)) ?? otherwise;
 }
