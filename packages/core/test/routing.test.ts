@@ -87,6 +87,17 @@ describe("routing accepted work", () => {
     ).toEqual([{ role: "architecture", module: "parser" }]);
   });
 
+  it("sends a failure with several impediments to the most upstream role that owns one", () => {
+    expect(
+      route({
+        fromRole: "specification",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "upstream_ambiguity" }, { type: "architecture_impediment" }],
+      }),
+    ).toEqual([{ role: "programme-architect", module: "parser" }]);
+  });
+
   it("keeps the next task in the same module as the accepted work", () => {
     expect(
       route({ fromRole: "specification", module: "ledger", verdict: "pass", impediments: [] }),
