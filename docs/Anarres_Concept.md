@@ -161,13 +161,20 @@ The organisation is [github.com/anarres-project](https://github.com/anarres-proj
 
 ```
 anarres/
-├── divlab/        GitHub Action: validation, routing, leases, event log
+├── packages/
+│   ├── core/      Pure domain rules shared by everything: access scopes, routing, leases, eligibility
+│   ├── github/    The only code that talks to the GitHub API
+│   ├── divlab/    GitHub Action: validation, routing, leases, event log
+│   ├── cli/       `anarres` CLI called by the plugin's commands and hooks
+│   └── site/      Netlify website: sign-up, project browser, proposals, dashboards
 ├── plugin/        Claude Code plugin + marketplace: role skills, hooks, /anarres commands
-├── site/          Netlify website: sign-up, project browser, proposals, dashboards
 ├── template/      Template for new project repositories
 ├── governance/    Odonian Principles, policies, member trust levels, PDC list
 └── docs/          Concept, design and decision records
 ```
+
+`CLAUDE.md` in the repository describes the full engineering layout, including the acceptance test
+layers.
 
 When the parts have settled, they will be split into separate repositories (`divlab`, `plugin`, `site`, `project-template`, `governance`), plus a `proposals` repository where project proposals are filed as issues. Each approved project gets its own repository, `proj-<name>` (more than one at scale; see §14). Platform code is AGPL-3.0. Each project chooses its own licence (§13).
 
