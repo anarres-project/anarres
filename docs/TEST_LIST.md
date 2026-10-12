@@ -3,8 +3,8 @@
 Behaviours still to drive out, smallest useful next step first. Add a case whenever you think of
 one; that is where implementation ideas go, not into code. Tick items off as they go green.
 
-Source: `docs/Anarres_Concept.md` (Phase 1: Divlab and plugin). Order to be agreed with Bernard
-before work starts.
+Source: `docs/Anarres_Concept.md` (Phase 1: Divlab and plugin). Order agreed with Bernard,
+2026-10-12: work top to bottom.
 
 ## 0. Walking skeleton
 
@@ -50,6 +50,14 @@ with the gate (`npm test`) and CI running.
 - [ ] Work for a task the member has not claimed is rejected.
 - [ ] Coding work that changes tests is rejected.
 - [ ] Work based on inputs that have since changed is flagged as stale.
+
+## 4a. Any language (hosted projects)
+
+- [ ] Coding work is accepted only when the project's own CI check passes; Divlab never runs
+      project code.
+- [ ] Test work is accepted when the project's report shows the new tests running and failing.
+- [ ] Test counts for metrics come from the project's JUnit XML report, whatever the language.
+- [ ] A project without a declared toolchain cannot be started.
 
 ## 5. The member's side (CLI and plugin)
 

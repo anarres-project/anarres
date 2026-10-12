@@ -210,6 +210,10 @@ Two choices here avoid merge conflicts by design. Every role writes only to its 
 
 `anarres.yaml` includes a **layer→location map**. In public mode every layer lives in the project repository. In private mode (§12) layers can be mapped to separate repositories with team-level permissions. The plugin and Divlab read the map, so switching modes is a configuration change, not a rewrite.
 
+### Any language
+
+Hosted projects can be written in any language (Python, Java, C++, Rust and so on). Anarres itself never builds or runs a project's code. `anarres.yaml` declares the project's **toolchain**: the dev container image members work in, the command that runs the tests, and where the test report is written. The project's own CI workflow runs that command. Divlab only reads the outcome: the CI check result and a test report in **JUnit XML**, a format almost every test framework can produce. Divlab's routing, validation and metrics are therefore the same whatever language a project uses.
+
 ---
 
 ## 8. Task lifecycle and synchronisation
@@ -237,7 +241,7 @@ This is how members' Claude sessions find out there is work for them, and how ev
    - It touches only the role's write paths.
    - The feedback header is valid against the schema.
    - It matches a task this member has claimed.
-   - Role-specific checks pass: the Coding PR leaves `tests/` untouched and the module's tests pass in CI; the Test PR's tests run and fail as expected; and so on.
+   - Role-specific checks pass: the Coding PR leaves `tests/` untouched and the module's tests pass in the project's CI; the Test PR's tests run and fail as expected; and so on. Divlab reads these results from the CI check and the JUnit XML report, whatever the project's language (§7).
    - **Staleness:** if an input changed after the pinned SHA, the PR is flagged and Divlab decides whether to accept it or re-queue the task.
 8. **Merge.** In v1 Divlab auto-merges PRs that pass every check. PDC coordinators can require human review on any project or module.
 9. **Routing.** On merge, Divlab reads the feedback header, applies the routing table (§9), opens the next task or tasks and writes an event file.
@@ -327,7 +331,7 @@ Every artefact a member's Claude reads was written by someone else. The threats 
 
 Defences built into the plugin:
 
-- Tasks that execute code (Test, Coding, Security & Quality, Integration) run in a **dev container** with no host secrets and restricted network access. Other roles use Claude Code's sandbox.
+- Tasks that execute code (Test, Coding, Security & Quality, Integration) run in the project's declared **dev container** with no host secrets and restricted network access. Other roles use Claude Code's sandbox.
 - Read-scope hooks confine the agent to the sparse-checkout workspace.
 - Each role's instructions tell it to treat artefacts as data and to report suspicious content as a feedback impediment (`suspicious_content`), never to act on it.
 - Anarres sessions run with isolated Claude configuration, so the member's personal memory, global CLAUDE.md and other projects never enter an Anarres task, and nothing from one Anarres role carries into another.

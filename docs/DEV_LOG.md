@@ -6,10 +6,19 @@ Running history and current status. Newest entry first.
 
 ## Current status
 
-Design stage. No code yet. Next: agree the order of `docs/TEST_LIST.md`, then build the walking
-skeleton (section 0): the first acceptance scenario, the `npm test` gate and CI.
+Design stage. No code yet. Next: build the walking skeleton (`docs/TEST_LIST.md`, section 0): the
+first acceptance scenario through the in-process driver, the `npm test` gate and CI.
 
 ---
+
+## 2026-10-12: Decisions confirmed
+
+- Stack (decision 0001) accepted. It covers Anarres itself only; hosted projects may use any
+  language. Recorded in the concept document (§7, "Any language"): projects declare a toolchain,
+  their own CI runs their tests, and Divlab reads only the check result and a JUnit XML report.
+  Matching cases added to the test list (section 4a).
+- Test list order accepted as drafted; first slice is "Divlab posts the next task".
+- Building continues in sessions started from this repository, so `CLAUDE.md` applies.
 
 ## 2026-10-12: Project set up
 

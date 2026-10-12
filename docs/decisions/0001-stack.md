@@ -1,6 +1,9 @@
 # 0001: Stack
 
-**Status:** Proposed, October 2026. To be confirmed by Bernard.
+**Status:** Accepted, 2026-10-12.
+
+**Scope:** the tools used to build Anarres itself. Hosted projects may use any language; see the
+concept document, §7, "Any language".
 
 ## Context
 
