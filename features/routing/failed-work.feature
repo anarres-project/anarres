@@ -47,6 +47,12 @@ Feature: Divlab sends failed work back to the role that can fix it
     When a member's Reviewer work on "parser" is accepted with a fail verdict, reporting a scope gap
     Then the only task ready for "parser" is a Programme Architect task
 
+  @wip
+  Scenario: Blocked work goes back just as failed work does
+    Given a project with a module "parser"
+    When a member's Test work on "parser" is accepted with a blocked verdict, reporting an upstream ambiguity
+    Then the only task ready for "parser" is a Specification task
+
   Scenario Outline: Several problems go back to the most upstream role that owns one
     Given a project with a module "parser"
     When a member's <role> work on "parser" is accepted with a fail verdict, reporting <first> and <second>
