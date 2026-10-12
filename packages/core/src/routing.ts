@@ -28,6 +28,7 @@ export function route(work: AcceptedWork): Task[] {
     if (reports("architecture_impediment") && !reports("upstream_ambiguity")) {
       return [{ role: "architecture", module: work.module }];
     }
+    if (reports("test_failures")) return [{ role: "coding", module: work.module }];
     const owner = work.fromRole === "test" ? "specification" : "programme-architect";
     return [{ role: owner, module: work.module }];
   }
