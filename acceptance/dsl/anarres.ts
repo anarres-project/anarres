@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import type { Driver } from "../drivers/driver.ts";
+import type { Driver, RoutingRecord } from "../drivers/driver.ts";
 import type { Aliases } from "./aliases.ts";
 
 const DEFAULT_PROJECT = "ledger";
@@ -83,6 +83,38 @@ export class Anarres {
   async moduleIsNotDone(module: string) {
     const done = await this.driver.doneModules(this.project);
     assert.ok(!done.includes(module), `expected ${module} not to be done`);
+  }
+
+  async divlabRecorded(
+    work: { role: string; module: string },
+    outcome: RoutingRecord["outcome"],
+    reason: RoutingRecord["reason"],
+  ) {
+    const records = await this.recordsOf(work);
+    assert.deepEqual(
+      records.map((record) => ({ outcome: record.outcome, reason: record.reason })),
+      [{ outcome, reason }],
+      `expected one record of the ${work.role} work on ${work.module}`,
+    );
+  }
+
+  async divlabRecordKeepsWork(
+    work: { role: string; module: string },
+    reported: { verdict: string; impediments: string[] },
+  ) {
+    const records = await this.recordsOf(work);
+    assert.deepEqual(
+      records.map((record) => record.work),
+      [{ ...work, ...reported, feedbackSignal: this.feedbackSignals.get(workOn(work)) }],
+      `expected the record of the ${work.role} work on ${work.module} to keep what it reported`,
+    );
+  }
+
+  private async recordsOf(work: { role: string; module: string }) {
+    const records = await this.driver.routingRecords(this.project);
+    return records.filter(
+      (record) => record.work.role === work.role && record.work.module === work.module,
+    );
   }
 
   async pdcCoordinatorIsAlerted() {

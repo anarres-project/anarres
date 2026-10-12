@@ -97,6 +97,56 @@ Then("the module {string} is not done", function (this: AnarresWorld, module: st
   return this.anarres.moduleIsNotDone(module);
 });
 
+Then(
+  "Divlab records that the {role} work on {string} went to {role} because it passed",
+  function (this: AnarresWorld, role: string, module: string, to: string) {
+    return this.anarres.divlabRecorded({ role, module }, { tasksFor: [to] }, { rule: "passed" });
+  },
+);
+
+Then(
+  "Divlab records that the {role} work on {string} went to {role} because it reported {impediment}",
+  function (this: AnarresWorld, role: string, module: string, to: string, impediment: string) {
+    return this.anarres.divlabRecorded(
+      { role, module },
+      { tasksFor: [to] },
+      { rule: "reported", impediment },
+    );
+  },
+);
+
+Then(
+  "Divlab records that the {role} work on {string} went to a PDC coordinator because no rule covers it",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.divlabRecorded(
+      { role, module },
+      { alert: true },
+      { rule: "no_matching_rule" },
+    );
+  },
+);
+
+Then(
+  "Divlab records that the {role} work on {string} completed the module",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.divlabRecorded(
+      { role, module },
+      { moduleDone: true },
+      { rule: "pipeline_complete" },
+    );
+  },
+);
+
+Then(
+  "Divlab's record of the {role} work on {string} keeps its feedback signal, its verdict and both problems it reported",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.divlabRecordKeepsWork(
+      { role, module },
+      { verdict: "fail", impediments: ["test failures", "architecture impediment"] },
+    );
+  },
+);
+
 Then("a PDC coordinator is alerted", function (this: AnarresWorld) {
   return this.anarres.pdcCoordinatorIsAlerted();
 });

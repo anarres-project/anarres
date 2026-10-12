@@ -1,4 +1,4 @@
-import { type Role, route } from "@anarres/core";
+import { type Role, type RoutingRecord, routingRecord } from "@anarres/core";
 
 export type WorkAccepted = {
   project: string;
@@ -32,8 +32,23 @@ export interface TaskBoard {
   markModuleDone(module: { project: string; module: string }): Promise<void>;
 }
 
-export async function onWorkAccepted(event: WorkAccepted, board: TaskBoard): Promise<void> {
-  const decision = route(event);
+/** A routing decision as recorded in a project's event log. */
+export type RoutingEvent = { project: string } & RoutingRecord;
+
+/** Where Divlab records its decisions: one file per event in the project repository. */
+export interface EventLog {
+  append(event: RoutingEvent): Promise<void>;
+}
+
+export async function onWorkAccepted(
+  event: WorkAccepted,
+  board: TaskBoard,
+  log: EventLog,
+): Promise<void> {
+  const { project, ...work } = event;
+  const record = routingRecord(work);
+  await log.append({ project, ...record });
+  const { decision } = record;
   if ("alert" in decision) {
     await board.alertCoordinators({
       project: event.project,

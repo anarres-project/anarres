@@ -19,11 +19,54 @@ guessed at. A revision task carries the feedback signal that sent the work back;
 next role does not. An interface impediment from any module role goes to the Programme Architect.
 A knowledge gap makes a Research task ready, ahead of anything else reported; when the research
 passes, the role that reported the gap gets a revision task; Research failing alerts a PDC
-coordinator. A Security & Quality pass marks the module done. Next in section 1: escalation;
-events. Divlab as a real
+coordinator. A Security & Quality pass marks the module done. Every routing decision is recorded
+with its inputs and the rule that decided it. Next in section 1: escalation, counted from the
+event log. Divlab as a real
 Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-12: Every routing decision is recorded
+
+- Core: `routingRecord(work)` gives the accepted work as received, the decision and the reason
+  (`passed`, `pipeline_complete`, `reported` + the impediment that decided it, `failed`,
+  `research_returned`, `no_matching_rule`). `route` keeps its shape, so the routing tests are
+  untouched; internally each rule returns a *ruling* (decision and reason).
+- Divlab: a separate `EventLog` port (to become one file per event under `events/`); Divlab records
+  the decision, then acts on it. The fake GitHub keeps the log; the driver translates it back into
+  scenario words.
+- Acceptance: `features/routing/decision-record.feature`, 5 scenarios, red with
+  `NotYetImplemented` at the driver. Since they never went red on an assertion, checked by
+  planting a record that always says "passed" and drops the reported problems: the 4 scenarios
+  that should fail did.
+- Cycles:
+
+  ```
+  RED:      records passed work with the task it made and that it passed
+            -> TypeError: routingRecord is not a function (stub added)
+            -> expected undefined to deeply equal { …(3) }
+  GREEN:    (55 passed), reason hard-coded "passed"
+  RED:      records failed work with the problem that decided where it went
+            -> expected { …(3) } to deeply equal { …(3) } (reason "passed")
+  GREEN:    (56 passed), rules return rulings; the failure route found is the one that decided
+  RED:      records that no rule covers a failure that reports no problem -> { rule: 'passed' }
+  GREEN:    (57 passed)
+  RED:      records that a passed Security & Quality check completed the module's pipeline
+            -> { rule: 'passed' }
+  GREEN:    (58 passed)
+  RED:      records that a failed review went back to Coding because it failed -> { rule: 'passed' }
+  GREEN:    (59 passed)
+  RED:      records that research went back to the role that reported the gap -> { rule: 'passed' }
+  GREEN:    (60 passed), hard-coded for all research
+  RED:      records that no rule covers research that names no role it was for
+            -> { rule: 'research_returned' }
+  GREEN:    (61 passed)
+  REFACTOR: `Reason` is the exact set of rules; a single `NO_RULE_COVERS_IT` ruling
+  ```
+
+- When two matching rules name the same owner (a review reporting a scope gap and an interface
+  impediment), the reason names the first in the table. Either explains the decision.
+- Gate: 61 unit tests, 50 scenarios; `@wip` judge clean; mutation 158 of 158 killed.
 
 ## 2026-10-12: A passed Security & Quality check marks the module done
 

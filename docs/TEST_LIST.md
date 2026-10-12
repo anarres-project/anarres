@@ -74,7 +74,16 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [ ] All module pipelines done → the integration pipeline starts (concept §9; Phase 2).
 - [ ] Escalation: the same role is re-run more than three times → a PDC coordinator is alerted and
       no further task is posted.
-- [ ] Every routing decision is recorded as an event that names its inputs and its reason.
+- [x] Every routing decision is recorded as an event that names its inputs (the accepted work as
+      Divlab received it) and its reason (the rule that decided it).
+  - [ ] the event records when Divlab decided (injected clock, UTC);
+  - [ ] each event has an identifier from an injected generator (one file per event);
+  - [ ] a conditional pass's open questions and assumptions are kept in its event (needs them in
+        the accepted work first);
+  - [ ] the GitHub adapter writes each event as one file under `events/` in the project
+        repository;
+  - [ ] if acting on a decision fails after it was recorded, a re-run neither duplicates the event
+        nor its tasks (idempotency, once Divlab runs as an Action).
 - [ ] Once metrics exist: ρ negative for two consecutive steps alerts a PDC coordinator. Until
       then a pass advances regardless of ρ (Bernard, 2026-10-12; differs from the AutoPM table).
 
