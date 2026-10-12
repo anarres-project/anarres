@@ -61,9 +61,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       module role reports it and whatever else it reports.
 - [x] A knowledge gap from Architecture, Specification, Test or Coding creates a Research task for
       that module (a Reviewer's or Security & Quality's goes to Coding, as the AutoPM table reads).
-- [ ] Research *pass* → a revision task for the role that reported the gap, carrying the research
-      brief (Bernard, 2026-10-12). Today it wrongly advances to Architecture.
-- [ ] Research *fail* or *blocked* → ? (no AutoPM row; alerts a PDC coordinator today? check)
+- [x] Research *pass* → a revision task for the role that reported the gap, carrying Research's
+      feedback signal (Bernard, 2026-10-12). Research naming no such role alerts a PDC coordinator.
+- [ ] Research *fail* or *blocked* → ? No AutoPM row, so today it alerts a PDC coordinator (no
+      rule matches). Ask Bernard; pin with a test either way.
+- [ ] The revision task after research lists the research brief among its inputs (needs input
+      artefacts on tasks).
 - [ ] Security & Quality *pass* completes the module. (Reviewer *pass* → Security & Quality is
       done, with the rest of the pipeline.)
 - [ ] Escalation: the same role is re-run more than three times → a PDC coordinator is alerted and

@@ -7,6 +7,8 @@ export type AcceptedWork = {
   impediments: { type: string }[];
   /** Where the feedback signal that reported this work can be found. */
   feedbackSignal: string;
+  /** For Research work: the role that reported the knowledge gap. */
+  researchFor?: string;
 };
 
 export type Task = {
@@ -14,6 +16,8 @@ export type Task = {
   module: string;
   /** For a revision task: the feedback signal that sent the work back. */
   feedbackSignal?: string;
+  /** For a Research task: the role that reported the knowledge gap. */
+  researchFor?: string;
 };
 
 const MODULE_PIPELINE: readonly Role[] = [
@@ -27,12 +31,31 @@ const MODULE_PIPELINE: readonly Role[] = [
 
 export type RoutingDecision = { tasks: Task[] } | { alert: { reason: "no_matching_rule" } };
 
+const NO_MATCHING_RULE = { alert: { reason: "no_matching_rule" } } as const;
+
 export function route(work: AcceptedWork): RoutingDecision {
-  if (work.verdict === "fail" || work.verdict === "blocked") {
-    const owner = ownerOfFailure(work);
-    if (!owner) return { alert: { reason: "no_matching_rule" } };
-    return { tasks: [{ role: owner, module: work.module, feedbackSignal: work.feedbackSignal }] };
-  }
+  if (work.verdict === "fail" || work.verdict === "blocked") return revise(work);
+  if (work.fromRole === "research") return returnResearch(work);
+  return advance(work);
+}
+
+/** A revision task for the role that can fix what failed work reports. */
+function revise(work: AcceptedWork): RoutingDecision {
+  const owner = ownerOfFailure(work);
+  if (!owner) return NO_MATCHING_RULE;
+  const task = { role: owner, module: work.module, feedbackSignal: work.feedbackSignal };
+  return { tasks: [owner === "research" ? { ...task, researchFor: work.fromRole } : task] };
+}
+
+/** Research that passes goes back, as a revision task, to the role that reported the gap. */
+function returnResearch(work: AcceptedWork): RoutingDecision {
+  const reporter = MODULE_PIPELINE.find((role) => role === work.researchFor);
+  if (!reporter) return NO_MATCHING_RULE;
+  return { tasks: [{ role: reporter, module: work.module, feedbackSignal: work.feedbackSignal }] };
+}
+
+/** A task for the next role in the module pipeline. */
+function advance(work: AcceptedWork): RoutingDecision {
   const next = (MODULE_PIPELINE as readonly string[]).indexOf(work.fromRole) + 1;
   return {
     tasks: MODULE_PIPELINE.slice(next, next + 1).map((role) => ({ role, module: work.module })),

@@ -28,6 +28,13 @@ When(
   },
 );
 
+Given(
+  "a member's {role} work on {string} was accepted with a {verdict} verdict, reporting {impediment}",
+  function (this: AnarresWorld, role: string, module: string, verdict: string, impediment: string) {
+    return this.anarres.memberHasWorkAccepted({ role, module, verdict, impediments: [impediment] });
+  },
+);
+
 When(
   "a member's {role} work on {string} is accepted with a {verdict} verdict, reporting {impediment}",
   function (this: AnarresWorld, role: string, module: string, verdict: string, impediment: string) {

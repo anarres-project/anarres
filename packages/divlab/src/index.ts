@@ -7,6 +7,8 @@ export type WorkAccepted = {
   verdict: string;
   impediments: { type: string }[];
   feedbackSignal: string;
+  /** For Research work: the role its task was for, as recorded on the task. */
+  researchFor?: string;
 };
 
 export type PostedTask = {
@@ -14,6 +16,7 @@ export type PostedTask = {
   role: Role;
   module: string;
   feedbackSignal?: string;
+  researchFor?: string;
 };
 
 export type CoordinatorAlert = {

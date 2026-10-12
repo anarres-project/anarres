@@ -260,7 +260,11 @@ describe("routing accepted work", () => {
         impediments: [{ type: "knowledge_gap" }],
         feedbackSignal: FEEDBACK,
       }),
-    ).toEqual({ tasks: [{ role: "research", module: "parser", feedbackSignal: FEEDBACK }] });
+    ).toEqual({
+      tasks: [
+        { role: "research", module: "parser", feedbackSignal: FEEDBACK, researchFor: "test" },
+      ],
+    });
   });
 
   it("makes a Research task when failed code reports a knowledge gap", () => {
@@ -272,7 +276,11 @@ describe("routing accepted work", () => {
         impediments: [{ type: "knowledge_gap" }],
         feedbackSignal: FEEDBACK,
       }),
-    ).toEqual({ tasks: [{ role: "research", module: "parser", feedbackSignal: FEEDBACK }] });
+    ).toEqual({
+      tasks: [
+        { role: "research", module: "parser", feedbackSignal: FEEDBACK, researchFor: "coding" },
+      ],
+    });
   });
 
   it.each(["architecture", "specification"])(
@@ -286,7 +294,11 @@ describe("routing accepted work", () => {
           impediments: [{ type: "knowledge_gap" }],
           feedbackSignal: FEEDBACK,
         }),
-      ).toEqual({ tasks: [{ role: "research", module: "parser", feedbackSignal: FEEDBACK }] });
+      ).toEqual({
+        tasks: [
+          { role: "research", module: "parser", feedbackSignal: FEEDBACK, researchFor: fromRole },
+        ],
+      });
     },
   );
 
@@ -302,6 +314,22 @@ describe("routing accepted work", () => {
     ).toEqual({ tasks: [{ role: "coding", module: "parser", feedbackSignal: FEEDBACK }] });
   });
 
+  it("records on a Research task which role reported the gap", () => {
+    expect(
+      route({
+        fromRole: "coding",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "knowledge_gap" }],
+        feedbackSignal: FEEDBACK,
+      }),
+    ).toStrictEqual({
+      tasks: [
+        { role: "research", module: "parser", feedbackSignal: FEEDBACK, researchFor: "coding" },
+      ],
+    });
+  });
+
   it("puts research before anything else a failure reports", () => {
     expect(
       route({
@@ -311,7 +339,49 @@ describe("routing accepted work", () => {
         impediments: [{ type: "interface_impediment" }, { type: "knowledge_gap" }],
         feedbackSignal: FEEDBACK,
       }),
-    ).toEqual({ tasks: [{ role: "research", module: "parser", feedbackSignal: FEEDBACK }] });
+    ).toEqual({
+      tasks: [
+        { role: "research", module: "parser", feedbackSignal: FEEDBACK, researchFor: "test" },
+      ],
+    });
+  });
+
+  it("sends research that passes back to the role that reported the gap", () => {
+    expect(
+      route({
+        fromRole: "research",
+        module: "parser",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        researchFor: "test",
+      }),
+    ).toStrictEqual({ tasks: [{ role: "test", module: "parser", feedbackSignal: FEEDBACK }] });
+  });
+
+  it("sends research for Coding that passes back to Coding", () => {
+    expect(
+      route({
+        fromRole: "research",
+        module: "parser",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        researchFor: "coding",
+      }),
+    ).toStrictEqual({ tasks: [{ role: "coding", module: "parser", feedbackSignal: FEEDBACK }] });
+  });
+
+  it("alerts a PDC coordinator when research that passes names no role it was for", () => {
+    expect(
+      route({
+        fromRole: "research",
+        module: "parser",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+      }),
+    ).toEqual({ alert: { reason: "no_matching_rule" } });
   });
 
   it("routes blocked work just as it routes failed work", () => {

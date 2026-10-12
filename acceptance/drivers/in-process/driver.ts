@@ -12,15 +12,21 @@ export class InProcessDriver implements Driver {
   }
 
   async acceptWork(work: AcceptedWork): Promise<void> {
+    const fromRole = roleId(work.role);
+    // The member's pull request names the task it is for; Divlab reads what that task recorded.
+    const task = this.github
+      .readyTasks(work.project)
+      .find((task) => task.role === fromRole && task.module === work.module);
     await onWorkAccepted(
       {
         project: work.project,
         module: work.module,
-        fromRole: roleId(work.role),
+        fromRole,
         // Scenarios say "conditional pass"; feedback signals carry "conditional_pass".
         verdict: work.verdict.replace(" ", "_"),
         impediments: work.impediments.map((name) => ({ type: name.replace(" ", "_") })),
         feedbackSignal: work.feedbackSignal,
+        ...(task?.researchFor === undefined ? {} : { researchFor: task.researchFor }),
       },
       this.github,
     );

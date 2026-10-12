@@ -17,12 +17,42 @@ to Coding; a scope gap goes to the Programme Architect. *Blocked* routes as *fai
 now the AutoPM table, and a failure no rule covers alerts a PDC coordinator instead of being
 guessed at. A revision task carries the feedback signal that sent the work back; a task for the
 next role does not. An interface impediment from any module role goes to the Programme Architect.
-A knowledge gap makes a Research task ready, ahead of anything else reported. Next in section 1:
-Research passing sends the revision back to the role that reported the gap; module completion;
+A knowledge gap makes a Research task ready, ahead of anything else reported; when the research
+passes, the role that reported the gap gets a revision task. Next in section 1: module completion;
 escalation; events. Divlab as a real
 Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-12: Research that passes goes back to the role that reported the gap
+
+- A Research task records which role reported the gap (`researchFor`), as the GitHub issue will.
+  When Research work is accepted, Divlab reads that from the task the work was for; the in-process
+  driver plays the plugin's part, submitting against the open task for that role and module.
+- The revision task carries Research's feedback signal (which points to the brief).
+- Research that names no role it was for alerts a PDC coordinator: no guessing. This also ends the
+  wrong guess noted last entry (a Research pass advancing to Architecture).
+- Acceptance: outline over Test and Coding, red as *not yet right* (no revision task).
+- Cycles:
+
+  ```
+  RED:      records on a Research task which role reported the gap
+            -> expected { tasks: [ { …(3) } ] } to strictly equal { tasks: [ { …(4) } ] }
+  GREEN:    (48 passed), after updating the five earlier Research-task expectations, which were
+            incomplete once every Research task names who asked (went red, as they should)
+  RED:      sends research that passes back to the role that reported the gap
+            -> expected { tasks: [ { …(2) } ] } to strictly equal { tasks: [ { role: 'test', … } ] }
+  GREEN:    (49 passed), hard-coded Test
+  RED:      sends research for Coding that passes back to Coding
+            -> expected { tasks: [ { role: 'test', … } ] } to strictly equal { … role: 'coding' … }
+  GREEN:    (50 passed), by exact match against the module pipeline
+  RED:      alerts a PDC coordinator when research that passes names no role it was for
+            -> expected { tasks: [] } to deeply equal { Object (alert) }
+  GREEN:    (51 passed)
+  REFACTOR: `route` split into `revise`, `returnResearch` and `advance`
+  ```
+
+- Gate: 51 unit tests, 42 scenarios; `@wip` judge clean; mutation 120 of 120 killed.
 
 ## 2026-10-12: A knowledge gap makes a Research task ready
 
