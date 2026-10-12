@@ -38,7 +38,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       exists: failures stable for more than two runs → Specification.
 - [x] A failed review → Coding; a review reporting a scope gap → Programme Architect.
 - [x] A failed Security & Quality check → Coding.
-- [ ] *Blocked* routes exactly as *fail*.
+- [x] *Blocked* routes exactly as *fail*.
 - [ ] Several impediments → one revision task, for the most upstream owning role; the others ride
       along in the feedback it carries (Bernard, 2026-10-12).
   - [x] an upstream ambiguity outranks an architecture impediment;

@@ -13,11 +13,22 @@ through the whole module pipeline. A conditional pass advances like a pass. Fail
 ambiguity goes back to its owner. An architecture impediment goes to
 Architecture. Upstream ambiguity, architecture impediments and Coding's test failures are routed,
 with the most upstream winning when several are reported. Failed review and Security & Quality go back
-to Coding; a scope gap goes to the Programme Architect. Next: *blocked* routes as *fail*, then "no
-rule matches → alert a PDC coordinator", which replaces the known guesses with the routing table. Divlab as a real
+to Coding; a scope gap goes to the Programme Architect. *Blocked* routes as *fail*. Next: "no rule
+matches → alert a PDC coordinator", which replaces the known guesses with the routing table. Divlab as a real
 Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-12: Blocked routes as fail
+
+- Red showed a real bug: blocked work advanced to the next role.
+
+  ```
+  RED:      routes blocked work just as it routes failed work
+            -> expected [ { role: 'coding', … } ] to deeply equal [ { role: 'specification', … } ]
+  GREEN:    (25 passed)
+  REFACTOR: none
+  ```
 
 ## 2026-10-12: Failed review and Security & Quality go back to Coding
 

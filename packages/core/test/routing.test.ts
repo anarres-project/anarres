@@ -148,6 +148,17 @@ describe("routing accepted work", () => {
     ).toEqual([{ role: "coding", module: "parser" }]);
   });
 
+  it("routes blocked work just as it routes failed work", () => {
+    expect(
+      route({
+        fromRole: "test",
+        module: "parser",
+        verdict: "blocked",
+        impediments: [{ type: "upstream_ambiguity" }],
+      }),
+    ).toEqual([{ role: "specification", module: "parser" }]);
+  });
+
   it("keeps the next task in the same module as the accepted work", () => {
     expect(
       route({ fromRole: "specification", module: "ledger", verdict: "pass", impediments: [] }),
