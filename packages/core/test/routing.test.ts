@@ -189,6 +189,17 @@ describe("routing accepted work", () => {
     ).toEqual({ alert: { reason: "no_matching_rule" } });
   });
 
+  it("alerts a PDC coordinator when a failure other than a review reports a scope gap", () => {
+    expect(
+      route({
+        fromRole: "specification",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "scope_gap" }],
+      }),
+    ).toEqual({ alert: { reason: "no_matching_rule" } });
+  });
+
   it("keeps the next task in the same module as the accepted work", () => {
     expect(
       route({ fromRole: "specification", module: "ledger", verdict: "pass", impediments: [] }),
