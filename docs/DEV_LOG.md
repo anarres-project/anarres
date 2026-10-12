@@ -9,10 +9,21 @@ Running history and current status. Newest entry first.
 Walking skeleton green: the first scenario ("a passed specification makes a test task ready")
 runs through the in-process driver, the `npm test` gate and `npm run test:wip` run in CI. Mutation
 testing is set up (`npm run mutate`, weekly in CI). Section 1 (routing) under way: a pass advances
-through the whole module pipeline. Next: a conditional pass advances like a pass. Divlab as a real
+through the whole module pipeline. A conditional pass advances like a pass. Next: the fail and impediment routes. Divlab as a real
 Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-12: A conditional pass advances like a pass
+
+- Acceptance scenario and unit test both **passed the first time they ran**: `route` ignores the
+  verdict, so the behaviour already existed. Kept as regression tests, to guard against a naive
+  `verdict === "pass"` once fail routing arrives; checked by hand that exactly that change makes
+  both fail.
+- Step glue gained a `{verdict}` parameter ("conditional pass"); the in-process driver turns it
+  into the feedback signal's `conditional_pass`.
+- Not yet: keeping the open questions and assumptions in the event record (section 1, "Every
+  routing decision is recorded as an event").
 
 ## 2026-10-12: A pass advances through the module pipeline
 

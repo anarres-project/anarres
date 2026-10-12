@@ -25,7 +25,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 ## 1. Routing (Divlab)
 
 - [x] Each *pass* verdict advances to the next role in the module pipeline.
-- [ ] A *conditional pass* advances exactly as a *pass* does (Bernard, 2026-10-12); its open
+- [x] A *conditional pass* advances exactly as a *pass* does (Bernard, 2026-10-12); its open
       questions and assumptions are kept in the routing decision's event record.
 - [ ] A *fail* verdict reporting an upstream ambiguity sends a revision task to the role that
       owns the ambiguous artefact.

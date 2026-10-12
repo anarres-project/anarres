@@ -17,7 +17,8 @@ export class InProcessDriver implements Driver {
         project: work.project,
         module: work.module,
         fromRole: roleId(work.role),
-        verdict: work.verdict,
+        // Scenarios say "conditional pass"; feedback signals carry "conditional_pass".
+        verdict: work.verdict.replace(" ", "_"),
       },
       this.github,
     );

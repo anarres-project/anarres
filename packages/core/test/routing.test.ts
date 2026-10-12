@@ -32,6 +32,12 @@ describe("routing accepted work", () => {
     ]);
   });
 
+  it("advances a conditional pass just as it does a pass", () => {
+    expect(
+      route({ fromRole: "specification", module: "parser", verdict: "conditional_pass" }),
+    ).toEqual([{ role: "test", module: "parser" }]);
+  });
+
   it("keeps the next task in the same module as the accepted work", () => {
     expect(route({ fromRole: "specification", module: "ledger", verdict: "pass" })).toEqual([
       { role: "test", module: "ledger" },

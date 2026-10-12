@@ -17,3 +17,8 @@ Feature: Divlab posts the next task
       | Test          | Coding             |
       | Coding        | Reviewer           |
       | Reviewer      | Security & Quality |
+
+  Scenario: Conditionally passed work also makes the next role's task ready
+    Given a project with a module "parser"
+    When a member's Specification work on "parser" is accepted with a conditional pass verdict
+    Then a Test task for "parser" is ready to claim
