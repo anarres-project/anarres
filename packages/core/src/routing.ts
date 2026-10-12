@@ -23,6 +23,9 @@ const MODULE_PIPELINE: readonly Role[] = [
 
 export function route(work: AcceptedWork): Task[] {
   if (work.verdict === "fail") {
+    if (work.impediments.some((impediment) => impediment.type === "architecture_impediment")) {
+      return [{ role: "architecture", module: work.module }];
+    }
     const owner = work.fromRole === "test" ? "specification" : "programme-architect";
     return [{ role: owner, module: work.module }];
   }

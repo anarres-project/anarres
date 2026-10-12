@@ -76,6 +76,17 @@ describe("routing accepted work", () => {
     ).toEqual([{ role: "programme-architect", module: "parser" }]);
   });
 
+  it("sends a failed specification back to Architecture when it reports an architecture impediment", () => {
+    expect(
+      route({
+        fromRole: "specification",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "architecture_impediment" }],
+      }),
+    ).toEqual([{ role: "architecture", module: "parser" }]);
+  });
+
   it("keeps the next task in the same module as the accepted work", () => {
     expect(
       route({ fromRole: "specification", module: "ledger", verdict: "pass", impediments: [] }),
