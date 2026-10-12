@@ -21,11 +21,13 @@ const MODULE_PIPELINE: readonly Role[] = [
   "security-and-quality",
 ];
 
-export type RoutingDecision = { tasks: Task[] };
+export type RoutingDecision = { tasks: Task[] } | { alert: { reason: "no_matching_rule" } };
 
 export function route(work: AcceptedWork): RoutingDecision {
   if (work.verdict === "fail" || work.verdict === "blocked") {
-    return { tasks: [{ role: ownerOfFailure(work), module: work.module }] };
+    const owner = ownerOfFailure(work);
+    if (!owner) return { alert: { reason: "no_matching_rule" } };
+    return { tasks: [{ role: owner, module: work.module }] };
   }
   const next = (MODULE_PIPELINE as readonly string[]).indexOf(work.fromRole) + 1;
   return {
@@ -34,11 +36,14 @@ export function route(work: AcceptedWork): RoutingDecision {
 }
 
 /** The role that can fix what a failed piece of work reports. */
-function ownerOfFailure(work: AcceptedWork): Role {
+function ownerOfFailure(work: AcceptedWork): Role | undefined {
   const reports = (type: string) => work.impediments.some((impediment) => impediment.type === type);
   if (reports("architecture_impediment") && !reports("upstream_ambiguity")) return "architecture";
   if (reports("scope_gap")) return "programme-architect";
   if (reports("test_failures")) return "coding";
   if (work.fromRole === "reviewer" || work.fromRole === "security-and-quality") return "coding";
-  return work.fromRole === "test" ? "specification" : "programme-architect";
+  if (reports("upstream_ambiguity")) {
+    return work.fromRole === "test" ? "specification" : "programme-architect";
+  }
+  return undefined;
 }

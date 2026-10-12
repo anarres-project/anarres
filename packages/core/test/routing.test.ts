@@ -161,6 +161,12 @@ describe("routing accepted work", () => {
     ).toEqual({ tasks: [{ role: "specification", module: "parser" }] });
   });
 
+  it("alerts a PDC coordinator, posting no task, when a failure reports no problem", () => {
+    expect(
+      route({ fromRole: "specification", module: "parser", verdict: "fail", impediments: [] }),
+    ).toEqual({ alert: { reason: "no_matching_rule" } });
+  });
+
   it("keeps the next task in the same module as the accepted work", () => {
     expect(
       route({ fromRole: "specification", module: "ledger", verdict: "pass", impediments: [] }),
