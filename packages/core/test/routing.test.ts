@@ -178,6 +178,17 @@ describe("routing accepted work", () => {
     ).toEqual({ alert: { reason: "no_matching_rule" } });
   });
 
+  it("alerts a PDC coordinator when a failed test reports test failures", () => {
+    expect(
+      route({
+        fromRole: "test",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "test_failures" }],
+      }),
+    ).toEqual({ alert: { reason: "no_matching_rule" } });
+  });
+
   it("keeps the next task in the same module as the accepted work", () => {
     expect(
       route({ fromRole: "specification", module: "ledger", verdict: "pass", impediments: [] }),
