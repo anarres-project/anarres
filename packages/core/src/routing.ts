@@ -49,7 +49,8 @@ function ownerOfFailure(work: AcceptedWork): Role | undefined {
   if (work.fromRole === "coding" && reports("test_failures")) return "coding";
   if (work.fromRole === "reviewer" || work.fromRole === "security-and-quality") return "coding";
   if (reports("upstream_ambiguity")) {
-    return work.fromRole === "test" ? "specification" : "programme-architect";
+    if (work.fromRole === "test") return "specification";
+    if (["architecture", "specification"].includes(work.fromRole)) return "programme-architect";
   }
   return undefined;
 }

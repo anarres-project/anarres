@@ -200,6 +200,17 @@ describe("routing accepted work", () => {
     ).toEqual({ alert: { reason: "no_matching_rule" } });
   });
 
+  it("alerts a PDC coordinator when failed code reports an upstream ambiguity", () => {
+    expect(
+      route({
+        fromRole: "coding",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "upstream_ambiguity" }],
+      }),
+    ).toEqual({ alert: { reason: "no_matching_rule" } });
+  });
+
   it("keeps the next task in the same module as the accepted work", () => {
     expect(
       route({ fromRole: "specification", module: "ledger", verdict: "pass", impediments: [] }),
