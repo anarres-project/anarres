@@ -1,0 +1,9 @@
+name: Divlab
+description: Routes work merged into an Anarres project to the next tasks.
+inputs:
+  token:
+    description: The token Divlab acts with, the project repository's own by default.
+    default: ${{ github.token }}
+runs:
+  using: node24
+  main: dist/index.js

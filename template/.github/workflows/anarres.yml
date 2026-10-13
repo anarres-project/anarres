@@ -1,0 +1,26 @@
+name: Divlab
+
+# Divlab routes the work merged into this project to the next tasks (decision 0004). It runs on
+# a push to main, never on a pull request, so no code from a member's fork ever runs here.
+on:
+  push:
+    branches: [main]
+    paths: ["feedback/**"]
+
+# Divlab writes its event log (contents) and posts and closes tasks (issues). Nothing else.
+permissions:
+  contents: write
+  issues: write
+
+# One run at a time keeps decisions in order; a run that was dropped while waiting is caught up
+# by the next, which routes every feedback signal not yet routed.
+concurrency:
+  group: divlab
+  cancel-in-progress: false
+
+jobs:
+  divlab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: anarres-project/anarres/packages/divlab@main

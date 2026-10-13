@@ -5,7 +5,9 @@
   "license": "AGPL-3.0-only",
   "exports": "./src/index.ts",
   "dependencies": {
-    "@anarres/core": "*",
+    "@anarres/core": "*"
+  },
+  "devDependencies": {
     "@anarres/divlab": "*"
   }
 }

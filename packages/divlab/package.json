@@ -5,6 +5,10 @@
   "license": "AGPL-3.0-only",
   "exports": "./src/index.ts",
   "dependencies": {
-    "@anarres/core": "*"
+    "@anarres/core": "*",
+    "@anarres/github": "*"
+  },
+  "scripts": {
+    "bundle": "esbuild src/action.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/index.js --legal-comments=eof --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\""
   }
 }

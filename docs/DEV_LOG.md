@@ -30,6 +30,23 @@ Action and the sandbox driver are still open in section 0.
 
 ---
 
+## 2026-10-13: Divlab's Action: entry point, bundle and project workflow
+
+- `packages/divlab/action.yml` and `src/action.ts`: the Action wires Divlab to the GitHub adapter
+  with the project repository's own token and calls `onMerge`; nothing else. It is bundled by
+  esbuild 0.28.2 into one committed file, `packages/divlab/dist/index.js` (276 kB, mostly the
+  YAML parser). CI rebuilds it and fails if it differs from what is committed. esbuild's install
+  script is not approved and is not needed (its platform binary comes as a package).
+- The first bundle failed at start-up: `yaml` ships CommonJS for Node, and an ES module bundle has
+  no `require`. Fixed with esbuild's usual `createRequire` banner. Smoke-tested by hand: it
+  reports a missing setting, and fails cleanly with a bad token.
+- `@anarres/github` now needs Divlab only for its port types (a development dependency), so the
+  Action can depend on the adapter without a cycle between packages.
+- `template/.github/workflows/anarres.yml`: a project's Divlab workflow, as decision 0004
+  describes (push to main touching `feedback/`; contents and issues only; one run at a time).
+- Not yet exercised end to end: the sandbox driver must install this workflow and observe the
+  real Action, which needs two sandbox settings from Bernard.
+
 ## 2026-10-13: Divlab acts on a merge
 
 - New scenario, "Merging a member's work closes the task it was for". It **passed the first time**,
