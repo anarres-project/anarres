@@ -1,4 +1,4 @@
-import { onWorkAccepted, type RoutingEvent } from "@anarres/divlab";
+import { onMerge, type RoutingEvent } from "@anarres/divlab";
 import { GitHubAdapter } from "@anarres/github";
 import type {
   AcceptedWork,
@@ -7,7 +7,13 @@ import type {
   ReadyTask,
   RoutingRecord,
 } from "../driver.ts";
-import { inScenarioWords, roleId, roleNameOf, workAccepted } from "../scenario-words.ts";
+import {
+  feedbackSignalFile,
+  inScenarioWords,
+  roleId,
+  roleNameOf,
+  signalName,
+} from "../scenario-words.ts";
 import { GitHubApi } from "./github-api.ts";
 
 type Issue = {
@@ -49,23 +55,25 @@ export class SandboxDriver implements Driver {
   }
 
   async acceptWork(work: AcceptedWork): Promise<void> {
-    // Merging the member's pull request closes the task it names, then Divlab acts on the merge.
+    // The member's merged work adds a feedback signal naming its task; Divlab acts on the merge.
     const fromRole = roleId(work.role);
     const task = (await this.settled(work.project, "ready")).find(
       (issue) =>
         labelValue(issue, "role:") === fromRole && labelValue(issue, "module:") === work.module,
     );
-    if (task) {
-      await this.github.call("PATCH", `repos/${this.org}/${work.project}/issues/${task.number}`, {
-        state: "closed",
-      });
-    }
-    const researchFor = task && labelValue(task, "research-for:");
-    await onWorkAccepted(workAccepted(work, researchFor), this.divlab, this.divlab);
+    const { path, text } = feedbackSignalFile(work, task && String(task.number));
+    await this.github.call("PUT", `repos/${this.org}/${work.project}/contents/${path}`, {
+      message: `Merge the ${work.role} work on ${work.module}`,
+      content: Buffer.from(text).toString("base64"),
+    });
+    await onMerge(work.project, this.divlab, this.divlab, this.divlab);
     // The event log is consistent at once and says what Divlab did; the issue lists lag behind.
     const expected = this.expectedFor(work.project);
     const { decision } = (await this.divlab.read(work.project)).at(-1) as RoutingEvent;
-    if (task) expected.ready -= 1;
+    if (task) {
+      expected.ready -= 1;
+      run.closed.add(issueKey(work.project, task.number));
+    }
     if ("tasks" in decision) expected.ready += decision.tasks.length;
     if ("alert" in decision) expected.escalation += 1;
     if ("moduleDone" in decision) expected.done += 1;
@@ -78,7 +86,13 @@ export class SandboxDriver implements Driver {
       const module = labelValue(issue, "module:");
       if (role === undefined || module === undefined) return [];
       const feedbackSignal = issue.body?.match(/^Feedback signal: (.+)$/m)?.[1];
-      return [{ role: roleNameOf(role), module, ...(feedbackSignal ? { feedbackSignal } : {}) }];
+      return [
+        {
+          role: roleNameOf(role),
+          module,
+          ...(feedbackSignal ? { feedbackSignal: signalName(feedbackSignal) } : {}),
+        },
+      ];
     });
   }
 
@@ -143,13 +157,23 @@ export class SandboxDriver implements Driver {
     for (const { github, path } of run.created.splice(0)) await github.request("DELETE", path);
   }
 
-  /** The issues in a listing, once GitHub shows as many as Divlab's event log says it should. */
+  /**
+   * The issues in a listing, once GitHub shows as many as Divlab's event log says it should and,
+   * for ready tasks, none Divlab has closed. A count alone is not enough: a lagging list can show
+   * a closed task in place of the one that replaced it.
+   */
   private async settled(project: string, listing: Listing): Promise<Issue[]> {
     const [label, state] = LISTINGS[listing];
     const deadline = Date.now() + 30_000;
     for (;;) {
       const issues = await this.issues(project, label, state);
-      if (issues.length === this.expectedFor(project)[listing] || Date.now() > deadline) {
+      const stale =
+        listing === "ready" &&
+        issues.some((issue) => run.closed.has(issueKey(project, issue.number)));
+      if (
+        (issues.length === this.expectedFor(project)[listing] && !stale) ||
+        Date.now() > deadline
+      ) {
         return issues;
       }
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -178,7 +202,11 @@ const run = {
   created: [] as { github: GitHubApi; path: string }[],
   /** What GitHub should show once its issue lists catch up with Divlab's writes. */
   expected: new Map<string, Record<Listing, number>>(),
+  /** The tasks merged work has closed, which a lagging list may still show as ready. */
+  closed: new Set<string>(),
 };
+
+const issueKey = (project: string, number: number) => `${project}#${number}`;
 
 const LISTINGS: Record<Listing, [label: string, state: "open" | "all"]> = {
   ready: ["state:ready", "open"],

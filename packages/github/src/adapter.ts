@@ -1,19 +1,22 @@
-import type { EventLog, PostedTask, RoutingEvent, TaskBoard } from "@anarres/divlab";
+import type { EventLog, PostedTask, Repository, RoutingEvent, TaskBoard } from "@anarres/divlab";
 import {
   eventFile,
   issueForAlert,
   issueForModuleDone,
   issueForTask,
+  issueNumber,
+  type ListedIssue,
   logFrom,
   type NewIssue,
+  taskFromIssue,
 } from "./representation.ts";
 import { requestGitHub } from "./request.ts";
 
 /**
- * Divlab's task board and event log on GitHub: each project is a repository owned by `owner`.
- * The only code that calls the GitHub API on Divlab's behalf.
+ * Divlab's task board, event log and merged files on GitHub: each project is a repository owned
+ * by `owner`. The only code that calls the GitHub API on Divlab's behalf.
  */
-export class GitHubAdapter implements TaskBoard, EventLog {
+export class GitHubAdapter implements TaskBoard, EventLog, Repository {
   constructor(private readonly options: { owner: string; token: string }) {}
 
   async post(task: PostedTask): Promise<void> {
@@ -27,6 +30,42 @@ export class GitHubAdapter implements TaskBoard, EventLog {
   async markModuleDone({ project, module }: { project: string; module: string }): Promise<void> {
     const { number } = await this.openIssue(project, issueForModuleDone(module));
     await this.call("PATCH", `${this.repo(project)}/issues/${number}`, { state: "closed" });
+  }
+
+  async task(project: string, task: string): Promise<{ researchFor?: string } | undefined> {
+    const number = issueNumber(task);
+    if (number === undefined) return undefined;
+    const { status, data } = await this.request<ListedIssue>(
+      "GET",
+      `${this.repo(project)}/issues/${number}`,
+    );
+    if (status === 404) return undefined;
+    if (status !== 200) throw new GitHubError("GET", `issue ${number}`, status, data);
+    return taskFromIssue(data);
+  }
+
+  async close(project: string, task: string): Promise<void> {
+    const number = issueNumber(task);
+    if (number === undefined) return;
+    await this.call("PATCH", `${this.repo(project)}/issues/${number}`, { state: "closed" });
+  }
+
+  async feedbackSignals(project: string): Promise<string[]> {
+    const { status, data } = await this.request<{ path: string; type: string }[]>(
+      "GET",
+      `${this.repo(project)}/contents/feedback`,
+    );
+    if (status === 404) return [];
+    if (status !== 200) throw new GitHubError("GET", "feedback", status, data);
+    return data.filter((entry) => entry.type === "file").map((entry) => entry.path);
+  }
+
+  async readFile(project: string, path: string): Promise<string> {
+    const { content } = await this.call<{ content: string }>(
+      "GET",
+      `${this.repo(project)}/contents/${path}`,
+    );
+    return Buffer.from(content, "base64").toString("utf8");
   }
 
   async append(event: RoutingEvent): Promise<void> {

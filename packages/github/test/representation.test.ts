@@ -6,7 +6,9 @@ import {
   issueForAlert,
   issueForModuleDone,
   issueForTask,
+  issueNumber,
   logFrom,
+  taskFromIssue,
 } from "../src/index.ts";
 
 const EVENT: RoutingEvent = {
@@ -53,6 +55,36 @@ describe("a task as a GitHub issue", () => {
       }).labels,
     ).toEqual(["role:research", "module:parser", "state:ready", "research-for:coding"]);
   });
+
+  it("reads back from a Research task which role it is for", () => {
+    const issue = issueForTask({
+      project: "ledger",
+      role: "research",
+      module: "parser",
+      researchFor: "coding",
+    });
+    expect(taskFromIssue({ labels: issue.labels.map((name) => ({ name })) })).toEqual({
+      researchFor: "coding",
+    });
+  });
+
+  it("reads back nothing more from a task that is not Research", () => {
+    const issue = issueForTask({ project: "ledger", role: "test", module: "parser" });
+    expect(taskFromIssue({ labels: issue.labels.map((name) => ({ name })) })).toEqual({});
+  });
+});
+
+describe("the task a feedback signal names", () => {
+  it("is the issue with that number", () => {
+    expect(issueNumber("12")).toBe(12);
+  });
+
+  it.each(["../../orgs/anarres-sandbox", "12/comments", "12?state=open", "T-0142", "0", "012", ""])(
+    "is no issue at all when the id is %j, not a plain issue number",
+    (task) => {
+      expect(issueNumber(task)).toBeUndefined();
+    },
+  );
 });
 
 describe("a routing event as a file", () => {

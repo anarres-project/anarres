@@ -18,7 +18,15 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 
 - [x] `npm run mutate`: Stryker on `packages/core`, weekly in CI (decision 0002).
 - [ ] Divlab runs as a GitHub Action: bundled entry point, triggered when a pull request is merged,
-      posting tasks as issues through `packages/github`.
+      posting tasks as issues through `packages/github` (decision 0004).
+  - [x] Divlab acts on a merge: it finds the feedback signals merged since it last ran, reads
+        each, closes the task it names and routes it (in-process and against the sandbox, with
+        the driver merging a real feedback signal file);
+  - [ ] the bundled entry point (`action.yml`, one committed file, checked fresh in CI);
+  - [ ] the project template's workflow, and the sandbox driver observing the real Action
+        (needs the sandbox token to write workflows, and the sandbox to allow our Actions);
+  - [ ] the order in which several unrouted signals are routed in one run (merge order, not file
+        name order).
 - [ ] GitHub sandbox driver: the same scenarios against real repositories in the sandbox
       organisation (`npm run test:acceptance:sandbox`).
   - [x] sandbox organisation and token (2026-10-13);
@@ -32,7 +40,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] one repository per run, modules aliased per scenario (one per scenario tripped GitHub's
         limit on creating repositories);
   - [x] the event log is read in one GraphQL request, not one request per event;
-  - [ ] the sandbox run in CI on `main` (environment `sandbox`) and on demand;
+  - [x] the sandbox run in CI on `main` (environment `sandbox`) and on demand;
+  - [x] the driver waits until a ready list holds no task merged work has closed (a lagging list
+        once showed a closed task in place of its replacement: 39 of 55 failed on 2026-10-13);
   - [ ] event files validated against the routing record's schema, defined once in core.
   - [ ] a sweep deletes sandbox repositories left behind by an interrupted run (older than an
         hour), before each sandbox run;
@@ -161,13 +171,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         impediments without a type, or a task that is not text or a whole number make it
         unreadable, never guessed at;
   - [ ] a signal written with Windows line endings is read the same;
-  - [ ] Divlab finds the signals merged since it last ran, and routes each once;
+  - [x] Divlab finds the signals merged since it last ran, and routes each once;
+  - [ ] work naming a task that does not exist, or is not the member's (section 4);
   - [ ] a signal that reaches `main` unreadable (validation should stop it first: section 4)
         → ? (ask Bernard: alert PDC coordinators once, and record it so it is not retried?)
 - Work from a role Divlab does not recognise is rejected, not routed (today `route` treats an
   unknown role as the start of the pipeline; untested, so section 4 must cover it).
 - The task posted on GitHub links to its feedback signal at the merged commit (needs Divlab as an
   Action and `packages/github`).
-- Merging a member's pull request closes the task it was for (the in-process driver emulates
-  GitHub doing this; the GitHub adapter and sandbox driver must show it really happens).
 - (add new cases here, then place them)

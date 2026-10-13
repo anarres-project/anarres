@@ -30,6 +30,46 @@ Action and the sandbox driver are still open in section 0.
 
 ---
 
+## 2026-10-13: Divlab acts on a merge
+
+- New scenario, "Merging a member's work closes the task it was for". It **passed the first time**,
+  because both drivers closed the task themselves, standing in for the system. With that taken
+  out of the in-process driver it went red for the right reason (the Test task still ready), as did
+  three escalation scenarios. Divlab now closes the task the merged work names.
+- Divlab acts on a merge (`onMerge`): it lists the project's feedback signals, routes each that
+  has no event yet (the event log records which signal each decision came from), reads its
+  header with `readFeedbackSignal`, closes the task it names, and takes the Research link from
+  that task. The in-process driver now merges a feedback signal file into the fake and calls
+  `onMerge`; so does the sandbox driver, committing the file to the real repository. Driving it
+  out found a DSL defect: the same role's repeated work reused one feedback signal name, which
+  Divlab now rightly routes only once. Each piece of work has its own signal.
+- Unit cycles:
+
+  ```
+  RED:      (divlab) refuses to route a feedback signal it cannot read, naming it and why -> promise resolved "undefined" instead of rejecting
+  GREEN:    (1 passed)
+  RED:      (github) reads back from a Research task which role it is for -> TypeError: taskFromIssue is not a function; (stub) expected {} to deeply equal { researchFor: 'coding' }
+  GREEN:    (21 passed), hard-coded
+  RED:      reads back nothing more from a task that is not Research -> expected { researchFor: 'coding' } to deeply equal {}
+  GREEN:    (22 passed)
+  REFACTOR: the research-for label prefix named once
+  RED:      the task a feedback signal names is the issue with that number -> TypeError: issueNumber is not a function; (stub) expected undefined to be 12
+  GREEN:    (23 passed), hard-coded
+  RED:      is no issue at all when the id is … not a plain issue number (7 rows) -> expected 12 to be undefined
+  GREEN:    (30 passed)
+  ```
+
+  The task id comes from the member's header, so the adapter uses only a plain issue number in a
+  request.
+- The CI sandbox run for `ff3b4d5` (a docs-only commit) failed 39 of 55: tasks that had been
+  closed still listed as ready. GitHub reported no incident. Cause: a race in the sandbox driver.
+  It waited until a ready list held the expected *number* of tasks, and a lagging list can show a
+  closed task in place of the one that replaced it; the driver then named the stale task in the
+  next merge. The driver now also waits until the list holds no task merged work has closed.
+- Decision 0004 (proposed): Divlab as a GitHub Action, run on a push to the main branch, never on
+  a pull request; each run routes every signal with no event yet; one committed bundle, checked
+  fresh in CI.
+
 ## 2026-10-13: Reading a feedback signal
 
 - Started on Divlab as a GitHub Action (Bernard). First piece: `core` reads the work a merged

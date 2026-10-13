@@ -197,3 +197,10 @@ Then("a PDC coordinator is alerted", function (this: AnarresWorld) {
 Then("no task is ready for {string}", function (this: AnarresWorld, module: string) {
   return this.anarres.noTaskIsReady(module);
 });
+
+Then(
+  "the {role} task for {string} is no longer ready to claim",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.taskIsNoLongerReady({ role, module });
+  },
+);

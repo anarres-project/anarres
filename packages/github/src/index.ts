@@ -6,7 +6,10 @@ export {
   issueForAlert,
   issueForModuleDone,
   issueForTask,
+  issueNumber,
+  type ListedIssue,
   logFrom,
   type NewIssue,
+  taskFromIssue,
 } from "./representation.ts";
 export { requestGitHub } from "./request.ts";

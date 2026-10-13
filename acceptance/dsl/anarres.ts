@@ -12,7 +12,9 @@ type Work = { role: string; module: string };
  * tasks, alerts or records.
  */
 export class Anarres {
+  /** The feedback signal of each role's latest work on a module. */
   private readonly feedbackSignals = new Map<string, string>();
+  private signalsWritten = 0;
   private readonly modules: string[] = [];
 
   constructor(
@@ -27,7 +29,9 @@ export class Anarres {
   }
 
   async memberHasWorkAccepted(work: Work & { verdict: string; impediments?: string[] }) {
-    const feedbackSignal = this.aliases.of(`feedback-${this.feedbackSignals.size + 1}`);
+    // Every piece of work has a feedback signal of its own.
+    this.signalsWritten += 1;
+    const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
     this.feedbackSignals.set(workOn(this.aliased(work)), feedbackSignal);
     await this.driver.acceptWork({
       impediments: [],
@@ -87,6 +91,15 @@ export class Anarres {
       await this.readyTasks((t) => t.role === expected.role && t.module === expected.module),
       [expected],
       `expected the ${task.role} task for ${task.module} to carry no feedback signal`,
+    );
+  }
+
+  async taskIsNoLongerReady(task: Work) {
+    const expected = this.aliased(task);
+    assert.deepEqual(
+      await this.readyTasks((t) => t.role === expected.role && t.module === expected.module),
+      [],
+      `expected the ${task.role} task for ${task.module} to be closed`,
     );
   }
 

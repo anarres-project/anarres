@@ -11,10 +11,26 @@ export function issueForTask(task: PostedTask): NewIssue {
       `role:${task.role}`,
       `module:${task.module}`,
       "state:ready",
-      ...(task.researchFor === undefined ? [] : [`research-for:${task.researchFor}`]),
+      ...(task.researchFor === undefined ? [] : [`${RESEARCH_FOR}${task.researchFor}`]),
     ],
     body: task.feedbackSignal === undefined ? "" : `Feedback signal: ${task.feedbackSignal}`,
   };
+}
+
+/** An issue as GitHub lists it: only what Divlab reads back. */
+export type ListedIssue = { labels: { name: string }[] };
+
+/** What Divlab recorded on a task when it posted it. */
+export function taskFromIssue(issue: ListedIssue): { researchFor?: string } {
+  const label = issue.labels.find(({ name }) => name.startsWith(RESEARCH_FOR));
+  return label === undefined ? {} : { researchFor: label.name.slice(RESEARCH_FOR.length) };
+}
+
+const RESEARCH_FOR = "research-for:";
+
+/** The issue a task id names. The id comes from a member's feedback signal, so it is checked. */
+export function issueNumber(task: string): number | undefined {
+  return /^[1-9][0-9]*$/.test(task) ? Number(task) : undefined;
 }
 
 /** One file per event, so concurrent writers never touch the same file (concept §7). */

@@ -1,4 +1,4 @@
-import { onWorkAccepted } from "@anarres/divlab";
+import { onMerge } from "@anarres/divlab";
 import type {
   AcceptedWork,
   CoordinatorAlert,
@@ -6,10 +6,16 @@ import type {
   ReadyTask,
   RoutingRecord,
 } from "../driver.ts";
-import { inScenarioWords, roleId, roleName, workAccepted } from "../scenario-words.ts";
+import {
+  feedbackSignalFile,
+  inScenarioWords,
+  roleId,
+  roleName,
+  signalName,
+} from "../scenario-words.ts";
 import { FakeGitHub } from "./fake-github.ts";
 
-/** Feeds events straight into Divlab, with an in-memory fake of GitHub. */
+/** Merges work into an in-memory fake of GitHub and runs Divlab on each merge. */
 export class InProcessDriver implements Driver {
   private readonly github = new FakeGitHub();
 
@@ -19,12 +25,13 @@ export class InProcessDriver implements Driver {
 
   async acceptWork(work: AcceptedWork): Promise<void> {
     const fromRole = roleId(work.role);
-    // The member's pull request names the task it is for; Divlab reads what that task recorded.
+    // The member's feedback signal names the task the work was for.
     const task = this.github
       .readyTasks(work.project)
       .find((task) => task.role === fromRole && task.module === work.module);
-    if (task) this.github.close(task);
-    await onWorkAccepted(workAccepted(work, task?.researchFor), this.github, this.github);
+    const { path, text } = feedbackSignalFile(work, task?.id);
+    this.github.merge(work.project, path, text);
+    await onMerge(work.project, this.github, this.github, this.github);
   }
 
   async routingRecords(project: string): Promise<RoutingRecord[]> {
@@ -46,7 +53,7 @@ export class InProcessDriver implements Driver {
     return this.github.readyTasks(project).map(({ role, module, feedbackSignal }) => ({
       role: roleName(role),
       module,
-      ...(feedbackSignal === undefined ? {} : { feedbackSignal }),
+      ...(feedbackSignal === undefined ? {} : { feedbackSignal: signalName(feedbackSignal) }),
     }));
   }
 }

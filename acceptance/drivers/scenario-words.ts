@@ -1,5 +1,5 @@
 import { ROLE_NAMES, type Role } from "@anarres/core";
-import type { RoutingEvent, WorkAccepted } from "@anarres/divlab";
+import type { RoutingEvent } from "@anarres/divlab";
 import type { AcceptedWork, RoutingRecord } from "./driver.ts";
 
 /**
@@ -8,18 +8,28 @@ import type { AcceptedWork, RoutingRecord } from "./driver.ts";
  * "upstream_ambiguity".
  */
 
-/** The event Divlab receives when a member's work is merged. */
-export function workAccepted(work: AcceptedWork, researchFor?: string): WorkAccepted {
-  return {
-    project: work.project,
-    module: work.module,
-    fromRole: roleId(work.role),
-    verdict: ids(work.verdict),
-    impediments: work.impediments.map((name) => ({ type: ids(name) })),
-    feedbackSignal: work.feedbackSignal,
-    ...(researchFor === undefined ? {} : { researchFor }),
-  };
+/**
+ * The feedback signal a member's merged work adds to the project, as the plugin will write it:
+ * a header naming the task the work was for, the role, module, verdict and any impediments.
+ */
+export function feedbackSignalFile(work: AcceptedWork, task?: string) {
+  const header = [
+    "---",
+    "feedback_signal:",
+    ...(task === undefined ? [] : [`  task_id: "${task}"`]),
+    `  from_role: ${roleId(work.role)}`,
+    `  module: ${work.module}`,
+    `  verdict: ${ids(work.verdict)}`,
+    ...(work.impediments.length === 0
+      ? []
+      : ["  impediments:", ...work.impediments.map((name) => `    - type: ${ids(name)}`)]),
+    "---",
+  ];
+  return { path: `feedback/${work.feedbackSignal}.md`, text: `${header.join("\n")}\n` };
 }
+
+/** The scenario's name for a feedback signal, from where Divlab found it. */
+export const signalName = (path: string) => path.replace(/^feedback\/(.+)\.md$/, "$1");
 
 /** A routing record as the scenarios speak of it: role names and plain words, not ids. */
 export function inScenarioWords({ work, decision, reason }: RoutingEvent): RoutingRecord {
@@ -29,7 +39,7 @@ export function inScenarioWords({ work, decision, reason }: RoutingEvent): Routi
       module: work.module,
       verdict: words(work.verdict),
       impediments: work.impediments.map((impediment) => words(impediment.type)),
-      feedbackSignal: work.feedbackSignal,
+      feedbackSignal: signalName(work.feedbackSignal),
     },
     outcome:
       "tasks" in decision
