@@ -21,6 +21,15 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       posting tasks as issues through `packages/github`.
 - [ ] GitHub sandbox driver: the same scenarios against real repositories in the sandbox
       organisation (`npm run test:acceptance:sandbox`).
+  - [x] sandbox organisation and token (2026-10-13);
+  - [x] driver creates and deletes a repository per scenario, observes tasks directly;
+  - [x] `packages/github` representation: task, alert and finished module as issues; event as a
+        file (decision 0003);
+  - [ ] the adapter's HTTP calls (post, alert, mark done, append, read), so scenarios pass in the
+        sandbox;
+  - [ ] the driver observes alerts, finished modules and the event log;
+  - [ ] the sandbox run in CI on `main` (environment `sandbox`) and on demand;
+  - [ ] event files validated against the routing record's schema, defined once in core.
 
 ## 1. Routing (Divlab)
 

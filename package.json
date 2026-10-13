@@ -13,6 +13,7 @@
     "test": "npm run typecheck && npm run lint && npm run test:unit && npm run test:acceptance",
     "test:unit": "vitest run --coverage",
     "test:acceptance": "NODE_OPTIONS=\"--import tsx\" cucumber-js",
+    "test:acceptance:sandbox": "ANARRES_DRIVER=sandbox NODE_OPTIONS=\"--import tsx\" cucumber-js -p sandbox",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "test:wip": "tsx scripts/wip-judge.ts",

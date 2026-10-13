@@ -41,4 +41,6 @@ export interface Driver {
   coordinatorAlerts(project: string): Promise<CoordinatorAlert[]>;
   doneModules(project: string): Promise<string[]>;
   routingRecords(project: string): Promise<RoutingRecord[]>;
+  /** Removes whatever the scenario created outside this process. */
+  dispose?(): Promise<void>;
 }

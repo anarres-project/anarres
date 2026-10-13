@@ -22,11 +22,64 @@ passes, the role that reported the gap gets a revision task; Research failing al
 coordinator. A Security & Quality pass marks the module done. Every routing decision is recorded
 with its inputs and the rule that decided it. A role re-run more than three times for a module is
 escalated to a PDC coordinator, and a coordinator's alert says what was reported and why routing
-stopped. Section 1's remaining items wait on later work (metrics, input artefacts). Next: section
-0, Divlab as a real GitHub Action with the sandbox driver. Divlab as a real
+stopped. Section 1's remaining items wait on later work (metrics, input artefacts). Section 0 under
+way: the GitHub sandbox organisation is set up, the sandbox driver runs every scenario against
+real repositories (failing honestly until Divlab acts on GitHub), and `packages/github` turns tasks,
+alerts, finished modules and events into issues and files. Next: the adapter's HTTP calls, then
+Divlab as an Action. Divlab as a real
 Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-13: The GitHub sandbox, the sandbox driver and the adapter's representation
+
+- Sandbox set up with Bernard: organisation `anarres-sandbox` (2FA with secure methods only, base
+  permission none, classic tokens blocked, fine-grained tokens need approval, Actions limited to
+  the organisation's and GitHub's own, no self-hosted runners). A fine-grained token scoped to it
+  (Administration, Contents, Issues, Pull requests: read and write; 90 days, to 2027-01-11), in a
+  git-ignored `.env` locally and in the `sandbox` environment (deployable from `main` only) in CI.
+  Checked: it creates, uses and deletes a repository in the sandbox, and is refused (403) writing
+  to `anarres-project`.
+- Decision 0003 (proposed): how a project looks on GitHub. Tasks are issues labelled `role:`,
+  `module:`, `state:ready` (plus `research-for:`); alerts are `escalation` issues with the record
+  as JSON; a finished module is a closed `state:done` issue; each event is one file
+  `events/NNNNNN.json`. The adapter uses `fetch`, no Octokit.
+- Sandbox driver (`ANARRES_DRIVER=sandbox`, `npm run test:acceptance:sandbox`): one private
+  repository per scenario, deleted afterwards; observes GitHub directly rather than through the
+  adapter. First run: all 49 scenarios red with `NotYetImplemented` (Divlab acting on GitHub),
+  about 4 s each, nothing left behind. Translation into scenario words now shared by both drivers.
+- `packages/github`, pure representation, test first:
+
+  ```
+  RED:   a task … is labelled with its role, its module and as ready, and links its feedback signal
+         -> TypeError: issueForTask is not a function (stub) -> expected undefined to deeply equal …
+  GREEN: (1)
+  RED:   says nothing of a feedback signal when it has none -> 'Feedback signal: undefined'
+  GREEN: (2)
+  RED:   records on a Research task which role it is for -> 3 labels, expected 4
+  GREEN: (3)
+  RED:   an event is one file under events/, named by its place in the log -> '' (stub)
+  GREEN: (4)
+  RED:   reads back as the event that was written -> undefined (stub)
+  GREEN: (5)
+  RED:   is refused when it is not a routing record -> expected [Function] to throw
+  GREEN: (6), a shallow shape check; full validation goes with the schema in core
+  RED:   an alert is an escalation for the module, saying what was reported … -> undefined (stub)
+  GREEN: (7)
+  RED:   names the role that has been re-run more than three times -> no-rule wording
+  GREEN: (8)
+  RED:   carries the routing record for tools, after the words -> null
+  GREEN: (9)
+  RED:   says blocked work was blocked -> "failed"
+  GREEN: (10)
+  RED:   says when the work reported no problem -> "reporting ."
+  GREEN: (11)
+  RED:   a finished module is an issue labelled with the module and as done -> undefined (stub)
+  GREEN: (12)
+  REFACTOR: none
+  ```
+
+- Gate: 82 unit tests, 55 scenarios (in-process); `@wip` judge clean.
 
 ## 2026-10-12: A PDC coordinator's alert says what happened
 

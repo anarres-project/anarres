@@ -10,5 +10,10 @@
     "import": ["acceptance/support/**/*.ts", "acceptance/steps/**/*.ts"],
     "tags": "@wip",
     "format": ["progress", "message:reports/wip.ndjson"]
+  },
+  "sandbox": {
+    "import": ["acceptance/support/**/*.ts", "acceptance/steps/**/*.ts"],
+    "tags": "not @wip",
+    "format": ["progress"]
   }
 }
