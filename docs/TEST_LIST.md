@@ -25,11 +25,24 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] driver creates and deletes a repository per scenario, observes tasks directly;
   - [x] `packages/github` representation: task, alert and finished module as issues; event as a
         file (decision 0003);
-  - [ ] the adapter's HTTP calls (post, alert, mark done, append, read), so scenarios pass in the
+  - [x] the adapter's HTTP calls (post, alert, mark done, append, read), so scenarios pass in the
         sandbox;
-  - [ ] the driver observes alerts, finished modules and the event log;
+  - [x] the driver observes alerts, finished modules and the event log, waiting for GitHub's
+        issue lists to catch up with what the event log says Divlab did;
+  - [x] one repository per run, modules aliased per scenario (one per scenario tripped GitHub's
+        limit on creating repositories);
+  - [x] the event log is read in one GraphQL request, not one request per event;
   - [ ] the sandbox run in CI on `main` (environment `sandbox`) and on demand;
   - [ ] event files validated against the routing record's schema, defined once in core.
+  - [ ] a sweep deletes sandbox repositories left behind by an interrupted run (older than an
+        hour), before each sandbox run;
+  - [x] the adapter retries when GitHub rate-limits it (`retry-after`), so a busy sandbox run
+        slows down instead of failing; reads also retry a failing gateway or dropped connection;
+  - [ ] the sandbox run stays inside one token's hourly allowance (5,000 requests) with room to
+        spare: measure it, and fail loudly before the limit rather than time out on it. Explain
+        the "API rate limit exceeded" refusal of 2026-10-13, which came with allowance left;
+  - [ ] appending an event costs one request, not a listing plus a write (the sequence number
+        can come from the log Divlab has just read).
 
 ## 1. Routing (Divlab)
 

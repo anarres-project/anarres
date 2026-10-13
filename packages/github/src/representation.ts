@@ -88,3 +88,15 @@ export function issueForModuleDone(module: string): NewIssue {
     body: "",
   };
 }
+
+/**
+ * The event log from the files listed and the texts read, oldest first; undefined while any
+ * listed file is unread, since a decision must never rest on a log missing its latest events.
+ */
+export function logFrom(listed: string[], texts: Map<string, string>): RoutingEvent[] | undefined {
+  if (!listed.every((name) => texts.has(name))) return undefined;
+  return listed
+    .filter((name) => /^\d{6}\.json$/.test(name))
+    .sort()
+    .map((name) => eventFromFile(texts.get(name) ?? ""));
+}

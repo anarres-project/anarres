@@ -6,6 +6,7 @@ import {
   issueForAlert,
   issueForModuleDone,
   issueForTask,
+  logFrom,
 } from "../src/index.ts";
 
 const EVENT: RoutingEvent = {
@@ -65,6 +66,21 @@ describe("a routing event as a file", () => {
 
   it("is refused when it is not a routing record", () => {
     expect(() => eventFromFile('{"project": "ledger"}')).toThrow("not a routing record");
+  });
+
+  it("makes a log only when every listed event file has been read", () => {
+    const texts = new Map([["000001.json", eventFile(EVENT, 1).content]]);
+    expect(logFrom(["000001.json", "000002.json"], texts)).toBeUndefined();
+  });
+
+  it("reads the listed events oldest first, ignoring any other file", () => {
+    const second = { ...EVENT, reason: { rule: "failed" as const } };
+    const texts = new Map([
+      ["000002.json", eventFile(second, 2).content],
+      ["README.md", "not an event"],
+      ["000001.json", eventFile(EVENT, 1).content],
+    ]);
+    expect(logFrom(["000001.json", "000002.json"], texts)).toEqual([EVENT, second]);
   });
 });
 

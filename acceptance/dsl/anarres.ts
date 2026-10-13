@@ -1,57 +1,44 @@
 import assert from "node:assert/strict";
-import type { Driver, RoutingRecord } from "../drivers/driver.ts";
+import type { CoordinatorAlert, Driver, RoutingRecord } from "../drivers/driver.ts";
 import type { Aliases } from "./aliases.ts";
 
-const DEFAULT_PROJECT = "ledger";
 const DEFAULT_MEMBER = "alice";
 
-/** What members, PDC coordinators and Divlab do and observe, in domain terms. */
+type Work = { role: string; module: string };
+
+/**
+ * What members, PDC coordinators and Divlab do and observe, in domain terms. Module names are
+ * aliased ("parser" becomes "parser-s7"), so scenarios sharing a project never see each other's
+ * tasks, alerts or records.
+ */
 export class Anarres {
   private readonly feedbackSignals = new Map<string, string>();
+  private readonly modules: string[] = [];
 
   constructor(
     private readonly driver: Driver,
     private readonly aliases: Aliases,
+    private readonly project: string,
   ) {}
 
-  private get project(): string {
-    return this.aliases.of(DEFAULT_PROJECT);
-  }
-
   async projectWithModules(...modules: string[]): Promise<void> {
-    await this.driver.createProject(this.project, modules);
+    this.modules.push(...modules.map((module) => this.aliases.of(module)));
+    await this.driver.createProject(this.project, this.modules);
   }
 
-  async memberHasWorkAccepted(work: {
-    role: string;
-    module: string;
-    verdict: string;
-    impediments?: string[];
-  }) {
+  async memberHasWorkAccepted(work: Work & { verdict: string; impediments?: string[] }) {
     const feedbackSignal = this.aliases.of(`feedback-${this.feedbackSignals.size + 1}`);
-    this.feedbackSignals.set(workOn(work), feedbackSignal);
+    this.feedbackSignals.set(workOn(this.aliased(work)), feedbackSignal);
     await this.driver.acceptWork({
       impediments: [],
-      ...work,
+      ...this.aliased(work),
       project: this.project,
       member: this.aliases.of(DEFAULT_MEMBER),
       feedbackSignal,
     });
   }
 
-  async taskCarriesFeedbackFrom(task: { role: string; module: string }, fromRole: string) {
-    const ready = await this.driver.readyTasks(this.project);
-    assert.deepEqual(
-      ready.filter((t) => t.role === task.role && t.module === task.module),
-      [{ ...task, feedbackSignal: this.feedbackSignals.get(workOn({ ...task, role: fromRole })) }],
-      `expected the ${task.role} task for ${task.module} to carry the ${fromRole} work's feedback signal`,
-    );
-  }
-
-  async memberHasWorkSentBack(
-    work: { role: string; module: string; impediment: string },
-    times: number,
-  ) {
+  async memberHasWorkSentBack(work: Work & { impediment: string }, times: number) {
     for (let i = 0; i < times; i++) {
       await this.memberHasWorkAccepted({
         role: work.role,
@@ -62,45 +49,68 @@ export class Anarres {
     }
   }
 
-  async divlabHasPostedReadyTask(task: { role: string; module: string }) {
-    const ready = await this.driver.readyTasks(this.project);
+  async taskCarriesFeedbackFrom(task: Work, fromRole: string) {
+    const expected = this.aliased(task);
+    const feedbackSignal = this.feedbackSignals.get(workOn({ ...expected, role: fromRole }));
     assert.deepEqual(
-      ready.filter((t) => t.role === task.role && t.module === task.module).map(roleAndModule),
-      [task],
+      await this.readyTasks((t) => t.role === expected.role && t.module === expected.module),
+      [{ ...expected, feedbackSignal }],
+      `expected the ${task.role} task for ${task.module} to carry the ${fromRole} work's feedback signal`,
+    );
+  }
+
+  async divlabHasPostedReadyTask(task: Work) {
+    const expected = this.aliased(task);
+    const ready = await this.readyTasks(
+      (t) => t.role === expected.role && t.module === expected.module,
+    );
+    assert.deepEqual(
+      ready.map(roleAndModule),
+      [expected],
       `expected one ready ${task.role} task for ${task.module}`,
     );
   }
 
-  async divlabHasPostedOnlyReadyTask(task: { role: string; module: string }) {
-    const ready = await this.driver.readyTasks(this.project);
+  async divlabHasPostedOnlyReadyTask(task: Work) {
+    const expected = this.aliased(task);
+    const ready = await this.readyTasks((t) => t.module === expected.module);
     assert.deepEqual(
-      ready.filter((t) => t.module === task.module).map(roleAndModule),
-      [task],
+      ready.map(roleAndModule),
+      [expected],
       `expected the only ready task for ${task.module} to be a ${task.role} task`,
     );
   }
 
-  async taskCarriesNoFeedback(task: { role: string; module: string }) {
-    const ready = await this.driver.readyTasks(this.project);
+  async taskCarriesNoFeedback(task: Work) {
+    const expected = this.aliased(task);
     assert.deepEqual(
-      ready.filter((t) => t.role === task.role && t.module === task.module),
-      [task],
+      await this.readyTasks((t) => t.role === expected.role && t.module === expected.module),
+      [expected],
       `expected the ${task.role} task for ${task.module} to carry no feedback signal`,
+    );
+  }
+
+  async noTaskIsReady(module: string) {
+    const aliased = this.aliases.of(module);
+    assert.deepEqual(
+      await this.readyTasks((t) => t.module === aliased),
+      [],
+      `expected no ready task for ${module}`,
     );
   }
 
   async moduleIsDone(module: string) {
     const done = await this.driver.doneModules(this.project);
-    assert.ok(done.includes(module), `expected ${module} to be done`);
+    assert.ok(done.includes(this.aliases.of(module)), `expected ${module} to be done`);
   }
 
   async moduleIsNotDone(module: string) {
     const done = await this.driver.doneModules(this.project);
-    assert.ok(!done.includes(module), `expected ${module} not to be done`);
+    assert.ok(!done.includes(this.aliases.of(module)), `expected ${module} not to be done`);
   }
 
   async divlabRecorded(
-    work: { role: string; module: string },
+    work: Work,
     outcome: RoutingRecord["outcome"],
     reason: RoutingRecord["reason"],
     which: { latest?: boolean } = {},
@@ -114,36 +124,33 @@ export class Anarres {
     );
   }
 
-  async divlabRecordKeepsWork(
-    work: { role: string; module: string },
-    reported: { verdict: string; impediments: string[] },
-  ) {
+  async divlabRecordKeepsWork(work: Work, reported: { verdict: string; impediments: string[] }) {
+    const expected = this.aliased(work);
     const records = await this.recordsOf(work);
     assert.deepEqual(
       records.map((record) => record.work),
-      [{ ...work, ...reported, feedbackSignal: this.feedbackSignals.get(workOn(work)) }],
+      [{ ...expected, ...reported, feedbackSignal: this.feedbackSignals.get(workOn(expected)) }],
       `expected the record of the ${work.role} work on ${work.module} to keep what it reported`,
     );
   }
 
-  private async recordsOf(work: { role: string; module: string }) {
-    const records = await this.driver.routingRecords(this.project);
-    return records.filter(
-      (record) => record.work.role === work.role && record.work.module === work.module,
-    );
+  async pdcCoordinatorIsAlerted() {
+    const alerts = await this.alerts();
+    assert.equal(alerts.length, 1, "expected one alert to the PDC coordinators");
   }
 
   async pdcCoordinatorIsAlertedThatNoRuleCovers(
-    work: { role: string; module: string },
+    work: Work,
     reported: { verdict: string; impediments: string[] },
   ) {
-    const alerts = await this.driver.coordinatorAlerts(this.project);
+    const expected = this.aliased(work);
+    const feedbackSignal = this.feedbackSignals.get(workOn(expected));
     assert.deepEqual(
-      alerts,
+      await this.alerts(),
       [
         {
-          module: work.module,
-          work: { ...work, ...reported, feedbackSignal: this.feedbackSignals.get(workOn(work)) },
+          module: expected.module,
+          work: { ...expected, ...reported, feedbackSignal },
           reason: { rule: "no_matching_rule" },
         },
       ],
@@ -152,28 +159,36 @@ export class Anarres {
   }
 
   async pdcCoordinatorIsAlertedThatRoleIsStuck(role: string, module: string) {
-    const alerts = await this.driver.coordinatorAlerts(this.project);
+    const alerts = await this.alerts();
     assert.deepEqual(
       alerts.map((alert) => ({ module: alert.module, reason: alert.reason })),
-      [{ module, reason: { rule: "re_run_limit", role } }],
+      [{ module: this.aliases.of(module), reason: { rule: "re_run_limit", role } }],
       `expected one alert saying ${role} is stuck on ${module}`,
     );
   }
 
-  async pdcCoordinatorIsAlerted() {
-    const alerts = await this.driver.coordinatorAlerts(this.project);
-    assert.equal(alerts.length, 1, "expected one alert to the PDC coordinators");
+  private aliased<T extends Work>(work: T): T {
+    return { ...work, module: this.aliases.of(work.module) };
   }
 
-  async noTaskIsReady(module: string) {
-    const ready = await this.driver.readyTasks(this.project);
-    assert.deepEqual(
-      ready.filter((t) => t.module === module),
-      [],
-      `expected no ready task for ${module}`,
+  private async readyTasks(which: (task: Work) => boolean) {
+    return (await this.driver.readyTasks(this.project)).filter(which);
+  }
+
+  /** The alerts about this scenario's modules. */
+  private async alerts(): Promise<CoordinatorAlert[]> {
+    const alerts = await this.driver.coordinatorAlerts(this.project);
+    return alerts.filter((alert) => this.modules.includes(alert.module));
+  }
+
+  private async recordsOf(work: Work) {
+    const expected = this.aliased(work);
+    const records = await this.driver.routingRecords(this.project);
+    return records.filter(
+      (record) => record.work.role === expected.role && record.work.module === expected.module,
     );
   }
 }
 
-const workOn = (work: { role: string; module: string }) => `${work.role} on ${work.module}`;
-const roleAndModule = ({ role, module }: { role: string; module: string }) => ({ role, module });
+const workOn = (work: Work) => `${work.role} on ${work.module}`;
+const roleAndModule = ({ role, module }: Work) => ({ role, module });

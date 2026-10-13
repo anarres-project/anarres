@@ -23,13 +23,72 @@ coordinator. A Security & Quality pass marks the module done. Every routing deci
 with its inputs and the rule that decided it. A role re-run more than three times for a module is
 escalated to a PDC coordinator, and a coordinator's alert says what was reported and why routing
 stopped. Section 1's remaining items wait on later work (metrics, input artefacts). Section 0 under
-way: the GitHub sandbox organisation is set up, the sandbox driver runs every scenario against
-real repositories (failing honestly until Divlab acts on GitHub), and `packages/github` turns tasks,
-alerts, finished modules and events into issues and files. Next: the adapter's HTTP calls, then
-Divlab as an Action. Divlab as a real
+way: Divlab now acts on real GitHub repositories through `packages/github`, and 54 of the 55
+scenarios pass against the sandbox (the other met an unexplained rate-limit refusal). Next: Divlab
+as an Action, triggered by merged pull requests. Divlab as a real
 Action and the sandbox driver are still open in section 0.
 
 ---
+
+## 2026-10-13: Divlab acts on real GitHub; the sandbox suite runs
+
+- The adapter's HTTP calls (`GitHubAdapter`: post, alert, mark done, append, read). The sandbox
+  driver plays GitHub's part on merge (closes the task issue) and calls Divlab with the real
+  adapter; it observes GitHub directly.
+- What real GitHub taught us, in order:
+  1. **Issue lists lag writes by about a second.** The driver now waits until GitHub shows what
+     the event log says Divlab did (counts of ready tasks, escalations, finished modules), with a
+     30-second limit so a real defect still fails.
+  2. **One repository per scenario trips GitHub's secondary limit on creating repositories**
+     (about 130 in half an hour). Now one repository per run; the DSL aliases module names per
+     scenario ("parser-s7"), as `CLAUDE.md` asks. A planted routing fault still fails 9 scenarios
+     in-process, so the aliasing did not hollow out the assertions.
+  3. **Rate limits and blips.** `retryAfter` (test first, 6 cycles) says how long to wait:
+     `retry-after`, a secondary limit (a minute), the hourly reset, a failing gateway (2 s); never
+     a request that succeeded. `requestGitHub` retries only what is safe: any request after a
+     rate-limit refusal (GitHub did nothing), but only reads and deletes after a gateway failure
+     or dropped connection (a repeated create could post a task twice).
+  4. **Reading the log one file per request made each decision O(n)**: runs took 30 to 47
+     minutes and exhausted the hourly allowance. (Also my fault: a capture loop for Bernard's
+     dashboard polled with the same token.) The log is now read in one GraphQL request.
+  5. **GraphQL lags writes too**, and a stale log would make Divlab miscount re-runs. The adapter
+     lists the files with REST (which reflects writes at once) and accepts the GraphQL contents
+     only when they hold every listed file, else retries, then fails rather than decide on a
+     short log. Driven test first as `logFrom`.
+- Cycles (`packages/github`):
+
+  ```
+  RED:   waits as long as GitHub asks when it says how long -> undefined (stub written in the
+         same step as the test: a slip in the protocol, though the red was on the assertion)
+  GREEN: (13)
+  RED:   does not retry a refusal that is not about rate limits -> +0
+  GREEN: (14)
+  RED:   waits a minute out of a secondary rate limit that does not say how long -> undefined
+  GREEN: (15)
+  RED:   waits until the hourly limit resets when it is used up -> undefined
+  GREEN: (16), with the clock injected
+  RED:   never retries a request that succeeded, even the last one the limit allowed
+         -> a negative wait
+  GREEN: (17)
+  RED:   tries again shortly when GitHub's gateway fails -> undefined
+  GREEN: (18)
+  RED:   makes a log only when every listed event file has been read
+         -> TypeError (stub) -> expected [] to be undefined
+  GREEN: (19)
+  RED:   reads the listed events oldest first, ignoring any other file -> []
+  GREEN: (20)
+  REFACTOR: the adapter reads through `logFrom`; one `requestGitHub` shared by adapter and driver
+  ```
+
+- Final sandbox run (13:44 for 55 scenarios, one repository): 54 passed. The failure: GitHub
+  answered one issue-list read with "API rate limit exceeded" while the token showed its
+  allowance almost unused afterwards, and without the headers the retry looks for. Not
+  explained; on the test list with measuring a run's requests.
+- `ANARRES_SANDBOX_KEEP=1` keeps the run's repository to inspect. Bernard's dashboard of that
+  run's 68 routing decisions was built from it; the repository was then deleted.
+- CI: `.github/workflows/sandbox.yml` runs the sandbox suite on `main` and on demand, in the
+  `sandbox` environment, one run at a time.
+- Gate: 90 unit tests, 55 scenarios in-process; `@wip` judge clean.
 
 ## 2026-10-13: The GitHub sandbox, the sandbox driver and the adapter's representation
 

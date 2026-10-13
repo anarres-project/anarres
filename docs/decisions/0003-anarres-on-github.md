@@ -56,5 +56,8 @@ which observes GitHub directly, as a member would, rather than through the adapt
 
 - Label names are a public contract: the plugin will search on them. Changing one means changing
   the adapter, the plugin and the sandbox driver together.
-- Reading the event log costs one request per event. Fine for now; the Git trees API can fetch
-  them in bulk when logs grow.
+- The event log is read in one GraphQL request, checked against a REST listing of the files:
+  GraphQL lags behind writes, and Divlab must never decide on a log missing its latest events.
+- GitHub's lists lag its writes by about a second, and it limits how fast repositories may be
+  created. Tests that run against GitHub must wait for it to catch up, and share a repository
+  per run (2026-10-13).
