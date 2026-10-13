@@ -9,7 +9,6 @@ Ideas beyond current scope. Discuss before building.
 - **Programme-level decomposition.** Programme Architect, interface contracts, integration
   pipeline (concept document, Phase 2).
 - **Private mode.** Layer-per-repository visibility for security-sensitive projects (§12).
-- **Unattended members.** Self-paced claiming, subject to Anthropic's terms (Phase 5).
-- **Research instrumentation.** State space metrics dashboards and corpus export (Phase 6).
+- **Research instrumentation.** State space metrics dashboards and corpus export (Phase 5).
 - **Optional escalation diagnosis by Claude**, opt-in per project, paid from an organisation key.
 - **Chat notifications** (e.g. Discord) announcing new tasks.

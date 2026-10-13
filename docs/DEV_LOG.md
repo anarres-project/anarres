@@ -35,8 +35,12 @@ Action and the sandbox driver are still open in section 0.
 - The repository stays public (Bernard). New hard rule in `CLAUDE.md`: nothing here spells out
   how a safeguard could be got round; threat notes stay general, and specifics go to Bernard
   first.
-- The public documents were reviewed against the rule. Passages that may say more than they need
-  were raised with Bernard; none was changed without his decision.
+- The public documents were reviewed against the rule, and Bernard chose what to trim. The concept
+  document now says in general terms what Divlab checks before merging, how members gain trust
+  and when the Governance role looks; it no longer dwells on large numbers of sessions; and
+  unattended running is out of the roadmap and the later list (Research instrumentation is now
+  Phase 5). The fuller text stays in the history; specifics will live in private documents when
+  they are needed.
 
 ## 2026-10-13: Divlab acts on real GitHub; the sandbox suite runs
 

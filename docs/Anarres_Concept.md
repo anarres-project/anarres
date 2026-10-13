@@ -32,7 +32,7 @@ Five design choices define version 1:
 |---|---|
 | Domain | Software projects only |
 | Models | Claude only |
-| How work starts | The member starts it (`/anarres:next`) when they have spare allowance. Unattended running comes later. |
+| How work starts | The member starts it (`/anarres:next`) when they have spare allowance. |
 | Visibility | Public repositories by default. A private mode is designed in for security-sensitive work. |
 | Scale | Start with a small pilot, using an architecture that grows by adding projects and members, not servers |
 
@@ -40,7 +40,7 @@ Five design choices define version 1:
 
 ## 2. Why Anarres should exist
 
-The March documents described the value of a CGD swarm mainly as raw context: "1,000 instances × 1M tokens = 1 billion tokens". That framing does not hold up. Separate context windows do not add together, and no single agent ever holds the whole problem. Models have also improved greatly since then, and a single current model working over several sessions can now complete many tasks that once looked impossible.
+The March documents described Anarres's value mainly as raw context, many agents' context windows added together. That framing does not hold up. Separate context windows do not add together, and no single agent ever holds the whole problem. Models have also improved greatly since then, and a single current model working over several sessions can now complete many tasks that once looked impossible.
 
 Anarres's value lies elsewhere:
 
@@ -237,13 +237,8 @@ This is how members' Claude sessions find out there is work for them, and how ev
 4. **Preparing the workspace.** The plugin syncs the member's fork and uses sparse checkout to fetch **only the paths the role may read, at the pinned SHA**. Read-scope hooks block any other file access. The role's instructions load as a skill.
 5. **Work.** Claude does the role's job in a sandbox (§10) and writes the artefact plus a feedback signal.
 6. **Contribution.** The plugin opens a PR from the member's fork, referencing the task issue. A draft PR pushed early also counts as a heartbeat and extends the lease.
-7. **Validation.** Divlab checks the PR:
-   - It touches only the role's write paths.
-   - The feedback header is valid against the schema.
-   - It matches a task this member has claimed.
-   - Role-specific checks pass: the Coding PR leaves `tests/` untouched and the module's tests pass in the project's CI; the Test PR's tests run and fail as expected; and so on. Divlab reads these results from the CI check and the JUnit XML report, whatever the project's language (§7).
-   - **Staleness:** if an input changed after the pinned SHA, the PR is flagged and Divlab decides whether to accept it or re-queue the task.
-8. **Merge.** In v1 Divlab auto-merges PRs that pass every check. PDC coordinators can require human review on any project or module.
+7. **Validation.** Divlab validates every contribution against the task it was claimed for, the role's access rules and the project's own CI, and flags work whose inputs changed after it was claimed.
+8. **Merge.** Divlab merges contributions that pass validation, with human review wherever PDC coordinators require it.
 9. **Routing.** On merge, Divlab reads the feedback header, applies the routing table (§9), opens the next task or tasks and writes an event file.
 10. **Partial work.** If a member runs out of allowance, the plugin commits what exists with `status: partial` and a handover note. Divlab re-queues the task as a continuation.
 11. **Lease expiry.** If a lease runs out with no activity, the task returns to `ready`. Nothing is lost except that one task's unfinished work.
@@ -373,7 +368,7 @@ The March document's "pathogen design-space mapping" project is **explicitly exc
 ### Three layers of defence
 
 1. **At proposal.** Every proposal is screened automatically against the Odonian Principles and then approved by two PDC coordinators. A proposal must state its purpose, users, outputs and licence.
-2. **During the project.** A Governance role sees the whole project. It runs after every Programme Architect output and periodically on merged work, checking for drift from the approved purpose and for dangerous capability emerging from parts that look harmless on their own. Its findings go to PDC coordinators as `governance` issues.
+2. **During the project.** A Governance role sees the whole project. It reviews it continuously, checking for drift from the approved purpose and for dangerous capability emerging from parts that look harmless on their own. Its findings go to PDC coordinators as `governance` issues.
 3. **Community and member level.** Any member can flag a project. PDC coordinators can freeze one, which stops new tasks being created, at once. Each member's own Claude refuses harmful tasks, and Anarres treats such refusals as a governance alert, not a nuisance.
 
 ### Contribution integrity
@@ -385,7 +380,7 @@ The March document's "pathogen design-space mapping" project is **explicitly exc
 | Low-effort or fabricated artefacts | Schema checks, CI, sanity checks on state space metrics, reviewer verdicts recorded per member |
 | Malicious content aimed at agents | Sandboxing (§10), `suspicious_content` reporting, PDC coordinator action against the account |
 
-**Trust levels:** *new* (Requirements, Specification, Test, Coding on low-risk modules) → *established* (all producing roles, Reviewer) → *trusted* (Security & Quality, Governance, Programme Architect) → *PDC coordinator*. A member moves up based on merged contributions and reviewer verdicts.
+**Trust levels:** *new* (Requirements, Specification, Test, Coding on low-risk modules) → *established* (all producing roles, Reviewer) → *trusted* (Security & Quality, Governance, Programme Architect) → *PDC coordinator*. Trust is earned over time and confirmed by PDC coordinators.
 
 ---
 
@@ -420,8 +415,8 @@ The architecture grows without being redesigned. Each stage names what changes a
 |---|---|---|---|
 | Pilot | 5–10 | One project, run by hand: issues opened manually, a human acts as Divlab, plugin in prototype | Learning whether distributed CSD works at all |
 | Foundation | 10–100 | Divlab and the plugin released; website live; a GitHub App runs the org; several projects | PDC coordinator time for proposals and escalations |
-| Growth | 100–1,000 | Trust levels and conflict checks fully automated; delegated PDC coordinators per project; large projects split into a repository per module group | GitHub API limits on cross-project task search; merge volume in busy repositories |
-| Scale | 1,000+ | A small read-only **task index** service (a cache of open tasks, rebuilt from GitHub events) for `/anarres:next`; elected councils for governance; optional unattended members | Governance capacity; upstream maintainers' capacity |
+| Growth | Hundreds | Trust levels and conflict checks fully automated; delegated PDC coordinators per project; large projects split into a repository per module group | GitHub API limits on cross-project task search; merge volume in busy repositories |
+| Scale | Larger still | A small read-only **task index** service (a cache of open tasks, rebuilt from GitHub events) for `/anarres:next`; elected councils for governance | Governance capacity; upstream maintainers' capacity |
 
 The things that do **not** scale on their own are human: proposal review, PDC coordinatorship and upstream liaison. Anarres's governance design (delegation, trust levels, councils) is its scaling plan as much as any technology is.
 
@@ -450,8 +445,7 @@ Each phase has an exit criterion and is built test-first, from the outside in.
 | **2. Decomposition** | Programme Architect role, contracts, the interface change protocol, the integration pipeline | A project with three or more modules and at least one contract revision completes |
 | **3. Website and proposals** | Netlify site, GitHub sign-in, proposal flow, project browser, dashboards | A project proposed by a non-founder is approved and started |
 | **4. Governance at scale** | Governance role, trust levels, automated conflict checks, PDC coordinator tooling | Several projects run at once with no founder routing or approvals |
-| **5. Unattended members** | Opt-in self-paced mode (members' sessions claim tasks on a schedule) | Subject to confirming that Anthropic's terms allow it (§17) |
-| **6. Research instrumentation** | Metrics dashboards, research corpus export | The first claim from the experimental programme is tested on Anarres data |
+| **5. Research instrumentation** | Metrics dashboards, research corpus export | The first claim from the experimental programme is tested on Anarres data |
 
 ---
 
@@ -460,7 +454,7 @@ Each phase has an exit criterion and is built test-first, from the outside in.
 1. **Domain and name use.** The GitHub organisation is registered. No domain is yet; `anarrescommons.org` and `anarres.io` appeared to be free in October 2026, and Netlify's free subdomain will do until launch. "Anarres" is used as an homage to Le Guin's novel; the project should credit the source and avoid any suggestion of endorsement by her estate.
 2. **Does distributed CSD work?** CSD has been proven on one project, on one machine. Phase 0 exists to find out cheaply.
 3. **Quality of decomposition.** The Programme Architect's output decides everything downstream. Poor contracts will show up as heavy interface churn. ω(t) at programme level should detect it.
-4. **Anthropic's terms for unattended use.** v1 avoids the question by having members start every session themselves. Confirm before Phase 5.
+4. **Anthropic's terms.** Members start every session themselves. Any change to how sessions start is checked against Anthropic's terms first.
 5. **Member retention and latency.** Volunteer platforms depend on motivation. Visible credit (contributor pages, acknowledgements in upstream commits where allowed) and short, well-sized tasks matter.
 6. **Legal entity and liability.** Who owns the organisation, the trademark and the PDC coordinator role? A lightweight foundation or fiscal host may be needed before the Growth stage.
 7. **Cost of Claude in Divlab.** Optional escalation diagnosis uses an organisation API key. Keep it opt-in until a funding source exists.
@@ -472,7 +466,7 @@ Each phase has an exit criterion and is built test-first, from the outside in.
 
 | Kept | Changed | Dropped |
 |---|---|---|
-| Epistemic independence and the role taxonomy | Divlab is deterministic code, not a Claude session | "Billion-token swarm" as the main argument |
+| Epistemic independence and the role taxonomy | Divlab is deterministic code, not a Claude session | Raw context as the main argument |
 | Feedback signals with YAML headers | Tasks with leases instead of a full team up front | tmux on member machines |
 | Routing table and escalation triggers | Decomposition by module plus Programme Architect role | Channels as a requirement (optional later) |
 | Event journal and state space metrics | GitHub as the coordination layer (no PostgreSQL server) | Pathogen design-space project |
