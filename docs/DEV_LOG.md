@@ -30,6 +30,14 @@ Action and the sandbox driver are still open in section 0.
 
 ---
 
+## 2026-10-13: Discretion in public until release
+
+- The repository stays public (Bernard). New hard rule in `CLAUDE.md`: nothing here spells out
+  how a safeguard could be got round; threat notes stay general, and specifics go to Bernard
+  first.
+- The public documents were reviewed against the rule. Passages that may say more than they need
+  were raised with Bernard; none was changed without his decision.
+
 ## 2026-10-13: Divlab acts on real GitHub; the sandbox suite runs
 
 - The adapter's HTTP calls (`GitHubAdapter`: post, alert, mark done, append, read). The sandbox

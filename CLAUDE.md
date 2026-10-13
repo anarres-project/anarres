@@ -340,6 +340,11 @@ npm run mutate                   # Stryker on packages/core
 - ❌ Weaken a safety, eligibility, conflict-of-interest or governance rule to make something
   easier to build or test. Raise it with Bernard instead.
 - ❌ Run automated tests against any real `anarres-project` repository except the sandbox.
+- ❌ Spell out, anywhere in this public repository (docs, test names, feature files, commit
+  messages, issues), how a safety, eligibility, conflict-of-interest or governance safeguard could
+  be got round. Name the behaviour that must hold, keep threat notes general, and raise anything
+  more specific with Bernard first (Bernard, 2026-10-13: the repository stays public until
+  release).
 
 ---
 
