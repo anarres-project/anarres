@@ -156,6 +156,14 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 
 - Divlab reads the accepted work's module, role and verdict from the merged feedback signal
   header (today the in-process driver hands them straight to Divlab).
+  - [x] reading a feedback signal (`core`): the work its header reports, and the task it names;
+        a missing, unterminated or invalid header, a missing role, module or verdict,
+        impediments without a type, or a task that is not text or a whole number make it
+        unreadable, never guessed at;
+  - [ ] a signal written with Windows line endings is read the same;
+  - [ ] Divlab finds the signals merged since it last ran, and routes each once;
+  - [ ] a signal that reaches `main` unreadable (validation should stop it first: section 4)
+        → ? (ask Bernard: alert PDC coordinators once, and record it so it is not retried?)
 - Work from a role Divlab does not recognise is rejected, not routed (today `route` treats an
   unknown role as the start of the pipeline; untested, so section 4 must cover it).
 - The task posted on GitHub links to its feedback signal at the merged commit (needs Divlab as an

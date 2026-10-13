@@ -30,6 +30,52 @@ Action and the sandbox driver are still open in section 0.
 
 ---
 
+## 2026-10-13: Reading a feedback signal
+
+- Started on Divlab as a GitHub Action (Bernard). First piece: `core` reads the work a merged
+  feedback signal reports from its YAML header (`readFeedbackSignal`), so Divlab can act on what
+  was merged rather than on what a driver hands it. The header is untrusted: anything malformed is
+  `unreadable`, with the reason, never guessed at. YAML is parsed by `yaml` 2.9.1 (no
+  dependencies; it builds plain data and runs nothing).
+- Cycles:
+
+  ```
+  RED:      gives the work its header reports… -> TypeError: readFeedbackSignal is not a function; (stub) expected undefined to deeply equal {…}
+  GREEN:    (71 passed), hard-coded
+  RED:      gives the problems failed work reports, and no task when it names none -> expected { fromRole: 'specification', …(4) } to deeply equal { fromRole: 'coding', …(3) }
+  GREEN:    (72 passed)
+  RED:      finds a file with no feedback signal header unreadable -> TypeError: Cannot destructure property 'feedback_signal' of 'parse(...)' as it is null
+  GREEN:    (73 passed)
+  RED:      finds a header that is not valid YAML unreadable -> YAMLParseError
+  GREEN:    (74 passed)
+  RED:      finds a header that … with no feedback signal in it, unreadable (3 rows) -> TypeError: Cannot read properties of undefined (reading 'from_role')
+  GREEN:    (77 passed)
+  RED:      finds a feedback signal without a … in words unreadable (5 rows) -> expected { fromRole: undefined, …(3) } to deeply equal { Object (unreadable) }
+  GREEN:    (82 passed)
+  RED:      finds a feedback signal whose impediments … unreadable (3 rows) -> TypeError: … .map is not a function
+  GREEN:    (85 passed)
+  REFACTOR: removed an optional chain no test demanded
+  RED:      … impediments include an empty entry unreadable -> TypeError: Cannot read properties of null (reading 'type')
+  GREEN:    (86 passed)
+  RED:      gives the task as text when the header gives it as a number -> expected {…} to match object { task: '12' }
+  GREEN:    (87 passed)
+  RED:      finds a feedback signal whose task is … unreadable (3 rows) -> expected {…} to deeply equal { Object (unreadable) }
+  GREEN:    (90 passed)
+  ```
+
+- Mutation testing then left three survivors: the header pattern (nothing said the header must
+  start the file) and a null check. Driven out:
+
+  ```
+  RED:      finds a header that does not start the file no header at all -> expected { fromRole: 'test', …(3) } to deeply equal { Object (unreadable) }
+  GREEN:    (91 passed); the header is now found line by line, with no pattern
+  RED:      finds a header that never ends unreadable -> expected { Object (unreadable) } to deeply equal { unreadable: 'its header never ends' }
+  GREEN:    (92 passed)
+  PASSED FIRST TIME: an empty feedback signal is unreadable (the null check), kept to pin it down (93 passed)
+  ```
+
+  Mutation score 100% (284 of 284).
+
 ## 2026-10-13: Discretion in public until release
 
 - The repository stays public (Bernard). New hard rule in `CLAUDE.md`: nothing here spells out
