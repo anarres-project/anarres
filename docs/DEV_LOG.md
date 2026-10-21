@@ -30,6 +30,26 @@ the order in which several unrouted signals are routed in one run (section 0).
 
 ---
 
+## 2026-10-21: Work without a feedback signal; text members choose
+
+- A pull request with no feedback signal is refused, and Divlab's comment says the work needs one
+  (in-process; `@sandbox-wip` until tried in the sandbox). This drives out the guard TypeScript
+  had forced in without a test.
+- The sandbox driver looks for refusals and failed runs on every third check only.
+- The alert issue's routing record is safe inside its code block (JSON escapes line breaks); a
+  guard test holds it. The exposure is elsewhere: module names and impediment types from the
+  member's signal reach issue titles, labels and text unchecked (test list, section 4).
+
+OUTER RED: Work without a feedback signal is not merged, and the member is told why (@wip)
+           -> not yet right at "the member is told their work has no feedback signal"
+RED:      tells the member when their pull request has no feedback signal -> expected [] to
+          equal [ Array(1) ]
+GREEN:    (20 passed); OUTER GREEN, @wip removed
+PASSED FIRST TIME: keeps the routing record inside its code block (guard; shown to fail with raw
+          line breaks, then restored)
+
+---
+
 ## 2026-10-21: Every scenario's work goes through a pull request
 
 - Accepted work now means work a member submitted as a pull request and Divlab merged, in both

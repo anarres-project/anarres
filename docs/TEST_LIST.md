@@ -170,8 +170,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the refusal comment quotes the reason so nothing a member wrote acts as Markdown;
   - [x] proved against the sandbox: the pull request merged by `divlab-sandbox[bot]`, its work
         recorded and routed, the push workflow running after it.
-- [ ] The alert issue's routing record is quoted the same way as a refusal (it includes the
-      feedback signal's path, which the member chose, inside a plain code block today).
+- [x] The alert issue's routing record stays inside its code block whatever the member's text
+      says: JSON writes line breaks in strings as `\n`, so no line in the block can close it (a
+      guard test, passed first time; shown to fail if the line breaks were written raw).
 - [x] The sandbox driver submits work as a real pull request and waits for Divlab to merge or
       refuse it.
 - [ ] Every scenario submits work as a pull request, not by writing to main directly; then each
@@ -201,6 +202,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       paths.
 - [ ] Work without a valid feedback signal is rejected, saying what is missing.
 - [ ] Work for a task the member has not claimed is rejected.
+- [ ] Work naming a module the project does not have is refused, and so is a feedback signal
+      whose role, module or impediments are not plain names: Divlab writes them into issue
+      titles, labels and text, so member-chosen text must never reach them unchecked.
 - [ ] Coding work that changes tests is rejected.
 - [ ] Work based on inputs that have since changed is flagged as stale.
 

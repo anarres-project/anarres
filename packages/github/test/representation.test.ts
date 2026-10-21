@@ -157,6 +157,18 @@ describe("a PDC coordinator alert as a GitHub issue", () => {
     expect(JSON.parse(json ?? "null")).toEqual(unroutable);
   });
 
+  it("keeps the routing record inside its code block, whatever the work's feedback signal is called", () => {
+    const sly: RoutingEvent = {
+      ...unroutable,
+      work: {
+        ...unroutable.work,
+        feedbackSignal: "feedback/x\n```\n@everyone [click](https://example.test)",
+      },
+    };
+    const { body } = issueForAlert(sly);
+    expect(body.split("\n").filter((line) => line.startsWith("```"))).toEqual(["```json", "```"]);
+  });
+
   it("says blocked work was blocked", () => {
     const blocked: RoutingEvent = {
       ...unroutable,
