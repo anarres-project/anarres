@@ -165,3 +165,17 @@ export async function onPullRequest(
   await pullRequests.merge(project, pullRequest, head);
   await acceptSignal(project, feedback.path, signal, board, log);
 }
+
+/** Project repositories as Divlab sets them up. */
+export interface ProjectRepositories {
+  /** Only Divlab may change the main branch: no person is exempt (decision 0006). */
+  protectMain(project: string): Promise<void>;
+}
+
+/** A project's repository has been created, and Divlab prepares it. */
+export async function setUpProject(
+  project: string,
+  repositories: ProjectRepositories,
+): Promise<void> {
+  await repositories.protectMain(project);
+}

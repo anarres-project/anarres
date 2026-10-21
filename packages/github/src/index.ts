@@ -11,6 +11,7 @@ export {
   type ListedIssue,
   logFrom,
   type NewIssue,
+  rulesetProtectingMain,
   taskFromIssue,
 } from "./representation.ts";
 export { requestGitHub } from "./request.ts";

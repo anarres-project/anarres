@@ -124,3 +124,18 @@ export function commentForRefusal(reason: string): string {
   const fence = "`".repeat(Math.max(3, longest + 1));
   return `Divlab has not merged this pull request:\n\n${fence}\n${reason}\n${fence}`;
 }
+
+/**
+ * Nobody may update, delete or rewrite main except Divlab's App, which merges members' pull
+ * requests and records its decisions. No person is exempt, administrators included.
+ */
+export function rulesetProtectingMain(app: number) {
+  return {
+    name: "Only Divlab changes main",
+    target: "branch",
+    enforcement: "active",
+    conditions: { ref_name: { include: ["~DEFAULT_BRANCH"], exclude: [] } },
+    rules: [{ type: "update" }, { type: "deletion" }, { type: "non_fast_forward" }],
+    bypass_actors: [{ actor_id: app, actor_type: "Integration", bypass_mode: "always" }],
+  };
+}

@@ -63,6 +63,16 @@ export class Anarres {
     });
   }
 
+  private directChangeTook: boolean | undefined;
+
+  async someoneChangesMainDirectly() {
+    this.directChangeTook = await this.driver.changeMainDirectly(this.project);
+  }
+
+  async theChangeIsRefused() {
+    assert.equal(this.directChangeTook, false, "expected the change to main to be refused");
+  }
+
   async divlabHasNotMerged(work: Work) {
     const feedbackSignal = this.feedbackSignals.get(workOn(this.aliased(work)));
     assert.ok(

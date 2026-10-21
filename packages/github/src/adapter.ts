@@ -1,6 +1,7 @@
 import type {
   EventLog,
   PostedTask,
+  ProjectRepositories,
   PullRequests,
   Repository,
   RoutingEvent,
@@ -16,6 +17,7 @@ import {
   type ListedIssue,
   logFrom,
   type NewIssue,
+  rulesetProtectingMain,
   taskFromIssue,
 } from "./representation.ts";
 import { requestGitHub } from "./request.ts";
@@ -24,8 +26,20 @@ import { requestGitHub } from "./request.ts";
  * Divlab's task board, event log, merged files and members' pull requests on GitHub: each project is a repository owned
  * by `owner`. The only code that calls the GitHub API on Divlab's behalf.
  */
-export class GitHubAdapter implements TaskBoard, EventLog, Repository, PullRequests {
-  constructor(private readonly options: { owner: string; token: string }) {}
+export class GitHubAdapter
+  implements TaskBoard, EventLog, Repository, PullRequests, ProjectRepositories
+{
+  /** `app`: Divlab's GitHub App, needed only to set projects up. */
+  constructor(private readonly options: { owner: string; token: string; app?: number }) {}
+
+  async protectMain(project: string): Promise<void> {
+    if (this.options.app === undefined) throw new Error("Protecting main needs Divlab's App");
+    await this.call(
+      "POST",
+      `${this.repo(project)}/rulesets`,
+      rulesetProtectingMain(this.options.app),
+    );
+  }
 
   async post(task: PostedTask): Promise<void> {
     await this.openIssue(task.project, issueForTask(task));

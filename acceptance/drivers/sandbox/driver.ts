@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import type { RoutingEvent } from "@anarres/divlab";
+import { type RoutingEvent, setUpProject } from "@anarres/divlab";
 import { GitHubAdapter } from "@anarres/github";
 import type {
   AcceptedWork,
@@ -33,6 +33,7 @@ export class SandboxDriver implements Driver {
   private readonly github: GitHubApi;
   private readonly divlab: GitHubAdapter;
   private readonly org: string;
+  private readonly token: string;
 
   constructor() {
     const { ANARRES_SANDBOX_ORG: org, ANARRES_SANDBOX_TOKEN: token } = process.env;
@@ -40,6 +41,7 @@ export class SandboxDriver implements Driver {
       throw new Error("The sandbox driver needs ANARRES_SANDBOX_ORG and ANARRES_SANDBOX_TOKEN");
     }
     this.org = org;
+    this.token = token;
     this.github = new GitHubApi(token);
     this.divlab = new GitHubAdapter({ owner: org, token });
   }
@@ -66,6 +68,9 @@ export class SandboxDriver implements Driver {
         },
       );
     }
+    // Set up as a project is, once the workflows are in: from now on only Divlab changes main.
+    const divlab = new GitHubAdapter({ owner: this.org, token: this.token, app: DIVLAB_APP_ID });
+    await setUpProject(project, divlab);
     run.expected.set(project, { ready: 0, escalation: 0, done: 0 });
   }
 
@@ -124,6 +129,16 @@ export class SandboxDriver implements Driver {
   }
 
   /** Divlab's comments on the pull requests it did not merge. */
+  /** The sandbox token is an administrator's: if main refuses it, it refuses every person. */
+  async changeMainDirectly(project: string): Promise<boolean> {
+    const { status } = await this.github.request(
+      "PUT",
+      `repos/${this.org}/${project}/contents/not-through-divlab.md`,
+      { message: "A change that skips Divlab", content: Buffer.from("No.\n").toString("base64") },
+    );
+    return status >= 200 && status < 300;
+  }
+
   async refusals(project: string): Promise<string[]> {
     const said: string[] = [];
     for (const submitted of run.submitted.filter((pr) => pr.project === project && !pr.merged)) {
@@ -339,6 +354,9 @@ export class SandboxDriver implements Driver {
 }
 
 type Listing = "ready" | "escalation" | "done";
+
+/** The App ID of Divlab Sandbox, the sandbox's GitHub App (CONTRIBUTING.md). Not a secret. */
+const DIVLAB_APP_ID = 5414648;
 
 /** The project template's workflows: one for members' pull requests, one for pushes to main. */
 const TEMPLATE_WORKFLOWS = ["anarres.yml", "divlab-pull-request.yml"];

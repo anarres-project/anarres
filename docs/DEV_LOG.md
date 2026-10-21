@@ -30,6 +30,29 @@ the order in which several unrouted signals are routed in one run (section 0).
 
 ---
 
+## 2026-10-21: Only Divlab changes main
+
+- `setUpProject` protects a new project's main branch: a ruleset lets nobody but Divlab's App
+  update, delete or rewrite it, administrators included. A ruleset is a repository setting, so it
+  is applied when a project is set up, not carried in the template. Project set-up has no other
+  home yet; this is its seam.
+- The sandbox driver sets every repository up that way. Against the sandbox: an administrator's
+  direct change to main was refused, and Divlab Sandbox still merged, recorded and routed through
+  the escalation scenarios (6 of 6).
+- GitHub hides a private App from its public API, so the driver holds Divlab Sandbox's App ID.
+
+OUTER RED: A change to main from anyone but Divlab is refused (@wip) -> NotYetImplemented
+RED:      protects the project's main branch so that only Divlab can change it -> TypeError;
+          stub -> expected [] to equal [ 'ledger' ]
+GREEN:    (21 passed)
+RED:      lets nobody but Divlab's App change, delete or rewrite main -> expected undefined to
+          equal { …(6) }
+GREEN:    (34 passed in packages/github)
+SANDBOX:  first tries failed for harness reasons (a private App is not visible by name; a short
+          commit SHA cannot pin an Action), each reported with GitHub's own reason; then 6 of 6.
+
+---
+
 ## 2026-10-21: Plain names only
 
 - `readFeedbackSignal` finds a signal unreadable unless its role, module, verdict and impediment

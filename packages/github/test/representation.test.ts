@@ -9,6 +9,7 @@ import {
   issueForTask,
   issueNumber,
   logFrom,
+  rulesetProtectingMain,
   taskFromIssue,
 } from "../src/index.ts";
 
@@ -207,5 +208,18 @@ describe("Divlab's comment on a pull request it will not merge", () => {
     expect(commentForRefusal(reason)).toBe(
       `Divlab has not merged this pull request:\n\n\`\`\`\`\n${reason}\n\`\`\`\``,
     );
+  });
+});
+
+describe("the ruleset that protects a project's main branch (decision 0006)", () => {
+  it("lets nobody but Divlab's App change, delete or rewrite main", () => {
+    expect(rulesetProtectingMain(5414648)).toEqual({
+      name: "Only Divlab changes main",
+      target: "branch",
+      enforcement: "active",
+      conditions: { ref_name: { include: ["~DEFAULT_BRANCH"], exclude: [] } },
+      rules: [{ type: "update" }, { type: "deletion" }, { type: "non_fast_forward" }],
+      bypass_actors: [{ actor_id: 5414648, actor_type: "Integration", bypass_mode: "always" }],
+    });
   });
 });

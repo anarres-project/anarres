@@ -255,3 +255,14 @@ Then(
     return this.anarres.taskIsNoLongerReady({ role, module });
   },
 );
+
+When(
+  "someone other than Divlab changes the project's main branch directly",
+  function (this: AnarresWorld) {
+    return this.anarres.someoneChangesMainDirectly();
+  },
+);
+
+Then("the change is refused", function (this: AnarresWorld) {
+  return this.anarres.theChangeIsRefused();
+});

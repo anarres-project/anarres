@@ -181,17 +181,19 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] accepted work is submitted as a pull request and merged by Divlab, in both drivers;
   - [x] the sandbox suite's time with a pull request per merge: all 58 scenarios in 30.5
         minutes in CI (2026-10-21), inside the 45-minute limit;
-  - [ ] the ruleset.
+  - [x] the ruleset: every sandbox repository is set up with it.
 - [ ] Members' pull requests come from forks; the sandbox driver submits from a fork too.
-- [ ] A project's main branch admits changes only through pull requests Divlab's App merges; no
-      person is exempt (template ruleset; the sandbox driver sets it up too).
+- [x] A project's main branch admits changes only from Divlab's App; no person is exempt
+      (`setUpProject` applies the ruleset; the sandbox refused an administrator's direct change
+      while Divlab still merged and recorded, 2026-10-21).
 - [ ] Divlab alerts PDC coordinators when a project's main branch is not protected as decision 0006
       requires.
 - [ ] The tripwire leaves Divlab's own recorded merges alone.
 - [ ] A contribution that fails validation is not merged, and the member is told why.
   - [x] a feedback signal Divlab cannot read (unit tests only so far);
 - [ ] A contribution PDC coordinators require reviewed is merged only once a reviewer approves.
-- [ ] A new project's main branch can be changed only by Divlab (project template).
+- [x] A new project's main branch can be changed only by Divlab (`setUpProject`; a ruleset is a
+      repository setting, not a template file).
 - [ ] Work that reached main without Divlab merging it is not routed; it is recorded once and PDC
       coordinators are alerted (decision 0005).
 - [ ] Divlab records each merge as it makes it, and routes from those records, so work is routed

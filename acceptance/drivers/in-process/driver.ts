@@ -1,4 +1,4 @@
-import { onPullRequest } from "@anarres/divlab";
+import { onPullRequest, setUpProject } from "@anarres/divlab";
 import type {
   AcceptedWork,
   CoordinatorAlert,
@@ -21,6 +21,7 @@ export class InProcessDriver implements Driver {
 
   async createProject(project: string, modules: string[]): Promise<void> {
     this.github.repositories.set(project, modules);
+    await setUpProject(project, this.github);
   }
 
   /** The member submits the work and Divlab merges it: accepted work has been merged. */
@@ -29,6 +30,10 @@ export class InProcessDriver implements Driver {
     if (!(await this.mergedWork(work.project)).includes(work.feedbackSignal)) {
       throw new Error(`Divlab did not merge the ${work.role} work on ${work.module}`);
     }
+  }
+
+  async changeMainDirectly(project: string): Promise<boolean> {
+    return this.github.changeMainDirectly(project);
   }
 
   async refusals(project: string): Promise<string[]> {

@@ -66,7 +66,7 @@ The sandbox organisation itself needs, under Settings → Actions → General:
 - workflow permissions left read-only by default: the template's workflow asks for what it needs.
 
 Divlab merges as its own GitHub App (decision 0006). The sandbox's App is **Divlab Sandbox**
-(App ID 5414648, Client ID `Iv23liDDB4oQwfu6ZX9F`), owned by and installed on the sandbox
+(its App ID is in the sandbox driver, which sets each repository up with it), owned by and installed on the sandbox
 organisation only, for all its repositories. Its repository permissions: read and write for
 contents, issues and pull requests; read for metadata; none for workflows. The organisation holds
 its Client ID as the Actions variable `DIVLAB_APP_CLIENT_ID` (the template's workflows read it;

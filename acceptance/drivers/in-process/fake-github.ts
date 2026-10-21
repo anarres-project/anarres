@@ -2,6 +2,7 @@ import type {
   CoordinatorAlert,
   EventLog,
   PostedTask,
+  ProjectRepositories,
   PullRequests,
   Repository,
   RoutingEvent,
@@ -12,7 +13,9 @@ import type {
 type OpenTask = PostedTask & { id: string };
 
 /** An in-memory stand-in for the GitHub repositories and issues Divlab works with. */
-export class FakeGitHub implements TaskBoard, EventLog, Repository, PullRequests {
+export class FakeGitHub
+  implements TaskBoard, EventLog, Repository, PullRequests, ProjectRepositories
+{
   readonly repositories = new Map<string, string[]>();
   private readonly files = new Map<string, Map<string, string>>();
   private readonly openTasks: OpenTask[] = [];
@@ -48,6 +51,17 @@ export class FakeGitHub implements TaskBoard, EventLog, Repository, PullRequests
 
   coordinatorAlerts(project: string): CoordinatorAlert[] {
     return this.alerts.filter((alert) => alert.project === project);
+  }
+
+  private readonly protectedMains = new Set<string>();
+
+  async protectMain(project: string): Promise<void> {
+    this.protectedMains.add(project);
+  }
+
+  /** Someone other than Divlab writes to main: it takes only if main is unprotected. */
+  changeMainDirectly(project: string): boolean {
+    return !this.protectedMains.has(project);
   }
 
   /** A file reaches the project's main branch. */

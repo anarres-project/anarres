@@ -7627,6 +7627,16 @@ ${fence}
 ${reason}
 ${fence}`;
 }
+function rulesetProtectingMain(app) {
+  return {
+    name: "Only Divlab changes main",
+    target: "branch",
+    enforcement: "active",
+    conditions: { ref_name: { include: ["~DEFAULT_BRANCH"], exclude: [] } },
+    rules: [{ type: "update" }, { type: "deletion" }, { type: "non_fast_forward" }],
+    bypass_actors: [{ actor_id: app, actor_type: "Integration", bypass_mode: "always" }]
+  };
+}
 
 // ../github/src/rate-limits.ts
 function retryAfter(answer, now) {
@@ -7688,10 +7698,19 @@ var pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // ../github/src/adapter.ts
 var GitHubAdapter = class {
+  /** `app`: Divlab's GitHub App, needed only to set projects up. */
   constructor(options) {
     this.options = options;
   }
   options;
+  async protectMain(project2) {
+    if (this.options.app === void 0) throw new Error("Protecting main needs Divlab's App");
+    await this.call(
+      "POST",
+      `${this.repo(project2)}/rulesets`,
+      rulesetProtectingMain(this.options.app)
+    );
+  }
   async post(task) {
     await this.openIssue(task.project, issueForTask(task));
   }
