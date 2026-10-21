@@ -38,6 +38,8 @@ Action and the sandbox driver are still open in section 0.
   enforces, deterministic routing and governance for strangers working together.
 - `docs/LATER.md`: running tasks in a cloud sandbox, with the open question of whether the
   plugin's protections take effect there.
+- `CONTRIBUTING.md`: installing Node 24 with Homebrew, which leaves it unlinked beside a newer
+  `node`. The full gate now runs locally on Node 24 again (124 unit tests, 56 scenarios).
 
 ## 2026-10-13: Divlab's Action: entry point, bundle and project workflow
 

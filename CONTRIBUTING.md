@@ -21,6 +21,9 @@ You do not install the other tools globally: `npm ci` installs them, at the lock
 
 - [nvm](https://github.com/nvm-sh/nvm): `nvm install && nvm use`
 - [fnm](https://github.com/Schniz/fnm): `fnm install && fnm use`
+- [Homebrew](https://brew.sh) (macOS): `brew install node@24`, then
+  `export PATH="$(brew --prefix node@24)/bin:$PATH"` in the shell you work in. Homebrew does not
+  link it over a newer `node`, so it is not used until it comes first on your `PATH`.
 
 or install Node 24 from [nodejs.org](https://nodejs.org/en/download) and put it first on your
 `PATH` for this repository.
