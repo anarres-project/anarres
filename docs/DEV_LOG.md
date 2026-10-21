@@ -30,6 +30,18 @@ Action and the sandbox driver are still open in section 0.
 
 ---
 
+## 2026-10-21: Security reports and a private side repository
+
+- Bernard: `anarres` stays public (on GitHub Free, a private repository would lose the sandbox
+  environment and branch protection), and so do sandbox repositories (decision 0004).
+- A private side repository, `anarres-project/anarres-private`, now holds what must not be public:
+  the detailed threat model, known weaknesses not yet fixed, security findings and incident
+  notes. Safeguard code and its tests stay public. CLAUDE.md's discretion rule points to it.
+- `SECURITY.md`: how to report a problem privately, through GitHub's private vulnerability
+  reporting.
+
+---
+
 ## 2026-10-21: Coding's upstream ambiguity goes to Specification
 
 - Bernard: Coding reporting an upstream ambiguity now goes back to Specification, as Test's does,

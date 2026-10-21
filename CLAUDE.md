@@ -342,9 +342,12 @@ npm run mutate                   # Stryker on packages/core
 - ❌ Run automated tests against any real `anarres-project` repository except the sandbox.
 - ❌ Spell out, anywhere in this public repository (docs, test names, feature files, commit
   messages, issues), how a safety, eligibility, conflict-of-interest or governance safeguard could
-  be got round. Name the behaviour that must hold, keep threat notes general, and raise anything
-  more specific with Bernard first (Bernard, 2026-10-13: the repository stays public until
-  release).
+  be got round. Name the behaviour that must hold, keep threat notes general, and put anything
+  more specific in the private side repository, `anarres-project/anarres-private`, or raise it
+  with Bernard first (Bernard, 2026-10-13: the repository stays public until release; 2026-10-21:
+  the private side repository). Never copy its contents into this repository, its commit messages
+  or published artefacts; say at most that a private note exists. Safeguard code and its tests
+  stay here, in public.
 
 ---
 
