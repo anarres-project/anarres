@@ -27,8 +27,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the sandbox driver observing the real Action: it installs the template's workflow pinned
         to the commit under test, and waits for Divlab's run on each merge (all 57 scenarios in
         CI, about 22 minutes, 2026-10-21);
-  - [ ] the order in which several unrouted signals are routed in one run (merge order, not file
-        name order).
+  - [ ] routing in merge order: by Divlab recording each merge it makes, and routing from those
+        records rather than by listing the feedback signals (decision 0005), never from Git
+        history (section 4).
 - [ ] GitHub sandbox driver: the same scenarios against real repositories in the sandbox
       organisation (`npm run test:acceptance:sandbox`).
   - [x] sandbox organisation and token (2026-10-13);
@@ -156,6 +157,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [ ] A new project's main branch can be changed only by Divlab (project template).
 - [ ] Work that reached main without Divlab merging it is not routed; it is recorded once and PDC
       coordinators are alerted (decision 0005).
+- [ ] Divlab records each merge as it makes it, and routes from those records, so work is routed
+      in the order Divlab merged it.
+- [ ] A run interrupted between merging and recording is finished by the next run: Divlab records
+      that it is about to merge before it merges, so it never has to read Git history to find out
+      what it did.
 - [ ] Work that touches files outside the role's write scope is rejected, naming the offending
       paths.
 - [ ] Work without a valid feedback signal is rejected, saying what is missing.
