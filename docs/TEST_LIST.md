@@ -154,8 +154,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [ ] Divlab merges a contribution that passes validation (decision 0005: only Divlab merges).
   - [x] in-process: a pull request whose feedback signal Divlab can read is merged, and its work
         routed (`onPullRequest`);
-  - [ ] in the sandbox, as Divlab's App (the scenario is tagged `@sandbox-wip` until then; the
-        sandbox run lists such scenarios);
+  - [x] in the sandbox, as Divlab's App: a real pull request, merged by Divlab Sandbox
+        (2026-10-21);
   - [ ] the task the work names is closed, and Research work goes back to the role its task was
         for, as when routing a merge;
   - [ ] a pull request with no feedback signal is not merged, and the member is told so (today
@@ -168,11 +168,16 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       (changed files read as data, merge, refusal comment).
   - [x] what a run is for, from its event (`whatToActOn`), and the Action's dispatch;
   - [x] the refusal comment quotes the reason so nothing a member wrote acts as Markdown;
-  - [ ] proved against the sandbox (next).
+  - [x] proved against the sandbox: the pull request merged by `divlab-sandbox[bot]`, its work
+        recorded and routed, the push workflow running after it.
 - [ ] The alert issue's routing record is quoted the same way as a refusal (it includes the
       feedback signal's path, which the member chose, inside a plain code block today).
-- [ ] The sandbox driver submits work as a real pull request, sets up the ruleset with Divlab
-      Sandbox as its only bypass, and waits for Divlab to merge it; then `@sandbox-wip` goes.
+- [x] The sandbox driver submits work as a real pull request and waits for Divlab to merge or
+      refuse it.
+- [ ] Every scenario submits work as a pull request, not by writing to main directly; then each
+      sandbox repository gets the ruleset with Divlab Sandbox as its only bypass (it cannot
+      before: the driver's direct writes to main would be refused).
+- [ ] Members' pull requests come from forks; the sandbox driver submits from a fork too.
 - [ ] A project's main branch admits changes only through pull requests Divlab's App merges; no
       person is exempt (template ruleset; the sandbox driver sets it up too).
 - [ ] Divlab alerts PDC coordinators when a project's main branch is not protected as decision 0006

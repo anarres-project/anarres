@@ -30,6 +30,32 @@ the order in which several unrouted signals are routed in one run (section 0).
 
 ---
 
+## 2026-10-21: Divlab merges a real pull request as its App
+
+- `packages/github` implements Divlab's side of a pull request: its head, its changed files read
+  through the API as data (blobs from the project's own copy, no links followed), a squash merge
+  only at the commit Divlab read, and a refusal comment.
+- The Action decides from its event whether it is acting on a pull request or a push.
+- The sandbox driver installs both template workflows and submits work as a branch and a pull
+  request, then waits for Divlab to merge or refuse it and for Divlab's record.
+- Sandbox: the pull request was merged by `divlab-sandbox[bot]`, its work recorded and routed,
+  and the push workflow ran after it. The scenario lost its `@sandbox-wip` tag; the tag and the
+  sandbox run's listing of it stay for the next scenario that needs them.
+- The ruleset waits until every scenario submits work as a pull request: the driver still writes
+  to main directly for the older steps, which a ruleset would refuse.
+
+RED:      says why, quoting the reason as text, never as Markdown -> expected '' to be '…'
+          (stub written with the test)
+GREEN:    (31 passed in packages/github)
+RED:      keeps the reason inside its code block even when the reason contains a fence
+          -> strings differ
+GREEN:    (32 passed)
+SANDBOX:  first run failed: the driver read the log between Divlab's merge and its record; it
+          now waits for the record. Then 1 passed, and 9 of 9 across two features.
+REFACTOR: GitHub expressions in the template test written through a helper (lint warnings)
+
+---
+
 ## 2026-10-21: Merging only what was checked; what a run is for
 
 - Divlab reads a pull request at one commit and merges only that commit, so anything pushed after

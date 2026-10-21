@@ -139,8 +139,7 @@ export class SandboxDriver implements Driver {
   private async expectWhatDivlabDecided(project: string, path: string, task?: Issue) {
     // The event log is consistent at once and says what Divlab did; the issue lists lag behind.
     const expected = this.expectedFor(project);
-    const event = (await this.divlab.read(project)).find((e) => e.work.feedbackSignal === path);
-    if (!event) throw new Error(`Divlab recorded nothing for ${path} in ${project}`);
+    const event = await this.eventFor(project, path);
     if (task) {
       expected.ready -= 1;
       run.closed.add(issueKey(project, task.number));
@@ -149,6 +148,18 @@ export class SandboxDriver implements Driver {
     if ("tasks" in decision) expected.ready += decision.tasks.length;
     if ("alert" in decision) expected.escalation += 1;
     if ("moduleDone" in decision) expected.done += 1;
+  }
+
+  /** Divlab's record of the work, which it writes just after it merges. */
+  private async eventFor(project: string, path: string): Promise<RoutingEvent> {
+    const deadline = Date.now() + 60_000;
+    for (;;) {
+      const event = (await this.divlab.read(project)).find((e) => e.work.feedbackSignal === path);
+      if (event) return event;
+      if (Date.now() > deadline)
+        throw new Error(`Divlab recorded nothing for ${path} in ${project}`);
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+    }
   }
 
   /**
