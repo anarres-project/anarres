@@ -30,6 +30,41 @@ the order in which several unrouted signals are routed in one run (section 0).
 
 ---
 
+## 2026-10-21: The tripwire
+
+- The push workflow is now the tripwire (decisions 0005, 0006). A feedback signal on main with no
+  record of Divlab merging it is never read or routed: Divlab records it once as not accepted,
+  saying why, and alerts PDC coordinators once, and routing carries on. An unreadable signal on
+  main no longer stops Divlab.
+- The event log holds two kinds of record: routing decisions, and what Divlab did not accept.
+  Routing history reads only the decisions.
+- The push workflow acts as Divlab's App with no permissions of its own, like the pull request
+  workflow: the template test now holds both to that. `Repository.readFile` went, unused.
+
+OUTER RED: Work that reaches main without Divlab merging it is never routed (@wip) -> not yet
+           right: Divlab routed it
+RED:      never routes work that reached main without Divlab merging it -> expected [ … ] to
+          equal []
+GREEN:    (22 passed)
+RED:      records it as not accepted, saying why -> expected [] to equal [ … ]
+GREEN:    (23 passed)
+RED:      alerts PDC coordinators of it -> expected [] to equal [ … ]
+GREEN:    (24 passed); OUTER GREEN in-process
+RED:      records an unreadable signal on main like any other, without stopping (rewritten from
+          "refuses to route a feedback signal it cannot read", per decision 0005) -> Error: The
+          feedback signal … cannot be read
+GREEN:    (24 passed); REFACTOR: Repository.readFile removed, unused
+PASSED FIRST TIME: records and alerts it only once (guard; shown to fail without the check)
+RED:      reads back a record of work Divlab did not accept -> Error: not a routing record
+GREEN:    (159 passed)
+RED:      tells PDC coordinators what reached main without Divlab -> expected { title: '' … }
+GREEN:    (160 passed); REFACTOR: one quoting helper for refusals and alerts
+RED:      the push workflow acts as the App, with no permissions of its own -> 3 failing at once
+          (the pull request workflow's three rules, applied to the push workflow; one change)
+GREEN:    (164 passed)
+
+---
+
 ## 2026-10-21: Only Divlab changes main
 
 - `setUpProject` protects a new project's main branch: a ruleset lets nobody but Divlab's App

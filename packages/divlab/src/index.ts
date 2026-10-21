@@ -34,10 +34,18 @@ export type RoutingEvent = { project: string } & RoutingRecord;
 /** An alert carries the whole decision: what the work reported, and why routing stopped. */
 export type CoordinatorAlert = RoutingEvent;
 
+/** Something reached main without Divlab merging it: never routed, recorded once (0005). */
+export type NotAccepted = {
+  project: string;
+  notAccepted: { feedbackSignal: string; reason: string };
+};
+
 /** Where Divlab posts tasks and alerts: GitHub issues in production, a fake in fast tests. */
 export interface TaskBoard {
   post(task: PostedTask): Promise<void>;
   alertCoordinators(alert: CoordinatorAlert): Promise<void>;
+  /** PDC coordinators are told of something on main that Divlab did not accept. */
+  alertNotAccepted(record: NotAccepted): Promise<void>;
   markModuleDone(module: { project: string; module: string }): Promise<void>;
   /** What Divlab recorded on a task it posted; undefined if there is no such task. */
   task(project: string, task: string): Promise<Pick<PostedTask, "researchFor"> | undefined>;
@@ -49,7 +57,6 @@ export interface TaskBoard {
 export interface Repository {
   /** Where each feedback signal merged so far can be found, in no particular order. */
   feedbackSignals(project: string): Promise<string[]>;
-  readFile(project: string, path: string): Promise<string>;
 }
 
 /** Members' pull requests: what each would change, read as data, and merging it. */
@@ -63,16 +70,27 @@ export interface PullRequests {
   refuse(project: string, pullRequest: string, reason: string): Promise<void>;
 }
 
+/** What the event log holds: routing decisions, and what Divlab did not accept. */
+export type LogEvent = RoutingEvent | NotAccepted;
+
+/** The routing decisions in a log, which are all its history routing depends on. */
+export const routingDecisions = (log: readonly LogEvent[]): RoutingEvent[] =>
+  log.filter((event): event is RoutingEvent => "work" in event);
+
+/** The feedback signal an event is about, whichever kind of event it is. */
+export const signalOf = (event: LogEvent): string =>
+  "work" in event ? event.work.feedbackSignal : event.notAccepted.feedbackSignal;
+
 /** Where Divlab records its decisions: one file per event in the project repository. */
 export interface EventLog {
-  append(event: RoutingEvent): Promise<void>;
+  append(event: LogEvent): Promise<void>;
   /** The project's events, oldest first. */
-  read(project: string): Promise<RoutingEvent[]>;
+  read(project: string): Promise<LogEvent[]>;
 }
 
 async function onWorkAccepted(event: WorkAccepted, board: TaskBoard, log: EventLog): Promise<void> {
   const { project, task, ...work } = event;
-  const history = await log.read(project);
+  const history = routingDecisions(await log.read(project));
   const record = routingRecord(work, history);
   await log.append({ project, ...record });
   if (task !== undefined) await board.close(project, task);
@@ -125,15 +143,17 @@ export async function onMerge(
   board: TaskBoard,
   log: EventLog,
 ): Promise<void> {
-  // Each signal is routed once: any merged since Divlab last ran have no event yet.
-  const routed = new Set((await log.read(project)).map((event) => event.work.feedbackSignal));
+  // Divlab records every merge it makes, so a signal with no event reached main some other way.
+  const recorded = new Set((await log.read(project)).map(signalOf));
   for (const path of await repository.feedbackSignals(project)) {
-    if (routed.has(path)) continue;
-    const signal = readFeedbackSignal(await repository.readFile(project, path));
-    if ("unreadable" in signal) {
-      throw new Error(cannotRead(path, signal));
-    }
-    await acceptSignal(project, path, signal, board, log);
+    if (recorded.has(path)) continue;
+    // Never read, let alone routed: whatever it says, it did not come through Divlab.
+    const record: NotAccepted = {
+      project,
+      notAccepted: { feedbackSignal: path, reason: "it reached main without Divlab merging it" },
+    };
+    await log.append(record);
+    await board.alertNotAccepted(record);
   }
 }
 

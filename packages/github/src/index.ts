@@ -6,6 +6,7 @@ export {
   eventFromFile,
   issueForAlert,
   issueForModuleDone,
+  issueForNotAccepted,
   issueForTask,
   issueNumber,
   type ListedIssue,

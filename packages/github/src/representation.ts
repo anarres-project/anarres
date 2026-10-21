@@ -1,5 +1,5 @@
 import { ROLE_NAMES, type Role } from "@anarres/core";
-import type { PostedTask, RoutingEvent } from "@anarres/divlab";
+import type { LogEvent, NotAccepted, PostedTask, RoutingEvent } from "@anarres/divlab";
 
 /** What GitHub needs to open an issue. */
 export type NewIssue = { title: string; labels: string[]; body: string };
@@ -34,10 +34,7 @@ export function issueNumber(task: string): number | undefined {
 }
 
 /** One file per event, so concurrent writers never touch the same file (concept §7). */
-export function eventFile(
-  event: RoutingEvent,
-  sequence: number,
-): { path: string; content: string } {
+export function eventFile(event: LogEvent, sequence: number): { path: string; content: string } {
   return {
     path: `events/${String(sequence).padStart(6, "0")}.json`,
     content: `${JSON.stringify(event, null, 2)}\n`,
@@ -45,8 +42,16 @@ export function eventFile(
 }
 
 /** Event files can be edited by people, so what is read back is checked, never assumed. */
-export function eventFromFile(content: string): RoutingEvent {
+export function eventFromFile(content: string): LogEvent {
   const event: unknown = JSON.parse(content);
+  if (
+    isObject(event) &&
+    isObject(event.notAccepted) &&
+    typeof event.notAccepted.feedbackSignal === "string" &&
+    typeof event.notAccepted.reason === "string"
+  ) {
+    return event as NotAccepted;
+  }
   if (
     !isObject(event) ||
     !isObject(event.work) ||
@@ -109,7 +114,7 @@ export function issueForModuleDone(module: string): NewIssue {
  * The event log from the files listed and the texts read, oldest first; undefined while any
  * listed file is unread, since a decision must never rest on a log missing its latest events.
  */
-export function logFrom(listed: string[], texts: Map<string, string>): RoutingEvent[] | undefined {
+export function logFrom(listed: string[], texts: Map<string, string>): LogEvent[] | undefined {
   if (!listed.every((name) => texts.has(name))) return undefined;
   return listed
     .filter((name) => /^\d{6}\.json$/.test(name))
@@ -119,10 +124,14 @@ export function logFrom(listed: string[], texts: Map<string, string>): RoutingEv
 
 /** The reason is quoted in a code block, so text a member wrote can never act as Markdown. */
 export function commentForRefusal(reason: string): string {
-  // A fence longer than any run of backticks in the reason: nothing in it can close the block.
-  const longest = Math.max(0, ...(reason.match(/`+/g) ?? []).map((run) => run.length));
+  return `Divlab has not merged this pull request:\n\n${quoted(reason)}`;
+}
+
+/** Text in a code block, fenced longer than any run of backticks in it, so nothing can close it. */
+function quoted(text: string): string {
+  const longest = Math.max(0, ...(text.match(/`+/g) ?? []).map((run) => run.length));
   const fence = "`".repeat(Math.max(3, longest + 1));
-  return `Divlab has not merged this pull request:\n\n${fence}\n${reason}\n${fence}`;
+  return `${fence}\n${text}\n${fence}`;
 }
 
 /**
@@ -137,5 +146,14 @@ export function rulesetProtectingMain(app: number) {
     conditions: { ref_name: { include: ["~DEFAULT_BRANCH"], exclude: [] } },
     rules: [{ type: "update" }, { type: "deletion" }, { type: "non_fast_forward" }],
     bypass_actors: [{ actor_id: app, actor_type: "Integration", bypass_mode: "always" }],
+  };
+}
+
+/** The path the member chose goes only in a code block, never in the title or the words. */
+export function issueForNotAccepted({ notAccepted }: NotAccepted): NewIssue {
+  return {
+    title: "Escalation: work reached main without Divlab merging it",
+    labels: ["escalation", "not-accepted"],
+    body: `Divlab has not accepted this feedback signal, and will not route its work: ${notAccepted.reason}.\n\n${quoted(notAccepted.feedbackSignal)}`,
   };
 }

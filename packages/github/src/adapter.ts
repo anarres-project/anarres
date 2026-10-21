@@ -1,5 +1,7 @@
 import type {
   EventLog,
+  LogEvent,
+  NotAccepted,
   PostedTask,
   ProjectRepositories,
   PullRequests,
@@ -12,6 +14,7 @@ import {
   eventFile,
   issueForAlert,
   issueForModuleDone,
+  issueForNotAccepted,
   issueForTask,
   issueNumber,
   type ListedIssue,
@@ -49,6 +52,10 @@ export class GitHubAdapter
     await this.openIssue(alert.project, issueForAlert(alert));
   }
 
+  async alertNotAccepted(record: NotAccepted): Promise<void> {
+    await this.openIssue(record.project, issueForNotAccepted(record));
+  }
+
   async markModuleDone({ project, module }: { project: string; module: string }): Promise<void> {
     const { number } = await this.openIssue(project, issueForModuleDone(module));
     await this.call("PATCH", `${this.repo(project)}/issues/${number}`, { state: "closed" });
@@ -82,15 +89,7 @@ export class GitHubAdapter
     return data.filter((entry) => entry.type === "file").map((entry) => entry.path);
   }
 
-  async readFile(project: string, path: string): Promise<string> {
-    const { content } = await this.call<{ content: string }>(
-      "GET",
-      `${this.repo(project)}/contents/${path}`,
-    );
-    return Buffer.from(content, "base64").toString("utf8");
-  }
-
-  async append(event: RoutingEvent): Promise<void> {
+  async append(event: LogEvent): Promise<void> {
     const sequence = (await this.eventPaths(event.project)).length + 1;
     const { path, content } = eventFile(event, sequence);
     // Creating a file that already exists fails, so two runs cannot both take this number.
@@ -106,7 +105,7 @@ export class GitHubAdapter
    * decisions (re-run counts above all) must never rest on a log missing its latest events, so
    * the read waits for GraphQL to hold every listed file, and fails rather than return less.
    */
-  async read(project: string): Promise<RoutingEvent[]> {
+  async read(project: string): Promise<LogEvent[]> {
     const listed = (await this.eventPaths(project)).map((path) => path.slice("events/".length));
     if (listed.length === 0) return [];
     for (let attempt = 1; ; attempt++) {

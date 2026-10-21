@@ -1,19 +1,20 @@
 name: Divlab
 
-# Divlab routes the work merged into this project to the next tasks (decision 0004). It runs on
-# a push to main, never on a pull request, so no code from a member's fork ever runs here.
+# The tripwire (decisions 0005 and 0006). Only Divlab merges, and it records every merge it makes,
+# so a feedback signal on main with no record reached main some other way: Divlab records it as
+# not accepted, alerts PDC coordinators, and never routes it. It runs on a push to main, never on
+# a pull request, so no code from a member's fork ever runs here.
 on:
   push:
     branches: [main]
     paths: ["feedback/**"]
 
-# Divlab writes its event log (contents) and posts and closes tasks (issues). Nothing else.
-permissions:
-  contents: write
-  issues: write
+# The workflow's own token gets nothing: Divlab acts only with its App's token, the only actor
+# the project's main branch admits.
+permissions: {}
 
-# One run at a time keeps decisions in order; a run that was dropped while waiting is caught up
-# by the next, which routes every feedback signal not yet routed.
+# Shared with the pull request workflow: one Divlab run per project at a time keeps decisions in
+# order.
 concurrency:
   group: divlab
   cancel-in-progress: false
@@ -23,4 +24,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      # Pinned to a commit: this job holds the App's key.
+      - id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.DIVLAB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.DIVLAB_APP_PRIVATE_KEY }}
       - uses: anarres-project/anarres/packages/divlab@main
+        with:
+          token: ${{ steps.app.outputs.token }}

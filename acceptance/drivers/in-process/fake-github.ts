@@ -1,11 +1,12 @@
 import type {
   CoordinatorAlert,
   EventLog,
+  LogEvent,
+  NotAccepted,
   PostedTask,
   ProjectRepositories,
   PullRequests,
   Repository,
-  RoutingEvent,
   TaskBoard,
 } from "@anarres/divlab";
 
@@ -22,7 +23,7 @@ export class FakeGitHub
   private tasksPosted = 0;
   private readonly alerts: CoordinatorAlert[] = [];
   private readonly finished: { project: string; module: string }[] = [];
-  private readonly events: RoutingEvent[] = [];
+  private readonly events: LogEvent[] = [];
 
   async post(task: PostedTask): Promise<void> {
     this.tasksPosted += 1;
@@ -33,11 +34,23 @@ export class FakeGitHub
     this.alerts.push(alert);
   }
 
-  async append(event: RoutingEvent): Promise<void> {
+  private readonly notAcceptedAlerts: NotAccepted[] = [];
+
+  async alertNotAccepted(record: NotAccepted): Promise<void> {
+    this.notAcceptedAlerts.push(record);
+  }
+
+  unmergedWorkAlerts(project: string): string[] {
+    return this.notAcceptedAlerts
+      .filter((record) => record.project === project)
+      .map((record) => record.notAccepted.feedbackSignal);
+  }
+
+  async append(event: LogEvent): Promise<void> {
     this.events.push(event);
   }
 
-  async read(project: string): Promise<RoutingEvent[]> {
+  async read(project: string): Promise<LogEvent[]> {
     return this.events.filter((event) => event.project === project);
   }
 
@@ -123,12 +136,6 @@ export class FakeGitHub
     return [...(this.files.get(project)?.keys() ?? [])].filter((path) =>
       path.startsWith("feedback/"),
     );
-  }
-
-  async readFile(project: string, path: string): Promise<string> {
-    const text = this.files.get(project)?.get(path);
-    if (text === undefined) throw new Error(`${project} has no file ${path}`);
-    return text;
   }
 
   async task(project: string, id: string): Promise<PostedTask | undefined> {

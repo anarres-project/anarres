@@ -20,12 +20,41 @@ export class Anarres {
   constructor(
     private readonly driver: Driver,
     private readonly aliases: Aliases,
-    private readonly project: string,
+    private project: string,
   ) {}
 
   async projectWithModules(...modules: string[]): Promise<void> {
     this.modules.push(...modules.map((module) => this.aliases.of(module)));
     await this.driver.createProject(this.project, this.modules);
+  }
+
+  /** A project of its own, whose main branch was left unprotected: a misconfiguration. */
+  async projectLeftUnprotected(module: string): Promise<void> {
+    this.project = `${this.project}-unprotected`;
+    this.modules.push(this.aliases.of(module));
+    await this.driver.createProject(this.project, this.modules, { unprotected: true });
+  }
+
+  async workReachesMainWithoutDivlab(work: Work & { verdict: string }) {
+    this.signalsWritten += 1;
+    const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
+    this.feedbackSignals.set(workOn(this.aliased(work)), feedbackSignal);
+    await this.driver.mergeDirectly({
+      impediments: [],
+      ...this.aliased(work),
+      project: this.project,
+      member: this.aliases.of(DEFAULT_MEMBER),
+      feedbackSignal,
+    });
+  }
+
+  async coordinatorsAlertedOfUnmergedWork(work: Work) {
+    const feedbackSignal = this.feedbackSignals.get(workOn(this.aliased(work)));
+    assert.deepEqual(
+      await this.driver.unmergedWorkAlerts(this.project),
+      [feedbackSignal],
+      `expected one alert that the ${work.role} work on ${work.module} reached main without Divlab`,
+    );
   }
 
   async memberHasWorkAccepted(work: Work & { verdict: string; impediments?: string[] }) {

@@ -266,3 +266,24 @@ When(
 Then("the change is refused", function (this: AnarresWorld) {
   return this.anarres.theChangeIsRefused();
 });
+
+Given(
+  "a project with a module {string} whose main branch was left unprotected",
+  function (this: AnarresWorld, module: string) {
+    return this.anarres.projectLeftUnprotected(module);
+  },
+);
+
+When(
+  "a member's {role} work on {string} reaches main without Divlab merging it",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.workReachesMainWithoutDivlab({ role, module, verdict: "pass" });
+  },
+);
+
+Then(
+  "a PDC coordinator is alerted that the {role} work on {string} reached main without Divlab merging it",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.coordinatorsAlertedOfUnmergedWork({ role, module });
+  },
+);

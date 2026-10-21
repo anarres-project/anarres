@@ -7574,6 +7574,9 @@ function eventFile(event, sequence) {
 }
 function eventFromFile(content) {
   const event = JSON.parse(content);
+  if (isObject(event) && isObject(event.notAccepted) && typeof event.notAccepted.feedbackSignal === "string" && typeof event.notAccepted.reason === "string") {
+    return event;
+  }
   if (!isObject(event) || !isObject(event.work) || !isObject(event.decision) || !isObject(event.reason)) {
     throw new Error("The event file is not a routing record");
   }
@@ -7619,12 +7622,15 @@ function logFrom(listed, texts) {
   return listed.filter((name) => /^\d{6}\.json$/.test(name)).sort().map((name) => eventFromFile(texts.get(name) ?? ""));
 }
 function commentForRefusal(reason) {
-  const longest = Math.max(0, ...(reason.match(/`+/g) ?? []).map((run) => run.length));
-  const fence = "`".repeat(Math.max(3, longest + 1));
   return `Divlab has not merged this pull request:
 
-${fence}
-${reason}
+${quoted(reason)}`;
+}
+function quoted(text) {
+  const longest = Math.max(0, ...(text.match(/`+/g) ?? []).map((run) => run.length));
+  const fence = "`".repeat(Math.max(3, longest + 1));
+  return `${fence}
+${text}
 ${fence}`;
 }
 function rulesetProtectingMain(app) {
@@ -7635,6 +7641,15 @@ function rulesetProtectingMain(app) {
     conditions: { ref_name: { include: ["~DEFAULT_BRANCH"], exclude: [] } },
     rules: [{ type: "update" }, { type: "deletion" }, { type: "non_fast_forward" }],
     bypass_actors: [{ actor_id: app, actor_type: "Integration", bypass_mode: "always" }]
+  };
+}
+function issueForNotAccepted({ notAccepted }) {
+  return {
+    title: "Escalation: work reached main without Divlab merging it",
+    labels: ["escalation", "not-accepted"],
+    body: `Divlab has not accepted this feedback signal, and will not route its work: ${notAccepted.reason}.
+
+${quoted(notAccepted.feedbackSignal)}`
   };
 }
 
@@ -7717,6 +7732,9 @@ var GitHubAdapter = class {
   async alertCoordinators(alert) {
     await this.openIssue(alert.project, issueForAlert(alert));
   }
+  async alertNotAccepted(record) {
+    await this.openIssue(record.project, issueForNotAccepted(record));
+  }
   async markModuleDone({ project: project2, module }) {
     const { number } = await this.openIssue(project2, issueForModuleDone(module));
     await this.call("PATCH", `${this.repo(project2)}/issues/${number}`, { state: "closed" });
@@ -7745,13 +7763,6 @@ var GitHubAdapter = class {
     if (status === 404) return [];
     if (status !== 200) throw new GitHubError("GET", "feedback", status, data);
     return data.filter((entry) => entry.type === "file").map((entry) => entry.path);
-  }
-  async readFile(project2, path) {
-    const { content } = await this.call(
-      "GET",
-      `${this.repo(project2)}/contents/${path}`
-    );
-    return Buffer.from(content, "base64").toString("utf8");
   }
   async append(event) {
     const sequence = (await this.eventPaths(event.project)).length + 1;
@@ -7893,9 +7904,11 @@ function whatToActOn(name, event) {
 }
 
 // src/index.ts
+var routingDecisions = (log) => log.filter((event) => "work" in event);
+var signalOf = (event) => "work" in event ? event.work.feedbackSignal : event.notAccepted.feedbackSignal;
 async function onWorkAccepted(event, board, log) {
   const { project: project2, task, ...work } = event;
-  const history = await log.read(project2);
+  const history = routingDecisions(await log.read(project2));
   const record = routingRecord(work, history);
   await log.append({ project: project2, ...record });
   if (task !== void 0) await board.close(project2, task);
@@ -7929,14 +7942,15 @@ async function acceptSignal(project2, path, signal, board, log) {
 }
 var cannotRead = (path, { unreadable }) => `The feedback signal ${path} cannot be read: ${unreadable}`;
 async function onMerge(project2, repository, board, log) {
-  const routed = new Set((await log.read(project2)).map((event) => event.work.feedbackSignal));
+  const recorded = new Set((await log.read(project2)).map(signalOf));
   for (const path of await repository.feedbackSignals(project2)) {
-    if (routed.has(path)) continue;
-    const signal = readFeedbackSignal(await repository.readFile(project2, path));
-    if ("unreadable" in signal) {
-      throw new Error(cannotRead(path, signal));
-    }
-    await acceptSignal(project2, path, signal, board, log);
+    if (recorded.has(path)) continue;
+    const record = {
+      project: project2,
+      notAccepted: { feedbackSignal: path, reason: "it reached main without Divlab merging it" }
+    };
+    await log.append(record);
+    await board.alertNotAccepted(record);
   }
 }
 async function onPullRequest(project2, pullRequest, pullRequests, board, log) {

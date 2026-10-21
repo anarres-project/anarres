@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { type RoutingEvent, setUpProject } from "@anarres/divlab";
+import { type LogEvent, type RoutingEvent, setUpProject, signalOf } from "@anarres/divlab";
 import { GitHubAdapter } from "@anarres/github";
 import type {
   AcceptedWork,
@@ -50,7 +50,11 @@ export class SandboxDriver implements Driver {
    * Creates the run's repository the first time a scenario asks for it. Public, so Divlab's
    * Action runs in it cost nothing (decision 0004); it holds only synthetic data.
    */
-  async createProject(project: string, _modules: string[]): Promise<void> {
+  async createProject(
+    project: string,
+    _modules: string[],
+    options: { unprotected?: boolean } = {},
+  ): Promise<void> {
     if (run.expected.has(project)) return;
     await this.github.call("POST", `orgs/${this.org}/repos`, {
       name: project,
@@ -70,8 +74,8 @@ export class SandboxDriver implements Driver {
     }
     // Set up as a project is, once the workflows are in: from now on only Divlab changes main.
     const divlab = new GitHubAdapter({ owner: this.org, token: this.token, app: DIVLAB_APP_ID });
-    await setUpProject(project, divlab);
-    run.expected.set(project, { ready: 0, escalation: 0, done: 0 });
+    if (!options.unprotected) await setUpProject(project, divlab);
+    run.expected.set(project, { ready: 0, escalation: 0, done: 0, notAccepted: 0 });
   }
 
   /** The member submits the work and Divlab merges it: accepted work has been merged. */
@@ -139,6 +143,25 @@ export class SandboxDriver implements Driver {
     return status >= 200 && status < 300;
   }
 
+  /** Written straight to main, which only an unprotected project allows; the push wakes Divlab. */
+  async mergeDirectly(work: AcceptedWork): Promise<void> {
+    const { path, text } = feedbackSignalFile(work);
+    await this.github.call("PUT", `repos/${this.org}/${work.project}/contents/${path}`, {
+      message: `The ${work.role} work on ${work.module}, not through Divlab`,
+      content: Buffer.from(text).toString("base64"),
+    });
+    await this.eventFor(work.project, path);
+    this.expectedFor(work.project).notAccepted += 1;
+  }
+
+  async unmergedWorkAlerts(project: string): Promise<string[]> {
+    const issues = await this.settled(project, "notAccepted");
+    return issues.flatMap((issue) => {
+      const path = issue.body?.match(/\n`{3,}\n(.+)\n`{3,}$/)?.[1];
+      return path ? [signalName(path)] : [];
+    });
+  }
+
   async refusals(project: string): Promise<string[]> {
     const said: string[] = [];
     for (const submitted of run.submitted.filter((pr) => pr.project === project && !pr.merged)) {
@@ -156,6 +179,7 @@ export class SandboxDriver implements Driver {
     // The event log is consistent at once and says what Divlab did; the issue lists lag behind.
     const expected = this.expectedFor(project);
     const event = await this.eventFor(project, path);
+    if (!("work" in event)) throw new Error(`Divlab did not accept ${path} in ${project}`);
     if (task) {
       expected.ready -= 1;
       run.closed.add(issueKey(project, task.number));
@@ -167,10 +191,10 @@ export class SandboxDriver implements Driver {
   }
 
   /** Divlab's record of the work, which it writes just after it merges. */
-  private async eventFor(project: string, path: string): Promise<RoutingEvent> {
+  private async eventFor(project: string, path: string): Promise<LogEvent> {
     const deadline = Date.now() + 60_000;
     for (;;) {
-      const event = (await this.divlab.read(project)).find((e) => e.work.feedbackSignal === path);
+      const event = (await this.divlab.read(project)).find((e) => signalOf(e) === path);
       if (event) return event;
       if (Date.now() > deadline)
         throw new Error(`Divlab recorded nothing for ${path} in ${project}`);
@@ -349,11 +373,16 @@ export class SandboxDriver implements Driver {
       "GET",
       `repos/${this.org}/${project}/issues?labels=${encodeURIComponent(label)}&state=${state}&per_page=100`,
     );
-    return issues.filter((issue) => issue.pull_request === undefined);
+    // An alert of work Divlab did not accept is an escalation too, but not a routing alert.
+    const notAccepted = (issue: Issue) => issue.labels.some((l) => l.name === "not-accepted");
+    return issues.filter(
+      (issue) =>
+        issue.pull_request === undefined && (label !== "escalation" || !notAccepted(issue)),
+    );
   }
 }
 
-type Listing = "ready" | "escalation" | "done";
+type Listing = "ready" | "escalation" | "done" | "notAccepted";
 
 /** The App ID of Divlab Sandbox, the sandbox's GitHub App (CONTRIBUTING.md). Not a secret. */
 const DIVLAB_APP_ID = 5414648;
@@ -407,6 +436,7 @@ const LISTINGS: Record<Listing, [label: string, state: "open" | "all"]> = {
   ready: ["state:ready", "open"],
   escalation: ["escalation", "all"],
   done: ["state:done", "all"],
+  notAccepted: ["not-accepted", "all"],
 };
 
 const labelValue = (issue: Issue, prefix: string) =>

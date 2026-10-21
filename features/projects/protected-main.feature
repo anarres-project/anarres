@@ -7,3 +7,9 @@ Feature: Only Divlab changes a project's main branch
     Given a project with a module "parser"
     When someone other than Divlab changes the project's main branch directly
     Then the change is refused
+
+  Scenario: Work that reaches main without Divlab merging it is never routed
+    Given a project with a module "parser" whose main branch was left unprotected
+    When a member's Specification work on "parser" reaches main without Divlab merging it
+    Then no task is ready for "parser"
+    And a PDC coordinator is alerted that the Specification work on "parser" reached main without Divlab merging it

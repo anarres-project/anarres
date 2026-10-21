@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   type EventLog,
+  type NotAccepted,
   onMerge,
   onPullRequest,
   type PostedTask,
@@ -15,21 +16,100 @@ const untouched = async () => {
 const board: TaskBoard = {
   post: untouched,
   alertCoordinators: untouched,
+  alertNotAccepted: untouched,
   markModuleDone: untouched,
   task: untouched,
   close: untouched,
 };
-const emptyLog: EventLog = { read: async () => [], append: untouched };
 
 describe("acting on a merge", () => {
-  it("refuses to route a feedback signal it cannot read, naming it and why", async () => {
-    const repository: Repository = {
-      feedbackSignals: async () => ["feedback/FB-3.md"],
-      readFile: async () => "Looks good to me.",
+  const passedSpecification =
+    "---\nfeedback_signal:\n  from_role: specification\n  module: parser\n  verdict: pass\n---\n";
+  /** One feedback signal on main; the tripwire never needs to read what it says. */
+  const onMain = (_text: string): Repository => ({
+    feedbackSignals: async () => ["feedback/FB-9.md"],
+  });
+  /** A board and log that keep what Divlab does, for the test to look at. */
+  const watching = () => {
+    const seen = {
+      posted: [] as PostedTask[],
+      alerts: [] as NotAccepted[],
+      appended: [] as unknown[],
     };
-    await expect(onMerge("ledger", repository, board, emptyLog)).rejects.toThrow(
-      "The feedback signal feedback/FB-3.md cannot be read: it has no feedback signal header",
-    );
+    const watchedBoard: TaskBoard = {
+      ...board,
+      post: async (task) => {
+        seen.posted.push(task);
+      },
+      alertNotAccepted: async (record) => {
+        seen.alerts.push(record);
+      },
+    };
+    const watchedLog: EventLog = {
+      read: async () => [],
+      append: async (event) => {
+        seen.appended.push(event);
+      },
+    };
+    return { seen, watchedBoard, watchedLog };
+  };
+
+  it("never routes work that reached main without Divlab merging it", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    await onMerge("ledger", onMain(passedSpecification), watchedBoard, watchedLog);
+    expect(seen.posted).toEqual([]);
+  });
+
+  it("records and alerts work that reached main without Divlab only once, not on every run", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    const alreadyRecorded: EventLog = {
+      ...watchedLog,
+      read: async () => [
+        {
+          project: "ledger",
+          notAccepted: {
+            feedbackSignal: "feedback/FB-9.md",
+            reason: "it reached main without Divlab merging it",
+          },
+        },
+      ],
+    };
+    await onMerge("ledger", onMain(passedSpecification), watchedBoard, alreadyRecorded);
+    expect([seen.appended, seen.alerts]).toEqual([[], []]);
+  });
+
+  it("alerts PDC coordinators of work that reached main without Divlab merging it", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    await onMerge("ledger", onMain(passedSpecification), watchedBoard, watchedLog);
+    expect(seen.alerts).toEqual(seen.appended);
+  });
+
+  it("records work that reached main without Divlab merging it as not accepted, saying why", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    await onMerge("ledger", onMain(passedSpecification), watchedBoard, watchedLog);
+    expect(seen.appended).toEqual([
+      {
+        project: "ledger",
+        notAccepted: {
+          feedbackSignal: "feedback/FB-9.md",
+          reason: "it reached main without Divlab merging it",
+        },
+      },
+    ]);
+  });
+
+  it("records an unreadable signal on main as not accepted like any other, without stopping", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    await onMerge("ledger", onMain("Looks good to me."), watchedBoard, watchedLog);
+    expect(seen.appended).toEqual([
+      {
+        project: "ledger",
+        notAccepted: {
+          feedbackSignal: "feedback/FB-9.md",
+          reason: "it reached main without Divlab merging it",
+        },
+      },
+    ]);
   });
 });
 

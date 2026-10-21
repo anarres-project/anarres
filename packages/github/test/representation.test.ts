@@ -1,4 +1,4 @@
-import type { RoutingEvent } from "@anarres/divlab";
+import type { NotAccepted, RoutingEvent } from "@anarres/divlab";
 import { describe, expect, it } from "vitest";
 import {
   commentForRefusal,
@@ -6,6 +6,7 @@ import {
   eventFromFile,
   issueForAlert,
   issueForModuleDone,
+  issueForNotAccepted,
   issueForTask,
   issueNumber,
   logFrom,
@@ -96,6 +97,17 @@ describe("a routing event as a file", () => {
 
   it("reads back as the event that was written", () => {
     expect(eventFromFile(eventFile(EVENT, 1).content)).toEqual(EVENT);
+  });
+
+  it("reads back a record of work Divlab did not accept", () => {
+    const notAccepted: NotAccepted = {
+      project: "ledger",
+      notAccepted: {
+        feedbackSignal: "feedback/T-0143.md",
+        reason: "it reached main without Divlab merging it",
+      },
+    };
+    expect(eventFromFile(eventFile(notAccepted, 2).content)).toEqual(notAccepted);
   });
 
   it("is refused when it is not a routing record", () => {
@@ -220,6 +232,30 @@ describe("the ruleset that protects a project's main branch (decision 0006)", ()
       conditions: { ref_name: { include: ["~DEFAULT_BRANCH"], exclude: [] } },
       rules: [{ type: "update" }, { type: "deletion" }, { type: "non_fast_forward" }],
       bypass_actors: [{ actor_id: 5414648, actor_type: "Integration", bypass_mode: "always" }],
+    });
+  });
+});
+
+describe("an alert of work Divlab did not accept, as a GitHub issue", () => {
+  it("tells PDC coordinators what reached main without Divlab, quoting its path as text", () => {
+    expect(
+      issueForNotAccepted({
+        project: "ledger",
+        notAccepted: {
+          feedbackSignal: "feedback/@all.md",
+          reason: "it reached main without Divlab merging it",
+        },
+      }),
+    ).toEqual({
+      title: "Escalation: work reached main without Divlab merging it",
+      labels: ["escalation", "not-accepted"],
+      body: [
+        "Divlab has not accepted this feedback signal, and will not route its work: it reached main without Divlab merging it.",
+        "",
+        "```",
+        "feedback/@all.md",
+        "```",
+      ].join("\n"),
     });
   });
 });

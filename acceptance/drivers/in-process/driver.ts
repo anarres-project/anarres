@@ -1,4 +1,4 @@
-import { onPullRequest, setUpProject } from "@anarres/divlab";
+import { onMerge, onPullRequest, routingDecisions, setUpProject } from "@anarres/divlab";
 import type {
   AcceptedWork,
   CoordinatorAlert,
@@ -19,9 +19,13 @@ import { FakeGitHub } from "./fake-github.ts";
 export class InProcessDriver implements Driver {
   private readonly github = new FakeGitHub();
 
-  async createProject(project: string, modules: string[]): Promise<void> {
+  async createProject(
+    project: string,
+    modules: string[],
+    options: { unprotected?: boolean } = {},
+  ): Promise<void> {
     this.github.repositories.set(project, modules);
-    await setUpProject(project, this.github);
+    if (!options.unprotected) await setUpProject(project, this.github);
   }
 
   /** The member submits the work and Divlab merges it: accepted work has been merged. */
@@ -36,12 +40,23 @@ export class InProcessDriver implements Driver {
     return this.github.changeMainDirectly(project);
   }
 
+  /** The work lands on main without a pull request, and the push wakes Divlab, as on GitHub. */
+  async mergeDirectly(work: AcceptedWork): Promise<void> {
+    const { path, text } = feedbackSignalFile(work);
+    this.github.mergeFile(work.project, path, text);
+    await onMerge(work.project, this.github, this.github, this.github);
+  }
+
+  async unmergedWorkAlerts(project: string): Promise<string[]> {
+    return this.github.unmergedWorkAlerts(project).map(signalName);
+  }
+
   async refusals(project: string): Promise<string[]> {
     return this.github.refusals(project);
   }
 
   async routingRecords(project: string): Promise<RoutingRecord[]> {
-    return (await this.github.read(project)).map(inScenarioWords);
+    return routingDecisions(await this.github.read(project)).map(inScenarioWords);
   }
 
   async doneModules(project: string): Promise<string[]> {

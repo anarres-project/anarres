@@ -39,7 +39,16 @@ export type RoutingRecord = {
 
 /** How the DSL reaches Anarres. Each driver invokes the system its own way. */
 export interface Driver {
-  createProject(project: string, modules: string[]): Promise<void>;
+  /** `unprotected`: set up without protecting main, as a misconfigured project would be. */
+  createProject(
+    project: string,
+    modules: string[],
+    options?: { unprotected?: boolean },
+  ): Promise<void>;
+  /** The member's work lands on main without going through Divlab. */
+  mergeDirectly(work: AcceptedWork): Promise<void>;
+  /** The feedback signals PDC coordinators were alerted had reached main without Divlab. */
+  unmergedWorkAlerts(project: string): Promise<string[]>;
   acceptWork(work: AcceptedWork): Promise<void>;
   /** The member opens a pull request with their work, for Divlab to validate and merge. */
   submitWork(work: AcceptedWork): Promise<void>;
