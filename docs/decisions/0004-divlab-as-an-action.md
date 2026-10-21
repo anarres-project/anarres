@@ -41,9 +41,9 @@ observes the real Action at work.
 - The GitHub sandbox needs two settings: the sandbox token may write workflow files (so the driver
   can install the template's workflow), and the sandbox organisation allows Actions from
   `anarres-project`.
-- Sandbox repositories are public (Bernard, 2026-10-21): every merge in a scenario starts an
-  Action run, and on GitHub Free, Actions in public repositories cost nothing, while private ones
-  draw on a monthly allowance. They hold only synthetic data and are deleted after each run.
+- Sandbox repositories are public (Bernard, 2026-10-21): once the driver observes the real
+  Action, every merge in a scenario starts an Action run, and on GitHub Free, Actions in public
+  repositories cost nothing, while private ones draw on a monthly allowance. They hold only synthetic data and are deleted after each run.
 - Every merge in a sandbox scenario starts a real Action run, so the sandbox suite takes
   noticeably longer than when the driver called Divlab directly.
 - Order among several signals routed in one run is open (test list). What to do with a signal

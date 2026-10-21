@@ -39,6 +39,8 @@ Action and the sandbox driver are still open in section 0.
   notes. Safeguard code and its tests stay public. CLAUDE.md's discretion rule points to it.
 - `SECURITY.md`: how to report a problem privately, through GitHub's private vulnerability
   reporting.
+- The sandbox driver now creates its repositories public (they were private), ready for the real
+  Action. Checked by running a scenario against the sandbox and watching the new repository.
 
 ---
 

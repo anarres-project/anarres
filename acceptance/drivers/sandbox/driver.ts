@@ -42,12 +42,15 @@ export class SandboxDriver implements Driver {
     this.divlab = new GitHubAdapter({ owner: org, token });
   }
 
-  /** Creates the run's repository the first time a scenario asks for it. */
+  /**
+   * Creates the run's repository the first time a scenario asks for it. Public, so Divlab's
+   * Action runs in it cost nothing (decision 0004); it holds only synthetic data.
+   */
   async createProject(project: string, _modules: string[]): Promise<void> {
     if (run.expected.has(project)) return;
     await this.github.call("POST", `orgs/${this.org}/repos`, {
       name: project,
-      private: true,
+      private: false,
       auto_init: true,
     });
     run.created.push({ github: this.github, path: `repos/${this.org}/${project}` });
