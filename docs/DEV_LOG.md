@@ -23,10 +23,15 @@ coordinator. A Security & Quality pass marks the module done. Every routing deci
 with its inputs and the rule that decided it. A role re-run more than three times for a module is
 escalated to a PDC coordinator, and a coordinator's alert says what was reported and why routing
 stopped. Section 1's remaining items wait on later work (metrics, input artefacts). Section 0 under
-way: Divlab runs as a real GitHub Action, installed from the project template, and the sandbox
-driver now runs every scenario against it. Decided 2026-10-21: only Divlab merges (decision 0005);
-work for a done module is refused; Coding's upstream ambiguity goes to Specification (built). Next:
-the order in which several unrouted signals are routed in one run (section 0).
+way. Only Divlab merges (decisions 0005, 0006): Divlab acts as its own GitHub App, validates a
+member's pull request as data, records that it is about to merge, merges only the commit it read,
+and routes the work; a ruleset set up with each project lets nobody else change main; the push
+workflow is the tripwire (anything on main Divlab did not merge is recorded, alerted, never
+routed; an interrupted merge is finished from Divlab's record); every run checks main is still
+protected. Signals must use plain names. Every scenario's work goes through a real pull request;
+the sandbox suite runs them all against the real Action (about 30 minutes). Next: pull requests
+from forks, waiting on a second sandbox organisation for members (Bernard, 2026-10-22); then the
+1,000-event log limit and the sandbox sweep (section 0).
 
 ---
 
