@@ -7365,6 +7365,9 @@ var require_dist = __commonJS({
   }
 });
 
+// src/action.ts
+import { readFileSync } from "node:fs";
+
 // ../core/src/feedback-signal.ts
 var import_yaml = __toESM(require_dist(), 1);
 function readFeedbackSignal(text) {
@@ -7606,6 +7609,15 @@ function logFrom(listed, texts) {
   if (!listed.every((name) => texts.has(name))) return void 0;
   return listed.filter((name) => /^\d{6}\.json$/.test(name)).sort().map((name) => eventFromFile(texts.get(name) ?? ""));
 }
+function commentForRefusal(reason) {
+  const longest = Math.max(0, ...(reason.match(/`+/g) ?? []).map((run) => run.length));
+  const fence = "`".repeat(Math.max(3, longest + 1));
+  return `Divlab has not merged this pull request:
+
+${fence}
+${reason}
+${fence}`;
+}
 
 // ../github/src/rate-limits.ts
 function retryAfter(answer, now) {
@@ -7764,6 +7776,48 @@ var GitHubAdapter = class {
       ])
     );
   }
+  async head(project2, pullRequest) {
+    const { head } = await this.call(
+      "GET",
+      `${this.repo(project2)}/pulls/${pullRequest}`
+    );
+    return head.sha;
+  }
+  /**
+   * What the pull request changes, as text read through the API; nothing is checked out. Each
+   * file is read from the project's own copy of the pull request's commits, never by following a
+   * link the pull request supplies.
+   */
+  async changedFiles(project2, pullRequest) {
+    const files = [];
+    for (let page = 1; ; page++) {
+      const listed = await this.call(
+        "GET",
+        `${this.repo(project2)}/pulls/${pullRequest}/files?per_page=100&page=${page}`
+      );
+      for (const file of listed) {
+        if (file.status === "removed") continue;
+        const { content } = await this.call(
+          "GET",
+          `${this.repo(project2)}/git/blobs/${file.sha}`
+        );
+        files.push({ path: file.filename, text: Buffer.from(content, "base64").toString("utf8") });
+      }
+      if (listed.length < 100) return files;
+    }
+  }
+  /** GitHub refuses the merge if the pull request has moved on from `head`. */
+  async merge(project2, pullRequest, head) {
+    await this.call("PUT", `${this.repo(project2)}/pulls/${pullRequest}/merge`, {
+      sha: head,
+      merge_method: "squash"
+    });
+  }
+  async refuse(project2, pullRequest, reason) {
+    await this.call("POST", `${this.repo(project2)}/issues/${pullRequest}/comments`, {
+      body: commentForRefusal(reason)
+    });
+  }
   /** The event files, oldest first. */
   async eventPaths(project2) {
     const { status, data } = await this.request(
@@ -7796,6 +7850,19 @@ var GitHubError = class extends Error {
     super(`GitHub ${method} ${path} answered ${status}: ${JSON.stringify(data)}`);
   }
 };
+
+// src/event.ts
+function whatToActOn(name, event) {
+  if (name === "pull_request_target") {
+    const number = event.pull_request?.number;
+    if (!Number.isSafeInteger(number) || number < 1) {
+      throw new Error("The pull request event does not say which pull request it is about");
+    }
+    return { pullRequest: String(number) };
+  }
+  if (name === "push") return { merge: true };
+  throw new Error(`Divlab does not act on ${name} events`);
+}
 
 // src/index.ts
 async function onWorkAccepted(event, board, log) {
@@ -7841,6 +7908,20 @@ async function onMerge(project2, repository, board, log) {
     );
   }
 }
+async function onPullRequest(project2, pullRequest, pullRequests, board, log) {
+  const head = await pullRequests.head(project2, pullRequest);
+  const files = await pullRequests.changedFiles(project2, pullRequest);
+  const feedback = files.find((file) => file.path.startsWith("feedback/"));
+  if (feedback === void 0) return;
+  const signal = readFeedbackSignal(feedback.text);
+  if ("unreadable" in signal) {
+    await pullRequests.refuse(project2, pullRequest, cannotRead(feedback.path, signal));
+    return;
+  }
+  await pullRequests.merge(project2, pullRequest, head);
+  const { task: _task, ...work } = signal;
+  await onWorkAccepted({ project: project2, ...work, feedbackSignal: feedback.path }, board, log);
+}
 
 // src/action.ts
 var [owner, project] = (process.env.GITHUB_REPOSITORY ?? "").split("/");
@@ -7851,7 +7932,10 @@ if (!owner || !project || !token) {
 }
 var github = new GitHubAdapter({ owner, token });
 try {
-  await onMerge(project, github, github, github);
+  const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH ?? "", "utf8"));
+  const run = whatToActOn(process.env.GITHUB_EVENT_NAME ?? "", event);
+  if ("pullRequest" in run) await onPullRequest(project, run.pullRequest, github, github, github);
+  else await onMerge(project, github, github, github);
 } catch (error) {
   console.log(`::error::${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);

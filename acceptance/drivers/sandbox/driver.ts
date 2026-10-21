@@ -9,7 +9,6 @@ import type {
   ReadyTask,
   RoutingRecord,
 } from "../driver.ts";
-import { HarnessNotYetBuilt } from "../errors.ts";
 import {
   feedbackSignalFile,
   inScenarioWords,
@@ -57,14 +56,16 @@ export class SandboxDriver implements Driver {
       auto_init: true,
     });
     run.created.push({ github: this.github, path: `repos/${this.org}/${project}` });
-    await this.github.call(
-      "PUT",
-      `repos/${this.org}/${project}/contents/.github/workflows/anarres.yml`,
-      {
-        message: "Install Divlab from the project template",
-        content: Buffer.from(divlabWorkflow()).toString("base64"),
-      },
-    );
+    for (const workflow of TEMPLATE_WORKFLOWS) {
+      await this.github.call(
+        "PUT",
+        `repos/${this.org}/${project}/contents/.github/workflows/${workflow}`,
+        {
+          message: "Install Divlab from the project template",
+          content: Buffer.from(divlabWorkflow(workflow)).toString("base64"),
+        },
+      );
+    }
     run.expected.set(project, { ready: 0, escalation: 0, done: 0 });
   }
 
@@ -85,24 +86,106 @@ export class SandboxDriver implements Driver {
       },
     );
     await this.divlabHasActedOn(work.project, merged.commit.sha);
+    await this.expectWhatDivlabDecided(work.project, path, task);
+  }
+
+  /** The member's work goes on a branch of its own, and a pull request asks to merge it. */
+  async submitWork(work: AcceptedWork): Promise<void> {
+    const repository = `repos/${this.org}/${work.project}`;
+    const fromRole = roleId(work.role);
+    const task = (await this.settled(work.project, "ready")).find(
+      (issue) =>
+        labelValue(issue, "role:") === fromRole && labelValue(issue, "module:") === work.module,
+    );
+    const { object: main } = await this.github.call<{ object: { sha: string } }>(
+      "GET",
+      `${repository}/git/ref/heads/main`,
+    );
+    const branch = `work/${work.feedbackSignal}`;
+    await this.github.call("POST", `${repository}/git/refs`, {
+      ref: `refs/heads/${branch}`,
+      sha: main.sha,
+    });
+    const { path, text } = feedbackSignalFile(work, task && String(task.number));
+    await this.github.call("PUT", `${repository}/contents/${path}`, {
+      message: `The ${work.role} work on ${work.module}`,
+      content: Buffer.from(text).toString("base64"),
+      branch,
+    });
+    const { number } = await this.github.call<{ number: number }>("POST", `${repository}/pulls`, {
+      title: `The ${work.role} work on ${work.module}`,
+      head: branch,
+      base: "main",
+    });
+    run.submitted.push({ project: work.project, number, feedbackSignal: work.feedbackSignal });
+    if (await this.divlabHasDecidedOn(work.project, number)) {
+      await this.expectWhatDivlabDecided(work.project, path, task);
+    }
+  }
+
+  async mergedWork(project: string): Promise<string[]> {
+    const merged: string[] = [];
+    for (const submitted of run.submitted.filter((pr) => pr.project === project)) {
+      const pullRequest = await this.github.call<{ merged: boolean }>(
+        "GET",
+        `repos/${this.org}/${project}/pulls/${submitted.number}`,
+      );
+      if (pullRequest.merged) merged.push(submitted.feedbackSignal);
+    }
+    return merged;
+  }
+
+  /** What GitHub's lists should show once they catch up with what Divlab recorded for the work. */
+  private async expectWhatDivlabDecided(project: string, path: string, task?: Issue) {
     // The event log is consistent at once and says what Divlab did; the issue lists lag behind.
-    const expected = this.expectedFor(work.project);
-    const { decision } = (await this.divlab.read(work.project)).at(-1) as RoutingEvent;
+    const expected = this.expectedFor(project);
+    const event = (await this.divlab.read(project)).find((e) => e.work.feedbackSignal === path);
+    if (!event) throw new Error(`Divlab recorded nothing for ${path} in ${project}`);
     if (task) {
       expected.ready -= 1;
-      run.closed.add(issueKey(work.project, task.number));
+      run.closed.add(issueKey(project, task.number));
     }
+    const { decision } = event;
     if ("tasks" in decision) expected.ready += decision.tasks.length;
     if ("alert" in decision) expected.escalation += 1;
     if ("moduleDone" in decision) expected.done += 1;
   }
 
-  async submitWork(_work: AcceptedWork): Promise<void> {
-    throw new HarnessNotYetBuilt("submitting work as a pull request in the sandbox");
-  }
-
-  async mergedWork(_project: string): Promise<string[]> {
-    throw new HarnessNotYetBuilt("submitting work as a pull request in the sandbox");
+  /**
+   * Waits for Divlab to merge a pull request or refuse it, and says which (true if merged). A
+   * failed Divlab run fails the step with GitHub's reason.
+   */
+  private async divlabHasDecidedOn(project: string, number: number): Promise<boolean> {
+    const repository = `repos/${this.org}/${project}`;
+    const started = Date.now();
+    for (;;) {
+      const pullRequest = await this.github.call<{ merged: boolean }>(
+        "GET",
+        `${repository}/pulls/${number}`,
+      );
+      if (pullRequest.merged) return true;
+      const comments = await this.github.call<unknown[]>(
+        "GET",
+        `${repository}/issues/${number}/comments`,
+      );
+      if (comments.length > 0) return false;
+      const { workflow_runs: runs } = await this.github.call<{ workflow_runs: WorkflowRun[] }>(
+        "GET",
+        `${repository}/actions/runs?event=pull_request_target&status=completed`,
+      );
+      const failed = runs.find(
+        (r) => r.conclusion !== "success" && Date.parse(r.created_at) >= started - 5_000,
+      );
+      if (failed) {
+        throw new Error(
+          `Divlab's run for pull request ${number} ended ${failed.conclusion}: ${await this.whyRunFailed(repository, failed)} (${failed.html_url})`,
+        );
+      }
+      if (Date.now() - started > RUN_FINISH_LIMIT) {
+        throw new Error(`Divlab neither merged nor refused pull request ${number} in ${project}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+    }
   }
 
   async readyTasks(project: string): Promise<ReadyTask[]> {
@@ -270,24 +353,34 @@ export class SandboxDriver implements Driver {
 
 type Listing = "ready" | "escalation" | "done";
 
+/** The project template's workflows: one for members' pull requests, one for pushes to main. */
+const TEMPLATE_WORKFLOWS = ["anarres.yml", "divlab-pull-request.yml"];
+
 /**
- * The project template's workflow, using Divlab as it is at the commit under test (decision 0004):
+ * One of the project template's workflows, using Divlab as it is at the commit under test (decision 0004):
  * CI's commit, or locally the checked-out one, which must have been pushed.
  */
-function divlabWorkflow(): string {
+function divlabWorkflow(name: string): string {
   const template = readFileSync(
-    new URL("../../../template/.github/workflows/anarres.yml", import.meta.url),
+    new URL(`../../../template/.github/workflows/${name}`, import.meta.url),
     "utf8",
   );
   const divlab = "anarres-project/anarres/packages/divlab@main";
-  if (!template.includes(divlab)) throw new Error(`The project template no longer uses ${divlab}`);
+  if (!template.includes(divlab))
+    throw new Error(`The template's ${name} no longer uses ${divlab}`);
   const commit =
     process.env.GITHUB_SHA ??
     execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
   return template.replace(divlab, divlab.replace("@main", `@${commit}`));
 }
 
-type WorkflowRun = { id: number; status: string; conclusion: string | null; html_url: string };
+type WorkflowRun = {
+  id: number;
+  status: string;
+  conclusion: string | null;
+  html_url: string;
+  created_at: string;
+};
 
 /** How long a merge may wait for Divlab's run to start, and to finish, within a step's timeout. */
 const RUN_START_LIMIT = 120_000;
@@ -300,6 +393,8 @@ const run = {
   expected: new Map<string, Record<Listing, number>>(),
   /** The tasks merged work has closed, which a lagging list may still show as ready. */
   closed: new Set<string>(),
+  /** The pull requests members' work was submitted in. */
+  submitted: [] as { project: string; number: number; feedbackSignal: string }[],
 };
 
 const issueKey = (project: string, number: number) => `${project}#${number}`;

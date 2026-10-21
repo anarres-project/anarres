@@ -1,6 +1,7 @@
 import type { RoutingEvent } from "@anarres/divlab";
 import { describe, expect, it } from "vitest";
 import {
+  commentForRefusal,
   eventFile,
   eventFromFile,
   issueForAlert,
@@ -179,5 +180,20 @@ describe("a finished module on GitHub", () => {
       labels: ["module:parser", "state:done"],
       body: "",
     });
+  });
+});
+
+describe("Divlab's comment on a pull request it will not merge", () => {
+  it("says why, quoting the reason as text, never as Markdown", () => {
+    expect(commentForRefusal("The feedback signal feedback/@all.md cannot be read")).toBe(
+      "Divlab has not merged this pull request:\n\n```\nThe feedback signal feedback/@all.md cannot be read\n```",
+    );
+  });
+
+  it("keeps the reason inside its code block even when the reason contains a fence", () => {
+    const reason = "feedback/x```\n[click](https://example.test)\n```.md cannot be read";
+    expect(commentForRefusal(reason)).toBe(
+      `Divlab has not merged this pull request:\n\n\`\`\`\`\n${reason}\n\`\`\`\``,
+    );
   });
 });

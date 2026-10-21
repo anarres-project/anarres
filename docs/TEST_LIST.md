@@ -165,8 +165,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       Divlab, its own token gets no permissions, it puts nothing from the event in an expression,
       and it shares the project's Divlab concurrency group (`template.test.ts`).
 - [ ] Divlab's Action acts on a pull request event with `onPullRequest`, through `packages/github`
-      (changed files read as data, merge, refusal comment); today the Action always runs
-      `onMerge`, so the template's pull request workflow is not yet useful.
+      (changed files read as data, merge, refusal comment).
+  - [x] what a run is for, from its event (`whatToActOn`), and the Action's dispatch;
+  - [x] the refusal comment quotes the reason so nothing a member wrote acts as Markdown;
+  - [ ] proved against the sandbox (next).
+- [ ] The alert issue's routing record is quoted the same way as a refusal (it includes the
+      feedback signal's path, which the member chose, inside a plain code block today).
 - [ ] The sandbox driver submits work as a real pull request, sets up the ruleset with Divlab
       Sandbox as its only bypass, and waits for Divlab to merge it; then `@sandbox-wip` goes.
 - [ ] A project's main branch admits changes only through pull requests Divlab's App merges; no

@@ -9,6 +9,9 @@ const templateWorkflow = (name: string) => parse(templateText(name));
 const PULL_REQUEST_WORKFLOW = "divlab-pull-request.yml";
 const workflow = templateWorkflow(PULL_REQUEST_WORKFLOW);
 
+/** A GitHub Actions expression, as a workflow writes it. */
+const expression = (inside: string) => `\${{ ${inside} }}`;
+
 type Step = { id?: string; uses?: string; run?: string; with?: Record<string, string> };
 const steps: Step[] = Object.values(workflow.jobs).flatMap(
   (job) => (job as { steps: Step[] }).steps,
@@ -29,10 +32,10 @@ describe("the project template's pull request workflow (decision 0006)", () => {
   it("runs Divlab as its App, with a token minted from the organisation's App credentials", () => {
     const [token, divlab] = steps;
     expect(token?.with).toEqual({
-      "client-id": "${{ vars.DIVLAB_APP_CLIENT_ID }}",
-      "private-key": "${{ secrets.DIVLAB_APP_PRIVATE_KEY }}",
+      "client-id": expression("vars.DIVLAB_APP_CLIENT_ID"),
+      "private-key": expression("secrets.DIVLAB_APP_PRIVATE_KEY"),
     });
-    expect(divlab?.with).toEqual({ token: `\${{ steps.${token?.id}.outputs.token }}` });
+    expect(divlab?.with).toEqual({ token: expression(`steps.${token?.id}.outputs.token`) });
   });
 
   it("gives the workflow's own token no permissions: Divlab acts only with the App's", () => {

@@ -1,5 +1,13 @@
-import type { EventLog, PostedTask, Repository, RoutingEvent, TaskBoard } from "@anarres/divlab";
+import type {
+  EventLog,
+  PostedTask,
+  PullRequests,
+  Repository,
+  RoutingEvent,
+  TaskBoard,
+} from "@anarres/divlab";
 import {
+  commentForRefusal,
   eventFile,
   issueForAlert,
   issueForModuleDone,
@@ -13,10 +21,10 @@ import {
 import { requestGitHub } from "./request.ts";
 
 /**
- * Divlab's task board, event log and merged files on GitHub: each project is a repository owned
+ * Divlab's task board, event log, merged files and members' pull requests on GitHub: each project is a repository owned
  * by `owner`. The only code that calls the GitHub API on Divlab's behalf.
  */
-export class GitHubAdapter implements TaskBoard, EventLog, Repository {
+export class GitHubAdapter implements TaskBoard, EventLog, Repository, PullRequests {
   constructor(private readonly options: { owner: string; token: string }) {}
 
   async post(task: PostedTask): Promise<void> {
@@ -127,6 +135,55 @@ export class GitHubAdapter implements TaskBoard, EventLog, Repository {
         entry.object?.text ?? "",
       ]),
     );
+  }
+
+  async head(project: string, pullRequest: string): Promise<string> {
+    const { head } = await this.call<{ head: { sha: string } }>(
+      "GET",
+      `${this.repo(project)}/pulls/${pullRequest}`,
+    );
+    return head.sha;
+  }
+
+  /**
+   * What the pull request changes, as text read through the API; nothing is checked out. Each
+   * file is read from the project's own copy of the pull request's commits, never by following a
+   * link the pull request supplies.
+   */
+  async changedFiles(
+    project: string,
+    pullRequest: string,
+  ): Promise<{ path: string; text: string }[]> {
+    const files: { path: string; text: string }[] = [];
+    for (let page = 1; ; page++) {
+      const listed = await this.call<{ filename: string; status: string; sha: string }[]>(
+        "GET",
+        `${this.repo(project)}/pulls/${pullRequest}/files?per_page=100&page=${page}`,
+      );
+      for (const file of listed) {
+        if (file.status === "removed") continue;
+        const { content } = await this.call<{ content: string }>(
+          "GET",
+          `${this.repo(project)}/git/blobs/${file.sha}`,
+        );
+        files.push({ path: file.filename, text: Buffer.from(content, "base64").toString("utf8") });
+      }
+      if (listed.length < 100) return files;
+    }
+  }
+
+  /** GitHub refuses the merge if the pull request has moved on from `head`. */
+  async merge(project: string, pullRequest: string, head: string): Promise<void> {
+    await this.call("PUT", `${this.repo(project)}/pulls/${pullRequest}/merge`, {
+      sha: head,
+      merge_method: "squash",
+    });
+  }
+
+  async refuse(project: string, pullRequest: string, reason: string): Promise<void> {
+    await this.call("POST", `${this.repo(project)}/issues/${pullRequest}/comments`, {
+      body: commentForRefusal(reason),
+    });
   }
 
   /** The event files, oldest first. */

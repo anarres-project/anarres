@@ -116,3 +116,11 @@ export function logFrom(listed: string[], texts: Map<string, string>): RoutingEv
     .sort()
     .map((name) => eventFromFile(texts.get(name) ?? ""));
 }
+
+/** The reason is quoted in a code block, so text a member wrote can never act as Markdown. */
+export function commentForRefusal(reason: string): string {
+  // A fence longer than any run of backticks in the reason: nothing in it can close the block.
+  const longest = Math.max(0, ...(reason.match(/`+/g) ?? []).map((run) => run.length));
+  const fence = "`".repeat(Math.max(3, longest + 1));
+  return `Divlab has not merged this pull request:\n\n${fence}\n${reason}\n${fence}`;
+}
