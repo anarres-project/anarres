@@ -152,6 +152,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 ## 4. Validating contributions
 
 - [ ] Divlab merges a contribution that passes validation (decision 0005: only Divlab merges).
+- [ ] The project template's pull request workflow never checks out or runs anything from the pull
+      request (decision 0006).
+- [ ] A project's main branch admits changes only through pull requests Divlab's App merges; no
+      person is exempt (template ruleset; the sandbox driver sets it up too).
+- [ ] Divlab alerts PDC coordinators when a project's main branch is not protected as decision 0006
+      requires.
+- [ ] The tripwire leaves Divlab's own recorded merges alone.
 - [ ] A contribution that fails validation is not merged, and the member is told why.
 - [ ] A contribution PDC coordinators require reviewed is merged only once a reviewer approves.
 - [ ] A new project's main branch can be changed only by Divlab (project template).

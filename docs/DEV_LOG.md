@@ -30,6 +30,19 @@ the order in which several unrouted signals are routed in one run (section 0).
 
 ---
 
+## 2026-10-21: How Divlab merges
+
+- Tried in the sandbox: a ruleset binds even administrators on a public repository under GitHub
+  Free, but a workflow's own token cannot be exempted from one; a GitHub App can.
+- Decision 0006 (Bernard): Divlab acts as its own GitHub App, the only actor a project's ruleset
+  lets merge. It acts on pull request events without running anything from the pull request,
+  merges and routes in one recorded run, keeps the push workflow as a tripwire, and checks its own
+  protection on every run. Two Apps, one per organisation, so tests never hold a key for
+  `anarres-project`.
+- Routing in merge order now comes from Divlab recording its own merges (test list).
+
+---
+
 ## 2026-10-21: The sandbox driver observes the real Action
 
 - The sandbox driver no longer calls Divlab itself. Each sandbox repository gets the project

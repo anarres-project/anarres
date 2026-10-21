@@ -281,7 +281,7 @@ feedback_signal:
 
 The March AutoPM spec had a Claude session apply a fixed routing table. A fixed table is code, and it is better written as code: testable, auditable, free to run and identical on every project.
 
-**What Divlab does** (a GitHub Action in `divlab/`):
+**What Divlab does** (a GitHub Action in `divlab/`, acting as its own GitHub App so that only it can merge: decision 0006):
 
 - validates PRs (§8, step 7)
 - manages leases and eligibility
