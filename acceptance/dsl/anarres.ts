@@ -44,7 +44,12 @@ export class Anarres {
 
   /** The member opens a pull request with their work; Divlab decides whether to merge it. */
   async memberSubmitsWork(
-    work: Work & { verdict: string; impediments?: string[]; withoutFeedbackSignal?: boolean },
+    work: Work & {
+      verdict: string;
+      impediments?: string[];
+      withoutFeedbackSignal?: boolean;
+      moduleNotPlain?: boolean;
+    },
   ) {
     this.signalsWritten += 1;
     const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);

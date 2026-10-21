@@ -16,3 +16,12 @@ Feature: Divlab merges the work members submit
     Then Divlab has not merged the member's Specification work on "parser"
     And the member is told their work has no feedback signal
     And no task is ready for "parser"
+
+  # Not yet tried against the sandbox (2026-10-21).
+  @sandbox-wip
+  Scenario: Work whose feedback signal does not use plain names is not merged
+    Given a project with a module "parser"
+    When a member submits Specification work on "parser" whose feedback signal names its module in more than a plain name
+    Then Divlab has not merged the member's Specification work on "parser"
+    And the member is told their feedback signal must use plain names
+    And no task is ready for "parser"

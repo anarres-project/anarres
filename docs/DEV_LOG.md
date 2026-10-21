@@ -30,6 +30,27 @@ the order in which several unrouted signals are routed in one run (section 0).
 
 ---
 
+## 2026-10-21: Plain names only
+
+- `readFeedbackSignal` finds a signal unreadable unless its role, module, verdict and impediment
+  types are plain names: lower-case letters and digits joined by single hyphens or underscores, at
+  most 40 long (GitHub labels hold 50 characters, and Divlab writes `module:<name>`). Both of
+  Divlab's paths read signals there, so both refuse; a refused pull request is told why.
+- Mutation testing on core: 318 mutants, all killed.
+
+OUTER RED: Work whose feedback signal does not use plain names is not merged (@wip) -> not yet
+           right: Divlab merged it
+RED:      module not a plain name -> expected { fromRole: 'test', … } to equal { unreadable }
+GREEN:    (94 passed)
+RED:      role not a plain name -> same; GREEN: one loop over role and module (95 passed)
+RED:      verdict not a plain name -> same; GREEN: (96 passed)
+RED:      impediment type not a plain name -> same; GREEN: (97 passed)
+RED:      a name too long to be a name -> same; GREEN: at most 40 (98 passed)
+PASSED FIRST TIME: a name as long as a name may be (pins the boundary)
+OUTER GREEN: @wip removed; @sandbox-wip until tried against the sandbox
+
+---
+
 ## 2026-10-21: Start whole, split when it hurts
 
 - Bernard asked whether a module list written at set-up would smuggle a big up-front design into

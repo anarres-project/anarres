@@ -142,4 +142,58 @@ describe("reading a feedback signal", () => {
       unreadable: "its feedback signal does not give its task_id as text or a whole number",
     });
   });
+
+  /** A header giving these fields, one per line. */
+  const headerWith = (...fields: string[]) =>
+    ["---", "feedback_signal:", ...fields.map((field) => `  ${field}`), "---"].join("\n");
+
+  it("finds a feedback signal unreadable when its module is not a plain name", () => {
+    const signal = headerWith(
+      "from_role: test",
+      'module: "parser [see](https://example.test)"',
+      "verdict: pass",
+    );
+    expect(readFeedbackSignal(signal)).toEqual({
+      unreadable: "its feedback signal's module is not a plain name",
+    });
+  });
+
+  it("finds a feedback signal unreadable when its role is not a plain name", () => {
+    const signal = headerWith('from_role: "@everyone"', "module: parser", "verdict: pass");
+    expect(readFeedbackSignal(signal)).toEqual({
+      unreadable: "its feedback signal's from_role is not a plain name",
+    });
+  });
+
+  it("finds a feedback signal unreadable when its verdict is not a plain name", () => {
+    const signal = headerWith("from_role: test", "module: parser", 'verdict: "pass <b>now</b>"');
+    expect(readFeedbackSignal(signal)).toEqual({
+      unreadable: "its feedback signal's verdict is not a plain name",
+    });
+  });
+
+  it("finds a feedback signal unreadable when an impediment's type is not a plain name", () => {
+    const signal = headerWith(
+      "from_role: coding",
+      "module: parser",
+      "verdict: fail",
+      "impediments:",
+      '  - type: "test_failures ![x](https://example.test/x.png)"',
+    );
+    expect(readFeedbackSignal(signal)).toEqual({
+      unreadable: "its feedback signal's impediments are not each a plain name",
+    });
+  });
+
+  it("finds a feedback signal unreadable when a name is too long to be a name", () => {
+    const signal = headerWith("from_role: test", `module: ${"a".repeat(41)}`, "verdict: pass");
+    expect(readFeedbackSignal(signal)).toEqual({
+      unreadable: "its feedback signal's module is not a plain name",
+    });
+  });
+
+  it("reads a name as long as a name may be", () => {
+    const signal = headerWith("from_role: test", `module: ${"a".repeat(40)}`, "verdict: pass");
+    expect(readFeedbackSignal(signal)).toMatchObject({ module: "a".repeat(40) });
+  });
 });

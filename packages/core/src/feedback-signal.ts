@@ -10,6 +10,13 @@ export type FeedbackSignal = {
   task?: string;
 };
 
+/**
+ * Lower-case letters and digits, joined by single hyphens or underscores, at most 40 long. Divlab
+ * writes these names into what it posts (titles, labels of at most 50 characters, text), so text
+ * a member chose must be no more than a name.
+ */
+const PLAIN_NAME = /^(?=.{1,40}$)[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
+
 /** Why a feedback signal could not be read. Divlab never guesses at what it meant. */
 export type Unreadable = { unreadable: string };
 
@@ -34,12 +41,20 @@ export function readFeedbackSignal(text: string): FeedbackSignal | Unreadable {
       return { unreadable: `its feedback signal does not give its ${field}` };
     }
   }
+  for (const field of ["from_role", "module", "verdict"]) {
+    if (!PLAIN_NAME.test(header[field])) {
+      return { unreadable: `its feedback signal's ${field} is not a plain name` };
+    }
+  }
   const impediments = header.impediments ?? [];
   if (
     !Array.isArray(impediments) ||
     !impediments.every((impediment) => typeof impediment?.type === "string")
   ) {
     return { unreadable: "its feedback signal's impediments do not each give a type" };
+  }
+  if (!impediments.every((impediment) => PLAIN_NAME.test(impediment.type))) {
+    return { unreadable: "its feedback signal's impediments are not each a plain name" };
   }
   const task = header.task_id;
   if (task !== undefined && typeof task !== "string" && !Number.isInteger(task)) {

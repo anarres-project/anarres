@@ -54,6 +54,20 @@ When(
   },
 );
 
+When(
+  "a member submits {role} work on {string} whose feedback signal names its module in more than a plain name",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.memberSubmitsWork({ role, module, verdict: "pass", moduleNotPlain: true });
+  },
+);
+
+Then(
+  "the member is told their feedback signal must use plain names",
+  function (this: AnarresWorld) {
+    return this.anarres.memberIsToldWhy("is not a plain name");
+  },
+);
+
 Then(
   "Divlab has not merged the member's {role} work on {string}",
   function (this: AnarresWorld, role: string, module: string) {

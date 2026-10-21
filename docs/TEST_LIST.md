@@ -203,9 +203,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       paths.
 - [ ] Work without a valid feedback signal is rejected, saying what is missing.
 - [ ] Work for a task the member has not claimed is rejected.
-- [ ] Work naming a module the project does not have is refused, and so is a feedback signal
-      whose role, module or impediments are not plain names: Divlab writes them into issue
-      titles, labels and text, so member-chosen text must never reach them unchecked.
+- [x] A feedback signal whose role, module, verdict or impediment types are not plain names
+      (lower-case letters and digits joined by single hyphens or underscores, at most 40 long) is
+      unreadable: Divlab writes them into issue titles, labels and text. The member is told why
+      (in-process; `@sandbox-wip` until tried against the sandbox).
+- [ ] Work naming a module the project does not have is refused (needs the Programme Architect's
+      `modules.yaml`; until then a project has one module: concept §5, "start whole").
 - [ ] Coding work that changes tests is rejected.
 - [ ] Work based on inputs that have since changed is flagged as stale.
 

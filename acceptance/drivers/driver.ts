@@ -8,6 +8,8 @@ export type AcceptedWork = {
   impediments: string[];
   /** The member's work leaves its feedback signal out. */
   withoutFeedbackSignal?: boolean;
+  /** The member's feedback signal names its module in more than a plain name. */
+  moduleNotPlain?: boolean;
 };
 
 export type ReadyTask = {
