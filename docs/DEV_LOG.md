@@ -39,6 +39,7 @@ the order in which several unrouted signals are routed in one run (section 0).
   `anarres-project/anarres/*`, which covers Divlab in its subfolder.
 - About 19 seconds a merge, some 25 minutes for the suite, so the sandbox job's limit rises from 30
   to 45 minutes.
+- First full CI run against the real Action: all 57 scenarios green in about 22 minutes.
 
 RED:      A failure that reports no problem is never guessed at (sandbox, driver waiting for the
           real Action, no workflow yet) -> Error: No Divlab run started for 75d6a0b…

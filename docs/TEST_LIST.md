@@ -24,9 +24,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         the driver merging a real feedback signal file);
   - [x] the bundled entry point (`action.yml`, one committed file, checked fresh in CI);
   - [x] the project template's workflow (`template/`);
-  - [ ] the sandbox driver observing the real Action: it installs the template's workflow pinned
-        to the commit under test, and waits for Divlab's run on each merge (sandbox set up
-        2026-10-21; green locally on a scenario and on the failed-work feature, waiting on CI);
+  - [x] the sandbox driver observing the real Action: it installs the template's workflow pinned
+        to the commit under test, and waits for Divlab's run on each merge (all 57 scenarios in
+        CI, about 22 minutes, 2026-10-21);
   - [ ] the order in which several unrouted signals are routed in one run (merge order, not file
         name order).
 - [ ] GitHub sandbox driver: the same scenarios against real repositories in the sandbox
