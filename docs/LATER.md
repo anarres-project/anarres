@@ -23,3 +23,13 @@ Ideas beyond current scope. Discuss before building.
   outsider may do in a project repository (GitHub's interaction limits are one tool) and which
   inputs Divlab and the plugin act on only from members (Bernard, 2026-10-21). The sandbox's
   repositories hold only synthetic data, so they are left open for now.
+- **Scaling on GitHub.** With thousands of members across many projects (Bernard, 2026-10-21):
+  - Divlab as a **GitHub App**, GitHub's route for automation at volume, whose rate limits grow
+    with the repositories using it, in place of each project's own token;
+  - **Actions concurrency** is per organisation (about 20 jobs at once on Free), shared by every
+    project's Divlab runs: a paid plan, or projects in their own organisations;
+  - a **published task index** (a file Divlab writes, or the site) for the plugin to read, since
+    GitHub's search allows few requests a minute and its index lags;
+  - very busy projects split into several repositories (concept, scaling table), since one Divlab
+    run at a time caps a project at roughly 150 to 180 merges an hour;
+  - talk to GitHub (open source programmes, acceptable use) before volume makes it urgent.

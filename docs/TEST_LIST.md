@@ -46,6 +46,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the driver waits until a ready list holds no task merged work has closed (a lagging list
         once showed a closed task in place of its replacement: 39 of 55 failed on 2026-10-13);
   - [ ] event files validated against the routing record's schema, defined once in core.
+  - [ ] Divlab reads a project's whole event log however long it grows: GitHub lists at most
+        1,000 files in a directory, so a busy project's log would otherwise be read in part,
+        silently (re-run counts, signals already routed).
   - [ ] a sweep deletes sandbox repositories left behind by an interrupted run (older than an
         hour), before each sandbox run;
   - [x] the adapter retries when GitHub rate-limits it (`retry-after`), so a busy sandbox run
@@ -132,6 +135,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 
 - [ ] A member can claim a ready task for a role they are eligible for.
 - [ ] A claimed task cannot be claimed by anyone else.
+- [ ] When several members claim the same task at once, the first valid claim wins and the others
+      are told the task is taken, whatever order GitHub delivers the claims in.
 - [ ] A lease expires after 24 hours without activity, and the task becomes ready again.
 - [ ] Submitting draft work extends the lease.
 - [ ] A member can release a task early.
