@@ -179,7 +179,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       sandbox repository gets the ruleset with Divlab Sandbox as its only bypass (it cannot
       before: the driver's direct writes to main would be refused).
   - [x] accepted work is submitted as a pull request and merged by Divlab, in both drivers;
-  - [ ] the sandbox suite's time with a pull request per merge (CI, 2026-10-21);
+  - [x] the sandbox suite's time with a pull request per merge: all 58 scenarios in 30.5
+        minutes in CI (2026-10-21), inside the 45-minute limit;
   - [ ] the ruleset.
 - [ ] Members' pull requests come from forks; the sandbox driver submits from a fork too.
 - [ ] A project's main branch admits changes only through pull requests Divlab's App merges; no

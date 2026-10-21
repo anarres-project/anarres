@@ -65,6 +65,8 @@ PASSED FIRST TIME: keeps the routing record inside its code block (guard; shown 
 
 - Accepted work now means work a member submitted as a pull request and Divlab merged, in both
   drivers. Nothing in the scenarios changed.
+- First full sandbox run with a pull request for every merge: 58 of 58 in 30.5 minutes (22
+  before), inside the 45-minute limit, so no need yet to run scenarios in parallel.
 - `onPullRequest` closes the task the work names and sends Research back to the role its task was
   for, as the merge path does; both now share `acceptSignal`.
 
