@@ -30,6 +30,17 @@ the order in which several unrouted signals are routed in one run (section 0).
 
 ---
 
+## 2026-10-21: Start whole, split when it hurts
+
+- Bernard asked whether a module list written at set-up would smuggle a big up-front design into
+  CSD. It would. The concept document (§5) now says decomposition is earned by evidence: a project
+  starts as one module, and splits only when the sizing rule fails or feedback shows the
+  boundaries do not work; requirements start as a first slice too.
+- So the check that work names a module the project has waits for the Programme Architect's
+  `modules.yaml`; the safety half (plain names only) does not.
+
+---
+
 ## 2026-10-21: Work without a feedback signal; text members choose
 
 - A pull request with no feedback signal is refused, and Divlab's comment says the work needs one
