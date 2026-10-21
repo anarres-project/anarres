@@ -37,6 +37,10 @@ export type RoutingRecord = {
 export interface Driver {
   createProject(project: string, modules: string[]): Promise<void>;
   acceptWork(work: AcceptedWork): Promise<void>;
+  /** The member opens a pull request with their work, for Divlab to validate and merge. */
+  submitWork(work: AcceptedWork): Promise<void>;
+  /** The feedback signals of the submitted work Divlab has merged. */
+  mergedWork(project: string): Promise<string[]>;
   readyTasks(project: string): Promise<ReadyTask[]>;
   coordinatorAlerts(project: string): Promise<CoordinatorAlert[]>;
   doneModules(project: string): Promise<string[]>;

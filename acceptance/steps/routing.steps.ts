@@ -35,6 +35,20 @@ Given(
   },
 );
 
+When(
+  "a member submits {role} work on {string} with a {verdict} verdict",
+  function (this: AnarresWorld, role: string, module: string, verdict: string) {
+    return this.anarres.memberSubmitsWork({ role, module, verdict });
+  },
+);
+
+Then(
+  "Divlab has merged the member's {role} work on {string}",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.divlabHasMerged({ role, module });
+  },
+);
+
 Given(
   "a member's {role} work on {string} has been sent back for {impediment} {int} times",
   function (this: AnarresWorld, role: string, module: string, impediment: string, times: number) {

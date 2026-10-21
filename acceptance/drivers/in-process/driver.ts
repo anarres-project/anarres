@@ -1,4 +1,4 @@
-import { onMerge } from "@anarres/divlab";
+import { onMerge, onPullRequest } from "@anarres/divlab";
 import type {
   AcceptedWork,
   CoordinatorAlert,
@@ -30,7 +30,7 @@ export class InProcessDriver implements Driver {
       .readyTasks(work.project)
       .find((task) => task.role === fromRole && task.module === work.module);
     const { path, text } = feedbackSignalFile(work, task?.id);
-    this.github.merge(work.project, path, text);
+    this.github.mergeFile(work.project, path, text);
     await onMerge(work.project, this.github, this.github, this.github);
   }
 
@@ -47,6 +47,19 @@ export class InProcessDriver implements Driver {
       const { work, reason } = inScenarioWords(alert);
       return { module: work.module, work, reason };
     });
+  }
+
+  async submitWork(work: AcceptedWork): Promise<void> {
+    const { path, text } = feedbackSignalFile(work);
+    const pullRequest = this.github.openPullRequest(work.project, [{ path, text }]);
+    await onPullRequest(work.project, pullRequest, this.github, this.github, this.github);
+  }
+
+  async mergedWork(project: string): Promise<string[]> {
+    return this.github
+      .mergedFiles(project)
+      .filter((path) => path.startsWith("feedback/"))
+      .map(signalName);
   }
 
   async readyTasks(project: string): Promise<ReadyTask[]> {

@@ -2,6 +2,7 @@ import type {
   CoordinatorAlert,
   EventLog,
   PostedTask,
+  PullRequests,
   Repository,
   RoutingEvent,
   TaskBoard,
@@ -11,7 +12,7 @@ import type {
 type OpenTask = PostedTask & { id: string };
 
 /** An in-memory stand-in for the GitHub repositories and issues Divlab works with. */
-export class FakeGitHub implements TaskBoard, EventLog, Repository {
+export class FakeGitHub implements TaskBoard, EventLog, Repository, PullRequests {
   readonly repositories = new Map<string, string[]>();
   private readonly files = new Map<string, Map<string, string>>();
   private readonly openTasks: OpenTask[] = [];
@@ -49,11 +50,47 @@ export class FakeGitHub implements TaskBoard, EventLog, Repository {
     return this.alerts.filter((alert) => alert.project === project);
   }
 
-  /** A member's pull request is merged, adding a file to the project. */
-  merge(project: string, path: string, text: string): void {
+  /** A file reaches the project's main branch. */
+  mergeFile(project: string, path: string, text: string): void {
     const files = this.files.get(project) ?? new Map<string, string>();
     files.set(path, text);
     this.files.set(project, files);
+  }
+
+  private readonly pullRequests: { project: string; files: { path: string; text: string }[] }[] =
+    [];
+  private readonly mergedPullRequests: string[] = [];
+
+  /** A member opens a pull request; it is identified by its number, as on GitHub. */
+  openPullRequest(project: string, files: { path: string; text: string }[]): string {
+    this.pullRequests.push({ project, files });
+    return String(this.pullRequests.length);
+  }
+
+  async changedFiles(_project: string, pullRequest: string) {
+    return this.pullRequest(pullRequest).files;
+  }
+
+  async merge(project: string, pullRequest: string): Promise<void> {
+    for (const { path, text } of this.pullRequest(pullRequest).files)
+      this.mergeFile(project, path, text);
+    this.mergedPullRequests.push(pullRequest);
+  }
+
+  async refuse(_project: string, _pullRequest: string, _reason: string): Promise<void> {}
+
+  /** The files of the pull requests merged into a project. */
+  mergedFiles(project: string): string[] {
+    return this.mergedPullRequests
+      .map((number) => this.pullRequest(number))
+      .filter((pullRequest) => pullRequest.project === project)
+      .flatMap((pullRequest) => pullRequest.files.map((file) => file.path));
+  }
+
+  private pullRequest(number: string) {
+    const pullRequest = this.pullRequests[Number(number) - 1];
+    if (!pullRequest) throw new Error(`There is no pull request ${number}`);
+    return pullRequest;
   }
 
   async feedbackSignals(project: string): Promise<string[]> {

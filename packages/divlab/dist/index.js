@@ -7817,13 +7817,14 @@ async function onWorkAccepted(event, board, log) {
     await board.post({ project: event.project, ...task2 });
   }
 }
+var cannotRead = (path, { unreadable }) => `The feedback signal ${path} cannot be read: ${unreadable}`;
 async function onMerge(project2, repository, board, log) {
   const routed = new Set((await log.read(project2)).map((event) => event.work.feedbackSignal));
   for (const path of await repository.feedbackSignals(project2)) {
     if (routed.has(path)) continue;
     const signal = readFeedbackSignal(await repository.readFile(project2, path));
     if ("unreadable" in signal) {
-      throw new Error(`The feedback signal ${path} cannot be read: ${signal.unreadable}`);
+      throw new Error(cannotRead(path, signal));
     }
     const { task, ...work } = signal;
     const researchFor = task === void 0 ? void 0 : (await board.task(project2, task))?.researchFor;

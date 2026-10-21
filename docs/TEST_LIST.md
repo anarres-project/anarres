@@ -152,6 +152,14 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 ## 4. Validating contributions
 
 - [ ] Divlab merges a contribution that passes validation (decision 0005: only Divlab merges).
+  - [x] in-process: a pull request whose feedback signal Divlab can read is merged, and its work
+        routed (`onPullRequest`);
+  - [ ] in the sandbox, as Divlab's App (the scenario is tagged `@sandbox-wip` until then; the
+        sandbox run lists such scenarios);
+  - [ ] the task the work names is closed, and Research work goes back to the role its task was
+        for, as when routing a merge;
+  - [ ] a pull request with no feedback signal is not merged, and the member is told so (today
+        Divlab stops without merging, but says nothing: a guard no test has demanded yet).
 - [ ] The project template's pull request workflow never checks out or runs anything from the pull
       request (decision 0006).
 - [ ] A project's main branch admits changes only through pull requests Divlab's App merges; no
@@ -160,6 +168,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       requires.
 - [ ] The tripwire leaves Divlab's own recorded merges alone.
 - [ ] A contribution that fails validation is not merged, and the member is told why.
+  - [x] a feedback signal Divlab cannot read (unit tests only so far);
 - [ ] A contribution PDC coordinators require reviewed is merged only once a reviewer approves.
 - [ ] A new project's main branch can be changed only by Divlab (project template).
 - [ ] Work that reached main without Divlab merging it is not routed; it is recorded once and PDC

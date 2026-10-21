@@ -64,6 +64,13 @@ The sandbox organisation itself needs, under Settings → Actions → General:
 - actions from `anarres-project/anarres/*` allowed (Divlab is one);
 - workflow permissions left read-only by default: the template's workflow asks for what it needs.
 
+Divlab merges as its own GitHub App (decision 0006). The sandbox's App is **Divlab Sandbox**
+(App ID 5414648, Client ID `Iv23liDDB4oQwfu6ZX9F`), owned by and installed on the sandbox
+organisation only, for all its repositories. Its repository permissions: read and write for
+contents, issues and pull requests; read for metadata; none for workflows. The organisation holds
+its id as the Actions variable `DIVLAB_APP_ID` and its private key as the Actions secret
+`DIVLAB_APP_PRIVATE_KEY`. The key lives nowhere else.
+
 Never point these at any other organisation: automated tests touch only the sandbox.
 
 ## Adding or upgrading a tool

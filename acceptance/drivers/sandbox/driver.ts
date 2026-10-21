@@ -9,6 +9,7 @@ import type {
   ReadyTask,
   RoutingRecord,
 } from "../driver.ts";
+import { HarnessNotYetBuilt } from "../errors.ts";
 import {
   feedbackSignalFile,
   inScenarioWords,
@@ -94,6 +95,14 @@ export class SandboxDriver implements Driver {
     if ("tasks" in decision) expected.ready += decision.tasks.length;
     if ("alert" in decision) expected.escalation += 1;
     if ("moduleDone" in decision) expected.done += 1;
+  }
+
+  async submitWork(_work: AcceptedWork): Promise<void> {
+    throw new HarnessNotYetBuilt("submitting work as a pull request in the sandbox");
+  }
+
+  async mergedWork(_project: string): Promise<string[]> {
+    throw new HarnessNotYetBuilt("submitting work as a pull request in the sandbox");
   }
 
   async readyTasks(project: string): Promise<ReadyTask[]> {

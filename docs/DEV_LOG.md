@@ -30,6 +30,30 @@ the order in which several unrouted signals are routed in one run (section 0).
 
 ---
 
+## 2026-10-21: Divlab merges submitted work (in-process)
+
+- Bernard created the sandbox's GitHub App, Divlab Sandbox (IDs in `CONTRIBUTING.md`).
+- `onPullRequest`: Divlab reads a pull request's feedback signal as data, merges the pull request
+  if it can read it and routes its work; if it cannot, it does not merge and tells the member why.
+- The new scenario runs in-process. It is tagged `@sandbox-wip` until Divlab merges as its App in
+  the sandbox; the sandbox profile leaves such scenarios out and the sandbox run lists them.
+
+OUTER RED: Work that passes validation is merged and routed (@wip)
+           -> NotYetImplemented: Divlab merging submitted work
+RED:      merges a pull request whose feedback signal it can read
+          -> TypeError: onPullRequest is not a function; stubbed -> expected [] to equal [ '7' ]
+GREEN:    (2 passed)
+RED:      routes the work in the pull request it merges -> expected [] to equal [ { … } ]
+GREEN:    (3 passed); REFACTOR: shared test fixtures
+RED:      does not merge a pull request whose feedback signal it cannot read
+          -> expected [ '8' ] to deeply equal []
+GREEN:    (4 passed)
+RED:      tells the member why it did not merge their pull request -> expected [] to equal [ … ]
+GREEN:    (5 passed); REFACTOR: the "cannot be read" reason written once, shared with onMerge
+OUTER GREEN: the scenario passes in-process; 128 unit tests, 58 scenarios
+
+---
+
 ## 2026-10-21: How Divlab merges
 
 - Tried in the sandbox: a ruleset binds even administrators on a public repository under GitHub

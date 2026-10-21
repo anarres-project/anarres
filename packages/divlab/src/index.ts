@@ -1,4 +1,10 @@
-import { type Role, type RoutingRecord, readFeedbackSignal, routingRecord } from "@anarres/core";
+import {
+  type Role,
+  type RoutingRecord,
+  readFeedbackSignal,
+  routingRecord,
+  type Unreadable,
+} from "@anarres/core";
 
 export type WorkAccepted = {
   project: string;
@@ -45,6 +51,14 @@ export interface Repository {
   readFile(project: string, path: string): Promise<string>;
 }
 
+/** Members' pull requests: what each would change, read as data, and merging it. */
+export interface PullRequests {
+  changedFiles(project: string, pullRequest: string): Promise<{ path: string; text: string }[]>;
+  merge(project: string, pullRequest: string): Promise<void>;
+  /** Divlab will not merge it: the member is told why. */
+  refuse(project: string, pullRequest: string, reason: string): Promise<void>;
+}
+
 /** Where Divlab records its decisions: one file per event in the project repository. */
 export interface EventLog {
   append(event: RoutingEvent): Promise<void>;
@@ -72,6 +86,9 @@ async function onWorkAccepted(event: WorkAccepted, board: TaskBoard, log: EventL
   }
 }
 
+const cannotRead = (path: string, { unreadable }: Unreadable) =>
+  `The feedback signal ${path} cannot be read: ${unreadable}`;
+
 /** Work has been merged to the project's main branch. */
 export async function onMerge(
   project: string,
@@ -85,7 +102,7 @@ export async function onMerge(
     if (routed.has(path)) continue;
     const signal = readFeedbackSignal(await repository.readFile(project, path));
     if ("unreadable" in signal) {
-      throw new Error(`The feedback signal ${path} cannot be read: ${signal.unreadable}`);
+      throw new Error(cannotRead(path, signal));
     }
     const { task, ...work } = signal;
     // Research work goes back to the role its task was for, as Divlab recorded on the task.
@@ -103,4 +120,25 @@ export async function onMerge(
       log,
     );
   }
+}
+
+/** A member has submitted work as a pull request. */
+export async function onPullRequest(
+  project: string,
+  pullRequest: string,
+  pullRequests: PullRequests,
+  board: TaskBoard,
+  log: EventLog,
+): Promise<void> {
+  const files = await pullRequests.changedFiles(project, pullRequest);
+  const feedback = files.find((file) => file.path.startsWith("feedback/"));
+  if (feedback === undefined) return;
+  const signal = readFeedbackSignal(feedback.text);
+  if ("unreadable" in signal) {
+    await pullRequests.refuse(project, pullRequest, cannotRead(feedback.path, signal));
+    return;
+  }
+  await pullRequests.merge(project, pullRequest);
+  const { task: _task, ...work } = signal;
+  await onWorkAccepted({ project, ...work, feedbackSignal: feedback.path }, board, log);
 }

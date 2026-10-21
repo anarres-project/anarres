@@ -42,6 +42,28 @@ export class Anarres {
     });
   }
 
+  /** The member opens a pull request with their work; Divlab decides whether to merge it. */
+  async memberSubmitsWork(work: Work & { verdict: string; impediments?: string[] }) {
+    this.signalsWritten += 1;
+    const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
+    this.feedbackSignals.set(workOn(this.aliased(work)), feedbackSignal);
+    await this.driver.submitWork({
+      impediments: [],
+      ...this.aliased(work),
+      project: this.project,
+      member: this.aliases.of(DEFAULT_MEMBER),
+      feedbackSignal,
+    });
+  }
+
+  async divlabHasMerged(work: Work) {
+    const feedbackSignal = this.feedbackSignals.get(workOn(this.aliased(work)));
+    assert.ok(
+      (await this.driver.mergedWork(this.project)).includes(feedbackSignal ?? ""),
+      `expected Divlab to have merged the ${work.role} work on ${work.module}`,
+    );
+  }
+
   async memberHasWorkSentBack(work: Work & { impediment: string }, times: number) {
     for (let i = 0; i < times; i++) {
       await this.memberHasWorkAccepted({
