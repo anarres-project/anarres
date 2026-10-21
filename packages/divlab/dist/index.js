@@ -7884,6 +7884,21 @@ async function onWorkAccepted(event, board, log) {
     await board.post({ project: event.project, ...task2 });
   }
 }
+async function acceptSignal(project2, path, signal, board, log) {
+  const { task, ...work } = signal;
+  const researchFor = task === void 0 ? void 0 : (await board.task(project2, task))?.researchFor;
+  await onWorkAccepted(
+    {
+      project: project2,
+      ...work,
+      feedbackSignal: path,
+      ...researchFor === void 0 ? {} : { researchFor },
+      ...task === void 0 ? {} : { task }
+    },
+    board,
+    log
+  );
+}
 var cannotRead = (path, { unreadable }) => `The feedback signal ${path} cannot be read: ${unreadable}`;
 async function onMerge(project2, repository, board, log) {
   const routed = new Set((await log.read(project2)).map((event) => event.work.feedbackSignal));
@@ -7893,19 +7908,7 @@ async function onMerge(project2, repository, board, log) {
     if ("unreadable" in signal) {
       throw new Error(cannotRead(path, signal));
     }
-    const { task, ...work } = signal;
-    const researchFor = task === void 0 ? void 0 : (await board.task(project2, task))?.researchFor;
-    await onWorkAccepted(
-      {
-        project: project2,
-        ...work,
-        feedbackSignal: path,
-        ...researchFor === void 0 ? {} : { researchFor },
-        ...task === void 0 ? {} : { task }
-      },
-      board,
-      log
-    );
+    await acceptSignal(project2, path, signal, board, log);
   }
 }
 async function onPullRequest(project2, pullRequest, pullRequests, board, log) {
@@ -7919,8 +7922,7 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log) {
     return;
   }
   await pullRequests.merge(project2, pullRequest, head);
-  const { task: _task, ...work } = signal;
-  await onWorkAccepted({ project: project2, ...work, feedbackSignal: feedback.path }, board, log);
+  await acceptSignal(project2, feedback.path, signal, board, log);
 }
 
 // src/action.ts

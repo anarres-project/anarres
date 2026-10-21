@@ -1,4 +1,4 @@
-import { onMerge, onPullRequest } from "@anarres/divlab";
+import { onPullRequest } from "@anarres/divlab";
 import type {
   AcceptedWork,
   CoordinatorAlert,
@@ -15,7 +15,7 @@ import {
 } from "../scenario-words.ts";
 import { FakeGitHub } from "./fake-github.ts";
 
-/** Merges work into an in-memory fake of GitHub and runs Divlab on each merge. */
+/** Submits work to an in-memory fake of GitHub as pull requests, for Divlab to merge. */
 export class InProcessDriver implements Driver {
   private readonly github = new FakeGitHub();
 
@@ -23,15 +23,12 @@ export class InProcessDriver implements Driver {
     this.github.repositories.set(project, modules);
   }
 
+  /** The member submits the work and Divlab merges it: accepted work has been merged. */
   async acceptWork(work: AcceptedWork): Promise<void> {
-    const fromRole = roleId(work.role);
-    // The member's feedback signal names the task the work was for.
-    const task = this.github
-      .readyTasks(work.project)
-      .find((task) => task.role === fromRole && task.module === work.module);
-    const { path, text } = feedbackSignalFile(work, task?.id);
-    this.github.mergeFile(work.project, path, text);
-    await onMerge(work.project, this.github, this.github, this.github);
+    await this.submitWork(work);
+    if (!(await this.mergedWork(work.project)).includes(work.feedbackSignal)) {
+      throw new Error(`Divlab did not merge the ${work.role} work on ${work.module}`);
+    }
   }
 
   async routingRecords(project: string): Promise<RoutingRecord[]> {
@@ -50,7 +47,12 @@ export class InProcessDriver implements Driver {
   }
 
   async submitWork(work: AcceptedWork): Promise<void> {
-    const { path, text } = feedbackSignalFile(work);
+    const fromRole = roleId(work.role);
+    // The member's feedback signal names the task the work was for.
+    const task = this.github
+      .readyTasks(work.project)
+      .find((task) => task.role === fromRole && task.module === work.module);
+    const { path, text } = feedbackSignalFile(work, task?.id);
     const pullRequest = this.github.openPullRequest(work.project, [{ path, text }]);
     await onPullRequest(work.project, pullRequest, this.github, this.github, this.github);
   }

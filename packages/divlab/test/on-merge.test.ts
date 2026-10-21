@@ -99,4 +99,40 @@ describe("acting on a pull request", () => {
     await onPullRequest("ledger", "7", pullRequests, { ...board, post: async () => {} }, log);
     expect(merged).toEqual(["7 at c0ffee"]);
   });
+
+  it("closes the task the work in the pull request was for", async () => {
+    const closed: string[] = [];
+    const forTask = {
+      path: "feedback/FB-4.md",
+      text: '---\nfeedback_signal:\n  task_id: "3"\n  from_role: test\n  module: parser\n  verdict: pass\n---\n',
+    };
+    const closing: TaskBoard = {
+      ...board,
+      post: async () => {},
+      task: async () => ({}),
+      close: async (_project, task) => {
+        closed.push(task);
+      },
+    };
+    await onPullRequest("ledger", "9", submitting([], [forTask]), closing, log);
+    expect(closed).toEqual(["3"]);
+  });
+
+  it("sends passed Research back to the role its task was for, as Divlab recorded on the task", async () => {
+    const posted: PostedTask[] = [];
+    const research = {
+      path: "feedback/FB-5.md",
+      text: '---\nfeedback_signal:\n  task_id: "4"\n  from_role: research\n  module: parser\n  verdict: pass\n---\n',
+    };
+    const recorded: TaskBoard = {
+      ...board,
+      post: async (task) => {
+        posted.push(task);
+      },
+      task: async () => ({ researchFor: "coding" }),
+      close: async () => {},
+    };
+    await onPullRequest("ledger", "10", submitting([], [research]), recorded, log);
+    expect(posted.map((task) => task.role)).toEqual(["coding"]);
+  });
 });

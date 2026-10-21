@@ -30,6 +30,25 @@ the order in which several unrouted signals are routed in one run (section 0).
 
 ---
 
+## 2026-10-21: Every scenario's work goes through a pull request
+
+- Accepted work now means work a member submitted as a pull request and Divlab merged, in both
+  drivers. Nothing in the scenarios changed.
+- `onPullRequest` closes the task the work names and sends Research back to the role its task was
+  for, as the merge path does; both now share `acceptSignal`.
+
+OUTER RED: 6 of 58 scenarios (tasks left open, so escalation counts and closed tasks failed;
+           Research not sent back)
+RED:      closes the task the work in the pull request was for -> expected [] to equal [ '3' ]
+GREEN:    (18 passed)
+RED:      sends passed Research back to the role its task was for -> Error: Divlab should not
+          have acted (it escalated)
+GREEN:    (19 passed)
+REFACTOR: acceptSignal, shared by onPullRequest and onMerge
+OUTER GREEN: 58 of 58 in-process
+
+---
+
 ## 2026-10-21: Divlab merges a real pull request as its App
 
 - `packages/github` implements Divlab's side of a pull request: its head, its changed files read

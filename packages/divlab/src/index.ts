@@ -1,4 +1,5 @@
 import {
+  type FeedbackSignal,
   type Role,
   type RoutingRecord,
   readFeedbackSignal,
@@ -89,6 +90,31 @@ async function onWorkAccepted(event: WorkAccepted, board: TaskBoard, log: EventL
   }
 }
 
+/** Accepted work, as its feedback signal reports it: routed, and the task it names closed. */
+async function acceptSignal(
+  project: string,
+  path: string,
+  signal: FeedbackSignal,
+  board: TaskBoard,
+  log: EventLog,
+): Promise<void> {
+  const { task, ...work } = signal;
+  // Research work goes back to the role its task was for, as Divlab recorded on the task.
+  const researchFor =
+    task === undefined ? undefined : (await board.task(project, task))?.researchFor;
+  await onWorkAccepted(
+    {
+      project,
+      ...work,
+      feedbackSignal: path,
+      ...(researchFor === undefined ? {} : { researchFor }),
+      ...(task === undefined ? {} : { task }),
+    },
+    board,
+    log,
+  );
+}
+
 const cannotRead = (path: string, { unreadable }: Unreadable) =>
   `The feedback signal ${path} cannot be read: ${unreadable}`;
 
@@ -107,21 +133,7 @@ export async function onMerge(
     if ("unreadable" in signal) {
       throw new Error(cannotRead(path, signal));
     }
-    const { task, ...work } = signal;
-    // Research work goes back to the role its task was for, as Divlab recorded on the task.
-    const researchFor =
-      task === undefined ? undefined : (await board.task(project, task))?.researchFor;
-    await onWorkAccepted(
-      {
-        project,
-        ...work,
-        feedbackSignal: path,
-        ...(researchFor === undefined ? {} : { researchFor }),
-        ...(task === undefined ? {} : { task }),
-      },
-      board,
-      log,
-    );
+    await acceptSignal(project, path, signal, board, log);
   }
 }
 
@@ -144,6 +156,5 @@ export async function onPullRequest(
     return;
   }
   await pullRequests.merge(project, pullRequest, head);
-  const { task: _task, ...work } = signal;
-  await onWorkAccepted({ project, ...work, feedbackSignal: feedback.path }, board, log);
+  await acceptSignal(project, feedback.path, signal, board, log);
 }

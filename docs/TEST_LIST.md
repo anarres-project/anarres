@@ -156,7 +156,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         routed (`onPullRequest`);
   - [x] in the sandbox, as Divlab's App: a real pull request, merged by Divlab Sandbox
         (2026-10-21);
-  - [ ] the task the work names is closed, and Research work goes back to the role its task was
+  - [x] the task the work names is closed, and Research work goes back to the role its task was
         for, as when routing a merge;
   - [ ] a pull request with no feedback signal is not merged, and the member is told so (today
         Divlab stops without merging, but says nothing: a guard no test has demanded yet).
@@ -177,6 +177,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [ ] Every scenario submits work as a pull request, not by writing to main directly; then each
       sandbox repository gets the ruleset with Divlab Sandbox as its only bypass (it cannot
       before: the driver's direct writes to main would be refused).
+  - [x] accepted work is submitted as a pull request and merged by Divlab, in both drivers;
+  - [ ] the sandbox suite's time with a pull request per merge (CI, 2026-10-21);
+  - [ ] the ruleset.
 - [ ] Members' pull requests come from forks; the sandbox driver submits from a fork too.
 - [ ] A project's main branch admits changes only through pull requests Divlab's App merges; no
       person is exempt (template ruleset; the sandbox driver sets it up too).

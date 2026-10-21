@@ -69,24 +69,13 @@ export class SandboxDriver implements Driver {
     run.expected.set(project, { ready: 0, escalation: 0, done: 0 });
   }
 
+  /** The member submits the work and Divlab merges it: accepted work has been merged. */
   async acceptWork(work: AcceptedWork): Promise<void> {
-    // The member's merged work adds a feedback signal naming its task; Divlab acts on the merge.
-    const fromRole = roleId(work.role);
-    const task = (await this.settled(work.project, "ready")).find(
-      (issue) =>
-        labelValue(issue, "role:") === fromRole && labelValue(issue, "module:") === work.module,
-    );
-    const { path, text } = feedbackSignalFile(work, task && String(task.number));
-    const merged = await this.github.call<{ commit: { sha: string } }>(
-      "PUT",
-      `repos/${this.org}/${work.project}/contents/${path}`,
-      {
-        message: `Merge the ${work.role} work on ${work.module}`,
-        content: Buffer.from(text).toString("base64"),
-      },
-    );
-    await this.divlabHasActedOn(work.project, merged.commit.sha);
-    await this.expectWhatDivlabDecided(work.project, path, task);
+    await this.submitWork(work);
+    const submitted = run.submitted.at(-1);
+    if (!submitted?.merged) {
+      throw new Error(`Divlab did not merge the ${work.role} work on ${work.module}`);
+    }
   }
 
   /** The member's work goes on a branch of its own, and a pull request asks to merge it. */
@@ -117,22 +106,21 @@ export class SandboxDriver implements Driver {
       head: branch,
       base: "main",
     });
-    run.submitted.push({ project: work.project, number, feedbackSignal: work.feedbackSignal });
-    if (await this.divlabHasDecidedOn(work.project, number)) {
-      await this.expectWhatDivlabDecided(work.project, path, task);
-    }
+    const merged = await this.divlabHasDecidedOn(work.project, number);
+    run.submitted.push({
+      project: work.project,
+      number,
+      feedbackSignal: work.feedbackSignal,
+      merged,
+    });
+    if (merged) await this.expectWhatDivlabDecided(work.project, path, task);
   }
 
+  /** As GitHub showed each pull request once Divlab had decided on it. */
   async mergedWork(project: string): Promise<string[]> {
-    const merged: string[] = [];
-    for (const submitted of run.submitted.filter((pr) => pr.project === project)) {
-      const pullRequest = await this.github.call<{ merged: boolean }>(
-        "GET",
-        `repos/${this.org}/${project}/pulls/${submitted.number}`,
-      );
-      if (pullRequest.merged) merged.push(submitted.feedbackSignal);
-    }
-    return merged;
+    return run.submitted
+      .filter((submitted) => submitted.project === project && submitted.merged)
+      .map((submitted) => submitted.feedbackSignal);
   }
 
   /** What GitHub's lists should show once they catch up with what Divlab recorded for the work. */
@@ -272,36 +260,6 @@ export class SandboxDriver implements Driver {
     }
   }
 
-  /**
-   * Waits for Divlab's Action to finish acting on a merge. A run that fails, or never starts,
-   * fails the step with what GitHub says went wrong, rather than leaving a later step to time out.
-   */
-  private async divlabHasActedOn(project: string, commit: string): Promise<void> {
-    const repository = `repos/${this.org}/${project}`;
-    const started = Date.now();
-    for (;;) {
-      const { workflow_runs: runs } = await this.github.call<{ workflow_runs: WorkflowRun[] }>(
-        "GET",
-        `${repository}/actions/runs?head_sha=${commit}&event=push`,
-      );
-      const finished = runs.find((run) => run.status === "completed");
-      if (finished?.conclusion === "success") return;
-      if (finished) {
-        throw new Error(
-          `Divlab's run for ${commit} ended ${finished.conclusion}: ${await this.whyRunFailed(repository, finished)} (${finished.html_url})`,
-        );
-      }
-      const waited = Date.now() - started;
-      if (runs.length === 0 && waited > RUN_START_LIMIT) {
-        throw new Error(`No Divlab run started for ${commit} in ${project}`);
-      }
-      if (waited > RUN_FINISH_LIMIT) {
-        throw new Error(`Divlab's run for ${commit} had not finished: ${runs[0]?.html_url}`);
-      }
-      await new Promise((resolve) => setTimeout(resolve, 2_000));
-    }
-  }
-
   /** The errors a failed run reported, as GitHub annotates its jobs. */
   private async whyRunFailed(repository: string, failed: WorkflowRun): Promise<string> {
     const { jobs } = await this.github.call<{ jobs: { id: number }[] }>(
@@ -393,8 +351,7 @@ type WorkflowRun = {
   created_at: string;
 };
 
-/** How long a merge may wait for Divlab's run to start, and to finish, within a step's timeout. */
-const RUN_START_LIMIT = 120_000;
+/** How long Divlab may take to decide on a pull request, within a step's timeout. */
 const RUN_FINISH_LIMIT = 240_000;
 
 /** Shared by every scenario in a run: they all use the run's one repository, one at a time. */
@@ -405,7 +362,7 @@ const run = {
   /** The tasks merged work has closed, which a lagging list may still show as ready. */
   closed: new Set<string>(),
   /** The pull requests members' work was submitted in. */
-  submitted: [] as { project: string; number: number; feedbackSignal: string }[],
+  submitted: [] as { project: string; number: number; feedbackSignal: string; merged: boolean }[],
 };
 
 const issueKey = (project: string, number: number) => `${project}#${number}`;
