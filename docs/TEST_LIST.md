@@ -158,8 +158,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         (2026-10-21);
   - [x] the task the work names is closed, and Research work goes back to the role its task was
         for, as when routing a merge;
-  - [x] a pull request with no feedback signal is not merged, and the member is told so
-        (in-process; `@sandbox-wip` until tried against the sandbox).
+  - [x] a pull request with no feedback signal is not merged, and the member is told so (in
+        the sandbox too).
 - [x] The project template's pull request workflow never checks out or runs anything from the pull
       request (decision 0006): it runs as main has it, its only steps are the App's token and
       Divlab, its own token gets no permissions, it puts nothing from the event in an expression,
@@ -208,7 +208,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [x] A feedback signal whose role, module, verdict or impediment types are not plain names
       (lower-case letters and digits joined by single hyphens or underscores, at most 40 long) is
       unreadable: Divlab writes them into issue titles, labels and text. The member is told why
-      (in-process; `@sandbox-wip` until tried against the sandbox).
+      (in the sandbox too).
 - [ ] Work naming a module the project does not have is refused (needs the Programme Architect's
       `modules.yaml`; until then a project has one module: concept §5, "start whole").
 - [ ] Coding work that changes tests is rejected.
