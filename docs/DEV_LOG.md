@@ -30,6 +30,20 @@ Action and the sandbox driver are still open in section 0.
 
 ---
 
+## 2026-10-21: Only Divlab merges
+
+- Decision 0005 (Bernard): only Divlab merges into a project's main branch, so every change there
+  has passed validation. Anything that reaches main another way, an unreadable feedback signal
+  among them, is recorded once, alerted to PDC coordinators and never routed, and routing carries
+  on. The options not taken (a required check with no bypass, Divlab checking its own protection,
+  reverting automatically) are recorded there. The concept document (§8, step 8) and the test list
+  (sections 4 and Unsorted) follow.
+- Sandbox set up for the real Action: the sandbox token may now write workflows and read Action
+  runs, and the sandbox organisation allows actions from `anarres-project/anarres`. The steps are
+  in `CONTRIBUTING.md`.
+
+---
+
 ## 2026-10-21: Anarres beside Claude Code's Projects
 
 - Claude Code's Projects (public beta) runs parallel sessions under one coordinating

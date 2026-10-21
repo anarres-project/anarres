@@ -140,6 +140,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 
 ## 4. Validating contributions
 
+- [ ] Divlab merges a contribution that passes validation (decision 0005: only Divlab merges).
+- [ ] A contribution that fails validation is not merged, and the member is told why.
+- [ ] A contribution PDC coordinators require reviewed is merged only once a reviewer approves.
+- [ ] A new project's main branch can be changed only by Divlab (project template).
+- [ ] Work that reached main without Divlab merging it is not routed; it is recorded once and PDC
+      coordinators are alerted (decision 0005).
 - [ ] Work that touches files outside the role's write scope is rejected, naming the offending
       paths.
 - [ ] Work without a valid feedback signal is rejected, saying what is missing.
@@ -173,8 +179,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] a signal written with Windows line endings is read the same;
   - [x] Divlab finds the signals merged since it last ran, and routes each once;
   - [ ] work naming a task that does not exist, or is not the member's (section 4);
-  - [ ] a signal that reaches `main` unreadable (validation should stop it first: section 4)
-        → ? (ask Bernard: alert PDC coordinators once, and record it so it is not retried?)
+  - [ ] a signal that reaches `main` unreadable is recorded once as not accepted, with the
+        reason, and PDC coordinators are alerted once; the other signals are still routed
+        (decision 0005);
 - Work from a role Divlab does not recognise is rejected, not routed (today `route` treats an
   unknown role as the start of the pipeline; untested, so section 4 must cover it).
 - The task posted on GitHub links to its feedback signal at the merged commit (needs Divlab as an

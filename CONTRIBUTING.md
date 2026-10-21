@@ -44,6 +44,28 @@ expected: npm 11 holds them back by default, and nothing here needs them.
 The other commands (`npm run test:wip`, `npm run mutate` and so on) are listed under "Commands" in
 [`CLAUDE.md`](CLAUDE.md) and defined in `package.json`.
 
+## The GitHub sandbox
+
+`npm run test:acceptance:sandbox` runs the acceptance tests against real repositories in a
+dedicated sandbox organisation. Each run creates its repositories and deletes them at the end. It
+needs two values, from a git-ignored `.env` locally, or from the `sandbox` environment in CI:
+
+- `ANARRES_SANDBOX_ORG`: the sandbox organisation's name;
+- `ANARRES_SANDBOX_TOKEN`: a fine-grained personal access token whose resource owner is that
+  organisation, with access to all its repositories (the tests create new ones), and these
+  repository permissions:
+  - read and write: administration, contents, issues, pull requests, workflows (the tests install
+    the project template's workflow);
+  - read: actions (the tests watch Divlab's runs), metadata.
+
+The sandbox organisation itself needs, under Settings → Actions → General:
+
+- Actions enabled for all repositories;
+- actions from `anarres-project/anarres/*` allowed (Divlab is one);
+- workflow permissions left read-only by default: the template's workflow asks for what it needs.
+
+Never point these at any other organisation: automated tests touch only the sandbox.
+
 ## Adding or upgrading a tool
 
 `.npmrc` sets `save-exact=true`, so `npm install -D <tool>` records an exact version. Commit

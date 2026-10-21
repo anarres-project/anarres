@@ -25,7 +25,7 @@ order.
 
 **What was merged is untrusted data.** The feedback signal's header is parsed strictly (`core`,
 `readFeedbackSignal`); anything malformed stops Divlab with the reason rather than being guessed
-at. The task a signal names is checked before Divlab uses it in a request.
+at (superseded by decision 0005: it is recorded and alerted, and routing continues). The task a signal names is checked before Divlab uses it in a request.
 
 **The Action is one bundled JavaScript file, committed to this repository.** A JavaScript Action
 runs from the repository as it is, with no install step, so its code and dependencies must be in
@@ -43,5 +43,5 @@ observes the real Action at work.
   `anarres-project`.
 - Every merge in a sandbox scenario starts a real Action run, so the sandbox suite takes
   noticeably longer than when the driver called Divlab directly.
-- Order among several signals routed in one run, and what to do with a signal that reaches the
-  main branch unreadable, are open (test list).
+- Order among several signals routed in one run is open (test list). What to do with a signal
+  that reaches the main branch unreadable is decided in 0005.

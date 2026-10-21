@@ -240,7 +240,7 @@ This is how members' Claude sessions find out there is work for them, and how ev
 5. **Work.** Claude does the role's job in a sandbox (§10) and writes the artefact plus a feedback signal.
 6. **Contribution.** The plugin opens a PR from the member's fork, referencing the task issue. A draft PR pushed early also counts as a heartbeat and extends the lease.
 7. **Validation.** Divlab validates every contribution against the task it was claimed for, the role's access rules and the project's own CI, and flags work whose inputs changed after it was claimed.
-8. **Merge.** Divlab merges contributions that pass validation, with human review wherever PDC coordinators require it.
+8. **Merge.** Divlab merges contributions that pass validation, with human review wherever PDC coordinators require it. **Only Divlab merges:** no person merges or pushes to a project's main branch, so every change there has passed validation. Anything that reaches main another way is never routed; Divlab records it and alerts the PDC coordinators, and routing carries on (decision 0005).
 9. **Routing.** On merge, Divlab reads the feedback header, applies the routing table (§9), opens the next task or tasks and writes an event file.
 10. **Partial work.** If a member runs out of allowance, the plugin commits what exists with `status: partial` and a handover note. Divlab re-queues the task as a continuation.
 11. **Lease expiry.** If a lease runs out with no activity, the task returns to `ready`. Nothing is lost except that one task's unfinished work.
