@@ -30,6 +30,31 @@ the order in which several unrouted signals are routed in one run (section 0).
 
 ---
 
+## 2026-10-21: Divlab checks its own protection
+
+- Tried as the App in the sandbox: it can see that main's rules are in force and that it may
+  bypass them, but not who else may, even with administration read access (GitHub shows that only
+  to those who can edit the rules). Bernard removed that permission again: it bought nothing.
+- `checkProtection` runs after every Divlab run: if the rules GitHub applies to main are not all
+  there, it alerts PDC coordinators once; the open alert is the record, and closing it re-arms the
+  check. Decision 0006 says what it cannot see.
+
+OUTER RED: Divlab alerts PDC coordinators, once, when main is not protected (@wip) ->
+           NotYetImplemented, then not yet right (no alert)
+RED:      alerts when main is not protected -> TypeError; stub -> expected [] to equal [ 'ledger' ]
+GREEN:    (1 passed)
+RED:      says nothing while main is protected -> expected [ 'ledger' ] to equal []
+GREEN:    (2 passed)
+RED:      does not alert again while its earlier alert is open -> expected [ 'ledger' ] to equal []
+GREEN:    (34 passed in Divlab); OUTER GREEN in-process
+RED:      protection not in force when a rule no longer applies -> expected true to be false (this
+          test was written in the same step as the hard-coded green before it: a slip)
+GREEN:    (39 passed in packages/github); REFACTOR: main's rules listed once
+RED:      the unprotected-main alert issue -> expected { title: '' … } to equal { …(3) }
+GREEN:    (173 passed)
+
+---
+
 ## 2026-10-21: About to merge
 
 - Before merging a pull request, Divlab records that it is about to, with the work it read and

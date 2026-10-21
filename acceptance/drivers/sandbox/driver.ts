@@ -177,6 +177,16 @@ export class SandboxDriver implements Driver {
     throw new HarnessNotYetBuilt("interrupting the real Action between merging and recording");
   }
 
+  /** Divlab runs after the work it acted on, so give the last run time to look and alert. */
+  async unprotectedMainAlerts(project: string): Promise<number> {
+    const deadline = Date.now() + 60_000;
+    for (;;) {
+      const alerts = await this.issues(project, "unprotected-main", "all");
+      if (alerts.length > 0 || Date.now() > deadline) return alerts.length;
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+    }
+  }
+
   async refusals(project: string): Promise<string[]> {
     const said: string[] = [];
     for (const submitted of run.submitted.filter((pr) => pr.project === project && !pr.merged)) {
@@ -396,11 +406,12 @@ export class SandboxDriver implements Driver {
       "GET",
       `repos/${this.org}/${project}/issues?labels=${encodeURIComponent(label)}&state=${state}&per_page=100`,
     );
-    // An alert of work Divlab did not accept is an escalation too, but not a routing alert.
-    const notAccepted = (issue: Issue) => issue.labels.some((l) => l.name === "not-accepted");
+    // Alerts of work not accepted, or of an unprotected main, are escalations too, but not
+    // routing alerts.
+    const notRouting = (issue: Issue) =>
+      issue.labels.some((l) => l.name === "not-accepted" || l.name === "unprotected-main");
     return issues.filter(
-      (issue) =>
-        issue.pull_request === undefined && (label !== "escalation" || !notAccepted(issue)),
+      (issue) => issue.pull_request === undefined && (label !== "escalation" || !notRouting(issue)),
     );
   }
 }

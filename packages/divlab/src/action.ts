@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { GitHubAdapter } from "@anarres/github";
 import { whatToActOn } from "./event.ts";
-import { onMerge, onPullRequest } from "./index.ts";
+import { checkProtection, onMerge, onPullRequest } from "./index.ts";
 
 /**
  * The GitHub Action: a member's pull request, or a push to a project's main branch. It wires
@@ -19,6 +19,7 @@ try {
   const run = whatToActOn(process.env.GITHUB_EVENT_NAME ?? "", event);
   if ("pullRequest" in run) await onPullRequest(project, run.pullRequest, github, github, github);
   else await onMerge(project, github, github, github);
+  await checkProtection(project, github, github);
 } catch (error) {
   console.log(`::error::${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);

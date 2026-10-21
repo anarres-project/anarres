@@ -8,10 +8,12 @@ export {
   issueForModuleDone,
   issueForNotAccepted,
   issueForTask,
+  issueForUnprotectedMain,
   issueNumber,
   type ListedIssue,
   logFrom,
   type NewIssue,
+  protectsMain,
   rulesetProtectingMain,
   taskFromIssue,
 } from "./representation.ts";

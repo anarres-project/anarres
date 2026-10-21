@@ -7636,13 +7636,14 @@ function quoted(text) {
 ${text}
 ${fence}`;
 }
+var MAIN_RULES = ["update", "deletion", "non_fast_forward"];
 function rulesetProtectingMain(app) {
   return {
     name: "Only Divlab changes main",
     target: "branch",
     enforcement: "active",
     conditions: { ref_name: { include: ["~DEFAULT_BRANCH"], exclude: [] } },
-    rules: [{ type: "update" }, { type: "deletion" }, { type: "non_fast_forward" }],
+    rules: MAIN_RULES.map((type) => ({ type })),
     bypass_actors: [{ actor_id: app, actor_type: "Integration", bypass_mode: "always" }]
   };
 }
@@ -7655,6 +7656,18 @@ function issueForNotAccepted({ notAccepted }) {
 ${quoted(notAccepted.feedbackSignal)}`
   };
 }
+function protectsMain(rules) {
+  const applied = new Set(rules.map((rule2) => rule2.type));
+  return MAIN_RULES.every((type) => applied.has(type));
+}
+function issueForUnprotectedMain() {
+  return {
+    title: "Escalation: this project's main branch is not protected",
+    labels: ["escalation", UNPROTECTED_MAIN],
+    body: "Divlab found that this project's main branch no longer has the protection that lets only Divlab change it (decision 0006). Until it is restored, anyone with enough access could change main without Divlab's checks. Close this issue once main is protected again; Divlab alerts again if protection is lost later."
+  };
+}
+var UNPROTECTED_MAIN = "unprotected-main";
 
 // ../github/src/rate-limits.ts
 function retryAfter(answer, now) {
@@ -7737,6 +7750,24 @@ var GitHubAdapter = class {
   }
   async alertNotAccepted(record) {
     await this.openIssue(record.project, issueForNotAccepted(record));
+  }
+  async alertUnprotectedMain(project2) {
+    await this.openIssue(project2, issueForUnprotectedMain());
+  }
+  async unprotectedMainAlertOpen(project2) {
+    const open = await this.call(
+      "GET",
+      `${this.repo(project2)}/issues?labels=${UNPROTECTED_MAIN}&state=open&per_page=1`
+    );
+    return open.length > 0;
+  }
+  /** The rules GitHub applies to main now, whoever set them: readable with metadata access. */
+  async mainIsProtected(project2) {
+    const rules = await this.call(
+      "GET",
+      `${this.repo(project2)}/rules/branches/main`
+    );
+    return protectsMain(rules);
   }
   async markModuleDone({ project: project2, module }) {
     const { number } = await this.openIssue(project2, issueForModuleDone(module));
@@ -7995,6 +8026,11 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log) {
   await pullRequests.merge(project2, pullRequest, head);
   await acceptSignal(project2, feedback.path, signal, board, log);
 }
+async function checkProtection(project2, repositories, board) {
+  if (await repositories.mainIsProtected(project2)) return;
+  if (await board.unprotectedMainAlertOpen(project2)) return;
+  await board.alertUnprotectedMain(project2);
+}
 
 // src/action.ts
 var [owner, project] = (process.env.GITHUB_REPOSITORY ?? "").split("/");
@@ -8009,6 +8045,7 @@ try {
   const run = whatToActOn(process.env.GITHUB_EVENT_NAME ?? "", event);
   if ("pullRequest" in run) await onPullRequest(project, run.pullRequest, github, github, github);
   else await onMerge(project, github, github, github);
+  await checkProtection(project, github, github);
 } catch (error) {
   console.log(`::error::${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);

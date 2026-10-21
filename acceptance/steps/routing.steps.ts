@@ -305,3 +305,10 @@ Then(
     return this.anarres.noCoordinatorAlertedOfUnmergedWork();
   },
 );
+
+Then(
+  "PDC coordinators have been alerted once that the project's main branch is not protected",
+  function (this: AnarresWorld) {
+    return this.anarres.coordinatorsAlertedOnceOfUnprotectedMain();
+  },
+);

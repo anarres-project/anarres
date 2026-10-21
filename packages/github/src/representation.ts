@@ -148,6 +148,9 @@ function quoted(text: string): string {
   return `${fence}\n${text}\n${fence}`;
 }
 
+/** What protects main: no update, no deletion, no rewriting history, except by Divlab's App. */
+const MAIN_RULES = ["update", "deletion", "non_fast_forward"];
+
 /**
  * Nobody may update, delete or rewrite main except Divlab's App, which merges members' pull
  * requests and records its decisions. No person is exempt, administrators included.
@@ -158,7 +161,7 @@ export function rulesetProtectingMain(app: number) {
     target: "branch",
     enforcement: "active",
     conditions: { ref_name: { include: ["~DEFAULT_BRANCH"], exclude: [] } },
-    rules: [{ type: "update" }, { type: "deletion" }, { type: "non_fast_forward" }],
+    rules: MAIN_RULES.map((type) => ({ type })),
     bypass_actors: [{ actor_id: app, actor_type: "Integration", bypass_mode: "always" }],
   };
 }
@@ -171,3 +174,21 @@ export function issueForNotAccepted({ notAccepted }: NotAccepted): NewIssue {
     body: `Divlab has not accepted this feedback signal, and will not route its work: ${notAccepted.reason}.\n\n${quoted(notAccepted.feedbackSignal)}`,
   };
 }
+
+/** Whether every rule the ruleset gives main still applies to it, as GitHub reports. */
+export function protectsMain(rules: { type: string }[]): boolean {
+  const applied = new Set(rules.map((rule) => rule.type));
+  return MAIN_RULES.every((type) => applied.has(type));
+}
+
+/** The open issue is Divlab's record that it has alerted: closing it re-arms the check. */
+export function issueForUnprotectedMain(): NewIssue {
+  return {
+    title: "Escalation: this project's main branch is not protected",
+    labels: ["escalation", UNPROTECTED_MAIN],
+    body: "Divlab found that this project's main branch no longer has the protection that lets only Divlab change it (decision 0006). Until it is restored, anyone with enough access could change main without Divlab's checks. Close this issue once main is protected again; Divlab alerts again if protection is lost later.",
+  };
+}
+
+/** The label on Divlab's alert that a project's main branch is not protected. */
+export const UNPROTECTED_MAIN = "unprotected-main";

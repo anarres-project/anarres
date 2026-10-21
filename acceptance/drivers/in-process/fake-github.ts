@@ -72,6 +72,25 @@ export class FakeGitHub
     this.protectedMains.add(project);
   }
 
+  async mainIsProtected(project: string): Promise<boolean> {
+    return this.protectedMains.has(project);
+  }
+
+  /** Alerts that main is unprotected, as issues: open until a coordinator closes them. */
+  private readonly unprotectedAlerts: { project: string; open: boolean }[] = [];
+
+  async alertUnprotectedMain(project: string): Promise<void> {
+    this.unprotectedAlerts.push({ project, open: true });
+  }
+
+  async unprotectedMainAlertOpen(project: string): Promise<boolean> {
+    return this.unprotectedAlerts.some((alert) => alert.project === project && alert.open);
+  }
+
+  unprotectedMainAlerts(project: string): number {
+    return this.unprotectedAlerts.filter((alert) => alert.project === project).length;
+  }
+
   /** Someone other than Divlab writes to main: it takes only if main is unprotected. */
   changeMainDirectly(project: string): boolean {
     return !this.protectedMains.has(project);

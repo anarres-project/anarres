@@ -8,8 +8,10 @@ import {
   issueForModuleDone,
   issueForNotAccepted,
   issueForTask,
+  issueForUnprotectedMain,
   issueNumber,
   logFrom,
+  protectsMain,
   rulesetProtectingMain,
   taskFromIssue,
 } from "../src/index.ts";
@@ -237,6 +239,16 @@ describe("Divlab's comment on a pull request it will not merge", () => {
 });
 
 describe("the ruleset that protects a project's main branch (decision 0006)", () => {
+  it("is not in force when any of its rules no longer applies to main", () => {
+    expect(protectsMain([{ type: "deletion" }, { type: "non_fast_forward" }])).toBe(false);
+  });
+
+  it("is in force when GitHub applies all its rules to main", () => {
+    expect(
+      protectsMain([{ type: "deletion" }, { type: "update" }, { type: "non_fast_forward" }]),
+    ).toBe(true);
+  });
+
   it("lets nobody but Divlab's App change, delete or rewrite main", () => {
     expect(rulesetProtectingMain(5414648)).toEqual({
       name: "Only Divlab changes main",
@@ -269,6 +281,16 @@ describe("an alert of work Divlab did not accept, as a GitHub issue", () => {
         "feedback/@all.md",
         "```",
       ].join("\n"),
+    });
+  });
+});
+
+describe("an alert that a project's main branch is not protected, as a GitHub issue", () => {
+  it("tells PDC coordinators, under a label that marks it until they close it", () => {
+    expect(issueForUnprotectedMain()).toEqual({
+      title: "Escalation: this project's main branch is not protected",
+      labels: ["escalation", "unprotected-main"],
+      body: "Divlab found that this project's main branch no longer has the protection that lets only Divlab change it (decision 0006). Until it is restored, anyone with enough access could change main without Divlab's checks. Close this issue once main is protected again; Divlab alerts again if protection is lost later.",
     });
   });
 });

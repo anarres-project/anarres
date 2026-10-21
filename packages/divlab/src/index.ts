@@ -46,6 +46,10 @@ export interface TaskBoard {
   alertCoordinators(alert: CoordinatorAlert): Promise<void>;
   /** PDC coordinators are told of something on main that Divlab did not accept. */
   alertNotAccepted(record: NotAccepted): Promise<void>;
+  /** PDC coordinators are told that a project's main branch is not protected as it must be. */
+  alertUnprotectedMain(project: string): Promise<void>;
+  /** Whether such an alert is still open: coordinators close it once main is protected again. */
+  unprotectedMainAlertOpen(project: string): Promise<boolean>;
   markModuleDone(module: { project: string; module: string }): Promise<void>;
   /** What Divlab recorded on a task it posted; undefined if there is no such task. */
   task(project: string, task: string): Promise<Pick<PostedTask, "researchFor"> | undefined>;
@@ -218,6 +222,8 @@ export async function onPullRequest(
 export interface ProjectRepositories {
   /** Only Divlab may change the main branch: no person is exempt (decision 0006). */
   protectMain(project: string): Promise<void>;
+  /** Whether main has the protection `protectMain` gives it, still in force. */
+  mainIsProtected(project: string): Promise<boolean>;
 }
 
 /** A project's repository has been created, and Divlab prepares it. */
@@ -226,4 +232,16 @@ export async function setUpProject(
   repositories: ProjectRepositories,
 ): Promise<void> {
   await repositories.protectMain(project);
+}
+
+/** On every run: is the project's main branch still protected as decision 0006 requires? */
+export async function checkProtection(
+  project: string,
+  repositories: ProjectRepositories,
+  board: TaskBoard,
+): Promise<void> {
+  if (await repositories.mainIsProtected(project)) return;
+  // Alerted once: the open alert is the record, and closing it re-arms the check.
+  if (await board.unprotectedMainAlertOpen(project)) return;
+  await board.alertUnprotectedMain(project);
 }

@@ -1,4 +1,10 @@
-import { onMerge, onPullRequest, routingDecisions, setUpProject } from "@anarres/divlab";
+import {
+  checkProtection,
+  onMerge,
+  onPullRequest,
+  routingDecisions,
+  setUpProject,
+} from "@anarres/divlab";
 import type {
   AcceptedWork,
   CoordinatorAlert,
@@ -45,6 +51,7 @@ export class InProcessDriver implements Driver {
     const { path, text } = feedbackSignalFile(work);
     this.github.mergeFile(work.project, path, text);
     await onMerge(work.project, this.github, this.github, this.github);
+    await checkProtection(work.project, this.github, this.github);
   }
 
   async unmergedWorkAlerts(project: string): Promise<string[]> {
@@ -64,6 +71,11 @@ export class InProcessDriver implements Driver {
 
   async divlabActsAgain(project: string): Promise<void> {
     await onMerge(project, this.github, this.github, this.github);
+    await checkProtection(project, this.github, this.github);
+  }
+
+  async unprotectedMainAlerts(project: string): Promise<number> {
+    return this.github.unprotectedMainAlerts(project);
   }
 
   async refusals(project: string): Promise<string[]> {
@@ -94,6 +106,7 @@ export class InProcessDriver implements Driver {
     const { path, text } = feedbackSignalFile(work, task?.id);
     const pullRequest = this.github.openPullRequest(work.project, [{ path, text }]);
     await onPullRequest(work.project, pullRequest, this.github, this.github, this.github);
+    await checkProtection(work.project, this.github, this.github);
   }
 
   async mergedWork(project: string): Promise<string[]> {

@@ -186,8 +186,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [x] A project's main branch admits changes only from Divlab's App; no person is exempt
       (`setUpProject` applies the ruleset; the sandbox refused an administrator's direct change
       while Divlab still merged and recorded, 2026-10-21).
-- [ ] Divlab alerts PDC coordinators when a project's main branch is not protected as decision 0006
-      requires.
+- [x] Divlab alerts PDC coordinators when a project's main branch is not protected as decision 0006
+      requires: on every run it reads the rules GitHub applies to main; it alerts once, the open
+      alert being its record, and alerts again only after coordinators close it.
+- [ ] Divlab cannot see who else may bypass main's rules: GitHub shows that only to those who can
+      edit them, far more than Divlab should hold (tried 2026-10-21). Organisation owners and
+      PDC coordinators watch for it (governance, not Divlab).
 - [x] The tripwire leaves Divlab's own recorded merges alone, and acts as Divlab's App, like the
       pull request workflow (the ruleset admits nothing else).
 - [ ] A contribution that fails validation is not merged, and the member is told why.

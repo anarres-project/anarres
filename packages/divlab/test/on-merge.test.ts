@@ -17,6 +17,8 @@ const board: TaskBoard = {
   post: untouched,
   alertCoordinators: untouched,
   alertNotAccepted: untouched,
+  alertUnprotectedMain: untouched,
+  unprotectedMainAlertOpen: untouched,
   markModuleDone: untouched,
   task: untouched,
   close: untouched,

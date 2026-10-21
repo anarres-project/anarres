@@ -16,12 +16,15 @@ import {
   issueForModuleDone,
   issueForNotAccepted,
   issueForTask,
+  issueForUnprotectedMain,
   issueNumber,
   type ListedIssue,
   logFrom,
   type NewIssue,
+  protectsMain,
   rulesetProtectingMain,
   taskFromIssue,
+  UNPROTECTED_MAIN,
 } from "./representation.ts";
 import { requestGitHub } from "./request.ts";
 
@@ -54,6 +57,27 @@ export class GitHubAdapter
 
   async alertNotAccepted(record: NotAccepted): Promise<void> {
     await this.openIssue(record.project, issueForNotAccepted(record));
+  }
+
+  async alertUnprotectedMain(project: string): Promise<void> {
+    await this.openIssue(project, issueForUnprotectedMain());
+  }
+
+  async unprotectedMainAlertOpen(project: string): Promise<boolean> {
+    const open = await this.call<unknown[]>(
+      "GET",
+      `${this.repo(project)}/issues?labels=${UNPROTECTED_MAIN}&state=open&per_page=1`,
+    );
+    return open.length > 0;
+  }
+
+  /** The rules GitHub applies to main now, whoever set them: readable with metadata access. */
+  async mainIsProtected(project: string): Promise<boolean> {
+    const rules = await this.call<{ type: string }[]>(
+      "GET",
+      `${this.repo(project)}/rules/branches/main`,
+    );
+    return protectsMain(rules);
   }
 
   async markModuleDone({ project, module }: { project: string; module: string }): Promise<void> {

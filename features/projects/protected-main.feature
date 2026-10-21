@@ -13,3 +13,9 @@ Feature: Only Divlab changes a project's main branch
     When a member's Specification work on "parser" reaches main without Divlab merging it
     Then no task is ready for "parser"
     And a PDC coordinator is alerted that the Specification work on "parser" reached main without Divlab merging it
+
+  Scenario: Divlab alerts PDC coordinators, once, when a project's main branch is not protected
+    Given a project with a module "parser" whose main branch was left unprotected
+    When a member submits Specification work on "parser" with a pass verdict
+    And a member submits Test work on "parser" with a pass verdict
+    Then PDC coordinators have been alerted once that the project's main branch is not protected

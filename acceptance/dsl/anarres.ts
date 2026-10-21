@@ -65,6 +65,14 @@ export class Anarres {
     await this.driver.divlabActsAgain(this.project);
   }
 
+  async coordinatorsAlertedOnceOfUnprotectedMain() {
+    assert.equal(
+      await this.driver.unprotectedMainAlerts(this.project),
+      1,
+      "expected one alert that the project's main branch is not protected",
+    );
+  }
+
   async noCoordinatorAlertedOfUnmergedWork() {
     assert.deepEqual(
       await this.driver.unmergedWorkAlerts(this.project),
