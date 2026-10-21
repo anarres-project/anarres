@@ -53,8 +53,11 @@ export interface Repository {
 
 /** Members' pull requests: what each would change, read as data, and merging it. */
 export interface PullRequests {
+  /** The commit the pull request is at now. */
+  head(project: string, pullRequest: string): Promise<string>;
   changedFiles(project: string, pullRequest: string): Promise<{ path: string; text: string }[]>;
-  merge(project: string, pullRequest: string): Promise<void>;
+  /** Merges the pull request only if it is still at `head`. */
+  merge(project: string, pullRequest: string, head: string): Promise<void>;
   /** Divlab will not merge it: the member is told why. */
   refuse(project: string, pullRequest: string, reason: string): Promise<void>;
 }
@@ -130,6 +133,8 @@ export async function onPullRequest(
   board: TaskBoard,
   log: EventLog,
 ): Promise<void> {
+  // Read at one commit and merge only that commit: anything pushed since has not been checked.
+  const head = await pullRequests.head(project, pullRequest);
   const files = await pullRequests.changedFiles(project, pullRequest);
   const feedback = files.find((file) => file.path.startsWith("feedback/"));
   if (feedback === undefined) return;
@@ -138,7 +143,7 @@ export async function onPullRequest(
     await pullRequests.refuse(project, pullRequest, cannotRead(feedback.path, signal));
     return;
   }
-  await pullRequests.merge(project, pullRequest);
+  await pullRequests.merge(project, pullRequest, head);
   const { task: _task, ...work } = signal;
   await onWorkAccepted({ project, ...work, feedbackSignal: feedback.path }, board, log);
 }

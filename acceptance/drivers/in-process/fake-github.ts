@@ -67,6 +67,10 @@ export class FakeGitHub implements TaskBoard, EventLog, Repository, PullRequests
     return String(this.pullRequests.length);
   }
 
+  async head(_project: string, pullRequest: string): Promise<string> {
+    return `head-of-${pullRequest}`;
+  }
+
   async changedFiles(_project: string, pullRequest: string) {
     return this.pullRequest(pullRequest).files;
   }

@@ -30,6 +30,32 @@ the order in which several unrouted signals are routed in one run (section 0).
 
 ---
 
+## 2026-10-21: Merging only what was checked; what a run is for
+
+- Divlab reads a pull request at one commit and merges only that commit, so anything pushed after
+  it read the pull request is never merged unchecked.
+- `whatToActOn`: from the event that started a run, a merge (push) or a pull request (by its
+  number, which must be a whole number GitHub could have given); any other event, or a pull
+  request event that does not name its pull request properly, is refused.
+
+RED:      merges exactly the version of the pull request it read -> expected [ '7 at undefined' ]
+          to equal [ '7 at c0ffee' ]
+GREEN:    (12 passed)
+RED:      acts on a merge when something is pushed -> module not found; stub -> expected undefined
+GREEN:    (1 passed)
+RED:      acts on the pull request a pull request event is about -> expected { merge: true }
+GREEN:    (2 passed)
+RED:      refuses a pull request event that does not name its pull request by a whole number
+          -> expected [Function] to throw
+GREEN:    (3 passed)
+RED:      refuses a pull request number GitHub could not have given -> expected [Function] to
+          throw (the check had been written early; taken out, then demanded)
+GREEN:    (4 passed)
+RED:      refuses to act on an event it was not made for -> expected [Function] to throw
+GREEN:    (17 passed in Divlab)
+
+---
+
 ## 2026-10-21: The template's pull request workflow
 
 - Checked the sandbox App end to end with a throwaway workflow: it minted a token as Divlab

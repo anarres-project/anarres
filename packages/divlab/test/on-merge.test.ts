@@ -43,6 +43,7 @@ describe("acting on a pull request", () => {
     files: { path: string; text: string }[] = [specificationPasses],
     refusals: string[] = [],
   ): PullRequests => ({
+    head: async () => "c0ffee",
     changedFiles: async () => files,
     merge: async (_project, pullRequest) => {
       merged.push(pullRequest);
@@ -85,5 +86,17 @@ describe("acting on a pull request", () => {
     expect(refusals).toEqual([
       "8: The feedback signal feedback/FB-2.md cannot be read: it has no feedback signal header",
     ]);
+  });
+
+  it("merges exactly the version of the pull request it read, not one pushed since", async () => {
+    const merged: string[] = [];
+    const pullRequests: PullRequests = {
+      ...submitting(),
+      merge: async (_project, pullRequest, head) => {
+        merged.push(`${pullRequest} at ${head}`);
+      },
+    };
+    await onPullRequest("ledger", "7", pullRequests, { ...board, post: async () => {} }, log);
+    expect(merged).toEqual(["7 at c0ffee"]);
   });
 });
