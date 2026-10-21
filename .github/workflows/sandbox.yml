@@ -20,7 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     # The token is only available to workflows on main (environment protection).
     environment: sandbox
-    timeout-minutes: 30
+    # Each merge waits for a real Divlab run in the sandbox: about 25 minutes in all.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

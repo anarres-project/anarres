@@ -23,10 +23,28 @@ coordinator. A Security & Quality pass marks the module done. Every routing deci
 with its inputs and the rule that decided it. A role re-run more than three times for a module is
 escalated to a PDC coordinator, and a coordinator's alert says what was reported and why routing
 stopped. Section 1's remaining items wait on later work (metrics, input artefacts). Section 0 under
-way: Divlab now acts on real GitHub repositories through `packages/github`, and 54 of the 55
-scenarios pass against the sandbox (the other met an unexplained rate-limit refusal). Next: Divlab
-as an Action, triggered by merged pull requests. Divlab as a real
-Action and the sandbox driver are still open in section 0.
+way: Divlab runs as a real GitHub Action, installed from the project template, and the sandbox
+driver now runs every scenario against it. Decided 2026-10-21: only Divlab merges (decision 0005);
+work for a done module is refused; Coding's upstream ambiguity goes to Specification (built). Next:
+the order in which several unrouted signals are routed in one run (section 0).
+
+---
+
+## 2026-10-21: The sandbox driver observes the real Action
+
+- The sandbox driver no longer calls Divlab itself. Each sandbox repository gets the project
+  template's workflow, pinned to the commit under test, and on each merge the driver waits for
+  Divlab's real run, failing with GitHub's reason if the run fails or never starts.
+- Sandbox settings confirmed by a real run: the token installs workflows, and the sandbox allows
+  `anarres-project/anarres/*`, which covers Divlab in its subfolder.
+- About 19 seconds a merge, some 25 minutes for the suite, so the sandbox job's limit rises from 30
+  to 45 minutes.
+
+RED:      A failure that reports no problem is never guessed at (sandbox, driver waiting for the
+          real Action, no workflow yet) -> Error: No Divlab run started for 75d6a0b…
+GREEN:    the same scenario with the template's workflow installed (1 passed); the failed-work
+          feature (29 passed, 9m 10s)
+REFACTOR: none
 
 ---
 

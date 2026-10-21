@@ -22,9 +22,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] Divlab acts on a merge: it finds the feedback signals merged since it last ran, reads
         each, closes the task it names and routes it (in-process and against the sandbox, with
         the driver merging a real feedback signal file);
-  - [ ] the bundled entry point (`action.yml`, one committed file, checked fresh in CI);
-  - [ ] the project template's workflow, and the sandbox driver observing the real Action
-        (needs the sandbox token to write workflows, and the sandbox to allow our Actions);
+  - [x] the bundled entry point (`action.yml`, one committed file, checked fresh in CI);
+  - [x] the project template's workflow (`template/`);
+  - [ ] the sandbox driver observing the real Action: it installs the template's workflow pinned
+        to the commit under test, and waits for Divlab's run on each merge (sandbox set up
+        2026-10-21; green locally on a scenario and on the failed-work feature, waiting on CI);
   - [ ] the order in which several unrouted signals are routed in one run (merge order, not file
         name order).
 - [ ] GitHub sandbox driver: the same scenarios against real repositories in the sandbox

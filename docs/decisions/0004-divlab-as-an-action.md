@@ -45,6 +45,7 @@ observes the real Action at work.
   Action, every merge in a scenario starts an Action run, and on GitHub Free, Actions in public
   repositories cost nothing, while private ones draw on a monthly allowance. They hold only synthetic data and are deleted after each run.
 - Every merge in a sandbox scenario starts a real Action run, so the sandbox suite takes
-  noticeably longer than when the driver called Divlab directly.
+  noticeably longer than when the driver called Divlab directly: about 19 seconds a merge, some
+  25 minutes for the whole suite (2026-10-21).
 - Order among several signals routed in one run is open (test list). What to do with a signal
   that reaches the main branch unreadable is decided in 0005.

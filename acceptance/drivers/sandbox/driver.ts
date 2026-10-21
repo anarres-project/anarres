@@ -1,4 +1,6 @@
-import { onMerge, type RoutingEvent } from "@anarres/divlab";
+import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import type { RoutingEvent } from "@anarres/divlab";
 import { GitHubAdapter } from "@anarres/github";
 import type {
   AcceptedWork,
@@ -54,6 +56,14 @@ export class SandboxDriver implements Driver {
       auto_init: true,
     });
     run.created.push({ github: this.github, path: `repos/${this.org}/${project}` });
+    await this.github.call(
+      "PUT",
+      `repos/${this.org}/${project}/contents/.github/workflows/anarres.yml`,
+      {
+        message: "Install Divlab from the project template",
+        content: Buffer.from(divlabWorkflow()).toString("base64"),
+      },
+    );
     run.expected.set(project, { ready: 0, escalation: 0, done: 0 });
   }
 
@@ -65,11 +75,15 @@ export class SandboxDriver implements Driver {
         labelValue(issue, "role:") === fromRole && labelValue(issue, "module:") === work.module,
     );
     const { path, text } = feedbackSignalFile(work, task && String(task.number));
-    await this.github.call("PUT", `repos/${this.org}/${work.project}/contents/${path}`, {
-      message: `Merge the ${work.role} work on ${work.module}`,
-      content: Buffer.from(text).toString("base64"),
-    });
-    await onMerge(work.project, this.divlab, this.divlab, this.divlab);
+    const merged = await this.github.call<{ commit: { sha: string } }>(
+      "PUT",
+      `repos/${this.org}/${work.project}/contents/${path}`,
+      {
+        message: `Merge the ${work.role} work on ${work.module}`,
+        content: Buffer.from(text).toString("base64"),
+      },
+    );
+    await this.divlabHasActedOn(work.project, merged.commit.sha);
     // The event log is consistent at once and says what Divlab did; the issue lists lag behind.
     const expected = this.expectedFor(work.project);
     const { decision } = (await this.divlab.read(work.project)).at(-1) as RoutingEvent;
@@ -155,6 +169,53 @@ export class SandboxDriver implements Driver {
     }
   }
 
+  /**
+   * Waits for Divlab's Action to finish acting on a merge. A run that fails, or never starts,
+   * fails the step with what GitHub says went wrong, rather than leaving a later step to time out.
+   */
+  private async divlabHasActedOn(project: string, commit: string): Promise<void> {
+    const repository = `repos/${this.org}/${project}`;
+    const started = Date.now();
+    for (;;) {
+      const { workflow_runs: runs } = await this.github.call<{ workflow_runs: WorkflowRun[] }>(
+        "GET",
+        `${repository}/actions/runs?head_sha=${commit}&event=push`,
+      );
+      const finished = runs.find((run) => run.status === "completed");
+      if (finished?.conclusion === "success") return;
+      if (finished) {
+        throw new Error(
+          `Divlab's run for ${commit} ended ${finished.conclusion}: ${await this.whyRunFailed(repository, finished)} (${finished.html_url})`,
+        );
+      }
+      const waited = Date.now() - started;
+      if (runs.length === 0 && waited > RUN_START_LIMIT) {
+        throw new Error(`No Divlab run started for ${commit} in ${project}`);
+      }
+      if (waited > RUN_FINISH_LIMIT) {
+        throw new Error(`Divlab's run for ${commit} had not finished: ${runs[0]?.html_url}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+    }
+  }
+
+  /** The errors a failed run reported, as GitHub annotates its jobs. */
+  private async whyRunFailed(repository: string, failed: WorkflowRun): Promise<string> {
+    const { jobs } = await this.github.call<{ jobs: { id: number }[] }>(
+      "GET",
+      `${repository}/actions/runs/${failed.id}/jobs`,
+    );
+    const messages: string[] = [];
+    for (const job of jobs) {
+      const { status, data } = await this.github.request<{ message: string }[]>(
+        "GET",
+        `${repository}/check-runs/${job.id}/annotations`,
+      );
+      if (status === 200) messages.push(...data.map((annotation) => annotation.message));
+    }
+    return messages.join("; ") || "GitHub gave no reason";
+  }
+
   /** Deletes the repositories this run created. */
   static async disposeRun(): Promise<void> {
     for (const { github, path } of run.created.splice(0)) await github.request("DELETE", path);
@@ -199,6 +260,29 @@ export class SandboxDriver implements Driver {
 }
 
 type Listing = "ready" | "escalation" | "done";
+
+/**
+ * The project template's workflow, using Divlab as it is at the commit under test (decision 0004):
+ * CI's commit, or locally the checked-out one, which must have been pushed.
+ */
+function divlabWorkflow(): string {
+  const template = readFileSync(
+    new URL("../../../template/.github/workflows/anarres.yml", import.meta.url),
+    "utf8",
+  );
+  const divlab = "anarres-project/anarres/packages/divlab@main";
+  if (!template.includes(divlab)) throw new Error(`The project template no longer uses ${divlab}`);
+  const commit =
+    process.env.GITHUB_SHA ??
+    execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+  return template.replace(divlab, divlab.replace("@main", `@${commit}`));
+}
+
+type WorkflowRun = { id: number; status: string; conclusion: string | null; html_url: string };
+
+/** How long a merge may wait for Divlab's run to start, and to finish, within a step's timeout. */
+const RUN_START_LIMIT = 120_000;
+const RUN_FINISH_LIMIT = 240_000;
 
 /** Shared by every scenario in a run: they all use the run's one repository, one at a time. */
 const run = {
