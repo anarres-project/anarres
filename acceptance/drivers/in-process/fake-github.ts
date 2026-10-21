@@ -81,7 +81,15 @@ export class FakeGitHub implements TaskBoard, EventLog, Repository, PullRequests
     this.mergedPullRequests.push(pullRequest);
   }
 
-  async refuse(_project: string, _pullRequest: string, _reason: string): Promise<void> {}
+  private readonly refused: { project: string; reason: string }[] = [];
+
+  async refuse(project: string, _pullRequest: string, reason: string): Promise<void> {
+    this.refused.push({ project, reason });
+  }
+
+  refusals(project: string): string[] {
+    return this.refused.filter((r) => r.project === project).map((r) => r.reason);
+  }
 
   /** The files of the pull requests merged into a project. */
   mergedFiles(project: string): string[] {

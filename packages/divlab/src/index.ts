@@ -149,7 +149,14 @@ export async function onPullRequest(
   const head = await pullRequests.head(project, pullRequest);
   const files = await pullRequests.changedFiles(project, pullRequest);
   const feedback = files.find((file) => file.path.startsWith("feedback/"));
-  if (feedback === undefined) return;
+  if (feedback === undefined) {
+    await pullRequests.refuse(
+      project,
+      pullRequest,
+      "The pull request has no feedback signal: work needs one, in feedback/, saying what it was for and how it went",
+    );
+    return;
+  }
   const signal = readFeedbackSignal(feedback.text);
   if ("unreadable" in signal) {
     await pullRequests.refuse(project, pullRequest, cannotRead(feedback.path, signal));

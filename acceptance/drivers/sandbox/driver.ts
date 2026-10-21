@@ -123,6 +123,19 @@ export class SandboxDriver implements Driver {
       .map((submitted) => submitted.feedbackSignal);
   }
 
+  /** Divlab's comments on the pull requests it did not merge. */
+  async refusals(project: string): Promise<string[]> {
+    const said: string[] = [];
+    for (const submitted of run.submitted.filter((pr) => pr.project === project && !pr.merged)) {
+      const comments = await this.github.call<{ body: string }[]>(
+        "GET",
+        `repos/${this.org}/${project}/issues/${submitted.number}/comments`,
+      );
+      said.push(...comments.map((comment) => comment.body));
+    }
+    return said;
+  }
+
   /** What GitHub's lists should show once they catch up with what Divlab recorded for the work. */
   private async expectWhatDivlabDecided(project: string, path: string, task?: Issue) {
     // The event log is consistent at once and says what Divlab did; the issue lists lag behind.
@@ -157,12 +170,17 @@ export class SandboxDriver implements Driver {
   private async divlabHasDecidedOn(project: string, number: number): Promise<boolean> {
     const repository = `repos/${this.org}/${project}`;
     const started = Date.now();
-    for (;;) {
+    for (let check = 1; ; check++) {
       const pullRequest = await this.github.call<{ merged: boolean }>(
         "GET",
         `${repository}/pulls/${number}`,
       );
       if (pullRequest.merged) return true;
+      // A refusal or a failed run is rare: look for them less often, to spare the request budget.
+      if (check % 3 !== 0) {
+        await new Promise((resolve) => setTimeout(resolve, 2_000));
+        continue;
+      }
       const comments = await this.github.call<unknown[]>(
         "GET",
         `${repository}/issues/${number}/comments`,

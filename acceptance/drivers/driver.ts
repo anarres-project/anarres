@@ -6,6 +6,8 @@ export type AcceptedWork = {
   feedbackSignal: string;
   verdict: string;
   impediments: string[];
+  /** The member's work leaves its feedback signal out. */
+  withoutFeedbackSignal?: boolean;
 };
 
 export type ReadyTask = {
@@ -41,6 +43,8 @@ export interface Driver {
   submitWork(work: AcceptedWork): Promise<void>;
   /** The feedback signals of the submitted work Divlab has merged. */
   mergedWork(project: string): Promise<string[]>;
+  /** What Divlab told members whose work it did not merge. */
+  refusals(project: string): Promise<string[]>;
   readyTasks(project: string): Promise<ReadyTask[]>;
   coordinatorAlerts(project: string): Promise<CoordinatorAlert[]>;
   doneModules(project: string): Promise<string[]>;

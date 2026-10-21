@@ -42,6 +42,29 @@ When(
   },
 );
 
+When(
+  "a member submits {role} work on {string} without a feedback signal",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.memberSubmitsWork({
+      role,
+      module,
+      verdict: "pass",
+      withoutFeedbackSignal: true,
+    });
+  },
+);
+
+Then(
+  "Divlab has not merged the member's {role} work on {string}",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.divlabHasNotMerged({ role, module });
+  },
+);
+
+Then("the member is told their work has no feedback signal", function (this: AnarresWorld) {
+  return this.anarres.memberIsToldWhy("has no feedback signal");
+});
+
 Then(
   "Divlab has merged the member's {role} work on {string}",
   function (this: AnarresWorld, role: string, module: string) {

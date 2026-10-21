@@ -31,6 +31,10 @@ export class InProcessDriver implements Driver {
     }
   }
 
+  async refusals(project: string): Promise<string[]> {
+    return this.github.refusals(project);
+  }
+
   async routingRecords(project: string): Promise<RoutingRecord[]> {
     return (await this.github.read(project)).map(inScenarioWords);
   }

@@ -13,6 +13,10 @@ import type { AcceptedWork, RoutingRecord } from "./driver.ts";
  * a header naming the task the work was for, the role, module, verdict and any impediments.
  */
 export function feedbackSignalFile(work: AcceptedWork, task?: string) {
+  // Work without a feedback signal still has an artefact: the module's specification, say.
+  if (work.withoutFeedbackSignal) {
+    return { path: `modules/${work.module}/${work.feedbackSignal}.md`, text: "# Specification\n" };
+  }
   const header = [
     "---",
     "feedback_signal:",

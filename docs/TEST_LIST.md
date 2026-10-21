@@ -158,8 +158,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         (2026-10-21);
   - [x] the task the work names is closed, and Research work goes back to the role its task was
         for, as when routing a merge;
-  - [ ] a pull request with no feedback signal is not merged, and the member is told so (today
-        Divlab stops without merging, but says nothing: a guard no test has demanded yet).
+  - [x] a pull request with no feedback signal is not merged, and the member is told so
+        (in-process; `@sandbox-wip` until tried against the sandbox).
 - [x] The project template's pull request workflow never checks out or runs anything from the pull
       request (decision 0006): it runs as main has it, its only steps are the App's token and
       Divlab, its own token gets no permissions, it puts nothing from the event in an expression,

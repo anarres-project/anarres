@@ -135,4 +135,13 @@ describe("acting on a pull request", () => {
     await onPullRequest("ledger", "10", submitting([], [research]), recorded, log);
     expect(posted.map((task) => task.role)).toEqual(["coding"]);
   });
+
+  it("tells the member when their pull request has no feedback signal", async () => {
+    const refusals: string[] = [];
+    const artefactOnly = { path: "modules/parser/spec.md", text: "# Specification\n" };
+    await onPullRequest("ledger", "11", submitting([], [artefactOnly], refusals), board, log);
+    expect(refusals).toEqual([
+      "11: The pull request has no feedback signal: work needs one, in feedback/, saying what it was for and how it went",
+    ]);
+  });
 });

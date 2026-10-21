@@ -43,7 +43,9 @@ export class Anarres {
   }
 
   /** The member opens a pull request with their work; Divlab decides whether to merge it. */
-  async memberSubmitsWork(work: Work & { verdict: string; impediments?: string[] }) {
+  async memberSubmitsWork(
+    work: Work & { verdict: string; impediments?: string[]; withoutFeedbackSignal?: boolean },
+  ) {
     this.signalsWritten += 1;
     const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
     this.feedbackSignals.set(workOn(this.aliased(work)), feedbackSignal);
@@ -54,6 +56,23 @@ export class Anarres {
       member: this.aliases.of(DEFAULT_MEMBER),
       feedbackSignal,
     });
+  }
+
+  async divlabHasNotMerged(work: Work) {
+    const feedbackSignal = this.feedbackSignals.get(workOn(this.aliased(work)));
+    assert.ok(
+      !(await this.driver.mergedWork(this.project)).includes(feedbackSignal ?? ""),
+      `expected Divlab not to have merged the ${work.role} work on ${work.module}`,
+    );
+  }
+
+  /** Divlab's message to the member says why, in words they would recognise. */
+  async memberIsToldWhy(why: string) {
+    const refusals = await this.driver.refusals(this.project);
+    assert.ok(
+      refusals.some((refusal) => refusal.includes(why)),
+      `expected the member to be told their work ${why}; Divlab said: ${JSON.stringify(refusals)}`,
+    );
   }
 
   async divlabHasMerged(work: Work) {
