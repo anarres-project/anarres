@@ -47,7 +47,8 @@ The other commands (`npm run test:wip`, `npm run mutate` and so on) are listed u
 ## The GitHub sandbox
 
 `npm run test:acceptance:sandbox` runs the acceptance tests against real repositories in a
-dedicated sandbox organisation. Each run creates its repositories and deletes them at the end. It
+dedicated sandbox organisation. Each run creates its repositories and deletes them at the end.
+What a run does and checks is in [`docs/SANDBOX.md`](docs/SANDBOX.md). It
 needs two values, from a git-ignored `.env` locally, or from the `sandbox` environment in CI:
 
 - `ANARRES_SANDBOX_ORG`: the sandbox organisation's name;

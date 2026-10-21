@@ -356,6 +356,7 @@ npm run mutate                   # Stryker on packages/core
 - **`docs/Anarres_Concept.md`**: the product vision. The source of test-list entries, not a design
   to transcribe.
 - **`docs/DEV_LOG.md`**: running history and current status. Read it first; update it as you go.
+- **`docs/SANDBOX.md`**: what the GitHub sandbox run does and checks.
 - **`docs/TEST_LIST.md`**: behaviours still to drive out. Add to it whenever you think of a case;
   that is where ideas for the implementation go, not into code.
 - **`docs/decisions/`**: architecture and decision records, one file per decision.
