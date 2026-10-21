@@ -41,6 +41,8 @@ Action and the sandbox driver are still open in section 0.
 - Sandbox set up for the real Action: the sandbox token may now write workflows and read Action
   runs, and the sandbox organisation allows actions from `anarres-project/anarres`. The steps are
   in `CONTRIBUTING.md`.
+- Bernard: work for a module that is already done is refused, not routed. Reopening a done module
+  is a PDC coordinator's deliberate step, for later (test list).
 
 ---
 

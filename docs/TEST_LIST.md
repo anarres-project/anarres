@@ -102,7 +102,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [x] Security & Quality *pass* or *conditional pass* marks the module done, posting no task
       (AutoPM: "pipeline complete", "complete with caveats"; the caveats belong in the event
       record).
-- [ ] Work accepted for a module that is already done → ? (ask Bernard: alert, or reopen?)
+- [ ] Work for a module that is already done is refused, and the member told why: a done module
+      has no open task to claim (Bernard, 2026-10-21; validated in section 4, and anything that
+      reaches main another way is handled as decision 0005 says).
 - [ ] All module pipelines done → the integration pipeline starts (concept §9; Phase 2).
 - [x] Escalation: the same role is re-run more than three times → a PDC coordinator is alerted and
       no further task is posted (Bernard, 2026-10-12: per module, revision tasks only, the count
@@ -186,4 +188,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   unknown role as the start of the pipeline; untested, so section 4 must cover it).
 - The task posted on GitHub links to its feedback signal at the merged commit (needs Divlab as an
   Action and `packages/github`).
+- Later: a PDC coordinator reopens a done module, for example after a bug report or a Governance
+  finding, and Divlab makes the right task ready. Reopening is a coordinator's deliberate step,
+  never a side effect of a member's contribution (Bernard, 2026-10-21: revisit if real projects
+  need more).
 - (add new cases here, then place them)
