@@ -13,6 +13,7 @@ Feature: Divlab sends failed work back to the role that can fix it
     Examples:
       | role          | revising role       |
       | Test          | Specification       |
+      | Coding        | Specification       |
       | Specification | Programme Architect |
       | Architecture  | Programme Architect |
 

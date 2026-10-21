@@ -7478,6 +7478,7 @@ var FAILURE_ROUTES = [
   { from: "specification", reporting: "upstream_ambiguity", to: "programme-architect" },
   { from: "specification", reporting: "architecture_impediment", to: "architecture" },
   { from: "test", reporting: "upstream_ambiguity", to: "specification" },
+  { from: "coding", reporting: "upstream_ambiguity", to: "specification" },
   { from: "coding", reporting: "test_failures", to: "coding" },
   { from: "coding", reporting: "architecture_impediment", to: "architecture" },
   { from: "reviewer", reporting: "scope_gap", to: "programme-architect" },

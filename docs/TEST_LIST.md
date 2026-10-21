@@ -82,8 +82,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       (`FAILURE_ROUTES` in core); impediments no rule covers ride along.
 - [x] The PDC coordinator's alert says what was reported and why no rule matched: the alert is
       the routing record (the work as reported, with its feedback signal, and the reason).
-- [ ] Candidate rule: Coding reporting an upstream ambiguity → Specification? (The AutoPM has no
-      such row; Bernard, 2026-10-12: alert a PDC coordinator for now.)
+- [x] Coding reporting an upstream ambiguity → Specification (Bernard, 2026-10-21; the AutoPM has
+      no such row, CSD's interface specifications route a specification ambiguity there). If the
+      ambiguity lies further up, Specification fails upward in turn.
 - [ ] Revisit (Bernard, 2026-10-12): a Reviewer or Security & Quality fail reporting an
       architecture impediment goes to Coding, as the AutoPM table reads; Architecture may suit
       better.

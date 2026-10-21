@@ -30,6 +30,23 @@ Action and the sandbox driver are still open in section 0.
 
 ---
 
+## 2026-10-21: Coding's upstream ambiguity goes to Specification
+
+- Bernard: Coding reporting an upstream ambiguity now goes back to Specification, as Test's does,
+  instead of alerting a PDC coordinator. If the ambiguity lies further up, Specification fails
+  upward to the Programme Architect. One new row in `FAILURE_ROUTES`; the concept document (§9)
+  lists it among Divlab's extensions to the AutoPM table.
+
+RED:      An upstream ambiguity goes back to the role that owns the ambiguous artefact (Coding)
+          -> AssertionError: no task ready, expected a Specification task
+RED:      sends failed code back to Specification when it reports an upstream ambiguity
+          -> AssertionError: expected { alert } to deeply equal { tasks: [ … ] }
+GREEN:    124 unit tests, 57 scenarios passed
+REFACTOR: before the cycle, the "ride along" test now uses a scope gap from Coding as its
+          impediment no rule covers, since Coding's upstream ambiguity is now routed
+
+---
+
 ## 2026-10-21: Only Divlab merges
 
 - Decision 0005 (Bernard): only Divlab merges into a project's main branch, so every change there

@@ -481,7 +481,7 @@ describe("routing accepted work", () => {
     ).toEqual({ alert: { reason: "no_matching_rule" } });
   });
 
-  it("alerts a PDC coordinator when failed code reports an upstream ambiguity", () => {
+  it("sends failed code back to Specification when it reports an upstream ambiguity", () => {
     expect(
       route({
         fromRole: "coding",
@@ -490,7 +490,7 @@ describe("routing accepted work", () => {
         impediments: [{ type: "upstream_ambiguity" }],
         feedbackSignal: FEEDBACK,
       }),
-    ).toEqual({ alert: { reason: "no_matching_rule" } });
+    ).toEqual({ tasks: [{ role: "specification", module: "parser", feedbackSignal: FEEDBACK }] });
   });
 
   it("routes on the impediments a rule covers, letting the others ride along", () => {
@@ -499,7 +499,7 @@ describe("routing accepted work", () => {
         fromRole: "coding",
         module: "parser",
         verdict: "fail",
-        impediments: [{ type: "upstream_ambiguity" }, { type: "architecture_impediment" }],
+        impediments: [{ type: "scope_gap" }, { type: "architecture_impediment" }],
         feedbackSignal: FEEDBACK,
       }),
     ).toEqual({ tasks: [{ role: "architecture", module: "parser", feedbackSignal: FEEDBACK }] });
