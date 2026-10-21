@@ -30,6 +30,15 @@ Action and the sandbox driver are still open in section 0.
 
 ---
 
+## 2026-10-21: Anarres beside Claude Code's Projects
+
+- Claude Code's Projects (public beta) runs parallel sessions under one coordinating
+  conversation, for one user. The concept document (§2) now says how Anarres differs from it and
+  from Claude Tag: pooled capacity from many members, independence between roles that the system
+  enforces, deterministic routing and governance for strangers working together.
+- `docs/LATER.md`: running tasks in a cloud sandbox, with the open question of whether the
+  plugin's protections take effect there.
+
 ## 2026-10-13: Divlab's Action: entry point, bundle and project workflow
 
 - `packages/divlab/action.yml` and `src/action.ts`: the Action wires Divlab to the GitHub adapter
