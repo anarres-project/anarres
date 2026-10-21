@@ -30,6 +30,35 @@ the order in which several unrouted signals are routed in one run (section 0).
 
 ---
 
+## 2026-10-21: The template's pull request workflow
+
+- Checked the sandbox App end to end with a throwaway workflow: it minted a token as Divlab
+  Sandbox from the organisation's variable and secret, and acted as the App.
+- `template/.github/workflows/divlab-pull-request.yml`: runs as main has it
+  (`pull_request_target`), takes the App's token (GitHub's token action pinned to v3.2.0 by commit)
+  and runs Divlab with it; nothing else. `template.test.ts` holds it to that.
+- GitHub's token action has deprecated the App ID for the Client ID, so the template reads
+  `DIVLAB_APP_CLIENT_ID`.
+
+RED:      runs only as the project's main branch has it -> ENOENT; skeleton -> expected [] to
+          equal [ 'pull_request_target' ]
+GREEN:    (1 passed)
+RED:      does nothing but take the App's token and run Divlab -> TypeError (no jobs); empty jobs
+          -> expected [] to equal [ …(2) ]
+GREEN:    (2 passed)
+RED:      runs Divlab as its App -> expected undefined to equal { …(2) }
+GREEN:    (3 passed); REFACTOR: steps parsed once
+RED:      gives the workflow's own token no permissions -> expected undefined to equal {}
+GREEN:    (4 passed)
+RED:      waits its turn with the project's other Divlab runs -> expected undefined to equal
+          { group: 'divlab', … }
+GREEN:    (5 passed)
+PASSED FIRST TIME: never puts anything from the event in an expression (kept as a guard; shown
+          to fail by adding a pull request title expression, then restored)
+REFACTOR: Divlab declares the YAML library its tests use
+
+---
+
 ## 2026-10-21: Divlab merges submitted work (in-process)
 
 - Bernard created the sandbox's GitHub App, Divlab Sandbox (IDs in `CONTRIBUTING.md`).

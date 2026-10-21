@@ -1,0 +1,31 @@
+name: Divlab (pull requests)
+
+# Divlab validates a member's pull request and, if it passes, merges it and routes the work
+# (decision 0006). This event runs the workflow as this project's main branch has it, never as
+# the pull request has it, so nothing a pull request changes can run here.
+on:
+  pull_request_target:
+
+# The workflow's own token gets nothing: Divlab acts only with its App's token.
+permissions: {}
+
+# Shared with the push workflow: one Divlab run per project at a time keeps decisions in order.
+concurrency:
+  group: divlab
+  cancel-in-progress: false
+
+jobs:
+  divlab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Pinned to a commit: this job holds the App's key.
+      - id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.DIVLAB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.DIVLAB_APP_PRIVATE_KEY }}
+      # Divlab merges as its App, the only actor the project's ruleset lets merge.
+      - uses: anarres-project/anarres/packages/divlab@main
+        with:
+          token: ${{ steps.app.outputs.token }}

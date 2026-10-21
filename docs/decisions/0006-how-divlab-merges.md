@@ -63,7 +63,7 @@ and alerts PDC coordinators if it is not (decision 0005, option 2, now chosen).
   and Divlab Sandbox for `anarres-sandbox`, with the same permissions. Each is installable only on
   its own organisation, and their keys are separate, so tests never hold a key that can act on
   `anarres-project`.
-- Each organisation holds its App's id (a variable) and private key (a secret) for its
+- Each organisation holds its App's Client ID (a variable) and private key (a secret) for its
   repositories' workflows. Pull request workflows can read secrets, which is one more reason they
   must never run code from a pull request.
 - The project template gains the pull request workflow and the ruleset; the sandbox driver sets up

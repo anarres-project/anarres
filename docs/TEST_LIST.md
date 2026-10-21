@@ -160,8 +160,15 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         for, as when routing a merge;
   - [ ] a pull request with no feedback signal is not merged, and the member is told so (today
         Divlab stops without merging, but says nothing: a guard no test has demanded yet).
-- [ ] The project template's pull request workflow never checks out or runs anything from the pull
-      request (decision 0006).
+- [x] The project template's pull request workflow never checks out or runs anything from the pull
+      request (decision 0006): it runs as main has it, its only steps are the App's token and
+      Divlab, its own token gets no permissions, it puts nothing from the event in an expression,
+      and it shares the project's Divlab concurrency group (`template.test.ts`).
+- [ ] Divlab's Action acts on a pull request event with `onPullRequest`, through `packages/github`
+      (changed files read as data, merge, refusal comment); today the Action always runs
+      `onMerge`, so the template's pull request workflow is not yet useful.
+- [ ] The sandbox driver submits work as a real pull request, sets up the ruleset with Divlab
+      Sandbox as its only bypass, and waits for Divlab to merge it; then `@sandbox-wip` goes.
 - [ ] A project's main branch admits changes only through pull requests Divlab's App merges; no
       person is exempt (template ruleset; the sandbox driver sets it up too).
 - [ ] Divlab alerts PDC coordinators when a project's main branch is not protected as decision 0006
