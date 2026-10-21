@@ -21,3 +21,12 @@ Feature: Divlab merges the work members submit
     Then Divlab has not merged the member's Specification work on "parser"
     And the member is told their feedback signal must use plain names
     And no task is ready for "parser"
+
+  # Not in the sandbox: the real Action cannot be stopped between merging and recording on cue.
+  @sandbox-wip
+  Scenario: A merge Divlab was interrupted in is finished by its next run
+    Given a project with a module "parser"
+    And Divlab was interrupted just after merging a member's Specification work on "parser"
+    When Divlab next acts on the project
+    Then the only task ready for "parser" is a Test task
+    And no PDC coordinator is alerted that work reached main without Divlab merging it

@@ -102,10 +102,17 @@ export class FakeGitHub
     return this.pullRequest(pullRequest).files;
   }
 
+  /** The next merge succeeds, and then Divlab's run stops dead, as if its runner were lost. */
+  interruptAfterNextMerge = false;
+
   async merge(project: string, pullRequest: string): Promise<void> {
     for (const { path, text } of this.pullRequest(pullRequest).files)
       this.mergeFile(project, path, text);
     this.mergedPullRequests.push(pullRequest);
+    if (this.interruptAfterNextMerge) {
+      this.interruptAfterNextMerge = false;
+      throw new Interrupted();
+    }
   }
 
   private readonly refused: { project: string; reason: string }[] = [];
@@ -150,4 +157,9 @@ export class FakeGitHub
   readyTasks(project: string): OpenTask[] {
     return this.openTasks.filter((task) => task.project === project);
   }
+}
+
+/** Divlab's run stopped part way, as a lost runner or a cancelled job would stop it. */
+export class Interrupted extends Error {
+  override name = "Interrupted";
 }

@@ -1,6 +1,12 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { type LogEvent, type RoutingEvent, setUpProject, signalOf } from "@anarres/divlab";
+import {
+  type LogEvent,
+  type RoutingEvent,
+  routingDecisions,
+  setUpProject,
+  signalOf,
+} from "@anarres/divlab";
 import { GitHubAdapter } from "@anarres/github";
 import type {
   AcceptedWork,
@@ -9,6 +15,7 @@ import type {
   ReadyTask,
   RoutingRecord,
 } from "../driver.ts";
+import { HarnessNotYetBuilt } from "../errors.ts";
 import {
   feedbackSignalFile,
   inScenarioWords,
@@ -150,7 +157,7 @@ export class SandboxDriver implements Driver {
       message: `The ${work.role} work on ${work.module}, not through Divlab`,
       content: Buffer.from(text).toString("base64"),
     });
-    await this.eventFor(work.project, path);
+    await this.eventFor(work.project, path, "notAccepted");
     this.expectedFor(work.project).notAccepted += 1;
   }
 
@@ -160,6 +167,14 @@ export class SandboxDriver implements Driver {
       const path = issue.body?.match(/\n`{3,}\n(.+)\n`{3,}$/)?.[1];
       return path ? [signalName(path)] : [];
     });
+  }
+
+  async interruptAfterMerging(_work: AcceptedWork): Promise<void> {
+    throw new HarnessNotYetBuilt("interrupting the real Action between merging and recording");
+  }
+
+  async divlabActsAgain(_project: string): Promise<void> {
+    throw new HarnessNotYetBuilt("interrupting the real Action between merging and recording");
   }
 
   async refusals(project: string): Promise<string[]> {
@@ -178,8 +193,9 @@ export class SandboxDriver implements Driver {
   private async expectWhatDivlabDecided(project: string, path: string, task?: Issue) {
     // The event log is consistent at once and says what Divlab did; the issue lists lag behind.
     const expected = this.expectedFor(project);
-    const event = await this.eventFor(project, path);
-    if (!("work" in event)) throw new Error(`Divlab did not accept ${path} in ${project}`);
+    const event = await this.eventFor(project, path, "routed");
+    if (!("work" in event))
+      throw new Error(`Divlab recorded no decision for ${path} in ${project}`);
     if (task) {
       expected.ready -= 1;
       run.closed.add(issueKey(project, task.number));
@@ -191,10 +207,17 @@ export class SandboxDriver implements Driver {
   }
 
   /** Divlab's record of the work, which it writes just after it merges. */
-  private async eventFor(project: string, path: string): Promise<LogEvent> {
+  /** Divlab's record of the given kind for the work: a merge begun is not yet a decision. */
+  private async eventFor(
+    project: string,
+    path: string,
+    kind: "routed" | "notAccepted",
+  ): Promise<LogEvent> {
     const deadline = Date.now() + 60_000;
     for (;;) {
-      const event = (await this.divlab.read(project)).find((e) => signalOf(e) === path);
+      const event = (await this.divlab.read(project)).find(
+        (e) => signalOf(e) === path && (kind === "routed" ? "work" in e : "notAccepted" in e),
+      );
       if (event) return event;
       if (Date.now() > deadline)
         throw new Error(`Divlab recorded nothing for ${path} in ${project}`);
@@ -309,9 +332,9 @@ export class SandboxDriver implements Driver {
         ]),
       );
       if (names.every((name) => texts.has(name)) || Date.now() > deadline) {
-        return names.map((name) =>
-          inScenarioWords(JSON.parse(texts.get(name) ?? "null") as RoutingEvent),
-        );
+        // Only the routing decisions: merges begun and work not accepted are records too.
+        const events = names.map((name) => JSON.parse(texts.get(name) ?? "null") as LogEvent);
+        return routingDecisions(events).map(inScenarioWords);
       }
       await new Promise((resolve) => setTimeout(resolve, 1_000));
     }

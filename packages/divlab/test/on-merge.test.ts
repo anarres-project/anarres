@@ -78,6 +78,29 @@ describe("acting on a merge", () => {
     expect([seen.appended, seen.alerts]).toEqual([[], []]);
   });
 
+  it("finishes routing work it merged but was interrupted before routing", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    const begun: EventLog = {
+      ...watchedLog,
+      read: async () => [
+        {
+          project: "ledger",
+          aboutToMerge: {
+            pullRequest: "7",
+            head: "c0ffee",
+            feedbackSignal: "feedback/FB-9.md",
+            work: { fromRole: "specification", module: "parser", verdict: "pass", impediments: [] },
+          },
+        },
+      ],
+    };
+    await onMerge("ledger", onMain(passedSpecification), watchedBoard, begun);
+    expect([seen.posted, seen.alerts]).toEqual([
+      [{ project: "ledger", role: "test", module: "parser" }],
+      [],
+    ]);
+  });
+
   it("alerts PDC coordinators of work that reached main without Divlab merging it", async () => {
     const { seen, watchedBoard, watchedLog } = watching();
     await onMerge("ledger", onMain(passedSpecification), watchedBoard, watchedLog);
@@ -222,6 +245,35 @@ describe("acting on a pull request", () => {
     await onPullRequest("ledger", "11", submitting([], [artefactOnly], refusals), board, log);
     expect(refusals).toEqual([
       "11: The pull request has no feedback signal: work needs one, in feedback/, saying what it was for and how it went",
+    ]);
+  });
+
+  it("records that it is about to merge, with the work, before it merges", async () => {
+    const happened: unknown[] = [];
+    const pullRequests: PullRequests = {
+      ...submitting(),
+      merge: async (_project, pullRequest) => {
+        happened.push(`merged ${pullRequest}`);
+      },
+    };
+    const recording: EventLog = {
+      read: async () => [],
+      append: async (event) => {
+        happened.push(event);
+      },
+    };
+    await onPullRequest("ledger", "7", pullRequests, { ...board, post: async () => {} }, recording);
+    expect(happened.slice(0, 2)).toEqual([
+      {
+        project: "ledger",
+        aboutToMerge: {
+          pullRequest: "7",
+          head: "c0ffee",
+          feedbackSignal: "feedback/FB-1.md",
+          work: { fromRole: "specification", module: "parser", verdict: "pass", impediments: [] },
+        },
+      },
+      "merged 7",
     ]);
   });
 });

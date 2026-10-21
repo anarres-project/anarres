@@ -13,7 +13,7 @@ import {
   roleName,
   signalName,
 } from "../scenario-words.ts";
-import { FakeGitHub } from "./fake-github.ts";
+import { FakeGitHub, Interrupted } from "./fake-github.ts";
 
 /** Submits work to an in-memory fake of GitHub as pull requests, for Divlab to merge. */
 export class InProcessDriver implements Driver {
@@ -49,6 +49,21 @@ export class InProcessDriver implements Driver {
 
   async unmergedWorkAlerts(project: string): Promise<string[]> {
     return this.github.unmergedWorkAlerts(project).map(signalName);
+  }
+
+  async interruptAfterMerging(work: AcceptedWork): Promise<void> {
+    this.github.interruptAfterNextMerge = true;
+    try {
+      await this.submitWork(work);
+    } catch (error) {
+      if (!(error instanceof Interrupted)) throw error;
+      return;
+    }
+    throw new Error("Divlab was not interrupted: it never merged the work");
+  }
+
+  async divlabActsAgain(project: string): Promise<void> {
+    await onMerge(project, this.github, this.github, this.github);
   }
 
   async refusals(project: string): Promise<string[]> {

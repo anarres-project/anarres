@@ -30,6 +30,30 @@ the order in which several unrouted signals are routed in one run (section 0).
 
 ---
 
+## 2026-10-21: About to merge
+
+- Before merging a pull request, Divlab records that it is about to, with the work it read and
+  checked. The tripwire now tells three cases apart: a routing decision (Divlab's merge, done); a
+  merge begun but not routed (an interrupted run: finished from the record, not from Git history
+  or the file); no record (not through Divlab: not accepted, alerted).
+- The event log holds three kinds of record; readers of routing history still see only decisions,
+  and the sandbox driver waits for the kind it expects.
+- The scenario runs in-process, where the fake can stop Divlab just after a merge; it is
+  `@sandbox-wip` because the real Action cannot be stopped on cue.
+
+OUTER RED: A merge Divlab was interrupted in is finished by its next run (@wip) -> not yet right:
+           no task ready
+RED:      records that it is about to merge, with the work, before it merges -> expected
+          [ 'merged 7', … ] to equal [ { aboutToMerge }, 'merged 7' ]
+GREEN:    (165 passed)
+RED:      finishes routing work it merged but was interrupted before routing -> expected [ [], [] ]
+          to equal [ [ { … } ], [] ]
+GREEN:    (166 passed); OUTER GREEN in-process
+RED:      reads back a record that Divlab was about to merge -> Error: not a routing record
+GREEN:    (167 passed)
+
+---
+
 ## 2026-10-21: The tripwire
 
 - The push workflow is now the tripwire (decisions 0005, 0006). A feedback signal on main with no

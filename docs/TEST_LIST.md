@@ -200,11 +200,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       Divlab merge, whatever it says, it did not come through Divlab.
 - [ ] Anything else that reaches main without Divlab (a change with no feedback signal at all):
       the tripwire today looks only at feedback signals.
-- [ ] Divlab records each merge as it makes it, and routes from those records, so work is routed
+- [x] Divlab records each merge as it makes it, and routes from those records, so work is routed
       in the order Divlab merged it.
-- [ ] A run interrupted between merging and recording is finished by the next run: Divlab records
-      that it is about to merge before it merges, so it never has to read Git history to find out
-      what it did.
+- [x] A run interrupted between merging and recording is finished by the next run: Divlab records
+      that it is about to merge, with the work it checked, before it merges, so the tripwire
+      finishes from that record and never reads Git history (in-process; the sandbox cannot stop
+      the real Action on cue, so the scenario is `@sandbox-wip`).
 - [ ] Work that touches files outside the role's write scope is rejected, naming the offending
       paths.
 - [ ] Work without a valid feedback signal is rejected, saying what is missing.

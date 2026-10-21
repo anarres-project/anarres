@@ -1,4 +1,4 @@
-import type { NotAccepted, RoutingEvent } from "@anarres/divlab";
+import type { AboutToMerge, NotAccepted, RoutingEvent } from "@anarres/divlab";
 import { describe, expect, it } from "vitest";
 import {
   commentForRefusal,
@@ -108,6 +108,19 @@ describe("a routing event as a file", () => {
       },
     };
     expect(eventFromFile(eventFile(notAccepted, 2).content)).toEqual(notAccepted);
+  });
+
+  it("reads back a record that Divlab was about to merge a pull request", () => {
+    const begun: AboutToMerge = {
+      project: "ledger",
+      aboutToMerge: {
+        pullRequest: "7",
+        head: "c0ffee",
+        feedbackSignal: "feedback/T-0144.md",
+        work: { fromRole: "test", module: "parser", verdict: "pass", impediments: [] },
+      },
+    };
+    expect(eventFromFile(eventFile(begun, 3).content)).toEqual(begun);
   });
 
   it("is refused when it is not a routing record", () => {

@@ -70,16 +70,28 @@ export interface PullRequests {
   refuse(project: string, pullRequest: string, reason: string): Promise<void>;
 }
 
-/** What the event log holds: routing decisions, and what Divlab did not accept. */
-export type LogEvent = RoutingEvent | NotAccepted;
+/**
+ * Divlab is about to merge a pull request, whose work it has read and checked. Written before the
+ * merge, so a run that stops after merging can be finished from it, never from Git history.
+ */
+export type AboutToMerge = {
+  project: string;
+  aboutToMerge: { pullRequest: string; head: string; feedbackSignal: string; work: FeedbackSignal };
+};
+
+/** What the event log holds: routing decisions, merges begun, and what Divlab did not accept. */
+export type LogEvent = RoutingEvent | AboutToMerge | NotAccepted;
 
 /** The routing decisions in a log, which are all its history routing depends on. */
 export const routingDecisions = (log: readonly LogEvent[]): RoutingEvent[] =>
   log.filter((event): event is RoutingEvent => "work" in event);
 
 /** The feedback signal an event is about, whichever kind of event it is. */
-export const signalOf = (event: LogEvent): string =>
-  "work" in event ? event.work.feedbackSignal : event.notAccepted.feedbackSignal;
+export const signalOf = (event: LogEvent): string => {
+  if ("work" in event) return event.work.feedbackSignal;
+  if ("aboutToMerge" in event) return event.aboutToMerge.feedbackSignal;
+  return event.notAccepted.feedbackSignal;
+};
 
 /** Where Divlab records its decisions: one file per event in the project repository. */
 export interface EventLog {
@@ -144,9 +156,21 @@ export async function onMerge(
   log: EventLog,
 ): Promise<void> {
   // Divlab records every merge it makes, so a signal with no event reached main some other way.
-  const recorded = new Set((await log.read(project)).map(signalOf));
+  const events = await log.read(project);
+  const finished = new Set(events.filter((e) => !("aboutToMerge" in e)).map(signalOf));
+  const begun = new Map(
+    events.flatMap((e) =>
+      "aboutToMerge" in e ? [[e.aboutToMerge.feedbackSignal, e] as const] : [],
+    ),
+  );
   for (const path of await repository.feedbackSignals(project)) {
-    if (recorded.has(path)) continue;
+    if (finished.has(path)) continue;
+    // Merged by Divlab, whose run stopped before routing it: finish from what Divlab recorded.
+    const merge = begun.get(path);
+    if (merge) {
+      await acceptSignal(project, path, merge.aboutToMerge.work, board, log);
+      continue;
+    }
     // Never read, let alone routed: whatever it says, it did not come through Divlab.
     const record: NotAccepted = {
       project,
@@ -182,6 +206,10 @@ export async function onPullRequest(
     await pullRequests.refuse(project, pullRequest, cannotRead(feedback.path, signal));
     return;
   }
+  await log.append({
+    project,
+    aboutToMerge: { pullRequest, head, feedbackSignal: feedback.path, work: signal },
+  });
   await pullRequests.merge(project, pullRequest, head);
   await acceptSignal(project, feedback.path, signal, board, log);
 }

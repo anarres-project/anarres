@@ -7577,6 +7577,9 @@ function eventFromFile(content) {
   if (isObject(event) && isObject(event.notAccepted) && typeof event.notAccepted.feedbackSignal === "string" && typeof event.notAccepted.reason === "string") {
     return event;
   }
+  if (isObject(event) && isObject(event.aboutToMerge) && typeof event.aboutToMerge.feedbackSignal === "string" && isObject(event.aboutToMerge.work)) {
+    return event;
+  }
   if (!isObject(event) || !isObject(event.work) || !isObject(event.decision) || !isObject(event.reason)) {
     throw new Error("The event file is not a routing record");
   }
@@ -7905,7 +7908,11 @@ function whatToActOn(name, event) {
 
 // src/index.ts
 var routingDecisions = (log) => log.filter((event) => "work" in event);
-var signalOf = (event) => "work" in event ? event.work.feedbackSignal : event.notAccepted.feedbackSignal;
+var signalOf = (event) => {
+  if ("work" in event) return event.work.feedbackSignal;
+  if ("aboutToMerge" in event) return event.aboutToMerge.feedbackSignal;
+  return event.notAccepted.feedbackSignal;
+};
 async function onWorkAccepted(event, board, log) {
   const { project: project2, task, ...work } = event;
   const history = routingDecisions(await log.read(project2));
@@ -7942,9 +7949,20 @@ async function acceptSignal(project2, path, signal, board, log) {
 }
 var cannotRead = (path, { unreadable }) => `The feedback signal ${path} cannot be read: ${unreadable}`;
 async function onMerge(project2, repository, board, log) {
-  const recorded = new Set((await log.read(project2)).map(signalOf));
+  const events = await log.read(project2);
+  const finished = new Set(events.filter((e) => !("aboutToMerge" in e)).map(signalOf));
+  const begun = new Map(
+    events.flatMap(
+      (e) => "aboutToMerge" in e ? [[e.aboutToMerge.feedbackSignal, e]] : []
+    )
+  );
   for (const path of await repository.feedbackSignals(project2)) {
-    if (recorded.has(path)) continue;
+    if (finished.has(path)) continue;
+    const merge = begun.get(path);
+    if (merge) {
+      await acceptSignal(project2, path, merge.aboutToMerge.work, board, log);
+      continue;
+    }
     const record = {
       project: project2,
       notAccepted: { feedbackSignal: path, reason: "it reached main without Divlab merging it" }
@@ -7970,6 +7988,10 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log) {
     await pullRequests.refuse(project2, pullRequest, cannotRead(feedback.path, signal));
     return;
   }
+  await log.append({
+    project: project2,
+    aboutToMerge: { pullRequest, head, feedbackSignal: feedback.path, work: signal }
+  });
   await pullRequests.merge(project2, pullRequest, head);
   await acceptSignal(project2, feedback.path, signal, board, log);
 }

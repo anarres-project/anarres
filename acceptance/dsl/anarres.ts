@@ -48,6 +48,31 @@ export class Anarres {
     });
   }
 
+  async divlabInterruptedAfterMerging(work: Work & { verdict: string }) {
+    this.signalsWritten += 1;
+    const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
+    this.feedbackSignals.set(workOn(this.aliased(work)), feedbackSignal);
+    await this.driver.interruptAfterMerging({
+      impediments: [],
+      ...this.aliased(work),
+      project: this.project,
+      member: this.aliases.of(DEFAULT_MEMBER),
+      feedbackSignal,
+    });
+  }
+
+  async divlabActsAgain() {
+    await this.driver.divlabActsAgain(this.project);
+  }
+
+  async noCoordinatorAlertedOfUnmergedWork() {
+    assert.deepEqual(
+      await this.driver.unmergedWorkAlerts(this.project),
+      [],
+      "expected no alert that work reached main without Divlab",
+    );
+  }
+
   async coordinatorsAlertedOfUnmergedWork(work: Work) {
     const feedbackSignal = this.feedbackSignals.get(workOn(this.aliased(work)));
     assert.deepEqual(

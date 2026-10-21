@@ -287,3 +287,21 @@ Then(
     return this.anarres.coordinatorsAlertedOfUnmergedWork({ role, module });
   },
 );
+
+Given(
+  "Divlab was interrupted just after merging a member's {role} work on {string}",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.divlabInterruptedAfterMerging({ role, module, verdict: "pass" });
+  },
+);
+
+When("Divlab next acts on the project", function (this: AnarresWorld) {
+  return this.anarres.divlabActsAgain();
+});
+
+Then(
+  "no PDC coordinator is alerted that work reached main without Divlab merging it",
+  function (this: AnarresWorld) {
+    return this.anarres.noCoordinatorAlertedOfUnmergedWork();
+  },
+);

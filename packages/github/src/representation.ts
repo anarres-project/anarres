@@ -1,5 +1,11 @@
 import { ROLE_NAMES, type Role } from "@anarres/core";
-import type { LogEvent, NotAccepted, PostedTask, RoutingEvent } from "@anarres/divlab";
+import type {
+  AboutToMerge,
+  LogEvent,
+  NotAccepted,
+  PostedTask,
+  RoutingEvent,
+} from "@anarres/divlab";
 
 /** What GitHub needs to open an issue. */
 export type NewIssue = { title: string; labels: string[]; body: string };
@@ -51,6 +57,14 @@ export function eventFromFile(content: string): LogEvent {
     typeof event.notAccepted.reason === "string"
   ) {
     return event as NotAccepted;
+  }
+  if (
+    isObject(event) &&
+    isObject(event.aboutToMerge) &&
+    typeof event.aboutToMerge.feedbackSignal === "string" &&
+    isObject(event.aboutToMerge.work)
+  ) {
+    return event as AboutToMerge;
   }
   if (
     !isObject(event) ||

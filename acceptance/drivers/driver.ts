@@ -45,6 +45,10 @@ export interface Driver {
     modules: string[],
     options?: { unprotected?: boolean },
   ): Promise<void>;
+  /** Divlab merges the member's work but stops before it records and routes it. */
+  interruptAfterMerging(work: AcceptedWork): Promise<void>;
+  /** Divlab acts on the project again, as the next push to main would make it. */
+  divlabActsAgain(project: string): Promise<void>;
   /** The member's work lands on main without going through Divlab. */
   mergeDirectly(work: AcceptedWork): Promise<void>;
   /** The feedback signals PDC coordinators were alerted had reached main without Divlab. */
