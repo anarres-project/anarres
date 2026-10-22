@@ -43,6 +43,22 @@ and merge records are read back through core. Section 0 is done but for the log'
 
 ---
 
+## 2026-10-22: Every event records its time
+
+- Merge records and records of work not accepted now carry `decidedAt` too, from the same clock.
+- An event's identifier is its sequence number (its file name), taken from the log, never from
+  randomness or the clock, and unique because GitHub refuses a second file at a number: ticked,
+  with nothing to inject.
+
+RED:      records when it decided to merge, by its clock -> expected { project: 'ledger', …(1) } to
+          match object { …(2) }
+GREEN:    (41 passed, after the older test comparing the whole merge record expected the time,
+          a separate step: the record now holds it)
+RED:      records when it found work that reached main without it, by its clock -> expected
+          [ { project: 'ledger', …(1) } ] to match object [ Array(1) ]
+GREEN:    (42 passed, likewise for the two tests comparing the whole record)
+REFACTOR: none
+
 ## 2026-10-22: Divlab records when it decided
 
 - Each routing decision now records when Divlab made it, in UTC (`decidedAt`). Divlab takes its

@@ -154,8 +154,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       Divlab received it) and its reason (the rule that decided it).
   - [x] the event records when Divlab decided (injected clock, UTC): routing decisions carry
         `decidedAt`; the Action's clock is the wall clock, the only place it is read;
-  - [ ] merges begun and work not accepted record their time too;
-  - [ ] each event has an identifier from an injected generator (one file per event);
+  - [x] merges begun and work not accepted record their time too;
+  - [x] each event has an identifier (one file per event): its sequence number, the file's name,
+        taken from the log itself, never from randomness or the clock, and unique because GitHub
+        refuses a second file at the same number (adapter test: "gives a new event the next free
+        number when another run has recorded one since"). Nothing to inject;
   - [ ] a conditional pass's open questions and assumptions are kept in its event (needs them in
         the accepted work first);
   - [x] the GitHub adapter writes each event as one file under `events/` in the project

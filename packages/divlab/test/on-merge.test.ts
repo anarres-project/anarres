@@ -148,6 +148,12 @@ describe("acting on a merge", () => {
     expect(seen.posted).toEqual([]);
   });
 
+  it("records when it found work that reached main without it, by its clock", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    await onMerge("ledger", onMain(passedSpecification), watchedBoard, watchedLog, clock);
+    expect(seen.appended).toMatchObject([{ decidedAt: "2026-10-22T09:00:00.000Z" }]);
+  });
+
   it("alerts PDC coordinators of work that reached main without Divlab merging it", async () => {
     const { seen, watchedBoard, watchedLog } = watching();
     await onMerge("ledger", onMain(passedSpecification), watchedBoard, watchedLog, clock);
@@ -160,6 +166,7 @@ describe("acting on a merge", () => {
     expect(seen.appended).toEqual([
       {
         project: "ledger",
+        decidedAt: "2026-10-22T09:00:00.000Z",
         notAccepted: {
           feedbackSignal: "feedback/FB-9.md",
           reason: "it reached main without Divlab merging it",
@@ -174,6 +181,7 @@ describe("acting on a merge", () => {
     expect(seen.appended).toEqual([
       {
         project: "ledger",
+        decidedAt: "2026-10-22T09:00:00.000Z",
         notAccepted: {
           feedbackSignal: "feedback/FB-9.md",
           reason: "it reached main without Divlab merging it",
@@ -336,6 +344,28 @@ describe("acting on a pull request", () => {
     expect(appended.at(-1)).toMatchObject({ decidedAt: "2026-10-22T09:00:00.000Z" });
   });
 
+  it("records when it decided to merge, by its clock", async () => {
+    const appended: unknown[] = [];
+    const recording: EventLog = {
+      read: async () => [],
+      append: async (event) => {
+        appended.push(event);
+      },
+    };
+    await onPullRequest(
+      "ledger",
+      "7",
+      submitting(),
+      { ...board, post: async () => {} },
+      recording,
+      clock,
+    );
+    expect(appended[0]).toMatchObject({
+      aboutToMerge: { pullRequest: "7" },
+      decidedAt: "2026-10-22T09:00:00.000Z",
+    });
+  });
+
   it("records that it is about to merge, with the work, before it merges", async () => {
     const happened: unknown[] = [];
     const pullRequests: PullRequests = {
@@ -361,6 +391,7 @@ describe("acting on a pull request", () => {
     expect(happened.slice(0, 2)).toEqual([
       {
         project: "ledger",
+        decidedAt: "2026-10-22T09:00:00.000Z",
         aboutToMerge: {
           pullRequest: "7",
           head: "c0ffee",

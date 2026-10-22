@@ -8108,6 +8108,7 @@ async function onMerge(project2, repository, board, log, clock) {
     if (finished.has(path) || begun.has(path)) continue;
     const record = {
       project: project2,
+      decidedAt: clock().toISOString(),
       notAccepted: { feedbackSignal: path, reason: "it reached main without Divlab merging it" }
     };
     await log.append(record);
@@ -8133,6 +8134,7 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
   }
   await log.append({
     project: project2,
+    decidedAt: clock().toISOString(),
     aboutToMerge: { pullRequest, head, feedbackSignal: feedback.path, work: signal }
   });
   await pullRequests.merge(project2, pullRequest, head);

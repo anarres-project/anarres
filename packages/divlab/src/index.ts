@@ -41,6 +41,8 @@ export type CoordinatorAlert = RoutingEvent;
 /** Something reached main without Divlab merging it: never routed, recorded once (0005). */
 export type NotAccepted = {
   project: string;
+  /** When Divlab found it, in UTC (absent from events recorded before it kept the time). */
+  decidedAt?: string;
   notAccepted: { feedbackSignal: string; reason: string };
 };
 
@@ -84,6 +86,8 @@ export interface PullRequests {
  */
 export type AboutToMerge = {
   project: string;
+  /** When Divlab decided to merge, in UTC (absent from events recorded before it kept the time). */
+  decidedAt?: string;
   aboutToMerge: { pullRequest: string; head: string; feedbackSignal: string; work: FeedbackSignal };
 };
 
@@ -191,6 +195,7 @@ export async function onMerge(
     // Never read, let alone routed: whatever it says, it did not come through Divlab.
     const record: NotAccepted = {
       project,
+      decidedAt: clock().toISOString(),
       notAccepted: { feedbackSignal: path, reason: "it reached main without Divlab merging it" },
     };
     await log.append(record);
@@ -226,6 +231,7 @@ export async function onPullRequest(
   }
   await log.append({
     project,
+    decidedAt: clock().toISOString(),
     aboutToMerge: { pullRequest, head, feedbackSignal: feedback.path, work: signal },
   });
   await pullRequests.merge(project, pullRequest, head);
