@@ -37,3 +37,12 @@ Feature: Divlab merges the work members submit
     When Divlab next acts on the project
     Then the only task ready for "parser" is a Test task
     And no PDC coordinator is alerted that work reached main without Divlab merging it
+
+  # Not in the sandbox: the real Action cannot be stopped between recording and acting on cue.
+  @sandbox-wip
+  Scenario: A decision Divlab recorded but did not act on is acted on by its next run, once
+    Given a project with a module "parser"
+    And Divlab was interrupted just after recording its decision on a member's Specification work on "parser"
+    When Divlab next acts on the project
+    And Divlab next acts on the project
+    Then the only task ready for "parser" is a Test task

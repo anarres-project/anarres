@@ -2,6 +2,7 @@ export { GitHubAdapter } from "./adapter.ts";
 export { retryAfter } from "./rate-limits.ts";
 export {
   commentForRefusal,
+  decisionOf,
   eventFile,
   eventFromFile,
   issueForAlert,
@@ -14,6 +15,7 @@ export {
   logFrom,
   type NewIssue,
   policyAllowingDivlabChecks,
+  postedByDivlab,
   protectsMain,
   rulesetProtectingMain,
   taskFromIssue,

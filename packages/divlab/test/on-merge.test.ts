@@ -25,6 +25,7 @@ const board: TaskBoard = {
   markModuleDone: untouched,
   task: untouched,
   close: untouched,
+  actedOn: async () => [],
 };
 
 describe("acting on a merge", () => {
@@ -101,7 +102,7 @@ describe("acting on a merge", () => {
     };
     await onMerge("ledger", onMain(passedSpecification), watchedBoard, begun, clock);
     expect([seen.posted, seen.alerts]).toEqual([
-      [{ project: "ledger", role: "test", module: "parser" }],
+      [{ project: "ledger", role: "test", module: "parser", decidedOn: "feedback/FB-9.md" }],
       [],
     ]);
   });
@@ -152,6 +153,123 @@ describe("acting on a merge", () => {
     const { seen, watchedBoard, watchedLog } = watching();
     await onMerge("ledger", onMain(passedSpecification), watchedBoard, watchedLog, clock);
     expect(seen.appended).toMatchObject([{ decidedAt: "2026-10-22T09:00:00.000Z" }]);
+  });
+
+  it("acts on a decision it recorded but never acted on", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    const work = { fromRole: "specification", module: "parser", verdict: "pass", impediments: [] };
+    const recordedOnly: EventLog = {
+      ...watchedLog,
+      read: async () => [
+        {
+          project: "ledger",
+          aboutToMerge: {
+            pullRequest: "7",
+            head: "c0ffee",
+            feedbackSignal: "feedback/FB-9.md",
+            work,
+          },
+        },
+        {
+          project: "ledger",
+          work: { ...work, feedbackSignal: "feedback/FB-9.md" },
+          decision: { tasks: [{ role: "test", module: "parser" }] },
+          reason: { rule: "passed" },
+        },
+      ],
+    };
+    const nothingActedOn: TaskBoard = { ...watchedBoard, actedOn: async () => [] };
+    await onMerge("ledger", onMain(passedSpecification), nothingActedOn, recordedOnly, clock);
+    expect(seen.posted.map(({ role, module }) => ({ role, module }))).toEqual([
+      { role: "test", module: "parser" },
+    ]);
+  });
+
+  it("never acts twice on a decision: one the board shows it acted on is left alone", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    const work = { fromRole: "specification", module: "parser", verdict: "pass", impediments: [] };
+    const routed: EventLog = {
+      ...watchedLog,
+      read: async () => [
+        {
+          project: "ledger",
+          aboutToMerge: {
+            pullRequest: "7",
+            head: "c0ffee",
+            feedbackSignal: "feedback/FB-9.md",
+            work,
+          },
+        },
+        {
+          project: "ledger",
+          work: { ...work, feedbackSignal: "feedback/FB-9.md" },
+          decision: { tasks: [{ role: "test", module: "parser" }] },
+          reason: { rule: "passed" },
+        },
+      ],
+    };
+    const actedOn: TaskBoard = { ...watchedBoard, actedOn: async () => ["feedback/FB-9.md"] };
+    await onMerge("ledger", onMain(passedSpecification), actedOn, routed, clock);
+    expect(seen.posted).toEqual([]);
+  });
+
+  it("records having acted when the board shows it did, so it need not ask again", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    const work = { fromRole: "specification", module: "parser", verdict: "pass", impediments: [] };
+    const routed: EventLog = {
+      ...watchedLog,
+      read: async () => [
+        {
+          project: "ledger",
+          aboutToMerge: {
+            pullRequest: "7",
+            head: "c0ffee",
+            feedbackSignal: "feedback/FB-9.md",
+            work,
+          },
+        },
+        {
+          project: "ledger",
+          work: { ...work, feedbackSignal: "feedback/FB-9.md" },
+          decision: { tasks: [{ role: "test", module: "parser" }] },
+          reason: { rule: "passed" },
+        },
+      ],
+    };
+    const actedOn: TaskBoard = { ...watchedBoard, actedOn: async () => ["feedback/FB-9.md"] };
+    await onMerge("ledger", onMain(passedSpecification), actedOn, routed, clock);
+    expect(seen.appended).toEqual([
+      { project: "ledger", actedOn: { feedbackSignal: "feedback/FB-9.md" } },
+    ]);
+  });
+
+  it("trusts its own record of having acted, never asking the board, whose lists lag", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    const work = { fromRole: "specification", module: "parser", verdict: "pass", impediments: [] };
+    const actedAndRecorded: EventLog = {
+      ...watchedLog,
+      read: async () => [
+        {
+          project: "ledger",
+          aboutToMerge: {
+            pullRequest: "7",
+            head: "c0ffee",
+            feedbackSignal: "feedback/FB-9.md",
+            work,
+          },
+        },
+        {
+          project: "ledger",
+          work: { ...work, feedbackSignal: "feedback/FB-9.md" },
+          decision: { tasks: [{ role: "test", module: "parser" }] },
+          reason: { rule: "passed" },
+        },
+        { project: "ledger", actedOn: { feedbackSignal: "feedback/FB-9.md" } },
+      ],
+    };
+    const lagging: TaskBoard = { ...watchedBoard, actedOn: untouched };
+    await onMerge("ledger", onMain(passedSpecification), lagging, actedAndRecorded, clock);
+    expect(seen.posted).toEqual([]);
   });
 
   it("alerts PDC coordinators of work that reached main without Divlab merging it", async () => {
@@ -234,7 +352,39 @@ describe("acting on a pull request", () => {
       },
     };
     await onPullRequest("ledger", "7", submitting(), posting, log, clock);
-    expect(posted).toEqual([{ project: "ledger", role: "test", module: "parser" }]);
+    expect(posted).toEqual([
+      { project: "ledger", role: "test", module: "parser", decidedOn: "feedback/FB-1.md" },
+    ]);
+  });
+
+  it("tells the board which decision each task comes from, so it is posted once", async () => {
+    const posted: PostedTask[] = [];
+    const posting: TaskBoard = {
+      ...board,
+      post: async (task) => {
+        posted.push(task);
+      },
+    };
+    await onPullRequest("ledger", "7", submitting(), posting, log, clock);
+    expect(posted.map((task) => task.decidedOn)).toEqual(["feedback/FB-1.md"]);
+  });
+
+  it("tells the board which decision a finished module comes from", async () => {
+    const finished: unknown[] = [];
+    const securityPasses = {
+      path: "feedback/FB-6.md",
+      text: "---\nfeedback_signal:\n  from_role: security-and-quality\n  module: parser\n  verdict: pass\n---\n",
+    };
+    const marking: TaskBoard = {
+      ...board,
+      markModuleDone: async (done) => {
+        finished.push(done);
+      },
+    };
+    await onPullRequest("ledger", "12", submitting([], [securityPasses]), marking, log, clock);
+    expect(finished).toEqual([
+      { project: "ledger", module: "parser", decidedOn: "feedback/FB-6.md" },
+    ]);
   });
 
   it("does not merge a pull request whose feedback signal it cannot read", async () => {
@@ -341,7 +491,10 @@ describe("acting on a pull request", () => {
       recording,
       britishSummerTime,
     );
-    expect(appended.at(-1)).toMatchObject({ decidedAt: "2026-10-22T09:00:00.000Z" });
+    const decision = appended.find(
+      (event) => typeof event === "object" && event !== null && "work" in event,
+    );
+    expect(decision).toMatchObject({ decidedAt: "2026-10-22T09:00:00.000Z" });
   });
 
   it("records when it decided to merge, by its clock", async () => {
@@ -364,6 +517,27 @@ describe("acting on a pull request", () => {
       aboutToMerge: { pullRequest: "7" },
       decidedAt: "2026-10-22T09:00:00.000Z",
     });
+  });
+
+  it("records that it acted on its decision, once it has", async () => {
+    const happened: unknown[] = [];
+    const recording: EventLog = {
+      read: async () => [],
+      append: async (event) => {
+        happened.push(event);
+      },
+    };
+    const posting: TaskBoard = {
+      ...board,
+      post: async (task) => {
+        happened.push(`posted ${task.role}`);
+      },
+    };
+    await onPullRequest("ledger", "7", submitting(), posting, recording, clock);
+    expect(happened.slice(-2)).toEqual([
+      "posted test",
+      { project: "ledger", actedOn: { feedbackSignal: "feedback/FB-1.md" } },
+    ]);
   });
 
   it("records that it is about to merge, with the work, before it merges", async () => {

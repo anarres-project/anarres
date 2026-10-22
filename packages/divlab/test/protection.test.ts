@@ -20,6 +20,7 @@ function project(protectedMain: boolean, alertOpen = false) {
     markModuleDone: untouched,
     task: untouched,
     close: untouched,
+    actedOn: untouched,
     alertUnprotectedMain: async (name) => {
       alerts.push(name);
     },

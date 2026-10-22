@@ -72,6 +72,17 @@ export class InProcessDriver implements Driver {
     throw new Error("Divlab was not interrupted: it never merged the work");
   }
 
+  async interruptAfterRecording(work: AcceptedWork): Promise<void> {
+    this.github.interruptAfterNextDecision = true;
+    try {
+      await this.submitWork(work);
+    } catch (error) {
+      if (!(error instanceof Interrupted)) throw error;
+      return;
+    }
+    throw new Error("Divlab was not interrupted: it never recorded a decision");
+  }
+
   async divlabActsAgain(project: string): Promise<void> {
     await onMerge(project, this.github, this.github, this.github, CLOCK);
     await checkProtection(project, this.github, this.github);

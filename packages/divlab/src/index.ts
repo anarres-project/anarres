@@ -26,7 +26,12 @@ export type PostedTask = {
   module: string;
   feedbackSignal?: string;
   researchFor?: string;
+  /** The feedback signal whose routing decision posted the task. */
+  decidedOn: string;
 };
+
+/** A module Divlab marks done, and the feedback signal whose routing decision finished it. */
+export type FinishedModule = { project: string; module: string; decidedOn: string };
 
 /** A routing decision as recorded in a project's event log. */
 /** `decidedAt`: when Divlab decided, in UTC; events recorded before it kept the time have none. */
@@ -56,11 +61,13 @@ export interface TaskBoard {
   alertUnprotectedMain(project: string): Promise<void>;
   /** Whether such an alert is still open: coordinators close it once main is protected again. */
   unprotectedMainAlertOpen(project: string): Promise<boolean>;
-  markModuleDone(module: { project: string; module: string }): Promise<void>;
+  markModuleDone(module: FinishedModule): Promise<void>;
   /** What Divlab recorded on a task it posted; undefined if there is no such task. */
   task(project: string, task: string): Promise<Pick<PostedTask, "researchFor"> | undefined>;
   /** The task is done: nobody can claim it any more. */
   close(project: string, task: string): Promise<void>;
+  /** The feedback signals whose routing decisions the board shows Divlab acted on. */
+  actedOn(project: string): Promise<string[]>;
 }
 
 /** The files merged to a project's main branch. */
@@ -91,8 +98,12 @@ export type AboutToMerge = {
   aboutToMerge: { pullRequest: string; head: string; feedbackSignal: string; work: FeedbackSignal };
 };
 
-/** What the event log holds: routing decisions, merges begun, and what Divlab did not accept. */
-export type LogEvent = RoutingEvent | AboutToMerge | NotAccepted;
+/** Divlab has done what a routing decision called for on the board: written just after it. */
+export type ActedOn = { project: string; actedOn: { feedbackSignal: string } };
+
+/** What the event log holds: routing decisions and acting on them, merges begun, and what Divlab
+ * did not accept. */
+export type LogEvent = RoutingEvent | ActedOn | AboutToMerge | NotAccepted;
 
 /** The routing decisions in a log, which are all its history routing depends on. */
 export const routingDecisions = (log: readonly LogEvent[]): RoutingEvent[] =>
@@ -102,6 +113,7 @@ export const routingDecisions = (log: readonly LogEvent[]): RoutingEvent[] =>
 export const signalOf = (event: LogEvent): string => {
   if ("work" in event) return event.work.feedbackSignal;
   if ("aboutToMerge" in event) return event.aboutToMerge.feedbackSignal;
+  if ("actedOn" in event) return event.actedOn.feedbackSignal;
   return event.notAccepted.feedbackSignal;
 };
 
@@ -123,19 +135,25 @@ async function onWorkAccepted(
   const record = routingRecord(work, history);
   await log.append({ project, decidedAt: clock().toISOString(), ...record });
   if (task !== undefined) await board.close(project, task);
-  const { decision } = record;
-  if ("alert" in decision) {
-    await board.alertCoordinators({ project, ...record });
-    return;
-  }
-  if ("moduleDone" in decision) {
-    await board.markModuleDone({ project: event.project, module: event.module });
-    return;
-  }
-  for (const task of decision.tasks) {
-    await board.post({ project: event.project, ...task });
-  }
+  await actOn({ project, ...record }, board, log);
 }
+
+/** What a routing decision does on the board: a task, an alert or a finished module. */
+async function actOn(event: RoutingEvent, board: TaskBoard, log: EventLog): Promise<void> {
+  const { project, decision } = event;
+  const decidedOn = event.work.feedbackSignal;
+  if ("alert" in decision) {
+    await board.alertCoordinators(event);
+  } else if ("moduleDone" in decision) {
+    await board.markModuleDone({ project, module: event.work.module, decidedOn });
+  } else {
+    for (const task of decision.tasks) await board.post({ project, ...task, decidedOn });
+  }
+  await recordActing(event, log);
+}
+
+const recordActing = ({ project, work }: RoutingEvent, log: EventLog) =>
+  log.append({ project, actedOn: { feedbackSignal: work.feedbackSignal } });
 
 /** Accepted work, as its feedback signal reports it: routed, and the task it names closed. */
 async function acceptSignal(
@@ -183,6 +201,19 @@ export async function onMerge(
       "aboutToMerge" in e ? [[e.aboutToMerge.feedbackSignal, e] as const] : [],
     ),
   );
+  // Recorded, but the run stopped before recording that it acted: rare, so only then is the board
+  // asked (its lists lag) whether it acted before stopping.
+  const recordedActing = new Set(events.flatMap((e) => ("actedOn" in e ? [signalOf(e)] : [])));
+  const unconfirmed = routingDecisions(events).filter(
+    (decision) => !recordedActing.has(decision.work.feedbackSignal),
+  );
+  if (unconfirmed.length > 0) {
+    const onTheBoard = new Set(await board.actedOn(project));
+    for (const decision of unconfirmed) {
+      if (onTheBoard.has(decision.work.feedbackSignal)) await recordActing(decision, log);
+      else await actOn(decision, board, log);
+    }
+  }
   const onMain = await repository.feedbackSignals(project);
   // Merged by Divlab, whose run stopped before routing it: finish from what Divlab recorded, in
   // the order it merged.

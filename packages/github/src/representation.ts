@@ -1,6 +1,8 @@
 import { ROLE_NAMES, type Role, readMergedWork, readRoutingRecord } from "@anarres/core";
 import type {
   AboutToMerge,
+  ActedOn,
+  FinishedModule,
   LogEvent,
   NotAccepted,
   PostedTask,
@@ -19,12 +21,19 @@ export function issueForTask(task: PostedTask): NewIssue {
       "state:ready",
       ...(task.researchFor === undefined ? [] : [`${RESEARCH_FOR}${task.researchFor}`]),
     ],
-    body: task.feedbackSignal === undefined ? "" : `Feedback signal: ${task.feedbackSignal}`,
+    body: [
+      ...(task.feedbackSignal === undefined ? [] : [`Feedback signal: ${task.feedbackSignal}`, ""]),
+      decisionBlock(task.decidedOn),
+    ].join("\n"),
   };
 }
 
 /** An issue as GitHub lists it: only what Divlab reads back. */
 export type ListedIssue = { labels: { name: string }[] };
+
+/** Whether an issue carries a label Divlab gives the tasks, alerts and finished modules it posts. */
+export const postedByDivlab = (issue: ListedIssue) =>
+  issue.labels.some(({ name }) => ["state:ready", "escalation", "state:done"].includes(name));
 
 /** What Divlab recorded on a task when it posted it. */
 export function taskFromIssue(issue: ListedIssue): { researchFor?: string } {
@@ -50,6 +59,13 @@ export function eventFile(event: LogEvent, sequence: number): { path: string; co
 /** Event files can be edited by people, so what is read back is checked, never assumed. */
 export function eventFromFile(content: string): LogEvent {
   const event: unknown = JSON.parse(content);
+  if (
+    isObject(event) &&
+    isObject(event.actedOn) &&
+    typeof event.actedOn.feedbackSignal === "string"
+  ) {
+    return event as ActedOn;
+  }
   if (
     isObject(event) &&
     isObject(event.notAccepted) &&
@@ -113,11 +129,11 @@ function roleName(id: string): string {
 const capitalised = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 /** Opened and closed at once, so the issue list shows when the module finished. */
-export function issueForModuleDone(module: string): NewIssue {
+export function issueForModuleDone({ module, decidedOn }: FinishedModule): NewIssue {
   return {
     title: `Module ${module} is done`,
     labels: [`module:${module}`, "state:done"],
-    body: "",
+    body: decisionBlock(decidedOn),
   };
 }
 
@@ -206,3 +222,26 @@ export function issueForUnprotectedMain(): NewIssue {
 
 /** The label on Divlab's alert that a project's main branch is not protected. */
 export const UNPROTECTED_MAIN = "unprotected-main";
+
+/** The feedback signal whose routing decision an issue Divlab posted came from. */
+export function decisionOf(body: string): string | undefined {
+  const json = body.match(/```json\n([\s\S]*)\n```$/)?.[1];
+  const closing = JSON.parse(json ?? "null") as {
+    decidedOn?: string;
+    work?: { feedbackSignal?: string };
+  } | null;
+  return closing?.decidedOn ?? closing?.work?.feedbackSignal;
+}
+
+/**
+ * The decision, closing the issue as JSON: a path a member chose stays one line inside the code
+ * block, so it can never close it or act as Markdown. An alert closes with its routing record.
+ */
+const decisionBlock = (feedbackSignal: string) =>
+  [
+    "Divlab decided this from:",
+    "",
+    "```json",
+    JSON.stringify({ decidedOn: feedbackSignal }),
+    "```",
+  ].join("\n");

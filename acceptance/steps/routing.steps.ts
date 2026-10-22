@@ -322,6 +322,13 @@ Given(
   },
 );
 
+Given(
+  "Divlab was interrupted just after recording its decision on a member's {role} work on {string}",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.divlabInterruptedAfterRecording({ role, module, verdict: "pass" });
+  },
+);
+
 When("Divlab next acts on the project", function (this: AnarresWorld) {
   return this.anarres.divlabActsAgain();
 });

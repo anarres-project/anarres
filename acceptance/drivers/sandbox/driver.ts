@@ -279,6 +279,10 @@ export class SandboxDriver implements Driver {
     });
   }
 
+  async interruptAfterRecording(_work: AcceptedWork): Promise<void> {
+    throw new HarnessNotYetBuilt("interrupting the real Action between recording and acting");
+  }
+
   async interruptAfterMerging(_work: AcceptedWork): Promise<void> {
     throw new HarnessNotYetBuilt("interrupting the real Action between merging and recording");
   }

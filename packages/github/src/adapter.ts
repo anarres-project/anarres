@@ -1,5 +1,6 @@
 import type {
   EventLog,
+  FinishedModule,
   LogEvent,
   NotAccepted,
   PostedTask,
@@ -11,6 +12,7 @@ import type {
 } from "@anarres/divlab";
 import {
   commentForRefusal,
+  decisionOf,
   eventFile,
   issueForAlert,
   issueForModuleDone,
@@ -22,6 +24,7 @@ import {
   logFrom,
   type NewIssue,
   policyAllowingDivlabChecks,
+  postedByDivlab,
   protectsMain,
   rulesetProtectingMain,
   taskFromIssue,
@@ -93,8 +96,9 @@ export class GitHubAdapter
     return protectsMain(rules);
   }
 
-  async markModuleDone({ project, module }: { project: string; module: string }): Promise<void> {
-    const { number } = await this.openIssue(project, issueForModuleDone(module));
+  async markModuleDone(done: FinishedModule): Promise<void> {
+    const { project } = done;
+    const { number } = await this.openIssue(project, issueForModuleDone(done));
     await this.call("PATCH", `${this.repo(project)}/issues/${number}`, { state: "closed" });
   }
 
@@ -114,6 +118,20 @@ export class GitHubAdapter
     const number = issueNumber(task);
     if (number === undefined) return;
     await this.call("PATCH", `${this.repo(project)}/issues/${number}`, { state: "closed" });
+  }
+
+  async actedOn(project: string): Promise<string[]> {
+    const issues: (ListedIssue & { body: string | null })[] = [];
+    for (let page = 1; ; page++) {
+      const listed = await this.call<(ListedIssue & { body: string | null })[]>(
+        "GET",
+        `${this.repo(project)}/issues?state=all&per_page=100&page=${page}`,
+      );
+      issues.push(...listed);
+      if (listed.length < 100) break;
+    }
+    // Anyone may open an issue, but only those who triage can label one, as Divlab does.
+    return issues.filter(postedByDivlab).flatMap((issue) => decisionOf(issue.body ?? "") ?? []);
   }
 
   async feedbackSignals(project: string): Promise<string[]> {

@@ -91,6 +91,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] the merge record (about to merge) is appended before any read, so it still lists the
         log first: one read at the start of the run would cover it.
 
+- [ ] **Safety, next:** a feedback signal's file name is text the member chose, and Divlab writes
+      it into issues; it must be a plain name, or the pull request is refused, saying why.
+
 ## 1. Routing (Divlab)
 
 - [x] Each *pass* verdict advances to the next role in the module pipeline.
@@ -163,8 +166,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         the accepted work first);
   - [x] the GitHub adapter writes each event as one file under `events/` in the project
         repository;
-  - [ ] if acting on a decision fails after it was recorded, a re-run neither duplicates the event
-        nor its tasks (idempotency, once Divlab runs as an Action).
+  - [x] if acting on a decision fails after it was recorded, a re-run neither duplicates the event
+        nor its tasks, nor loses them: Divlab records that it acted; a decision with no such
+        record is checked against the board (each issue names its decision) and acted on only if
+        missing; the board is asked only then, since its lists lag;
+  - [ ] closing the task the work was for is not finished on a re-run: the routing record does
+        not keep the task's id (a member could claim a task already done meanwhile).
 - [ ] Once metrics exist: ρ negative for two consecutive steps alerts a PDC coordinator. Until
       then a pass advances regardless of ρ (Bernard, 2026-10-12; differs from the AutoPM table).
 

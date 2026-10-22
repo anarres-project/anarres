@@ -43,6 +43,70 @@ and merge records are read back through core. Section 0 is done but for the log'
 
 ---
 
+## 2026-10-22: A decision recorded is acted on, once
+
+- Divlab recorded each routing decision and then acted on it (a task, an alert, a finished
+  module). A run stopped in between left the decision recorded but never acted on, and later runs
+  skipped it as routed: the module stalled, with nobody told.
+- Each issue Divlab posts now closes with a JSON block naming the decision it came from, and
+  after acting Divlab records that it did (`actedOn`). A later run finds decisions with no such
+  record, asks the board which it shows, records those, and acts on the rest. The board's lists
+  lag behind writes (seen in the sandbox), so asking it after every merge would post tasks twice;
+  the log is read whole and up to date, so it is asked only for decisions the log cannot confirm.
+- Only issues carrying Divlab's labels count, since anyone may open an issue on a public
+  repository but only those who triage can label one. A path with a newline or a fence stays
+  inside the block (first design used a plain fenced line; two existing alert tests showed a path
+  can hold a newline, and the format became JSON).
+- Found on the way, a safety gap: a feedback signal's file name is the member's own text, and
+  revision tasks write it into issues unquoted. On the test list as the next item.
+- Closing the task the work was for is not finished on a re-run (the record lacks the task's id):
+  on the test list.
+- Slips: two failing tests written in one step (tasks and finished modules naming their decision);
+  one older test's expected body changed in the same step as the production code.
+
+Acceptance: a decision Divlab recorded but did not act on is acted on by its next run, once
+          -> RED (not yet right): no task ready, expected one Test task; GREEN in-process (the
+          sandbox cannot stop the real Action on cue: @sandbox-wip).
+RED:      acts on a decision it recorded but never acted on -> expected [] to deeply equal
+          [ { role: 'test', module: 'parser' } ]
+GREEN:    (43 passed)
+RED:      never acts twice on a decision: one the board shows it acted on is left alone
+          -> expected [ { project: 'ledger', …(2) } ] to deeply equal []
+GREEN:    (44 passed, after the shared board fixture gained `actedOn`, a separate step)
+RED:      tells the board which decision each task / a finished module comes from (both at once,
+          a slip) -> expected [ undefined ]; expected { …(1) } to deeply equal { …(2) }
+GREEN:    (46 passed, after two tests comparing whole posted tasks were updated)
+RED:      (adapter) is read back from a task's issue -> not a function (then the stub) -> expected
+          undefined to be 'feedback/FB-1.md'
+GREEN:    (54 passed, after the older task tests were given decisions)
+RED:      is read back from a finished module's issue -> expected undefined
+GREEN:    (55 passed)
+RED:      is read back from a PDC coordinators' alert -> expected undefined; the first fix broke
+          two alert tests, which showed paths may hold newlines: redesigned as a closing JSON block
+GREEN:    (56 passed)
+Passed first time: is read back whole, and stays inside its code block, whatever the path is
+          called (regression for the redesign)
+RED:      (adapter) are the decisions its tasks, alerts and finished modules came from -> not a
+          function (then the stub) -> expected [] to deeply equal [ … ]
+GREEN:    (58 passed)
+RED:      are only those on issues Divlab posted, which carry its labels -> expected
+          [ 'feedback/FB-3.md' ] to deeply equal []
+GREEN:    (59 passed)
+RED:      are read from every page of the project's issues -> got 100, expected 150
+GREEN:    (60 passed)
+RED:      records that it acted on its decision, once it has -> expected [ { … }, …(1) ] to deeply
+          equal [ 'posted test', …(1) ]
+GREEN:    (47 passed, after the time test looked for the routing record rather than the last event)
+RED:      trusts its own record of having acted, never asking the board, whose lists lag
+          -> Divlab should not have acted
+GREEN:    (48 passed)
+RED:      records having acted when the board shows it did, so it need not ask again -> expected []
+GREEN:    (49 passed)
+RED:      (adapter) reads back a record that Divlab acted on a decision -> cannot be read: it is
+          not a routing record
+GREEN:    (61 passed)
+REFACTOR: acting on a decision moved out of routing into one helper, used by both
+
 ## 2026-10-22: Every event records its time
 
 - Merge records and records of work not accepted now carry `decidedAt` too, from the same clock.

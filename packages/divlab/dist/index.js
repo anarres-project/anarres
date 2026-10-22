@@ -7586,9 +7586,13 @@ function issueForTask(task) {
       "state:ready",
       ...task.researchFor === void 0 ? [] : [`${RESEARCH_FOR}${task.researchFor}`]
     ],
-    body: task.feedbackSignal === void 0 ? "" : `Feedback signal: ${task.feedbackSignal}`
+    body: [
+      ...task.feedbackSignal === void 0 ? [] : [`Feedback signal: ${task.feedbackSignal}`, ""],
+      decisionBlock(task.decidedOn)
+    ].join("\n")
   };
 }
+var postedByDivlab = (issue) => issue.labels.some(({ name }) => ["state:ready", "escalation", "state:done"].includes(name));
 function taskFromIssue(issue) {
   const label = issue.labels.find(({ name }) => name.startsWith(RESEARCH_FOR));
   return label === void 0 ? {} : { researchFor: label.name.slice(RESEARCH_FOR.length) };
@@ -7606,6 +7610,9 @@ function eventFile(event, sequence) {
 }
 function eventFromFile(content) {
   const event = JSON.parse(content);
+  if (isObject2(event) && isObject2(event.actedOn) && typeof event.actedOn.feedbackSignal === "string") {
+    return event;
+  }
   if (isObject2(event) && isObject2(event.notAccepted) && typeof event.notAccepted.feedbackSignal === "string" && typeof event.notAccepted.reason === "string") {
     return event;
   }
@@ -7647,11 +7654,11 @@ function roleName(id) {
   return role ? ROLE_NAMES[role] : id;
 }
 var capitalised = (text) => text.charAt(0).toUpperCase() + text.slice(1);
-function issueForModuleDone(module) {
+function issueForModuleDone({ module, decidedOn }) {
   return {
     title: `Module ${module} is done`,
     labels: [`module:${module}`, "state:done"],
-    body: ""
+    body: decisionBlock(decidedOn)
   };
 }
 function logFrom(listed, texts) {
@@ -7714,6 +7721,18 @@ function issueForUnprotectedMain() {
   };
 }
 var UNPROTECTED_MAIN = "unprotected-main";
+function decisionOf(body) {
+  const json = body.match(/```json\n([\s\S]*)\n```$/)?.[1];
+  const closing = JSON.parse(json ?? "null");
+  return closing?.decidedOn ?? closing?.work?.feedbackSignal;
+}
+var decisionBlock = (feedbackSignal) => [
+  "Divlab decided this from:",
+  "",
+  "```json",
+  JSON.stringify({ decidedOn: feedbackSignal }),
+  "```"
+].join("\n");
 
 // ../github/src/rate-limits.ts
 function retryAfter(answer, now) {
@@ -7823,8 +7842,9 @@ var GitHubAdapter = class {
     );
     return protectsMain(rules);
   }
-  async markModuleDone({ project: project2, module }) {
-    const { number } = await this.openIssue(project2, issueForModuleDone(module));
+  async markModuleDone(done) {
+    const { project: project2 } = done;
+    const { number } = await this.openIssue(project2, issueForModuleDone(done));
     await this.call("PATCH", `${this.repo(project2)}/issues/${number}`, { state: "closed" });
   }
   async task(project2, task) {
@@ -7842,6 +7862,18 @@ var GitHubAdapter = class {
     const number = issueNumber(task);
     if (number === void 0) return;
     await this.call("PATCH", `${this.repo(project2)}/issues/${number}`, { state: "closed" });
+  }
+  async actedOn(project2) {
+    const issues = [];
+    for (let page = 1; ; page++) {
+      const listed = await this.call(
+        "GET",
+        `${this.repo(project2)}/issues?state=all&per_page=100&page=${page}`
+      );
+      issues.push(...listed);
+      if (listed.length < 100) break;
+    }
+    return issues.filter(postedByDivlab).flatMap((issue) => decisionOf(issue.body ?? "") ?? []);
   }
   async feedbackSignals(project2) {
     const { status, data } = await this.request(
@@ -8053,6 +8085,7 @@ var routingDecisions = (log) => log.filter((event) => "work" in event);
 var signalOf = (event) => {
   if ("work" in event) return event.work.feedbackSignal;
   if ("aboutToMerge" in event) return event.aboutToMerge.feedbackSignal;
+  if ("actedOn" in event) return event.actedOn.feedbackSignal;
   return event.notAccepted.feedbackSignal;
 };
 async function onWorkAccepted(event, board, log, clock) {
@@ -8061,19 +8094,21 @@ async function onWorkAccepted(event, board, log, clock) {
   const record = routingRecord(work, history);
   await log.append({ project: project2, decidedAt: clock().toISOString(), ...record });
   if (task !== void 0) await board.close(project2, task);
-  const { decision } = record;
-  if ("alert" in decision) {
-    await board.alertCoordinators({ project: project2, ...record });
-    return;
-  }
-  if ("moduleDone" in decision) {
-    await board.markModuleDone({ project: event.project, module: event.module });
-    return;
-  }
-  for (const task2 of decision.tasks) {
-    await board.post({ project: event.project, ...task2 });
-  }
+  await actOn({ project: project2, ...record }, board, log);
 }
+async function actOn(event, board, log) {
+  const { project: project2, decision } = event;
+  const decidedOn = event.work.feedbackSignal;
+  if ("alert" in decision) {
+    await board.alertCoordinators(event);
+  } else if ("moduleDone" in decision) {
+    await board.markModuleDone({ project: project2, module: event.work.module, decidedOn });
+  } else {
+    for (const task of decision.tasks) await board.post({ project: project2, ...task, decidedOn });
+  }
+  await recordActing(event, log);
+}
+var recordActing = ({ project: project2, work }, log) => log.append({ project: project2, actedOn: { feedbackSignal: work.feedbackSignal } });
 async function acceptSignal(project2, path, signal, board, log, clock) {
   const { task, ...work } = signal;
   const researchFor = task === void 0 ? void 0 : (await board.task(project2, task))?.researchFor;
@@ -8099,6 +8134,17 @@ async function onMerge(project2, repository, board, log, clock) {
       (e) => "aboutToMerge" in e ? [[e.aboutToMerge.feedbackSignal, e]] : []
     )
   );
+  const recordedActing = new Set(events.flatMap((e) => "actedOn" in e ? [signalOf(e)] : []));
+  const unconfirmed = routingDecisions(events).filter(
+    (decision) => !recordedActing.has(decision.work.feedbackSignal)
+  );
+  if (unconfirmed.length > 0) {
+    const onTheBoard = new Set(await board.actedOn(project2));
+    for (const decision of unconfirmed) {
+      if (onTheBoard.has(decision.work.feedbackSignal)) await recordActing(decision, log);
+      else await actOn(decision, board, log);
+    }
+  }
   const onMain = await repository.feedbackSignals(project2);
   for (const [path, merge] of begun) {
     if (finished.has(path) || !onMain.includes(path)) continue;

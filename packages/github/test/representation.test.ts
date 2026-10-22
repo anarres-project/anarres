@@ -2,6 +2,7 @@ import type { AboutToMerge, NotAccepted, RoutingEvent } from "@anarres/divlab";
 import { describe, expect, it } from "vitest";
 import {
   commentForRefusal,
+  decisionOf,
   eventFile,
   eventFromFile,
   issueForAlert,
@@ -38,16 +39,24 @@ describe("a task as a GitHub issue", () => {
         role: "specification",
         module: "parser",
         feedbackSignal: "feedback/T-0142.md",
+        decidedOn: "feedback/T-0141.md",
       }),
     ).toEqual({
       title: "Specification task for parser",
       labels: ["role:specification", "module:parser", "state:ready"],
-      body: "Feedback signal: feedback/T-0142.md",
+      body: 'Feedback signal: feedback/T-0142.md\n\nDivlab decided this from:\n\n```json\n{"decidedOn":"feedback/T-0141.md"}\n```',
     });
   });
 
   it("says nothing of a feedback signal when it has none", () => {
-    expect(issueForTask({ project: "ledger", role: "test", module: "parser" }).body).toBe("");
+    expect(
+      issueForTask({
+        project: "ledger",
+        role: "test",
+        module: "parser",
+        decidedOn: "feedback/T-1.md",
+      }).body,
+    ).not.toContain("Feedback signal:");
   });
 
   it("records on a Research task which role it is for", () => {
@@ -58,6 +67,7 @@ describe("a task as a GitHub issue", () => {
         module: "parser",
         feedbackSignal: "feedback/T-0142.md",
         researchFor: "coding",
+        decidedOn: "feedback/T-0141.md",
       }).labels,
     ).toEqual(["role:research", "module:parser", "state:ready", "research-for:coding"]);
   });
@@ -68,6 +78,7 @@ describe("a task as a GitHub issue", () => {
       role: "research",
       module: "parser",
       researchFor: "coding",
+      decidedOn: "feedback/T-0141.md",
     });
     expect(taskFromIssue({ labels: issue.labels.map((name) => ({ name })) })).toEqual({
       researchFor: "coding",
@@ -75,7 +86,12 @@ describe("a task as a GitHub issue", () => {
   });
 
   it("reads back nothing more from a task that is not Research", () => {
-    const issue = issueForTask({ project: "ledger", role: "test", module: "parser" });
+    const issue = issueForTask({
+      project: "ledger",
+      role: "test",
+      module: "parser",
+      decidedOn: "feedback/T-0141.md",
+    });
     expect(taskFromIssue({ labels: issue.labels.map((name) => ({ name })) })).toEqual({});
   });
 });
@@ -139,6 +155,11 @@ describe("a routing event as a file", () => {
     expect(() => eventFromFile(JSON.stringify(begun))).toThrow(
       "its work does not give its verdict",
     );
+  });
+
+  it("reads back a record that Divlab acted on a decision", () => {
+    const acted = { project: "ledger", actedOn: { feedbackSignal: "feedback/T-0144.md" } };
+    expect(eventFromFile(eventFile(acted, 4).content)).toEqual(acted);
   });
 
   it("is refused when it is not a routing record", () => {
@@ -238,10 +259,11 @@ describe("a PDC coordinator alert as a GitHub issue", () => {
 
 describe("a finished module on GitHub", () => {
   it("is an issue labelled with the module and as done", () => {
-    expect(issueForModuleDone("parser")).toEqual({
+    expect(
+      issueForModuleDone({ project: "ledger", module: "parser", decidedOn: "feedback/FB-6.md" }),
+    ).toMatchObject({
       title: "Module parser is done",
       labels: ["module:parser", "state:done"],
-      body: "",
     });
   });
 });
@@ -330,5 +352,45 @@ describe("an alert that a project's main branch is not protected, as a GitHub is
       labels: ["escalation", "unprotected-main"],
       body: "Divlab found that this project's main branch no longer has the protection that lets only Divlab change it (decision 0006). Until it is restored, anyone with enough access could change main without Divlab's checks. Close this issue once main is protected again; Divlab alerts again if protection is lost later.",
     });
+  });
+});
+
+describe("the decision an issue Divlab posted came from", () => {
+  it("is read back from a task's issue", () => {
+    const task = {
+      project: "ledger",
+      role: "test" as const,
+      module: "parser",
+      decidedOn: "feedback/FB-1.md",
+    };
+    expect(decisionOf(issueForTask(task).body)).toBe("feedback/FB-1.md");
+  });
+
+  it("is read back from a finished module's issue", () => {
+    const done = { project: "ledger", module: "parser", decidedOn: "feedback/FB-6.md" };
+    expect(decisionOf(issueForModuleDone(done).body)).toBe("feedback/FB-6.md");
+  });
+
+  it("is read back from a PDC coordinators' alert", () => {
+    const alert = {
+      ...EVENT,
+      decision: { alert: { reason: "no_matching_rule" as const } },
+      reason: { rule: "no_matching_rule" as const },
+    };
+    expect(decisionOf(issueForAlert(alert).body)).toBe(EVENT.work.feedbackSignal);
+  });
+
+  it("is read back whole, and stays inside its code block, whatever the path is called", () => {
+    const sly = "feedback/x\n```\n@everyone [click](https://example.test)";
+    const { body } = issueForTask({
+      project: "ledger",
+      role: "test",
+      module: "parser",
+      decidedOn: sly,
+    });
+    expect([decisionOf(body), body.split("\n").filter((line) => line.startsWith("```"))]).toEqual([
+      sly,
+      ["```json", "```"],
+    ]);
   });
 });

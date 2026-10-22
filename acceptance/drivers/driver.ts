@@ -49,6 +49,8 @@ export interface Driver {
   ): Promise<void>;
   /** Divlab merges the member's work but stops before it records and routes it. */
   interruptAfterMerging(work: AcceptedWork): Promise<void>;
+  /** Divlab merges the member's work and records its decision, but stops before acting on it. */
+  interruptAfterRecording(work: AcceptedWork): Promise<void>;
   /** Divlab acts on the project again, as the next push to main would make it. */
   divlabActsAgain(project: string): Promise<void>;
   /** The member's work lands on main without going through Divlab. */

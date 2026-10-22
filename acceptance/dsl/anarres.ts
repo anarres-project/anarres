@@ -61,6 +61,19 @@ export class Anarres {
     });
   }
 
+  async divlabInterruptedAfterRecording(work: Work & { verdict: string }) {
+    this.signalsWritten += 1;
+    const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
+    this.feedbackSignals.set(workOn(this.aliased(work)), feedbackSignal);
+    await this.driver.interruptAfterRecording({
+      impediments: [],
+      ...this.aliased(work),
+      project: this.project,
+      member: this.aliases.of(DEFAULT_MEMBER),
+      feedbackSignal,
+    });
+  }
+
   async divlabActsAgain() {
     await this.driver.divlabActsAgain(this.project);
   }

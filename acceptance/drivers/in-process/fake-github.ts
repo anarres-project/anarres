@@ -1,6 +1,7 @@
 import type {
   CoordinatorAlert,
   EventLog,
+  FinishedModule,
   LogEvent,
   NotAccepted,
   PostedTask,
@@ -24,13 +25,21 @@ export class FakeGitHub
   private readonly alerts: CoordinatorAlert[] = [];
   private readonly finished: { project: string; module: string }[] = [];
   private readonly events: LogEvent[] = [];
+  /** Each issue's decision, kept when the task is closed, as an issue on GitHub keeps it. */
+  private readonly decisions: { project: string; feedbackSignal: string }[] = [];
+
+  async actedOn(project: string): Promise<string[]> {
+    return this.decisions.filter((d) => d.project === project).map((d) => d.feedbackSignal);
+  }
 
   async post(task: PostedTask): Promise<void> {
+    this.decisions.push({ project: task.project, feedbackSignal: task.decidedOn });
     this.tasksPosted += 1;
     this.openTasks.push({ ...task, id: String(this.tasksPosted) });
   }
 
   async alertCoordinators(alert: CoordinatorAlert): Promise<void> {
+    this.decisions.push({ project: alert.project, feedbackSignal: alert.work.feedbackSignal });
     this.alerts.push(alert);
   }
 
@@ -46,15 +55,23 @@ export class FakeGitHub
       .map((record) => record.notAccepted.feedbackSignal);
   }
 
+  /** Divlab stops just after recording its next routing decision, before acting on it. */
+  interruptAfterNextDecision = false;
+
   async append(event: LogEvent): Promise<void> {
     this.events.push(event);
+    if (this.interruptAfterNextDecision && "work" in event) {
+      this.interruptAfterNextDecision = false;
+      throw new Interrupted();
+    }
   }
 
   async read(project: string): Promise<LogEvent[]> {
     return this.events.filter((event) => event.project === project);
   }
 
-  async markModuleDone(module: { project: string; module: string }): Promise<void> {
+  async markModuleDone(module: FinishedModule): Promise<void> {
+    this.decisions.push({ project: module.project, feedbackSignal: module.decidedOn });
     this.finished.push(module);
   }
 
