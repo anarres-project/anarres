@@ -53,3 +53,12 @@ Feature: Divlab merges the work members submit
     When Divlab next acts on the project
     And Divlab next acts on the project
     Then the only task ready for "parser" is a Test task
+
+  # Not in the sandbox: the real Action cannot be stopped between recording and acting on cue.
+  @sandbox-wip
+  Scenario: The task the work was for is closed by Divlab's next run, if it stopped first
+    Given a project with a module "parser"
+    And a member's Specification work on "parser" was accepted with a pass verdict
+    And Divlab was interrupted just after recording its decision on a member's Test work on "parser"
+    When Divlab next acts on the project
+    Then the only task ready for "parser" is a Coding task

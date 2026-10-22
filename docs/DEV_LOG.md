@@ -43,6 +43,23 @@ and merge records are read back through core. Section 0 is done but for the log'
 
 ---
 
+## 2026-10-22: A re-run closes the task the work was for
+
+- A run stopped after recording a decision left the task the work was for open, ready to claim
+  though done. The routing record now keeps that task, and acting on a decision closes it before
+  anything else, on the first run or a later one.
+
+Acceptance: the task the work was for is closed by Divlab's next run, if it stopped first -> RED
+          (not yet right): the Test task still ready beside the Coding task; GREEN in-process
+          (@sandbox-wip, as the real Action cannot be stopped on cue).
+RED:      records which task the work was for in its decision -> expected { project: 'ledger', …(4) }
+          to match object { task: '3' }
+GREEN:    (51 passed)
+RED:      closes the task a recorded decision was for, when it acts on it later -> expected [] to
+          deeply equal [ '3' ]
+GREEN:    (52 passed)
+REFACTOR: routing records and acts on one event; closing moved into acting on it
+
 ## 2026-10-22: Intermittent sandbox failures, kept for inspection
 
 - Two CI sandbox runs failed in one worker's repository while the others passed: d5b1284 (its

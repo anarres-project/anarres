@@ -8097,13 +8097,19 @@ async function onWorkAccepted(event, board, log, clock) {
   const { project: project2, task, ...work } = event;
   const history = routingDecisions(await log.read(project2));
   const record = routingRecord(work, history);
-  await log.append({ project: project2, decidedAt: clock().toISOString(), ...record });
-  if (task !== void 0) await board.close(project2, task);
-  await actOn({ project: project2, ...record }, board, log);
+  const decided = {
+    project: project2,
+    decidedAt: clock().toISOString(),
+    ...task === void 0 ? {} : { task },
+    ...record
+  };
+  await log.append(decided);
+  await actOn(decided, board, log);
 }
 async function actOn(event, board, log) {
   const { project: project2, decision } = event;
   const decidedOn = event.work.feedbackSignal;
+  if (event.task !== void 0) await board.close(project2, event.task);
   if ("alert" in decision) {
     await board.alertCoordinators(event);
   } else if ("moduleDone" in decision) {

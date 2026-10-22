@@ -172,8 +172,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         nor its tasks, nor loses them: Divlab records that it acted; a decision with no such
         record is checked against the board (each issue names its decision) and acted on only if
         missing; the board is asked only then, since its lists lag;
-  - [ ] closing the task the work was for is not finished on a re-run: the routing record does
-        not keep the task's id (a member could claim a task already done meanwhile).
+  - [x] closing the task the work was for is finished on a re-run: the routing record keeps the
+        task, and acting on a decision closes it first.
 - [ ] Once metrics exist: ρ negative for two consecutive steps alerts a PDC coordinator. Until
       then a pass advances regardless of ρ (Bernard, 2026-10-12; differs from the AutoPM table).
 

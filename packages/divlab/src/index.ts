@@ -36,7 +36,12 @@ export type FinishedModule = { project: string; module: string; decidedOn: strin
 
 /** A routing decision as recorded in a project's event log. */
 /** `decidedAt`: when Divlab decided, in UTC; events recorded before it kept the time have none. */
-export type RoutingEvent = { project: string; decidedAt?: string } & RoutingRecord;
+export type RoutingEvent = {
+  project: string;
+  decidedAt?: string;
+  /** The task the work was for, closed when the decision is acted on. */
+  task?: string;
+} & RoutingRecord;
 
 /** Divlab's clock: the time is always given to it, never read from the wall. */
 export type Clock = () => Date;
@@ -134,15 +139,21 @@ async function onWorkAccepted(
   const { project, task, ...work } = event;
   const history = routingDecisions(await log.read(project));
   const record = routingRecord(work, history);
-  await log.append({ project, decidedAt: clock().toISOString(), ...record });
-  if (task !== undefined) await board.close(project, task);
-  await actOn({ project, ...record }, board, log);
+  const decided: RoutingEvent = {
+    project,
+    decidedAt: clock().toISOString(),
+    ...(task === undefined ? {} : { task }),
+    ...record,
+  };
+  await log.append(decided);
+  await actOn(decided, board, log);
 }
 
 /** What a routing decision does on the board: a task, an alert or a finished module. */
 async function actOn(event: RoutingEvent, board: TaskBoard, log: EventLog): Promise<void> {
   const { project, decision } = event;
   const decidedOn = event.work.feedbackSignal;
+  if (event.task !== undefined) await board.close(project, event.task);
   if ("alert" in decision) {
     await board.alertCoordinators(event);
   } else if ("moduleDone" in decision) {

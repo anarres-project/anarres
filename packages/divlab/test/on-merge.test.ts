@@ -185,6 +185,41 @@ describe("acting on a merge", () => {
     ]);
   });
 
+  it("closes the task a recorded decision was for, when it acts on it later", async () => {
+    const { watchedBoard, watchedLog } = watching();
+    const closed: string[] = [];
+    const work = { fromRole: "test", module: "parser", verdict: "pass", impediments: [] };
+    const recordedOnly: EventLog = {
+      ...watchedLog,
+      read: async () => [
+        {
+          project: "ledger",
+          aboutToMerge: {
+            pullRequest: "9",
+            head: "c0ffee",
+            feedbackSignal: "feedback/FB-9.md",
+            work,
+          },
+        },
+        {
+          project: "ledger",
+          task: "3",
+          work: { ...work, feedbackSignal: "feedback/FB-9.md" },
+          decision: { tasks: [{ role: "coding", module: "parser" }] },
+          reason: { rule: "passed" },
+        },
+      ],
+    };
+    const closing: TaskBoard = {
+      ...watchedBoard,
+      close: async (_project, task) => {
+        closed.push(task);
+      },
+    };
+    await onMerge("ledger", onMain(passedSpecification), closing, recordedOnly, clock);
+    expect(closed).toEqual(["3"]);
+  });
+
   it("never acts twice on a decision: one the board shows it acted on is left alone", async () => {
     const { seen, watchedBoard, watchedLog } = watching();
     const work = { fromRole: "specification", module: "parser", verdict: "pass", impediments: [] };
@@ -438,6 +473,31 @@ describe("acting on a pull request", () => {
     };
     await onPullRequest("ledger", "9", submitting([], [forTask]), closing, log, clock);
     expect(closed).toEqual(["3"]);
+  });
+
+  it("records which task the work was for in its decision", async () => {
+    const appended: unknown[] = [];
+    const forTask = {
+      path: "feedback/FB-4.md",
+      text: '---\nfeedback_signal:\n  task_id: "3"\n  from_role: test\n  module: parser\n  verdict: pass\n---\n',
+    };
+    const recording: EventLog = {
+      read: async () => [],
+      append: async (event) => {
+        appended.push(event);
+      },
+    };
+    const closing: TaskBoard = {
+      ...board,
+      post: async () => {},
+      task: async () => ({}),
+      close: async () => {},
+    };
+    await onPullRequest("ledger", "9", submitting([], [forTask]), closing, recording, clock);
+    const decision = appended.find(
+      (event) => typeof event === "object" && event !== null && "work" in event,
+    );
+    expect(decision).toMatchObject({ task: "3" });
   });
 
   it("sends passed Research back to the role its task was for, as Divlab recorded on the task", async () => {
