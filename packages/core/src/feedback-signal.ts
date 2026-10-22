@@ -72,3 +72,12 @@ export function readFeedbackSignal(text: string): FeedbackSignal | Unreadable {
     ...(task === undefined ? {} : { task: String(task) }),
   };
 }
+
+/** Where a member's feedback signal is: checked, since its name is text the member chose. */
+export function readSignalFile(path: string): { path: string } | Unreadable {
+  if (!SIGNAL_FILE.test(path)) return { unreadable: "its file name is not a plain name" };
+  return { path };
+}
+
+/** A feedback signal file: directly in feedback/, named with letters, digits and hyphens. */
+const SIGNAL_FILE = /^feedback\/[A-Za-z0-9-]+\.md$/;

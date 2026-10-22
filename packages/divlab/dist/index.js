@@ -7420,6 +7420,11 @@ function readFeedbackSignal(text) {
     ...task === void 0 ? {} : { task: String(task) }
   };
 }
+function readSignalFile(path) {
+  if (!SIGNAL_FILE.test(path)) return { unreadable: "its file name is not a plain name" };
+  return { path };
+}
+var SIGNAL_FILE = /^feedback\/[A-Za-z0-9-]+\.md$/;
 
 // ../core/src/roles.ts
 var ROLE_NAMES = {
@@ -8164,13 +8169,18 @@ async function onMerge(project2, repository, board, log, clock) {
 async function onPullRequest(project2, pullRequest, pullRequests, board, log, clock) {
   const head = await pullRequests.head(project2, pullRequest);
   const files = await pullRequests.changedFiles(project2, pullRequest);
-  const feedback = files.find((file) => file.path.startsWith("feedback/"));
+  const feedback = files.find((file2) => file2.path.startsWith("feedback/"));
   if (feedback === void 0) {
     await pullRequests.refuse(
       project2,
       pullRequest,
       "The pull request has no feedback signal: work needs one, in feedback/, saying what it was for and how it went"
     );
+    return;
+  }
+  const file = readSignalFile(feedback.path);
+  if ("unreadable" in file) {
+    await pullRequests.refuse(project2, pullRequest, cannotRead(feedback.path, file));
     return;
   }
   const signal = readFeedbackSignal(feedback.text);

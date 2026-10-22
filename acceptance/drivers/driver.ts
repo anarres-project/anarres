@@ -10,6 +10,8 @@ export type AcceptedWork = {
   withoutFeedbackSignal?: boolean;
   /** The member's feedback signal names its module in more than a plain name. */
   moduleNotPlain?: boolean;
+  /** The member's feedback signal file is named in more than a plain name. */
+  fileNameNotPlain?: boolean;
 };
 
 export type ReadyTask = {

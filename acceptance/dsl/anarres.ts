@@ -150,6 +150,7 @@ export class Anarres {
       impediments?: string[];
       withoutFeedbackSignal?: boolean;
       moduleNotPlain?: boolean;
+      fileNameNotPlain?: boolean;
     },
   ) {
     this.signalsWritten += 1;

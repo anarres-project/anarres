@@ -458,6 +458,26 @@ describe("acting on a pull request", () => {
     expect(posted.map((task) => task.role)).toEqual(["coding"]);
   });
 
+  it("does not merge work whose feedback signal's file is not plainly named, and says why", async () => {
+    const merged: string[] = [];
+    const refusals: string[] = [];
+    const notPlain = { ...specificationPasses, path: "feedback/FB-1_*see*.md" };
+    await onPullRequest(
+      "ledger",
+      "13",
+      submitting(merged, [notPlain], refusals),
+      board,
+      log,
+      clock,
+    );
+    expect([merged, refusals]).toEqual([
+      [],
+      [
+        "13: The feedback signal feedback/FB-1_*see*.md cannot be read: its file name is not a plain name",
+      ],
+    ]);
+  });
+
   it("tells the member when their pull request has no feedback signal", async () => {
     const refusals: string[] = [];
     const artefactOnly = { path: "modules/parser/spec.md", text: "# Specification\n" };

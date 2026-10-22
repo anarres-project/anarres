@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readFeedbackSignal } from "../src/index.ts";
+import { readFeedbackSignal, readSignalFile } from "../src/index.ts";
 
 describe("reading a feedback signal", () => {
   it("gives the work its header reports: role, module, verdict and the task it was for", () => {
@@ -196,4 +196,29 @@ describe("reading a feedback signal", () => {
     const signal = headerWith("from_role: test", `module: ${"a".repeat(40)}`, "verdict: pass");
     expect(readFeedbackSignal(signal)).toMatchObject({ module: "a".repeat(40) });
   });
+});
+
+describe("where a feedback signal is", () => {
+  it("is a plainly named file in feedback/", () => {
+    expect(readSignalFile("feedback/FB-1.md")).toEqual({ path: "feedback/FB-1.md" });
+  });
+
+  it("is unreadable when the file's name is more than a plain name", () => {
+    expect(readSignalFile("feedback/FB-1_*see*.md")).toEqual({
+      unreadable: "its file name is not a plain name",
+    });
+  });
+
+  it("is unreadable when the file is in a folder within feedback/", () => {
+    expect(readSignalFile("feedback/parser/FB-1.md")).toEqual({
+      unreadable: "its file name is not a plain name",
+    });
+  });
+
+  it.each(["feedback/FB-1.md_*see*", "elsewhere/feedback/FB-1.md"])(
+    "is unreadable when the name runs on, or the file is not in feedback/ at all: %s",
+    (path) => {
+      expect(readSignalFile(path)).toEqual({ unreadable: "its file name is not a plain name" });
+    },
+  );
 });

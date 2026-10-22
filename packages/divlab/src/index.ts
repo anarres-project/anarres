@@ -3,6 +3,7 @@ import {
   type Role,
   type RoutingRecord,
   readFeedbackSignal,
+  readSignalFile,
   routingRecord,
   type Unreadable,
 } from "@anarres/core";
@@ -253,6 +254,11 @@ export async function onPullRequest(
       pullRequest,
       "The pull request has no feedback signal: work needs one, in feedback/, saying what it was for and how it went",
     );
+    return;
+  }
+  const file = readSignalFile(feedback.path);
+  if ("unreadable" in file) {
+    await pullRequests.refuse(project, pullRequest, cannotRead(feedback.path, file));
     return;
   }
   const signal = readFeedbackSignal(feedback.text);

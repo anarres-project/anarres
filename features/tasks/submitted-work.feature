@@ -29,6 +29,13 @@ Feature: Divlab merges the work members submit
     And the member is told their feedback signal must use plain names
     And no task is ready for "parser"
 
+  Scenario: Work whose feedback signal's file is not named plainly is not merged
+    Given a project with a module "parser"
+    When a member submits Specification work on "parser" whose feedback signal's file is named in more than a plain name
+    Then Divlab has not merged the member's Specification work on "parser"
+    And the member is told their feedback signal's file must have a plain name
+    And no task is ready for "parser"
+
   # Not in the sandbox: the real Action cannot be stopped between merging and recording on cue.
   @sandbox-wip
   Scenario: A merge Divlab was interrupted in is finished by its next run

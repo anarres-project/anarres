@@ -43,6 +43,34 @@ and merge records are read back through core. Section 0 is done but for the log'
 
 ---
 
+## 2026-10-22: A feedback signal's file must be plainly named
+
+- The file name after `feedback/` is the member's own text, and revision tasks wrote it into
+  issues as it was. Divlab now refuses a pull request whose signal file is not plainly named
+  (letters, digits and hyphens, directly in `feedback/`, ending `.md`), telling the member why.
+  Capitals are allowed, unlike the signal's fields: a file name never becomes a label. The rule
+  lives in core (`readSignalFile`), beside the signal's other rules.
+- Harness fix on the way: in-process, merged work was found by its file's name, so a renamed
+  file made "Divlab has not merged" pass whether or not it had; the scenarios' name for a signal
+  now ignores the decoration, and the step went red as it should.
+- Slip: the first pattern carried a length limit and rules for joining parts that no test asked
+  for; cut back to what the tests demanded. Stryker then found the anchors untested: two cases
+  added (passed first time), and the score is back to 100 (384 mutants).
+
+Acceptance: work whose feedback signal's file is not named plainly is not merged -> RED (not yet
+          right): "Divlab has not merged" failed, once the harness could see the merge; GREEN.
+RED:      is a plainly named file in feedback/ -> not a function (then the stub) -> expected
+          { unreadable: '' } to deeply equal { path: 'feedback/FB-1.md' }
+GREEN:    (114 passed)
+RED:      is unreadable when the file's name is more than a plain name -> expected { path: … }
+GREEN:    (115 passed)
+Passed first time: is unreadable when the file is in a folder within feedback/ (regression);
+          the two anchor cases (added for Stryker)
+RED:      (Divlab) does not merge work whose feedback signal's file is not plainly named, and says
+          why -> Divlab should not have acted
+GREEN:    (50 passed)
+REFACTOR: none
+
 ## 2026-10-22: A decision recorded is acted on, once
 
 - Divlab recorded each routing decision and then acted on it (a task, an alert, a finished

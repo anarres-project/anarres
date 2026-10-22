@@ -84,6 +84,25 @@ When(
   },
 );
 
+When(
+  "a member submits {role} work on {string} whose feedback signal's file is named in more than a plain name",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.memberSubmitsWork({
+      role,
+      module,
+      verdict: "pass",
+      fileNameNotPlain: true,
+    });
+  },
+);
+
+Then(
+  "the member is told their feedback signal's file must have a plain name",
+  function (this: AnarresWorld) {
+    return this.anarres.memberIsToldWhy("file name is not a plain name");
+  },
+);
+
 Then(
   "the member is told their feedback signal must use plain names",
   function (this: AnarresWorld) {

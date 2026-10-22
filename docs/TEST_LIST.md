@@ -91,8 +91,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] the merge record (about to merge) is appended before any read, so it still lists the
         log first: one read at the start of the run would cover it.
 
-- [ ] **Safety, next:** a feedback signal's file name is text the member chose, and Divlab writes
-      it into issues; it must be a plain name, or the pull request is refused, saying why.
+- [x] **Safety:** a feedback signal's file name is text the member chose, and Divlab writes it
+      into issues; it must be plainly named (letters, digits and hyphens, directly in
+      `feedback/`, ending `.md`; `readSignalFile` in core), or the pull request is refused, saying
+      why.
 
 ## 1. Routing (Divlab)
 

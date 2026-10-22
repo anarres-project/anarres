@@ -30,11 +30,17 @@ export function feedbackSignalFile(work: AcceptedWork, task?: string) {
       : ["  impediments:", ...work.impediments.map((name) => `    - type: ${ids(name)}`)]),
     "---",
   ];
-  return { path: `feedback/${work.feedbackSignal}.md`, text: `${header.join("\n")}\n` };
+  // Markdown in the file's name: text Divlab must never carry into what it posts either.
+  const name = work.fileNameNotPlain ? `${work.feedbackSignal}${NOT_PLAIN}` : work.feedbackSignal;
+  return { path: `feedback/${name}.md`, text: `${header.join("\n")}\n` };
 }
 
+/** What makes a feedback signal file's name more than a plain name, in the scenarios. */
+const NOT_PLAIN = "_*see*";
+
 /** The scenario's name for a feedback signal, from where Divlab found it. */
-export const signalName = (path: string) => path.replace(/^feedback\/(.+)\.md$/, "$1");
+export const signalName = (path: string) =>
+  path.replace(/^feedback\/(.+)\.md$/, "$1").replace(NOT_PLAIN, "");
 
 /** A routing record as the scenarios speak of it: role names and plain words, not ids. */
 export function inScenarioWords(event: RoutingEvent): RoutingRecord {
