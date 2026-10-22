@@ -54,7 +54,9 @@ files. GitHub's lists lag behind its writes, so the driver waits until they show
 log says Divlab did.
 
 **At the end** the run's repository and its fork are deleted. Set `ANARRES_SANDBOX_KEEP=1` to keep it for
-inspection, and delete it yourself afterwards.
+inspection. **Before a run starts**, a sweep deletes what interrupted runs left behind in both
+sandbox organisations: repositories a run made, more than an hour ago (no run lasts that long), so
+a kept repository lasts until a run an hour or more later.
 
 ## What the scenarios cover
 

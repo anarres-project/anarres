@@ -56,8 +56,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] reading the log costs a request per 100 events on every run: a busy project needs a
         cheaper read before then (a checkpoint of what routing needs, say), raised with Bernard
         first since it changes what the log holds;
-  - [ ] a sweep deletes sandbox repositories left behind by an interrupted run (older than an
-        hour), before each sandbox run;
+  - [x] a sweep deletes sandbox repositories left behind by an interrupted run (older than an
+        hour), before each sandbox run, in both sandbox organisations; only repositories a run
+        makes, never one a live run may still be using;
   - [x] the adapter retries when GitHub rate-limits it (`retry-after`), so a busy sandbox run
         slows down instead of failing; reads also retry a failing gateway or dropped connection;
   - [ ] the sandbox run stays inside one token's hourly allowance (5,000 requests) with room to

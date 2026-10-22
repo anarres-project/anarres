@@ -1,5 +1,6 @@
 import {
   AfterAll,
+  BeforeAll,
   type IWorldOptions,
   setDefaultTimeout,
   setWorldConstructor,
@@ -8,6 +9,7 @@ import {
 import type { Driver } from "../drivers/driver.ts";
 import { InProcessDriver } from "../drivers/in-process/driver.ts";
 import { SandboxDriver } from "../drivers/sandbox/driver.ts";
+import { runRepository } from "../drivers/sandbox/sweep.ts";
 import { Aliases } from "../dsl/aliases.ts";
 import { Anarres } from "../dsl/anarres.ts";
 
@@ -36,14 +38,20 @@ export class AnarresWorld extends World {
     scenarioCount += 1;
     const aliases = new Aliases(`s${scenarioCount}`);
     this.driver = sandbox ? new SandboxDriver() : new InProcessDriver();
-    const project = sandbox ? `ledger-${run}` : aliases.of("ledger");
+    const project = sandbox ? runRepository(run) : aliases.of("ledger");
     this.anarres = new Anarres(this.driver, aliases, project);
   }
 }
 
 setWorldConstructor(AnarresWorld);
 
-// ANARRES_SANDBOX_KEEP=1 leaves the run's repository in the sandbox to inspect; delete it after.
+// Repositories an interrupted run left behind go first.
+BeforeAll(async () => {
+  if (sandbox) await SandboxDriver.sweep();
+});
+
+// ANARRES_SANDBOX_KEEP=1 leaves the run's repository in the sandbox to inspect, until a run an
+// hour or more later sweeps it.
 AfterAll(async () => {
   if (sandbox && process.env.ANARRES_SANDBOX_KEEP !== "1") await SandboxDriver.disposeRun();
 });

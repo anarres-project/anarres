@@ -31,10 +31,29 @@ routed; an interrupted merge is finished from Divlab's record); every run checks
 protected. Signals must use plain names. Every scenario's work goes through a real pull request;
 the sandbox suite runs them all against the real Action (about 30 minutes), each from a fork in a
 second sandbox organisation playing the members, as real members' work will come. A project's event log is
-read whole past 1,000 events. Next: the sandbox sweep (section 0); before 2 December, the Actions
-policy that keeps `pull_request_target` working.
+read whole past 1,000 events. Interrupted sandbox runs are swept up before the next. Next: the
+sandbox run's request budget (section 0); before 2 December, the Actions policy that keeps
+`pull_request_target` working.
 
 ---
+
+## 2026-10-22: The sandbox sweep
+
+- Before each sandbox run, both sandbox organisations are swept of repositories an interrupted run
+  left behind. Which ones is a pure choice beside the driver, unit tested (Vitest now finds the
+  harness's own tests under `acceptance/` too): a run's repositories, made more than an hour ago.
+- Tried while CI's run was live: the sweep left its repositories alone.
+
+RED:      finds a run's repository made more than an hour ago -> expected [] to deeply equal
+          [ 'ledger-mvj9zaqb' ] (the empty stub was written in the same step as the test, before
+          the missing symbol had been seen fail: a slip)
+GREEN:    every repository (1 passed)
+RED:      leaves a repository made within the hour -> expected [ 'ledger-mvjb11k0' ] to deeply
+          equal []
+GREEN:    older than an hour (2 passed)
+RED:      leaves any repository a run did not make -> expected [ 'notes' ] to deeply equal []
+GREEN:    a run's name only (3 passed)
+REFACTOR: a run's repository named in one place, for the run and the sweep
 
 ## 2026-10-22: The event log past 1,000 events
 

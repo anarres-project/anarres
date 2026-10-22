@@ -2,7 +2,8 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    include: ["packages/*/test/**/*.test.ts"],
+    // The test harness's own logic is tested too, beside it.
+    include: ["packages/*/test/**/*.test.ts", "acceptance/**/*.test.ts"],
     passWithNoTests: true,
     coverage: {
       provider: "v8",

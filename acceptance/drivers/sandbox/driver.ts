@@ -24,6 +24,24 @@ import {
   signalName,
 } from "../scenario-words.ts";
 import { GitHubApi } from "./github-api.ts";
+import { leftBehind } from "./sweep.ts";
+
+/** The two sandbox organisations and their tokens, from `.env` locally or the CI environment. */
+function sandboxSettings() {
+  const {
+    ANARRES_SANDBOX_ORG: org,
+    ANARRES_SANDBOX_TOKEN: token,
+    ANARRES_SANDBOX_MEMBERS_ORG: membersOrg,
+    ANARRES_SANDBOX_MEMBERS_TOKEN: membersToken,
+  } = process.env;
+  if (!org || !token || !membersOrg || !membersToken) {
+    throw new Error(
+      "The sandbox driver needs ANARRES_SANDBOX_ORG, ANARRES_SANDBOX_TOKEN, " +
+        "ANARRES_SANDBOX_MEMBERS_ORG and ANARRES_SANDBOX_MEMBERS_TOKEN",
+    );
+  }
+  return { org, token, membersOrg, membersToken };
+}
 
 type Issue = {
   number: number;
@@ -46,18 +64,7 @@ export class SandboxDriver implements Driver {
   private readonly membersOrg: string;
 
   constructor() {
-    const {
-      ANARRES_SANDBOX_ORG: org,
-      ANARRES_SANDBOX_TOKEN: token,
-      ANARRES_SANDBOX_MEMBERS_ORG: membersOrg,
-      ANARRES_SANDBOX_MEMBERS_TOKEN: membersToken,
-    } = process.env;
-    if (!org || !token || !membersOrg || !membersToken) {
-      throw new Error(
-        "The sandbox driver needs ANARRES_SANDBOX_ORG, ANARRES_SANDBOX_TOKEN, " +
-          "ANARRES_SANDBOX_MEMBERS_ORG and ANARRES_SANDBOX_MEMBERS_TOKEN",
-      );
-    }
+    const { org, token, membersOrg, membersToken } = sandboxSettings();
     this.org = org;
     this.token = token;
     this.github = new GitHubApi(token);
@@ -405,6 +412,32 @@ export class SandboxDriver implements Driver {
       if (status === 200) messages.push(...data.map((annotation) => annotation.message));
     }
     return messages.join("; ") || "GitHub gave no reason";
+  }
+
+  /**
+   * Deletes what interrupted runs left behind in both sandbox organisations, before a run starts,
+   * so leftovers never build up (nor collide with this run's names).
+   */
+  static async sweep(): Promise<void> {
+    const { org, token, membersOrg, membersToken } = sandboxSettings();
+    for (const [owner, github] of [
+      [org, new GitHubApi(token)],
+      [membersOrg, new GitHubApi(membersToken)],
+    ] as const) {
+      const repositories: { name: string; created_at: string }[] = [];
+      for (let page = 1; ; page++) {
+        const listed = await github.call<{ name: string; created_at: string }[]>(
+          "GET",
+          `orgs/${owner}/repos?per_page=100&page=${page}`,
+        );
+        repositories.push(...listed);
+        if (listed.length < 100) break;
+      }
+      for (const name of leftBehind(repositories, Date.now())) {
+        await github.call("DELETE", `repos/${owner}/${name}`);
+        console.log(`Swept ${owner}/${name}, left behind by an interrupted run`);
+      }
+    }
   }
 
   /** Deletes the repositories this run created. */
