@@ -79,7 +79,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         allowance is counted per person, not per token, which most likely explains the refusal
         of 2026-10-13 (another loop was using the same account);
   - [ ] a run that GitHub refuses partway (the allowance spent by something else meanwhile)
-        fails at once, saying so, rather than waiting out the reset until a step times out;
+        fails at once, saying so, rather than waiting out the reset until a step times out:
+        between scenarios it now does (each checks first); within a scenario it still waits;
   - [ ] the sandbox driver's waiting costs most of a run's requests (checking pull requests
         while Divlab decides, issue lists while GitHub catches up): poll less often, or ask
         GitHub only once Divlab's run has finished;
@@ -245,8 +246,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       on demand. A failed worker now keeps its repositories: inspect them when it recurs.
 - [ ] The sandbox run polls less (pull requests every 2 seconds, issue lists every half second):
       about 2,100 requests a run, mostly waiting.
-- [ ] The allowance check asks every sandbox run for a full run's 2,500 requests, so a run of one
-      scenario is stopped too: scale it by the scenarios the run will do.
+- [x] The allowance check asked every sandbox run for a full run's 2,500 requests, so a run of one
+      scenario was stopped too: each scenario now checks for room for itself (200) first.
 - [x] A project's main branch admits changes only from Divlab's App; no person is exempt
       (`setUpProject` applies the ruleset; the sandbox refused an administrator's direct change
       while Divlab still merged and recorded, 2026-10-21).

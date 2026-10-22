@@ -541,7 +541,7 @@ export class SandboxDriver implements Driver {
 
   /** Stops the run before it starts if GitHub's allowance has no room for it. */
   static async checkAllowance(): Promise<void> {
-    const why = shortfall(await SandboxDriver.allowance(), REQUESTS_A_RUN_NEEDS, Date.now());
+    const why = shortfall(await SandboxDriver.allowance(), REQUESTS_A_SCENARIO_NEEDS, Date.now());
     if (why) throw new Error(why);
   }
 
@@ -645,10 +645,10 @@ type WorkflowRun = {
 };
 
 /**
- * The REST requests a sandbox run needs, with room to spare: a full run made 1,804 (and 206
- * GraphQL, counted separately), in CI on 2026-10-22.
+ * The requests a sandbox scenario needs, with room to spare: a full run averaged about 36 a
+ * scenario (2,400 for 67, in CI on 2026-10-22), more for one that merges several times in a row.
  */
-const REQUESTS_A_RUN_NEEDS = 2_500;
+const REQUESTS_A_SCENARIO_NEEDS = 200;
 
 /** How long Divlab may take to decide on a pull request, within a step's timeout. */
 const RUN_FINISH_LIMIT = 240_000;

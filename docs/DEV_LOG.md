@@ -43,6 +43,21 @@ and merge records are read back through core. Section 0 is done but for the log'
 
 ---
 
+## 2026-10-22: The allowance checked for each scenario
+
+- The check asked every sandbox run for a full run's 2,500 requests before starting, so a run of
+  one scenario was stopped too. A worker cannot know how many scenarios it will be given, so each
+  scenario now checks for room for itself (200 requests; a full run averages about 36) before it
+  starts. A full run whose allowance runs out partway fails its remaining scenarios at once,
+  saying when it resets; asking GitHub for the allowance costs nothing.
+- One scenario in the sandbox at aebea07: passed, the check before it. Not a proof (GitHub's
+  reading left room under the old check too, and went from 1,293 to 988 during the run).
+
+RED:      is too little when less is left than a scenario needs, and says when it resets
+          -> Received "...and a sandbox run needs about 200..."
+GREEN:    (9 passed)
+REFACTOR: none
+
 ## 2026-10-22: A re-run closes the task the work was for
 
 - A run stopped after recording a decision left the task the work was for open, ready to claim

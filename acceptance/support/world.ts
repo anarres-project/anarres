@@ -1,6 +1,7 @@
 import {
   After,
   AfterAll,
+  Before,
   BeforeAll,
   type IWorldOptions,
   Status,
@@ -48,12 +49,16 @@ export class AnarresWorld extends World {
 
 setWorldConstructor(AnarresWorld);
 
-// A run starts only if GitHub's allowance has room for it; then repositories an interrupted run
-// left behind go.
+// Repositories an interrupted run left behind go first.
 BeforeAll(async () => {
   if (!sandbox) return;
-  await SandboxDriver.checkAllowance();
   await SandboxDriver.sweep();
+});
+
+// Each scenario starts only if GitHub's allowance has room for it, however many the run has.
+Before(async () => {
+  if (!sandbox) return;
+  await SandboxDriver.checkAllowance();
 });
 
 // A worker whose scenario failed keeps its repositories, so what Divlab did can be looked at.
