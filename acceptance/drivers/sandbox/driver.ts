@@ -41,16 +41,29 @@ export class SandboxDriver implements Driver {
   private readonly divlab: GitHubAdapter;
   private readonly org: string;
   private readonly token: string;
+  /** The second sandbox organisation, playing the members: their forks live there. */
+  private readonly members: GitHubApi;
+  private readonly membersOrg: string;
 
   constructor() {
-    const { ANARRES_SANDBOX_ORG: org, ANARRES_SANDBOX_TOKEN: token } = process.env;
-    if (!org || !token) {
-      throw new Error("The sandbox driver needs ANARRES_SANDBOX_ORG and ANARRES_SANDBOX_TOKEN");
+    const {
+      ANARRES_SANDBOX_ORG: org,
+      ANARRES_SANDBOX_TOKEN: token,
+      ANARRES_SANDBOX_MEMBERS_ORG: membersOrg,
+      ANARRES_SANDBOX_MEMBERS_TOKEN: membersToken,
+    } = process.env;
+    if (!org || !token || !membersOrg || !membersToken) {
+      throw new Error(
+        "The sandbox driver needs ANARRES_SANDBOX_ORG, ANARRES_SANDBOX_TOKEN, " +
+          "ANARRES_SANDBOX_MEMBERS_ORG and ANARRES_SANDBOX_MEMBERS_TOKEN",
+      );
     }
     this.org = org;
     this.token = token;
     this.github = new GitHubApi(token);
     this.divlab = new GitHubAdapter({ owner: org, token });
+    this.membersOrg = membersOrg;
+    this.members = new GitHubApi(membersToken);
   }
 
   /**
@@ -94,7 +107,11 @@ export class SandboxDriver implements Driver {
     }
   }
 
-  /** The member's work goes on a branch of its own, and a pull request asks to merge it. */
+  /**
+   * The member's work goes on a branch of their fork, as a real member's does, and a pull request
+   * asks the project to merge it. The fork is only ever behind main by other members' feedback
+   * signals, each in a file of its own, so the branch needs no updating first.
+   */
   async submitWork(work: AcceptedWork): Promise<void> {
     const repository = `repos/${this.org}/${work.project}`;
     const fromRole = roleId(work.role);
@@ -102,24 +119,25 @@ export class SandboxDriver implements Driver {
       (issue) =>
         labelValue(issue, "role:") === fromRole && labelValue(issue, "module:") === work.module,
     );
-    const { object: main } = await this.github.call<{ object: { sha: string } }>(
+    const fork = await this.forkOf(work.project);
+    const { object: main } = await this.members.call<{ object: { sha: string } }>(
       "GET",
-      `${repository}/git/ref/heads/main`,
+      `repos/${fork}/git/ref/heads/main`,
     );
     const branch = `work/${work.feedbackSignal}`;
-    await this.github.call("POST", `${repository}/git/refs`, {
+    await this.members.call("POST", `repos/${fork}/git/refs`, {
       ref: `refs/heads/${branch}`,
       sha: main.sha,
     });
     const { path, text } = feedbackSignalFile(work, task && String(task.number));
-    await this.github.call("PUT", `${repository}/contents/${path}`, {
+    await this.members.call("PUT", `repos/${fork}/contents/${path}`, {
       message: `The ${work.role} work on ${work.module}`,
       content: Buffer.from(text).toString("base64"),
       branch,
     });
     const { number } = await this.github.call<{ number: number }>("POST", `${repository}/pulls`, {
       title: `The ${work.role} work on ${work.module}`,
-      head: branch,
+      head: `${this.membersOrg}:${branch}`,
       base: "main",
     });
     const merged = await this.divlabHasDecidedOn(work.project, number);
@@ -130,6 +148,28 @@ export class SandboxDriver implements Driver {
       merged,
     });
     if (merged) await this.expectWhatDivlabDecided(work.project, path, task);
+  }
+
+  /**
+   * The members' fork of the project, made the first time a member submits work to it. GitHub
+   * makes forks in the background, so this waits until the fork has its main branch.
+   */
+  private async forkOf(project: string): Promise<string> {
+    const known = run.forks.get(project);
+    if (known) return known;
+    const { full_name: fork } = await this.members.call<{ full_name: string }>(
+      "POST",
+      `repos/${this.org}/${project}/forks`,
+      { organization: this.membersOrg, default_branch_only: true },
+    );
+    run.created.push({ github: this.members, path: `repos/${fork}` });
+    const deadline = Date.now() + 60_000;
+    while ((await this.members.request("GET", `repos/${fork}/branches/main`)).status !== 200) {
+      if (Date.now() > deadline) throw new Error(`GitHub did not finish forking ${project}`);
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+    }
+    run.forks.set(project, fork);
+    return fork;
   }
 
   /** As GitHub showed each pull request once Divlab had decided on it. */
@@ -456,6 +496,8 @@ const RUN_FINISH_LIMIT = 240_000;
 /** Shared by every scenario in a run: they all use the run's one repository, one at a time. */
 const run = {
   created: [] as { github: GitHubApi; path: string }[],
+  /** The members' fork of each project, by project. */
+  forks: new Map<string, string>(),
   /** What GitHub should show once its issue lists catch up with Divlab's writes. */
   expected: new Map<string, Record<Listing, number>>(),
   /** The tasks merged work has closed, which a lagging list may still show as ready. */

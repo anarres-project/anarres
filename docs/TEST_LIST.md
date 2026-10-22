@@ -182,8 +182,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the sandbox suite's time with a pull request per merge: all 58 scenarios in 30.5
         minutes in CI (2026-10-21), inside the 45-minute limit;
   - [x] the ruleset: every sandbox repository is set up with it.
-- [ ] Members' pull requests come from forks; the sandbox driver submits from a fork too (needs a
-      second sandbox organisation playing the members, and a token for it: Bernard, 2026-10-22).
+- [x] Members' pull requests come from forks; the sandbox driver submits from a fork too, in a
+      second sandbox organisation playing the members (Bernard, 2026-10-22).
+- [ ] **Before 2 December 2026:** GitHub will then restrict `pull_request_target` on public
+      repositories unless an organisation's Actions policy allows it. Divlab's pull request
+      workflow depends on it, so `anarres-sandbox` and `anarres-project` each need that policy,
+      kept as narrow as GitHub allows; record the setting in CONTRIBUTING and decision 0006, and
+      confirm with a sandbox run.
 - [x] A project's main branch admits changes only from Divlab's App; no person is exempt
       (`setUpProject` applies the ruleset; the sandbox refused an administrator's direct change
       while Divlab still merged and recorded, 2026-10-21).

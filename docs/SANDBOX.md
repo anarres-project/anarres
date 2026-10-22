@@ -32,8 +32,10 @@ tasks, alerts or records.
 fail verdict, reporting test failures"):
 
 1. The driver finds the ready task for that role and module, as a member's plugin will.
-2. It writes the member's feedback signal, naming that task, on a branch of its own, and opens a
-   pull request.
+2. It writes the member's feedback signal, naming that task, on a branch of the member's fork of
+   the project, and opens a pull request from it, as a real member's plugin will. The forks live
+   in a second sandbox organisation playing the members; each project is forked the first time
+   work is submitted to it.
 3. GitHub starts Divlab's pull request workflow. It runs as `main` has it, never as the pull request
    has it, takes a short-lived token as the sandbox's App, and runs the Divlab Action.
 4. Divlab reads the pull request's files through the API, as data, and checks the feedback signal.
@@ -51,7 +53,7 @@ PDC coordinator would: open task issues, escalation issues, finished-module issu
 files. GitHub's lists lag behind its writes, so the driver waits until they show what the event
 log says Divlab did.
 
-**At the end** the run's repository is deleted. Set `ANARRES_SANDBOX_KEEP=1` to keep it for
+**At the end** the run's repository and its fork are deleted. Set `ANARRES_SANDBOX_KEEP=1` to keep it for
 inspection, and delete it yourself afterwards.
 
 ## What the scenarios cover
@@ -69,12 +71,15 @@ The scenarios are in `features/`, one file per capability. Today:
   inputs and rule; an alert says what was reported and why routing stopped.
 - `tasks/merged-work`: merged work closes the task it was for.
 - `tasks/submitted-work`: Divlab merges the work members submit, and refuses what it cannot accept.
+- `projects/protected-main`: only Divlab changes a project's main branch; the tripwire; the alert
+  when main is not protected.
 
 ## What it proves beyond the in-process run
 
 - The Divlab bundle works as a GitHub Action, at the pinned commit.
 - Divlab's App, its installation and its permissions are enough to merge, write events and post
   issues, and the template's workflows wire them up correctly.
+- Divlab handles pull requests from forks, as members' will come, without running their code.
 - `packages/github` uses GitHub's real API correctly: reading a pull request's files, merging only
   at the commit Divlab read, commenting, issues, labels and the event log.
 - Divlab's two workflows take turns, and the tripwire leaves Divlab's own merges alone.
@@ -88,9 +93,6 @@ every such scenario, so none is forgotten. The tag goes once the scenario passes
 
 ## Not covered yet
 
-- Pull requests from forks, as real members' will be: the driver opens them from a branch of the
-  same repository.
-- The ruleset that lets only Divlab merge into a project's main branch.
 - Claiming, leases, eligibility and the plugin, which are not built yet.
 
 The test list (`docs/TEST_LIST.md`) tracks each of these.

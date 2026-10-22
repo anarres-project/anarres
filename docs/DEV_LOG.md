@@ -29,11 +29,30 @@ and routes the work; a ruleset set up with each project lets nobody else change 
 workflow is the tripwire (anything on main Divlab did not merge is recorded, alerted, never
 routed; an interrupted merge is finished from Divlab's record); every run checks main is still
 protected. Signals must use plain names. Every scenario's work goes through a real pull request;
-the sandbox suite runs them all against the real Action (about 30 minutes). Next: pull requests
-from forks, waiting on a second sandbox organisation for members (Bernard, 2026-10-22); then the
-1,000-event log limit and the sandbox sweep (section 0).
+the sandbox suite runs them all against the real Action (about 30 minutes), each from a fork in a
+second sandbox organisation playing the members, as real members' work will come. Next: the
+1,000-event log limit and the sandbox sweep (section 0); before 2 December, the Actions policy that
+keeps `pull_request_target` working.
 
 ---
+
+## 2026-10-22: Work submitted from forks
+
+- Bernard set up `anarres-sandbox-members`, a second sandbox organisation playing the members:
+  Free plan, two-factor authentication required, Actions disabled, and a token that can act only
+  there (CONTRIBUTING lists its permissions).
+- A throwaway probe first: the members' token forked a sandbox repository into the members'
+  organisation and pushed a branch; the sandbox token opened a pull request from it and read its
+  files. Nothing on GitHub needed changing.
+- The sandbox driver now submits every member's work from the members' fork of the project, made
+  the first time it is needed and deleted with the run. The fork's main is never brought up to
+  date: it falls behind only by other feedback signals, each in a file of its own, so a branch
+  from it still merges cleanly and shows only its own file. Harness only: Divlab is unchanged.
+- Sandbox, locally: the submission and merged-work scenarios passed from forks (4 of 4); both
+  organisations empty afterwards.
+- GitHub's notice: from 2 December 2026 `pull_request_target` is restricted on public repositories
+  unless an organisation's Actions policy allows it. Divlab's pull request workflow needs it; on
+  the test list.
 
 ## 2026-10-21: Divlab checks its own protection
 

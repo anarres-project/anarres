@@ -49,7 +49,7 @@ The other commands (`npm run test:wip`, `npm run mutate` and so on) are listed u
 `npm run test:acceptance:sandbox` runs the acceptance tests against real repositories in a
 dedicated sandbox organisation. Each run creates its repositories and deletes them at the end.
 What a run does and checks is in [`docs/SANDBOX.md`](docs/SANDBOX.md). It
-needs two values, from a git-ignored `.env` locally, or from the `sandbox` environment in CI:
+needs four values, from a git-ignored `.env` locally, or from the `sandbox` environment in CI:
 
 - `ANARRES_SANDBOX_ORG`: the sandbox organisation's name;
 - `ANARRES_SANDBOX_TOKEN`: a fine-grained personal access token whose resource owner is that
@@ -57,7 +57,13 @@ needs two values, from a git-ignored `.env` locally, or from the `sandbox` envir
   repository permissions:
   - read and write: administration, contents, issues, pull requests, workflows (the tests install
     the project template's workflow);
-  - read: actions (the tests watch Divlab's runs), metadata.
+  - read: actions (the tests watch Divlab's runs), metadata;
+- `ANARRES_SANDBOX_MEMBERS_ORG` (a variable in CI): a second sandbox organisation, playing the
+  members, where the tests fork each project and push members' work;
+- `ANARRES_SANDBOX_MEMBERS_TOKEN` (a secret in CI): a fine-grained personal access token whose
+  resource owner is that organisation, with access to all its repositories, and these repository
+  permissions: read and write for administration (to make and delete forks) and contents (to push
+  work); read for metadata. Nothing else: it cannot act on the sandbox organisation itself.
 
 The sandbox organisation itself needs, under Settings → Actions → General:
 
@@ -73,7 +79,11 @@ its Client ID as the Actions variable `DIVLAB_APP_CLIENT_ID` (the template's wor
 GitHub's token action no longer takes the App ID) and its private key as the Actions secret
 `DIVLAB_APP_PRIVATE_KEY`. The key lives nowhere else.
 
-Never point these at any other organisation: automated tests touch only the sandbox.
+The members' organisation needs Actions disabled (Settings → Actions → General → Disabled):
+nothing runs in members' forks; Divlab runs only in the project's repository.
+
+Never point these at any other organisation: automated tests touch only the two sandbox
+organisations.
 
 ## Adding or upgrading a tool
 
