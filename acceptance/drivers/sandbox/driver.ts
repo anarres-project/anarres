@@ -601,7 +601,7 @@ const REQUESTS_A_RUN_NEEDS = 2_500;
 /** How long Divlab may take to decide on a pull request, within a step's timeout. */
 const RUN_FINISH_LIMIT = 240_000;
 
-/** Shared by every scenario in a run: they all use the run's one repository, one at a time. */
+/** Shared by every scenario a worker runs: they use its one repository, one at a time. */
 const run = {
   created: [] as { github: GitHubApi; path: string }[],
   /** The members' fork of each project, by project. */

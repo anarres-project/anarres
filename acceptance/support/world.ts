@@ -24,9 +24,10 @@ if (sandbox) {
   setDefaultTimeout(300_000);
 }
 
-// In the sandbox, a run's scenarios share one repository (creating one per scenario trips
-// GitHub's rate limits); aliased module names keep them apart. Runs are told apart by time.
-const run = Date.now().toString(36);
+// In the sandbox, a run's scenarios share one repository for each worker (creating one per
+// scenario trips GitHub's rate limits); aliased module names keep them apart. Runs are told apart
+// by time, and a run's parallel workers, each a process of its own, by their number.
+const run = `${Date.now().toString(36)}${process.env.CUCUMBER_WORKER_ID ?? ""}`;
 let scenarioCount = 0;
 
 export class AnarresWorld extends World {

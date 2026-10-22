@@ -40,6 +40,16 @@ sandbox job's time limit, then section 0's remaining items.
 
 ---
 
+## 2026-10-22: The sandbox run in parallel
+
+- A run's time is Divlab's: 77 pull requests, each waiting for a real Divlab run of 25 to 30
+  seconds, one after another. Polling less would save requests, not minutes.
+- The scenarios now run in four Cucumber workers. Each worker is a process of its own, so each
+  has its own repository (named after the run and the worker number); Divlab's runs queue only
+  within a repository, so four go at once. Harness configuration, no behaviour: no test cycle.
+- Locally, the project features: 4 of 4 in 1 minute 13 seconds (1 minute 48 one at a time); both
+  sandbox organisations empty afterwards. Each worker prints its own request tally.
+
 ## 2026-10-22: Divlab may check members' pull requests
 
 - GitHub blocks `pull_request_target` on public repositories from 2 December 2026 (changelog,
