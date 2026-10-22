@@ -17,7 +17,7 @@ with the gate (`npm test`) and CI running.
 Still to finish the skeleton's pipeline (not behaviour, but the route to production):
 
 - [x] `npm run mutate`: Stryker on `packages/core`, weekly in CI (decision 0002).
-- [ ] Divlab runs as a GitHub Action: bundled entry point, triggered when a pull request is merged,
+- [x] Divlab runs as a GitHub Action: bundled entry point, triggered when a pull request is merged,
       posting tasks as issues through `packages/github` (decision 0004).
   - [x] Divlab acts on a merge: it finds the feedback signals merged since it last ran, reads
         each, closes the task it names and routes it (in-process and against the sandbox, with
@@ -30,11 +30,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] no Divlab run is dropped: GitHub keeps one run waiting per concurrency group and cancels
         the rest unless the group queues them (`queue: max`); work three members submitted at
         once lost a run in the sandbox without it, and all merged with it;
-  - [ ] interrupted merges are finished in the order Divlab merged them (its records), not in
+  - [x] interrupted merges are finished in the order Divlab merged them (its records), not in
         the order the feedback signals are listed;
-  - [ ] routing in merge order: by Divlab recording each merge it makes, and routing from those
+  - [x] routing in merge order: by Divlab recording each merge it makes, and routing from those
         records rather than by listing the feedback signals (decision 0005), never from Git
-        history (section 4).
+        history (section 4). Each merge is routed in the run that makes it, from its record;
+        runs queue; interrupted merges are finished in recorded order; the listing serves only
+        the tripwire.
 - [ ] GitHub sandbox driver: the same scenarios against real repositories in the sandbox
       organisation (`npm run test:acceptance:sandbox`).
   - [x] sandbox organisation and token (2026-10-13);

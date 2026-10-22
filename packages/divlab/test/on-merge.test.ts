@@ -103,6 +103,48 @@ describe("acting on a merge", () => {
     ]);
   });
 
+  it("finishes interrupted merges in the order it merged them, not the order they are listed", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    const merged = (feedbackSignal: string, module: string) => ({
+      project: "ledger",
+      aboutToMerge: {
+        pullRequest: module,
+        head: "c0ffee",
+        feedbackSignal,
+        work: { fromRole: "specification", module, verdict: "pass", impediments: [] },
+      },
+    });
+    const begun: EventLog = {
+      ...watchedLog,
+      read: async () => [merged("feedback/FB-2.md", "lexer"), merged("feedback/FB-1.md", "parser")],
+    };
+    const listed: Repository = {
+      feedbackSignals: async () => ["feedback/FB-1.md", "feedback/FB-2.md"],
+    };
+    await onMerge("ledger", listed, watchedBoard, begun);
+    expect(seen.posted.map((task) => task.module)).toEqual(["lexer", "parser"]);
+  });
+
+  it("never routes work it was about to merge but did not, whose signal is not on main", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    const begunOnly: EventLog = {
+      ...watchedLog,
+      read: async () => [
+        {
+          project: "ledger",
+          aboutToMerge: {
+            pullRequest: "7",
+            head: "c0ffee",
+            feedbackSignal: "feedback/FB-3.md",
+            work: { fromRole: "specification", module: "parser", verdict: "pass", impediments: [] },
+          },
+        },
+      ],
+    };
+    await onMerge("ledger", onMain(passedSpecification), watchedBoard, begunOnly);
+    expect(seen.posted).toEqual([]);
+  });
+
   it("alerts PDC coordinators of work that reached main without Divlab merging it", async () => {
     const { seen, watchedBoard, watchedLog } = watching();
     await onMerge("ledger", onMain(passedSpecification), watchedBoard, watchedLog);

@@ -8064,13 +8064,13 @@ async function onMerge(project2, repository, board, log) {
       (e) => "aboutToMerge" in e ? [[e.aboutToMerge.feedbackSignal, e]] : []
     )
   );
-  for (const path of await repository.feedbackSignals(project2)) {
-    if (finished.has(path)) continue;
-    const merge = begun.get(path);
-    if (merge) {
-      await acceptSignal(project2, path, merge.aboutToMerge.work, board, log);
-      continue;
-    }
+  const onMain = await repository.feedbackSignals(project2);
+  for (const [path, merge] of begun) {
+    if (finished.has(path) || !onMain.includes(path)) continue;
+    await acceptSignal(project2, path, merge.aboutToMerge.work, board, log);
+  }
+  for (const path of onMain) {
+    if (finished.has(path) || begun.has(path)) continue;
     const record = {
       project: project2,
       notAccepted: { feedbackSignal: path, reason: "it reached main without Divlab merging it" }

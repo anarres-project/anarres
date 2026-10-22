@@ -37,10 +37,25 @@ pushes that change only documents skip it. An event is appended in one request o
 been read. Each project is set up with the Actions policy that lets Divlab's pull request
 workflow, and no other, run on pull requests once GitHub blocks that event by default. The
 sandbox run's scenarios run in four workers: 11 minutes. Divlab's runs queue rather than being
-dropped when members submit at once. Next: interrupted merges finished in merge order, then
+dropped when members submit at once, and interrupted merges are finished in merge order. Next:
 section 0's remaining items.
 
 ---
+
+## 2026-10-22: Interrupted merges finished in merge order
+
+- When a run finds merges Divlab began but did not route, it finished them in the order the
+  feedback signals were listed (by name). It now follows Divlab's own records, in the order it
+  merged; the tripwire then takes whatever on main it has no record of.
+- With that, routing follows merge order everywhere: each merge is routed in the run that makes
+  it, runs queue one at a time, and anything left over is finished in recorded order.
+
+RED:      finishes interrupted merges in the order it merged them, not the order they are listed
+          -> expected [ 'parser', 'lexer' ] to deeply equal [ 'lexer', 'parser' ]
+GREEN:    (38 passed)
+REFACTOR: none
+Regression test, passed first time: never routes work it was about to merge but did not, whose
+          signal is not on main (keeps what the listing loop did; fails with the check removed)
 
 ## 2026-10-22: No Divlab run is dropped
 

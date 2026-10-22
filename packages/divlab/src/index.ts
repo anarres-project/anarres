@@ -167,14 +167,15 @@ export async function onMerge(
       "aboutToMerge" in e ? [[e.aboutToMerge.feedbackSignal, e] as const] : [],
     ),
   );
-  for (const path of await repository.feedbackSignals(project)) {
-    if (finished.has(path)) continue;
-    // Merged by Divlab, whose run stopped before routing it: finish from what Divlab recorded.
-    const merge = begun.get(path);
-    if (merge) {
-      await acceptSignal(project, path, merge.aboutToMerge.work, board, log);
-      continue;
-    }
+  const onMain = await repository.feedbackSignals(project);
+  // Merged by Divlab, whose run stopped before routing it: finish from what Divlab recorded, in
+  // the order it merged.
+  for (const [path, merge] of begun) {
+    if (finished.has(path) || !onMain.includes(path)) continue;
+    await acceptSignal(project, path, merge.aboutToMerge.work, board, log);
+  }
+  for (const path of onMain) {
+    if (finished.has(path) || begun.has(path)) continue;
     // Never read, let alone routed: whatever it says, it did not come through Divlab.
     const record: NotAccepted = {
       project,
