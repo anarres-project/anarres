@@ -73,8 +73,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         GitHub only once Divlab's run has finished;
   - [ ] GitHub's reading of the allowance used jumps between readings (2,141 then 726 a minute
         later, same window, 2026-10-22): find out why before relying on it more;
-  - [ ] appending an event costs one request, not a listing plus a write (the sequence number
-        can come from the log Divlab has just read).
+  - [x] appending an event costs one request once the log has been read, not a listing plus a
+        write; a number another run took since is found and skipped; a write GitHub fails is
+        not retried, so an event GitHub saved anyway is not recorded twice;
+  - [ ] the merge record (about to merge) is appended before any read, so it still lists the
+        log first: one read at the start of the run would cover it.
 
 ## 1. Routing (Divlab)
 

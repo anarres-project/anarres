@@ -26,10 +26,12 @@ const CONTENTS_LISTING_LIMIT = 1_000;
  */
 class FakeGitHub {
   readonly files = new Map<string, string>();
+  /** How many requests GitHub has been sent. */
+  requests = 0;
 
   constructor(
     events: number,
-    private readonly limits: { textsPerRequest?: number } = {},
+    private readonly limits: { textsPerRequest?: number; failWritesAfterSaving?: boolean } = {},
   ) {
     for (let n = 1; n <= events; n++) {
       const { path, content } = eventFile(event(n), n);
@@ -47,6 +49,7 @@ class FakeGitHub {
     path: string,
     body?: unknown,
   ): Promise<{ status: number; data: T }> => {
+    this.requests++;
     const answer = (status: number, data: unknown) => ({ status, data: data as T });
     const local = path.replace("repos/commons/ledger/", "");
     if (method === "GET" && local === "contents/events") {
@@ -92,6 +95,8 @@ class FakeGitHub {
       if (this.files.has(file)) return answer(422, { message: "sha wasn't supplied" });
       const { content } = body as { content: string };
       this.files.set(file, Buffer.from(content, "base64").toString("utf8"));
+      // A failure from GitHub does not show that it did not carry the request out.
+      if (this.limits.failWritesAfterSaving) return answer(502, undefined);
       return answer(201, {});
     }
     return answer(404, { message: `the fake does not answer ${method} ${path}` });
@@ -120,5 +125,46 @@ describe("a project's event log on GitHub", () => {
     const github = new FakeGitHub(CONTENTS_LISTING_LIMIT + 1);
     await adapterFor(github).append(event(CONTENTS_LISTING_LIMIT + 2));
     expect([...github.files.keys()].sort().at(-1)).toBe("events/001002.json");
+  });
+
+  it("records a new event in one request once the log has been read", async () => {
+    const github = new FakeGitHub(250);
+    const adapter = adapterFor(github);
+    await adapter.read("ledger");
+    const before = github.requests;
+    await adapter.append(event(251));
+    expect(github.requests - before).toBe(1);
+  });
+
+  it("numbers each event a run records after reading the log", async () => {
+    const github = new FakeGitHub(250);
+    const adapter = adapterFor(github);
+    await adapter.read("ledger");
+    await adapter.append(event(251));
+    await adapter.append(event(252));
+    expect(JSON.parse(github.files.get("events/000252.json") ?? "{}").work?.module).toBe(
+      "module-252",
+    );
+  });
+
+  it("gives a new event the next free number when another run has recorded one since", async () => {
+    const github = new FakeGitHub(250);
+    const adapter = adapterFor(github);
+    await adapter.read("ledger");
+    await adapterFor(github).append(event(251));
+    await adapter.append(event(252));
+    const modules = [...github.files.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-2)
+      .map(([, content]) => JSON.parse(content).work.module);
+    expect(modules).toEqual(["module-251", "module-252"]);
+  });
+
+  it("records an event once, when GitHub saves it but answers with a failure", async () => {
+    const github = new FakeGitHub(250, { failWritesAfterSaving: true });
+    const adapter = adapterFor(github);
+    await adapter.read("ledger");
+    await adapter.append(event(251)).catch(() => {});
+    expect(github.files.size).toBe(251);
   });
 });

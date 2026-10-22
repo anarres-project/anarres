@@ -32,11 +32,38 @@ protected. Signals must use plain names. Every scenario's work goes through a re
 the sandbox suite runs them all against the real Action (about 30 minutes), each from a fork in a
 second sandbox organisation playing the members, as real members' work will come. A project's event log is
 read whole past 1,000 events. Interrupted sandbox runs are swept up before the next. A sandbox run
-counts its requests (about 2,000) and does not start without room in GitHub's allowance. Next:
-appending an event in one request (section 0); before 2 December, the Actions policy that keeps
-`pull_request_target` working.
+counts its requests (about 2,000) and does not start without room in GitHub's allowance, and
+pushes that change only documents skip it. An event is appended in one request once the log has
+been read. Next: before 2 December, the Actions policy that keeps `pull_request_target` working;
+then section 0's remaining items.
 
 ---
+
+## 2026-10-22: Appending an event in one request
+
+- Each event cost three requests: two Git tree reads to count the log, then the write. Divlab
+  reads the log before almost every event it records, so the adapter now remembers how many
+  events it saw (and counts each one it writes) and numbers the next from that: one request.
+- Numbering still cannot collide: creating a file that exists fails (422), and then the log is
+  listed again and the next free number taken. Any other failure is not retried: GitHub may
+  have saved the file despite failing, and a retry would record the event twice.
+- The merge record is appended before Divlab reads the log, so it still lists first; on the test
+  list.
+
+RED:      records a new event in one request once the log has been read -> expected 3 to be 1
+GREEN:    (44 passed)
+RED:      numbers each event a run records after reading the log -> GitHub PUT …/000251.json
+          answered 422 (the second event took the first's number: an error from the fake's
+          GitHub, not an assertion, but the behaviour under test)
+GREEN:    (45 passed)
+RED:      gives a new event the next free number when another run has recorded one since
+          -> answered 422
+GREEN:    (46 passed)
+REFACTOR: the second write's failure reports GitHub's own answer, not a made-up 422
+RED:      records an event once, when GitHub saves it but answers with a failure
+          -> expected 252 to be 251
+GREEN:    (47 passed)
+REFACTOR: one helper creates the event's file and says whether its number was taken
 
 ## 2026-10-22: The sandbox run's request budget
 

@@ -43,6 +43,9 @@ export class GitHubAdapter
     private readonly options: { owner: string; token: string; app?: number; request?: Request },
   ) {}
 
+  /** How many events each project's log held when this run last read it. */
+  private readonly eventsRead = new Map<string, number>();
+
   async protectMain(project: string): Promise<void> {
     if (this.options.app === undefined) throw new Error("Protecting main needs Divlab's App");
     await this.call(
@@ -118,14 +121,37 @@ export class GitHubAdapter
     return data.filter((entry) => entry.type === "file").map((entry) => entry.path);
   }
 
+  /**
+   * Numbered from the log as this run last saw it, so recording an event is one request. Creating a
+   * file that already exists fails, so two runs cannot both take a number: when another run has
+   * taken it, the event is numbered from the log as it stands.
+   */
   async append(event: LogEvent): Promise<void> {
+    const seen = this.eventsRead.get(event.project);
+    if (seen !== undefined && (await this.createEvent(event, seen + 1)) === "created") return;
     const sequence = (await this.eventFiles(event.project)).length + 1;
+    if ((await this.createEvent(event, sequence)) === "taken") {
+      throw new GitHubError(
+        "PUT",
+        `event ${sequence}`,
+        NUMBER_TAKEN,
+        "another run took its number",
+      );
+    }
+  }
+
+  /** Creates the event's file, numbered `sequence`: "taken" if that file exists already. */
+  private async createEvent(event: LogEvent, sequence: number): Promise<"created" | "taken"> {
     const { path, content } = eventFile(event, sequence);
-    // Creating a file that already exists fails, so two runs cannot both take this number.
-    await this.call("PUT", `${this.repo(event.project)}/contents/${path}`, {
+    const put = `${this.repo(event.project)}/contents/${path}`;
+    const { status, data } = await this.request("PUT", put, {
       message: `Divlab: routing event ${sequence}`,
       content: Buffer.from(content).toString("base64"),
     });
+    if (status === NUMBER_TAKEN) return "taken";
+    if (status < 200 || status >= 300) throw new GitHubError("PUT", put, status, data);
+    this.eventsRead.set(event.project, sequence);
+    return "created";
   }
 
   /**
@@ -137,6 +163,7 @@ export class GitHubAdapter
    */
   async read(project: string): Promise<LogEvent[]> {
     const listed = await this.eventFiles(project);
+    this.eventsRead.set(project, listed.length);
     if (listed.length === 0) return [];
     for (let attempt = 1; ; attempt++) {
       const texts = new Map<string, string>();
@@ -307,6 +334,9 @@ type EventFile = { name: string; sha: string };
  * How many event files' text to ask GraphQL for at once. Asked for 1,001 in one request, GitHub
  * failed (sandbox, 2026-10-22); where it starts failing is not known, so this stays cautious.
  */
+/** GitHub's answer to creating a file that exists already: another run took the event's number. */
+const NUMBER_TAKEN = 422;
+
 const TEXTS_PER_REQUEST = 100;
 
 /** How many times to ask GraphQL for a log that has caught up with its files, a second apart. */

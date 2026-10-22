@@ -7737,6 +7737,8 @@ var GitHubAdapter = class {
     this.options = options;
   }
   options;
+  /** How many events each project's log held when this run last read it. */
+  eventsRead = /* @__PURE__ */ new Map();
   async protectMain(project2) {
     if (this.options.app === void 0) throw new Error("Protecting main needs Divlab's App");
     await this.call(
@@ -7801,13 +7803,36 @@ var GitHubAdapter = class {
     if (status !== 200) throw new GitHubError("GET", "feedback", status, data);
     return data.filter((entry) => entry.type === "file").map((entry) => entry.path);
   }
+  /**
+   * Numbered from the log as this run last saw it, so recording an event is one request. Creating a
+   * file that already exists fails, so two runs cannot both take a number: when another run has
+   * taken it, the event is numbered from the log as it stands.
+   */
   async append(event) {
+    const seen = this.eventsRead.get(event.project);
+    if (seen !== void 0 && await this.createEvent(event, seen + 1) === "created") return;
     const sequence = (await this.eventFiles(event.project)).length + 1;
+    if (await this.createEvent(event, sequence) === "taken") {
+      throw new GitHubError(
+        "PUT",
+        `event ${sequence}`,
+        NUMBER_TAKEN,
+        "another run took its number"
+      );
+    }
+  }
+  /** Creates the event's file, numbered `sequence`: "taken" if that file exists already. */
+  async createEvent(event, sequence) {
     const { path, content } = eventFile(event, sequence);
-    await this.call("PUT", `${this.repo(event.project)}/contents/${path}`, {
+    const put = `${this.repo(event.project)}/contents/${path}`;
+    const { status, data } = await this.request("PUT", put, {
       message: `Divlab: routing event ${sequence}`,
       content: Buffer.from(content).toString("base64")
     });
+    if (status === NUMBER_TAKEN) return "taken";
+    if (status < 200 || status >= 300) throw new GitHubError("PUT", put, status, data);
+    this.eventsRead.set(event.project, sequence);
+    return "created";
   }
   /**
    * The whole event log. The files are listed with the REST API, which reflects writes at once,
@@ -7818,6 +7843,7 @@ var GitHubAdapter = class {
    */
   async read(project2) {
     const listed = await this.eventFiles(project2);
+    this.eventsRead.set(project2, listed.length);
     if (listed.length === 0) return [];
     for (let attempt = 1; ; attempt++) {
       const texts = /* @__PURE__ */ new Map();
@@ -7946,6 +7972,7 @@ var GitHubAdapter = class {
   }
 };
 var EVENT_FILE = /^\d{6}\.json$/;
+var NUMBER_TAKEN = 422;
 var TEXTS_PER_REQUEST = 100;
 var LOG_ATTEMPTS = 10;
 var GitHubError = class extends Error {
