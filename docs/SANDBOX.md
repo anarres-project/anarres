@@ -14,7 +14,9 @@ decisions [0004](decisions/0004-divlab-as-an-action.md) and
 ## When it runs
 
 - In CI, on every push to `main` (`.github/workflows/sandbox.yml`), one run at a time. A run waiting
-  its turn is replaced by a newer one, so only the latest commit is always checked.
+  its turn is replaced by a newer one, so only the latest commit is always checked. A push that
+  changes only documents (`docs/`, or the Markdown files at the top of the repository) does not
+  start a run: the run reads none of them, and it would spend part of GitHub's allowance (below).
 - Locally, on demand: `npm run test:acceptance:sandbox`. It reads the sandbox's name and token
   from a git-ignored `.env`. Divlab runs at your checked-out commit, so push it first.
 

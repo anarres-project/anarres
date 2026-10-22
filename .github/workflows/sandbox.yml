@@ -1,10 +1,15 @@
 name: Sandbox acceptance
 
 # The acceptance scenarios against real repositories in the GitHub sandbox organisation.
-# Slower than the gate, so not part of it: runs on main and on demand.
+# Slower than the gate, so not part of it: runs on main and on demand. A push that changes only
+# documents is skipped: the run reads none of them, and each run spends about 2,000 of the
+# hourly allowance of GitHub requests (SANDBOX.md).
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
   workflow_dispatch:
 
 permissions:
