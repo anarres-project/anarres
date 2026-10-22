@@ -130,15 +130,19 @@ export interface EventLog {
   read(project: string): Promise<LogEvent[]>;
 }
 
+/**
+ * `events`: the project's log as this run read it. Runs for a project go one at a time, so only
+ * this run writes to it meanwhile; what it records is added, for any work it routes next.
+ */
 async function onWorkAccepted(
   event: WorkAccepted,
   board: TaskBoard,
   log: EventLog,
   clock: Clock,
+  events: LogEvent[],
 ): Promise<void> {
   const { project, task, ...work } = event;
-  const history = routingDecisions(await log.read(project));
-  const record = routingRecord(work, history);
+  const record = routingRecord(work, routingDecisions(events));
   const decided: RoutingEvent = {
     project,
     decidedAt: clock().toISOString(),
@@ -146,6 +150,7 @@ async function onWorkAccepted(
     ...record,
   };
   await log.append(decided);
+  events.push(decided);
   await actOn(decided, board, log);
 }
 
@@ -175,6 +180,7 @@ async function acceptSignal(
   board: TaskBoard,
   log: EventLog,
   clock: Clock,
+  events: LogEvent[],
 ): Promise<void> {
   const { task, ...work } = signal;
   // Research work goes back to the role its task was for, as Divlab recorded on the task.
@@ -191,6 +197,7 @@ async function acceptSignal(
     board,
     log,
     clock,
+    events,
   );
 }
 
@@ -231,7 +238,7 @@ export async function onMerge(
   // the order it merged.
   for (const [path, merge] of begun) {
     if (finished.has(path) || !onMain.includes(path)) continue;
-    await acceptSignal(project, path, merge.aboutToMerge.work, board, log, clock);
+    await acceptSignal(project, path, merge.aboutToMerge.work, board, log, clock, events);
   }
   for (const path of onMain) {
     if (finished.has(path) || begun.has(path)) continue;
@@ -277,13 +284,14 @@ export async function onPullRequest(
     await pullRequests.refuse(project, pullRequest, cannotRead(feedback.path, signal));
     return;
   }
+  const events = await log.read(project);
   await log.append({
     project,
     decidedAt: clock().toISOString(),
     aboutToMerge: { pullRequest, head, feedbackSignal: feedback.path, work: signal },
   });
   await pullRequests.merge(project, pullRequest, head);
-  await acceptSignal(project, feedback.path, signal, board, log, clock);
+  await acceptSignal(project, feedback.path, signal, board, log, clock, events);
 }
 
 /** Project repositories as Divlab sets them up. */

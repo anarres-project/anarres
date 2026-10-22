@@ -89,8 +89,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] appending an event costs one request once the log has been read, not a listing plus a
         write; a number another run took since is found and skipped; a write GitHub fails is
         not retried, so an event GitHub saved anyway is not recorded twice;
-  - [ ] the merge record (about to merge) is appended before any read, so it still lists the
-        log first: one read at the start of the run would cover it.
+  - [x] the merge record (about to merge) was appended before any read, so it listed the log
+        first: a pull request's run now reads the log once, first, and routing reuses it.
 
 - [x] **Safety:** a feedback signal's file name is text the member chose, and Divlab writes it
       into issues; it must be plainly named (letters, digits and hyphens, directly in

@@ -39,9 +39,32 @@ workflow, and no other, run on pull requests once GitHub blocks that event by de
 sandbox run's scenarios run in four workers: 11 minutes. Divlab's runs queue rather than being
 dropped when members submit at once, and interrupted merges are finished in merge order. Routing
 and merge records are read back through core. Section 0 is done but for the log's read cost
-(deferred). Routing decisions record when Divlab made them. Next: section 1's open items.
+(deferred). Every event records when Divlab made it; a decision recorded is acted on once, and
+its task closed, even if a run stops between; a feedback signal's file must be plainly named; a
+pull request's run reads the log once. Next: section 2, claiming and leases.
 
 ---
+
+## 2026-10-22: One read of the log per pull request
+
+- Divlab wrote its merge record before reading the log, so the adapter listed the log to number
+  it (two requests more), and routing read the whole log again after. A pull request's run now
+  reads the log once, before recording anything, and routing reuses that history, adding each
+  decision it records. Runs for a project go one at a time, so nothing else writes meanwhile.
+- Slip: the line adding each decision to the run's history was written before a test asked for
+  it; the test that does (two interrupted merges, the second escalating) passed first time and
+  fails with the line taken out. Its first version named the impediment wrongly and failed for
+  that reason, not the behaviour.
+
+RED:      reads the project's log before recording anything, so each record costs one request
+          -> expected 'append' to be 'read'
+GREEN:    (53 passed)
+RED:      reads the project's log once for a pull request, however much it records -> expected 2
+          to be 1
+GREEN:    (54 passed)
+Passed first time: counts the decisions it records in a run when routing the next work in that
+          run (see the slip)
+REFACTOR: none
 
 ## 2026-10-22: The allowance checked for each scenario
 

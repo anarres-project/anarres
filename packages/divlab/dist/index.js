@@ -8093,10 +8093,9 @@ var signalOf = (event) => {
   if ("actedOn" in event) return event.actedOn.feedbackSignal;
   return event.notAccepted.feedbackSignal;
 };
-async function onWorkAccepted(event, board, log, clock) {
+async function onWorkAccepted(event, board, log, clock, events) {
   const { project: project2, task, ...work } = event;
-  const history = routingDecisions(await log.read(project2));
-  const record = routingRecord(work, history);
+  const record = routingRecord(work, routingDecisions(events));
   const decided = {
     project: project2,
     decidedAt: clock().toISOString(),
@@ -8104,6 +8103,7 @@ async function onWorkAccepted(event, board, log, clock) {
     ...record
   };
   await log.append(decided);
+  events.push(decided);
   await actOn(decided, board, log);
 }
 async function actOn(event, board, log) {
@@ -8120,7 +8120,7 @@ async function actOn(event, board, log) {
   await recordActing(event, log);
 }
 var recordActing = ({ project: project2, work }, log) => log.append({ project: project2, actedOn: { feedbackSignal: work.feedbackSignal } });
-async function acceptSignal(project2, path, signal, board, log, clock) {
+async function acceptSignal(project2, path, signal, board, log, clock, events) {
   const { task, ...work } = signal;
   const researchFor = task === void 0 ? void 0 : (await board.task(project2, task))?.researchFor;
   await onWorkAccepted(
@@ -8133,7 +8133,8 @@ async function acceptSignal(project2, path, signal, board, log, clock) {
     },
     board,
     log,
-    clock
+    clock,
+    events
   );
 }
 var cannotRead = (path, { unreadable }) => `The feedback signal ${path} cannot be read: ${unreadable}`;
@@ -8159,7 +8160,7 @@ async function onMerge(project2, repository, board, log, clock) {
   const onMain = await repository.feedbackSignals(project2);
   for (const [path, merge] of begun) {
     if (finished.has(path) || !onMain.includes(path)) continue;
-    await acceptSignal(project2, path, merge.aboutToMerge.work, board, log, clock);
+    await acceptSignal(project2, path, merge.aboutToMerge.work, board, log, clock, events);
   }
   for (const path of onMain) {
     if (finished.has(path) || begun.has(path)) continue;
@@ -8194,13 +8195,14 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     await pullRequests.refuse(project2, pullRequest, cannotRead(feedback.path, signal));
     return;
   }
+  const events = await log.read(project2);
   await log.append({
     project: project2,
     decidedAt: clock().toISOString(),
     aboutToMerge: { pullRequest, head, feedbackSignal: feedback.path, work: signal }
   });
   await pullRequests.merge(project2, pullRequest, head);
-  await acceptSignal(project2, feedback.path, signal, board, log, clock);
+  await acceptSignal(project2, feedback.path, signal, board, log, clock, events);
 }
 async function checkProtection(project2, repositories, board) {
   if (await repositories.mainIsProtected(project2)) return;

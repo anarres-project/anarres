@@ -129,6 +129,62 @@ describe("acting on a merge", () => {
     expect(seen.posted.map((task) => task.module)).toEqual(["lexer", "parser"]);
   });
 
+  it("counts the decisions it records in a run when routing the next work in that run", async () => {
+    const alerts: unknown[] = [];
+    const codingFails = (n: number) => ({
+      fromRole: "coding",
+      module: "parser",
+      verdict: "fail",
+      impediments: [{ type: "test_failures" }],
+      feedbackSignal: `feedback/FB-${n}.md`,
+    });
+    const sentBack = (n: number) => ({
+      project: "ledger",
+      work: codingFails(n),
+      decision: {
+        tasks: [
+          { role: "coding" as const, module: "parser", feedbackSignal: `feedback/FB-${n}.md` },
+        ],
+      },
+      reason: { rule: "reported" as const, impediment: "test_failures" },
+    });
+    const begun = (n: number) => {
+      const { feedbackSignal, ...work } = codingFails(n);
+      return {
+        project: "ledger",
+        aboutToMerge: { pullRequest: String(n), head: "c0ffee", feedbackSignal, work },
+      };
+    };
+    const twoInterrupted: EventLog = {
+      read: async () => [
+        sentBack(1),
+        { project: "ledger", actedOn: { feedbackSignal: "feedback/FB-1.md" } },
+        sentBack(2),
+        { project: "ledger", actedOn: { feedbackSignal: "feedback/FB-2.md" } },
+        begun(3),
+        begun(4),
+      ],
+      append: async () => {},
+    };
+    const onMainNow: Repository = {
+      feedbackSignals: async () => [
+        "feedback/FB-1.md",
+        "feedback/FB-2.md",
+        "feedback/FB-3.md",
+        "feedback/FB-4.md",
+      ],
+    };
+    const alerting: TaskBoard = {
+      ...board,
+      post: async () => {},
+      alertCoordinators: async (alert) => {
+        alerts.push(alert.reason);
+      },
+    };
+    await onMerge("ledger", onMainNow, alerting, twoInterrupted, clock);
+    expect(alerts).toEqual([{ rule: "re_run_limit", role: "coding" }]);
+  });
+
   it("never routes work it was about to merge but did not, whose signal is not on main", async () => {
     const { seen, watchedBoard, watchedLog } = watching();
     const begunOnly: EventLog = {
@@ -618,6 +674,48 @@ describe("acting on a pull request", () => {
       "posted test",
       { project: "ledger", actedOn: { feedbackSignal: "feedback/FB-1.md" } },
     ]);
+  });
+
+  it("reads the project's log before recording anything, so each record costs one request", async () => {
+    const calls: string[] = [];
+    const recording: EventLog = {
+      read: async () => {
+        calls.push("read");
+        return [];
+      },
+      append: async () => {
+        calls.push("append");
+      },
+    };
+    await onPullRequest(
+      "ledger",
+      "7",
+      submitting(),
+      { ...board, post: async () => {} },
+      recording,
+      clock,
+    );
+    expect(calls[0]).toBe("read");
+  });
+
+  it("reads the project's log once for a pull request, however much it records", async () => {
+    let reads = 0;
+    const counting: EventLog = {
+      read: async () => {
+        reads += 1;
+        return [];
+      },
+      append: async () => {},
+    };
+    await onPullRequest(
+      "ledger",
+      "7",
+      submitting(),
+      { ...board, post: async () => {} },
+      counting,
+      clock,
+    );
+    expect(reads).toBe(1);
   });
 
   it("records that it is about to merge, with the work, before it merges", async () => {
