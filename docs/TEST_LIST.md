@@ -61,9 +61,18 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         makes, never one a live run may still be using;
   - [x] the adapter retries when GitHub rate-limits it (`retry-after`), so a busy sandbox run
         slows down instead of failing; reads also retry a failing gateway or dropped connection;
-  - [ ] the sandbox run stays inside one token's hourly allowance (5,000 requests) with room to
-        spare: measure it, and fail loudly before the limit rather than time out on it. Explain
-        the "API rate limit exceeded" refusal of 2026-10-13, which came with allowance left;
+  - [x] the sandbox run stays inside the hourly allowance (5,000 requests) with room to spare:
+        measured (a full run, 1,804 REST and 206 GraphQL requests, in CI on 2026-10-22), and a
+        run does not start when GitHub reports too little left, saying when it resets. The
+        allowance is counted per person, not per token, which most likely explains the refusal
+        of 2026-10-13 (another loop was using the same account);
+  - [ ] a run that GitHub refuses partway (the allowance spent by something else meanwhile)
+        fails at once, saying so, rather than waiting out the reset until a step times out;
+  - [ ] the sandbox driver's waiting costs most of a run's requests (checking pull requests
+        while Divlab decides, issue lists while GitHub catches up): poll less often, or ask
+        GitHub only once Divlab's run has finished;
+  - [ ] GitHub's reading of the allowance used jumps between readings (2,141 then 726 a minute
+        later, same window, 2026-10-22): find out why before relying on it more;
   - [ ] appending an event costs one request, not a listing plus a write (the sequence number
         can come from the log Divlab has just read).
 

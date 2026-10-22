@@ -45,10 +45,11 @@ export class AnarresWorld extends World {
 
 setWorldConstructor(AnarresWorld);
 
-// Repositories an interrupted run left behind go first.
+// A run starts only if GitHub's allowance has room for it; then repositories an interrupted run
+// left behind go.
 BeforeAll(async () => {
   if (!sandbox) return;
-  console.log(`GitHub allowance at the start: ${await SandboxDriver.allowance()}`);
+  await SandboxDriver.checkAllowance();
   await SandboxDriver.sweep();
 });
 
@@ -60,5 +61,5 @@ AfterAll(async () => {
   // What the run cost, so its budget can be watched (the driver's requests; Divlab's runs act as
   // its App, which has an allowance of its own).
   console.log(SandboxDriver.requestsMade().join("\n"));
-  console.log(`GitHub allowance at the end: ${await SandboxDriver.allowance()}`);
+  await SandboxDriver.allowance();
 });

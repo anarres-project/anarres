@@ -23,6 +23,7 @@ import {
   roleNameOf,
   signalName,
 } from "../scenario-words.ts";
+import { shortfall } from "./allowance.ts";
 import { GitHubApi } from "./github-api.ts";
 import { countedRequest, summary, tally } from "./request-tally.ts";
 import { leftBehind } from "./sweep.ts";
@@ -451,14 +452,24 @@ export class SandboxDriver implements Driver {
    * token: the sandbox's two tokens, and anything else acting as the same person, share it.
    * Asking costs nothing.
    */
-  static async allowance(): Promise<string> {
+  static async allowance(): Promise<{ used: number; limit: number; reset: number }> {
     const { token } = sandboxSettings();
     const { data } = await requestGitHub<{
       resources: Record<"core" | "graphql", { used: number; limit: number; reset: number }>;
     }>(token, "GET", "rate_limit");
     const { core, graphql } = data.resources;
     const resets = new Date(core.reset * 1000).toISOString().slice(11, 16);
-    return `REST ${core.used} of ${core.limit} used (resets ${resets} UTC); GraphQL ${graphql.used} of ${graphql.limit}`;
+    console.log(
+      `GitHub allowance: REST ${core.used} of ${core.limit} used (resets ${resets} UTC); ` +
+        `GraphQL ${graphql.used} of ${graphql.limit}`,
+    );
+    return core;
+  }
+
+  /** Stops the run before it starts if GitHub's allowance has no room for it. */
+  static async checkAllowance(): Promise<void> {
+    const why = shortfall(await SandboxDriver.allowance(), REQUESTS_A_RUN_NEEDS, Date.now());
+    if (why) throw new Error(why);
   }
 
   /** What this run asked of GitHub, as the driver counted it. */
@@ -548,6 +559,12 @@ type WorkflowRun = {
   html_url: string;
   created_at: string;
 };
+
+/**
+ * The REST requests a sandbox run needs, with room to spare: a full run made 1,804 (and 206
+ * GraphQL, counted separately), in CI on 2026-10-22.
+ */
+const REQUESTS_A_RUN_NEEDS = 2_500;
 
 /** How long Divlab may take to decide on a pull request, within a step's timeout. */
 const RUN_FINISH_LIMIT = 240_000;

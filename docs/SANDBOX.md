@@ -99,6 +99,16 @@ every such scenario, so none is forgotten. The tag goes once the scenario passes
 
 The test list (`docs/TEST_LIST.md`) tracks each of these.
 
+## GitHub's allowance
+
+GitHub allows 5,000 REST requests an hour, counted per person, not per token: the sandbox's two
+tokens share it with anything else acting as the same person (the `gh` command, other scripts). A
+full run makes about 1,800 REST requests and 200 GraphQL ones (2026-10-22); Divlab's own runs act
+as its App, which has an allowance of its own. Each run prints what it asked of GitHub, by kind,
+and the allowance at its start and end. A run does not start when GitHub reports too little
+left: it fails at once, saying when the allowance resets. Keep anything that polls GitHub as the
+same person, such as watching a CI run, gentle while a run is going.
+
 ## Reading a failure
 
 - **A failed step names the Divlab run.** Open its link: the Divlab step's error is Divlab's own

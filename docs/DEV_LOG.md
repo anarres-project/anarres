@@ -31,11 +31,48 @@ routed; an interrupted merge is finished from Divlab's record); every run checks
 protected. Signals must use plain names. Every scenario's work goes through a real pull request;
 the sandbox suite runs them all against the real Action (about 30 minutes), each from a fork in a
 second sandbox organisation playing the members, as real members' work will come. A project's event log is
-read whole past 1,000 events. Interrupted sandbox runs are swept up before the next. Next: the
-sandbox run's request budget (section 0); before 2 December, the Actions policy that keeps
+read whole past 1,000 events. Interrupted sandbox runs are swept up before the next. A sandbox run
+counts its requests (about 2,000) and does not start without room in GitHub's allowance. Next:
+appending an event in one request (section 0); before 2 December, the Actions policy that keeps
 `pull_request_target` working.
 
 ---
+
+## 2026-10-22: The sandbox run's request budget
+
+- GitHub's hourly allowance is counted per person, not per token: the sandbox token, the
+  members' token and Bernard's own `gh` showed the same use. My CI watcher (`gh run watch`, every
+  3 seconds, about 1,200 requests an hour) was spending it; I now check every two minutes. A
+  loop sharing the account most likely explains the refusal of 2026-10-13.
+- The driver counts every request it makes, by kind (pure helpers, unit tested), and prints the
+  tally and the allowance at the start and end of each run. A full run in CI (1f31b64): 2,010
+  requests in 36½ minutes, 1,804 of them REST; most are waiting (502 pull request checks, 423
+  issue lists, 313 Git tree reads of the event log). Divlab's runs act as its App, on an
+  allowance of their own.
+- GitHub's reading of the allowance used is not steady: in one window it went 736 to 697 across a
+  full run, and 2,141 to 726 within a minute. The count is the driver's own; the reading is kept
+  only as what GitHub says, since that is what it refuses on.
+- Before a run starts, the driver checks the reading against 2,500 REST requests (the measured
+  run with room to spare) and fails at once, saying when the allowance resets.
+- Both CI sandbox runs passed, 63 of 63: the event log fix against real GitHub, and the run
+  above.
+
+RED:      the kind of request is its method and what it asks for, without the repository
+          -> Cannot find module (then the stub) -> expected '' to be 'GET issues'
+GREEN:    (1 passed)
+RED:      requests about different issues or runs are one kind -> 'GET actions/runs/39747493613/jobs'
+GREEN:    (2 passed)
+RED:      requests about different files or commits are one kind -> 'PUT contents/feedback/…'
+GREEN:    (3 passed)
+RED:      the total, then each kind, most made first -> expected [] (the stub was written in the
+          same step as the test: the same slip as the sweep's, again)
+GREEN:    (4 passed)
+RED:      too little allowance, saying when it resets -> Cannot find module (then the stub)
+          -> expected undefined
+GREEN:    (1 passed)
+RED:      enough when more is left than a run needs -> expected '…has 2000 r…' to be undefined
+GREEN:    (2 passed)
+REFACTOR: comments; the allowance reading returned for the check
 
 ## 2026-10-22: The sandbox sweep
 
