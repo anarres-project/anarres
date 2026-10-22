@@ -7,7 +7,7 @@ import {
   setUpProject,
   signalOf,
 } from "@anarres/divlab";
-import { GitHubAdapter } from "@anarres/github";
+import { GitHubAdapter, requestGitHub } from "@anarres/github";
 import type {
   AcceptedWork,
   CoordinatorAlert,
@@ -24,6 +24,7 @@ import {
   signalName,
 } from "../scenario-words.ts";
 import { GitHubApi } from "./github-api.ts";
+import { countedRequest, summary, tally } from "./request-tally.ts";
 import { leftBehind } from "./sweep.ts";
 
 /** The two sandbox organisations and their tokens, from `.env` locally or the CI environment. */
@@ -68,7 +69,7 @@ export class SandboxDriver implements Driver {
     this.org = org;
     this.token = token;
     this.github = new GitHubApi(token);
-    this.divlab = new GitHubAdapter({ owner: org, token });
+    this.divlab = new GitHubAdapter({ owner: org, token, request: countedRequest });
     this.membersOrg = membersOrg;
     this.members = new GitHubApi(membersToken);
   }
@@ -100,7 +101,12 @@ export class SandboxDriver implements Driver {
       );
     }
     // Set up as a project is, once the workflows are in: from now on only Divlab changes main.
-    const divlab = new GitHubAdapter({ owner: this.org, token: this.token, app: DIVLAB_APP_ID });
+    const divlab = new GitHubAdapter({
+      owner: this.org,
+      token: this.token,
+      app: DIVLAB_APP_ID,
+      request: countedRequest,
+    });
     if (!options.unprotected) await setUpProject(project, divlab);
     run.expected.set(project, { ready: 0, escalation: 0, done: 0, notAccepted: 0 });
   }
@@ -438,6 +444,26 @@ export class SandboxDriver implements Driver {
         console.log(`Swept ${owner}/${name}, left behind by an interrupted run`);
       }
     }
+  }
+
+  /**
+   * How much of the hourly allowance the sandbox has used. GitHub counts it per person, not per
+   * token: the sandbox's two tokens, and anything else acting as the same person, share it.
+   * Asking costs nothing.
+   */
+  static async allowance(): Promise<string> {
+    const { token } = sandboxSettings();
+    const { data } = await requestGitHub<{
+      resources: Record<"core" | "graphql", { used: number; limit: number; reset: number }>;
+    }>(token, "GET", "rate_limit");
+    const { core, graphql } = data.resources;
+    const resets = new Date(core.reset * 1000).toISOString().slice(11, 16);
+    return `REST ${core.used} of ${core.limit} used (resets ${resets} UTC); GraphQL ${graphql.used} of ${graphql.limit}`;
+  }
+
+  /** What this run asked of GitHub, as the driver counted it. */
+  static requestsMade(): string[] {
+    return summary(tally);
   }
 
   /** Deletes the repositories this run created. */

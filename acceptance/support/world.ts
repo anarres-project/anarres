@@ -47,11 +47,18 @@ setWorldConstructor(AnarresWorld);
 
 // Repositories an interrupted run left behind go first.
 BeforeAll(async () => {
-  if (sandbox) await SandboxDriver.sweep();
+  if (!sandbox) return;
+  console.log(`GitHub allowance at the start: ${await SandboxDriver.allowance()}`);
+  await SandboxDriver.sweep();
 });
 
 // ANARRES_SANDBOX_KEEP=1 leaves the run's repository in the sandbox to inspect, until a run an
 // hour or more later sweeps it.
 AfterAll(async () => {
-  if (sandbox && process.env.ANARRES_SANDBOX_KEEP !== "1") await SandboxDriver.disposeRun();
+  if (!sandbox) return;
+  if (process.env.ANARRES_SANDBOX_KEEP !== "1") await SandboxDriver.disposeRun();
+  // What the run cost, so its budget can be watched (the driver's requests; Divlab's runs act as
+  // its App, which has an allowance of its own).
+  console.log(SandboxDriver.requestsMade().join("\n"));
+  console.log(`GitHub allowance at the end: ${await SandboxDriver.allowance()}`);
 });

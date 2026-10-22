@@ -1,11 +1,11 @@
-import { requestGitHub } from "@anarres/github";
+import { countedRequest } from "./request-tally.ts";
 
 /** The few GitHub REST calls the sandbox driver makes to see what members would see. */
 export class GitHubApi {
   constructor(private readonly token: string) {}
 
   request<T>(method: string, path: string, body?: unknown, options?: { repeatable?: boolean }) {
-    return requestGitHub<T>(this.token, method, path, body, options);
+    return countedRequest<T>(this.token, method, path, body, options);
   }
 
   /** Like `request`, but any status outside 2xx is an error. */
