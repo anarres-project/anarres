@@ -21,6 +21,7 @@ import {
   type ListedIssue,
   logFrom,
   type NewIssue,
+  policyAllowingDivlabChecks,
   protectsMain,
   rulesetProtectingMain,
   taskFromIssue,
@@ -53,6 +54,10 @@ export class GitHubAdapter
       `${this.repo(project)}/rulesets`,
       rulesetProtectingMain(this.options.app),
     );
+  }
+
+  async allowDivlabChecks(project: string): Promise<void> {
+    await this.call("POST", `${this.repo(project)}/actions/policies`, policyAllowingDivlabChecks());
   }
 
   async post(task: PostedTask): Promise<void> {

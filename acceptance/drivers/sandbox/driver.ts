@@ -204,6 +204,28 @@ export class SandboxDriver implements Driver {
     return status >= 200 && status < 300;
   }
 
+  /** The workflows the project's active Actions policies allow to run on pull requests. */
+  async pullRequestChecks(project: string): Promise<string[]> {
+    const { policies } = await this.github.call<{ policies: { id: number }[] }>(
+      "GET",
+      `repos/${this.org}/${project}/actions/policies`,
+    );
+    const allowed: string[] = [];
+    for (const { id } of policies) {
+      const policy = await this.github.call<ActionsPolicy>(
+        "GET",
+        `repos/${this.org}/${project}/actions/policies/${id}`,
+      );
+      const events = policy.rules.find((rule) => rule.type === "restrict_action_events");
+      if (policy.enforcement !== "active") continue;
+      if (!events?.parameters.allowed_events?.includes("pull_request_target")) continue;
+      for (const path of policy.conditions?.workflow_path?.include ?? ["~ALL"]) {
+        allowed.push(path === DIVLAB_PULL_REQUEST_WORKFLOW ? "Divlab" : path);
+      }
+    }
+    return allowed;
+  }
+
   /** Written straight to main, which only an unprotected project allows; the push wakes Divlab. */
   async mergeDirectly(work: AcceptedWork): Promise<void> {
     const { path, text } = feedbackSignalFile(work);
@@ -533,6 +555,16 @@ const DIVLAB_APP_ID = 5414648;
 
 /** The project template's workflows: one for members' pull requests, one for pushes to main. */
 const TEMPLATE_WORKFLOWS = ["anarres.yml", "divlab-pull-request.yml"];
+
+/** Where Divlab's pull request workflow lives in a project repository. */
+const DIVLAB_PULL_REQUEST_WORKFLOW = ".github/workflows/divlab-pull-request.yml";
+
+/** A repository's Actions policy, as GitHub describes it. */
+type ActionsPolicy = {
+  enforcement: string;
+  conditions?: { workflow_path?: { include?: string[] } };
+  rules: { type: string; parameters: { allowed_events?: string[] } }[];
+};
 
 /**
  * One of the project template's workflows, using Divlab as it is at the commit under test (decision 0004):

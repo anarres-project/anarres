@@ -10,6 +10,7 @@ function project(protectedMain: boolean, alertOpen = false) {
   const alerts: string[] = [];
   const repositories: ProjectRepositories = {
     protectMain: untouched,
+    allowDivlabChecks: untouched,
     mainIsProtected: async () => protectedMain,
   };
   const board: TaskBoard = {

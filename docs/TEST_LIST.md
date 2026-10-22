@@ -203,11 +203,17 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the ruleset: every sandbox repository is set up with it.
 - [x] Members' pull requests come from forks; the sandbox driver submits from a fork too, in a
       second sandbox organisation playing the members (Bernard, 2026-10-22).
-- [ ] **Before 2 December 2026:** GitHub will then restrict `pull_request_target` on public
-      repositories unless an organisation's Actions policy allows it. Divlab's pull request
-      workflow depends on it, so `anarres-sandbox` and `anarres-project` each need that policy,
-      kept as narrow as GitHub allows; record the setting in CONTRIBUTING and decision 0006, and
-      confirm with a sandbox run.
+- [x] **Before 2 December 2026** (GitHub's reference page still says 2 November): GitHub then
+      blocks `pull_request_target` on public repositories unless an Actions policy allows it.
+      `setUpProject` gives each project a repository policy allowing it for Divlab's pull request
+      workflow only (an organisation policy is not enforced on GitHub Free; a repository policy
+      is, probed 2026-10-22). Not checked on every run: reading the policy needs administration
+      access, which Divlab's App does not hold (Bernard, 2026-10-22); without it Divlab stops
+      rather than merging anything unchecked.
+- [ ] Projects set up before this change (none outside the sandbox yet) need the policy added
+      before 2 November.
+- [ ] The sandbox job's 45-minute limit is close (39 and 41½ minutes on 2026-10-22): poll less,
+      or wait less, before raising it.
 - [x] A project's main branch admits changes only from Divlab's App; no person is exempt
       (`setUpProject` applies the ruleset; the sandbox refused an administrator's direct change
       while Divlab still merged and recorded, 2026-10-21).

@@ -7647,6 +7647,18 @@ function rulesetProtectingMain(app) {
     bypass_actors: [{ actor_id: app, actor_type: "Integration", bypass_mode: "always" }]
   };
 }
+function policyAllowingDivlabChecks() {
+  return {
+    name: "Only Divlab checks pull requests",
+    enforcement: "active",
+    conditions: {
+      workflow_path: { include: [".github/workflows/divlab-pull-request.yml"], exclude: [] }
+    },
+    rules: [
+      { type: "restrict_action_events", parameters: { allowed_events: ["pull_request_target"] } }
+    ]
+  };
+}
 function issueForNotAccepted({ notAccepted }) {
   return {
     title: "Escalation: work reached main without Divlab merging it",
@@ -7746,6 +7758,9 @@ var GitHubAdapter = class {
       `${this.repo(project2)}/rulesets`,
       rulesetProtectingMain(this.options.app)
     );
+  }
+  async allowDivlabChecks(project2) {
+    await this.call("POST", `${this.repo(project2)}/actions/policies`, policyAllowingDivlabChecks());
   }
   async post(task) {
     await this.openIssue(task.project, issueForTask(task));

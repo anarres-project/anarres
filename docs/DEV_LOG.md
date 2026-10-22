@@ -34,10 +34,37 @@ second sandbox organisation playing the members, as real members' work will come
 read whole past 1,000 events. Interrupted sandbox runs are swept up before the next. A sandbox run
 counts its requests (about 2,000) and does not start without room in GitHub's allowance, and
 pushes that change only documents skip it. An event is appended in one request once the log has
-been read. Next: before 2 December, the Actions policy that keeps `pull_request_target` working;
-then section 0's remaining items.
+been read. Each project is set up with the Actions policy that lets Divlab's pull request
+workflow, and no other, run on pull requests once GitHub blocks that event by default. Next: the
+sandbox job's time limit, then section 0's remaining items.
 
 ---
+
+## 2026-10-22: Divlab may check members' pull requests
+
+- GitHub blocks `pull_request_target` on public repositories from 2 December 2026 (changelog,
+  revised 21 October; a reference page still says 2 November) unless an Actions policy allows
+  it. Bernard made an organisation policy in `anarres-sandbox`; GitHub warns that organisation
+  policies are not enforced on the Free plan, and its insights need Enterprise.
+- Probes in the sandbox: a repository policy can be made with the API on Free, and is enforced
+  (a workflow outside its allowed events failed to start; the same workflow with the event
+  allowed was queued). Reading or writing one needs administration (write).
+- So `setUpProject` makes the policy, with the setting-up token; Divlab's App does not check it
+  on its runs, which would need administration (Bernard, 2026-10-22). Recorded in decision 0006
+  (addendum) and CONTRIBUTING.
+- The sandbox run with one request per event (3539cd1): 63 of 63, 1,889 requests (2,023 before);
+  41½ minutes, close to the job's 45-minute limit: on the test list.
+
+Acceptance: only Divlab may check members' pull requests to the project -> RED (not yet right):
+          expected [ "Divlab" ], got []; GREEN after the cycles below; passes in the sandbox too.
+RED:      lets Divlab, and nothing else, check members' pull requests -> expected [] to deeply
+          equal [ 'ledger' ]
+GREEN:    (35 passed, after the older test's stand-in gained the new method, a separate step)
+RED:      allows pull request events for Divlab's pull request workflow, and no other
+          -> not a function (then the stub) -> expected {} to deeply equal { …(4) }
+GREEN:    (48 passed)
+REFACTOR: none. The adapter's one-line POST has no unit test of its own, like `protectMain`'s;
+          the sandbox scenario checks it against GitHub.
 
 ## 2026-10-22: Appending an event in one request
 

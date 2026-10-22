@@ -224,6 +224,8 @@ export interface ProjectRepositories {
   protectMain(project: string): Promise<void>;
   /** Whether main has the protection `protectMain` gives it, still in force. */
   mainIsProtected(project: string): Promise<boolean>;
+  /** Divlab's checks, and nothing else, may act on members' pull requests. */
+  allowDivlabChecks(project: string): Promise<void>;
 }
 
 /** A project's repository has been created, and Divlab prepares it. */
@@ -232,6 +234,7 @@ export async function setUpProject(
   repositories: ProjectRepositories,
 ): Promise<void> {
   await repositories.protectMain(project);
+  await repositories.allowDivlabChecks(project);
 }
 
 /** On every run: is the project's main branch still protected as decision 0006 requires? */

@@ -65,6 +65,14 @@ export class Anarres {
     await this.driver.divlabActsAgain(this.project);
   }
 
+  async onlyDivlabChecksPullRequests() {
+    assert.deepEqual(
+      await this.driver.pullRequestChecks(this.project),
+      ["Divlab"],
+      "expected the project to let Divlab, and nothing else, act on members' pull requests",
+    );
+  }
+
   async coordinatorsAlertedOnceOfUnprotectedMain() {
     assert.equal(
       await this.driver.unprotectedMainAlerts(this.project),

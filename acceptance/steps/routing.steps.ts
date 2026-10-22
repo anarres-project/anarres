@@ -267,6 +267,10 @@ Then("the change is refused", function (this: AnarresWorld) {
   return this.anarres.theChangeIsRefused();
 });
 
+Then("only Divlab may check members' pull requests to the project", function (this: AnarresWorld) {
+  return this.anarres.onlyDivlabChecksPullRequests();
+});
+
 Given(
   "a project with a module {string} whose main branch was left unprotected",
   function (this: AnarresWorld, module: string) {

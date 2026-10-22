@@ -66,6 +66,16 @@ export class FakeGitHub
     return this.alerts.filter((alert) => alert.project === project);
   }
 
+  private readonly checkedPullRequests = new Set<string>();
+
+  async allowDivlabChecks(project: string): Promise<void> {
+    this.checkedPullRequests.add(project);
+  }
+
+  pullRequestChecks(project: string): string[] {
+    return this.checkedPullRequests.has(project) ? ["Divlab"] : [];
+  }
+
   private readonly protectedMains = new Set<string>();
 
   async protectMain(project: string): Promise<void> {

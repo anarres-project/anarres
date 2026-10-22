@@ -166,6 +166,23 @@ export function rulesetProtectingMain(app: number) {
   };
 }
 
+/**
+ * The Actions policy that lets Divlab's pull request workflow, and no other, act on pull
+ * requests: GitHub blocks that event on public repositories unless a policy allows it.
+ */
+export function policyAllowingDivlabChecks() {
+  return {
+    name: "Only Divlab checks pull requests",
+    enforcement: "active",
+    conditions: {
+      workflow_path: { include: [".github/workflows/divlab-pull-request.yml"], exclude: [] },
+    },
+    rules: [
+      { type: "restrict_action_events", parameters: { allowed_events: ["pull_request_target"] } },
+    ],
+  };
+}
+
 /** The path the member chose goes only in a code block, never in the title or the words. */
 export function issueForNotAccepted({ notAccepted }: NotAccepted): NewIssue {
   return {

@@ -76,3 +76,11 @@ owners and PDC coordinators to watch.
   main: the push workflow becomes the tripwire, and routing happens in the run that merges.
 - Merges made as the App start push workflows (unlike the workflow token's), so the tripwire must
   recognise Divlab's own recorded merges and leave them alone.
+- **Addendum, 2026-10-22.** GitHub blocks `pull_request_target` on public repositories from 2
+  December 2026 (its changelog; one reference page still says 2 November) unless an Actions
+  policy allows it. Setting a project up now also creates a repository Actions policy that
+  allows that event for `.github/workflows/divlab-pull-request.yml` and for no other workflow.
+  An organisation policy would not do: on GitHub Free it is not enforced. Reading or writing
+  the policy needs administration access, so it is set at setup, by the token that creates the
+  project, and Divlab's App does not check it on its runs; the App keeps its narrow permissions.
+  Without the policy, Divlab's pull request workflow does not run, and nothing is merged.

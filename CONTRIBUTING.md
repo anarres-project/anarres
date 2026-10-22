@@ -79,6 +79,13 @@ its Client ID as the Actions variable `DIVLAB_APP_CLIENT_ID` (the template's wor
 GitHub's token action no longer takes the App ID) and its private key as the Actions secret
 `DIVLAB_APP_PRIVATE_KEY`. The key lives nowhere else.
 
+Each project repository gets, when it is set up, an Actions policy allowing `pull_request_target`
+for Divlab's pull request workflow only (decision 0006, addendum): GitHub blocks that event on
+public repositories otherwise. The sandbox driver sets each sandbox repository up the same way,
+with the sandbox token's administration permission. The `anarres-sandbox` organisation also has
+an organisation policy to the same effect ("Divlab pull requests"); GitHub does not enforce
+organisation policies on the Free plan, so it is only a fallback.
+
 The members' organisation needs Actions disabled (Settings → Actions → General → Disabled):
 nothing runs in members' forks; Divlab runs only in the project's repository.
 

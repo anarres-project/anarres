@@ -11,6 +11,7 @@ import {
   issueForUnprotectedMain,
   issueNumber,
   logFrom,
+  policyAllowingDivlabChecks,
   protectsMain,
   rulesetProtectingMain,
   taskFromIssue,
@@ -257,6 +258,21 @@ describe("the ruleset that protects a project's main branch (decision 0006)", ()
       conditions: { ref_name: { include: ["~DEFAULT_BRANCH"], exclude: [] } },
       rules: [{ type: "update" }, { type: "deletion" }, { type: "non_fast_forward" }],
       bypass_actors: [{ actor_id: 5414648, actor_type: "Integration", bypass_mode: "always" }],
+    });
+  });
+});
+
+describe("the Actions policy that lets Divlab check members' pull requests", () => {
+  it("allows pull request events for Divlab's pull request workflow, and no other", () => {
+    expect(policyAllowingDivlabChecks()).toEqual({
+      name: "Only Divlab checks pull requests",
+      enforcement: "active",
+      conditions: {
+        workflow_path: { include: [".github/workflows/divlab-pull-request.yml"], exclude: [] },
+      },
+      rules: [
+        { type: "restrict_action_events", parameters: { allowed_events: ["pull_request_target"] } },
+      ],
     });
   });
 });

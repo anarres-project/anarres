@@ -13,6 +13,7 @@ export {
   type ListedIssue,
   logFrom,
   type NewIssue,
+  policyAllowingDivlabChecks,
   protectsMain,
   rulesetProtectingMain,
   taskFromIssue,

@@ -9,8 +9,22 @@ describe("setting up a project", () => {
       protectMain: async (project) => {
         protectedProjects.push(project);
       },
+      allowDivlabChecks: async () => {},
     };
     await setUpProject("ledger", repositories);
     expect(protectedProjects).toEqual(["ledger"]);
+  });
+
+  it("lets Divlab, and nothing else, check members' pull requests", async () => {
+    const allowedProjects: string[] = [];
+    const repositories: ProjectRepositories = {
+      mainIsProtected: async () => true,
+      protectMain: async () => {},
+      allowDivlabChecks: async (project) => {
+        allowedProjects.push(project);
+      },
+    };
+    await setUpProject("ledger", repositories);
+    expect(allowedProjects).toEqual(["ledger"]);
   });
 });

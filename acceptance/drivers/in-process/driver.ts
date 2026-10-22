@@ -74,6 +74,10 @@ export class InProcessDriver implements Driver {
     await checkProtection(project, this.github, this.github);
   }
 
+  async pullRequestChecks(project: string): Promise<string[]> {
+    return this.github.pullRequestChecks(project);
+  }
+
   async unprotectedMainAlerts(project: string): Promise<number> {
     return this.github.unprotectedMainAlerts(project);
   }

@@ -60,6 +60,8 @@ export interface Driver {
   mergedWork(project: string): Promise<string[]>;
   /** An administrator, not Divlab, writes to the project's main branch; true if it took. */
   changeMainDirectly(project: string): Promise<boolean>;
+  /** What the project lets act on members' pull requests: "Divlab" for Divlab's checks. */
+  pullRequestChecks(project: string): Promise<string[]>;
   /** How many times PDC coordinators were alerted that the project's main is unprotected. */
   unprotectedMainAlerts(project: string): Promise<number>;
   /** What Divlab told members whose work it did not merge. */
