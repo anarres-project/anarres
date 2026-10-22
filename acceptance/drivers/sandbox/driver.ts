@@ -385,7 +385,20 @@ export class SandboxDriver implements Driver {
         );
       }
       if (Date.now() - started > RUN_FINISH_LIMIT) {
-        throw new Error(`Divlab neither merged nor refused pull request ${number} in ${project}`);
+        // Say what Divlab's runs were doing, since the repository is gone by the time anyone looks.
+        const { workflow_runs: all } = await this.github.call<{ workflow_runs: WorkflowRun[] }>(
+          "GET",
+          `${repository}/actions/runs?per_page=20`,
+        );
+        const states = all
+          .map(
+            (r) =>
+              `${r.event} ${r.status}${r.conclusion ? ` ${r.conclusion}` : ""} (${r.created_at})`,
+          )
+          .join("; ");
+        throw new Error(
+          `Divlab neither merged nor refused pull request ${number} in ${project}; its runs: ${states || "none"}`,
+        );
       }
       await new Promise((resolve) => setTimeout(resolve, 2_000));
     }
@@ -624,6 +637,7 @@ function divlabWorkflow(name: string): string {
 
 type WorkflowRun = {
   id: number;
+  event: string;
   status: string;
   conclusion: string | null;
   html_url: string;

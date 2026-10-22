@@ -63,6 +63,11 @@ and merge records are read back through core. Section 0 is done but for the log'
   on the test list.
 - Slips: two failing tests written in one step (tasks and finished modules naming their decision);
   one older test's expected body changed in the same step as the production code.
+- The first sandbox run with all of today's records (d5b1284) failed 4 of 66: one worker's first
+  four pull requests were never decided within four minutes each, after which the same
+  repository worked normally; the other workers passed. It did not happen again on demand (6 of 6).
+  The repository was gone before it could be looked at, so the driver now says what state
+  Divlab's runs were in when it gives up on a pull request.
 
 Acceptance: a decision Divlab recorded but did not act on is acted on by its next run, once
           -> RED (not yet right): no task ready, expected one Test task; GREEN in-process (the
