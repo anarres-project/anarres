@@ -7543,6 +7543,31 @@ function reRuns(role, history) {
   return history.slice(lastPass + 1).filter((record) => rolesSentBack(record.decision).includes(role)).length;
 }
 var rolesSentBack = (decision) => "tasks" in decision ? decision.tasks.filter((task) => task.feedbackSignal !== void 0).map((task) => task.role) : [];
+var WORK_FIELDS = [
+  ["fromRole", "role"],
+  ["module", "module"],
+  ["verdict", "verdict"]
+];
+function readRoutingRecord(value) {
+  if (!isObject(value) || !isObject(value.work) || !isObject(value.decision) || !isObject(value.reason)) {
+    return { unreadable: "it is not a routing record" };
+  }
+  const record = value;
+  for (const [field, named] of WORK_FIELDS) {
+    if (typeof record.work[field] !== "string") {
+      return { unreadable: `its work does not give its ${named}` };
+    }
+  }
+  const decided = "tasks" in record.decision ? record.decision.tasks : [];
+  if (!Array.isArray(decided) || !decided.every(isObject)) {
+    return { unreadable: "its decision's tasks are not a list of tasks" };
+  }
+  if (!decided.every((task) => Object.hasOwn(ROLE_NAMES, task.role))) {
+    return { unreadable: "its decision names a role Anarres does not have" };
+  }
+  return record;
+}
+var isObject = (value) => typeof value === "object" && value !== null;
 
 // ../github/src/representation.ts
 function issueForTask(task) {
@@ -7574,18 +7599,18 @@ function eventFile(event, sequence) {
 }
 function eventFromFile(content) {
   const event = JSON.parse(content);
-  if (isObject(event) && isObject(event.notAccepted) && typeof event.notAccepted.feedbackSignal === "string" && typeof event.notAccepted.reason === "string") {
+  if (isObject2(event) && isObject2(event.notAccepted) && typeof event.notAccepted.feedbackSignal === "string" && typeof event.notAccepted.reason === "string") {
     return event;
   }
-  if (isObject(event) && isObject(event.aboutToMerge) && typeof event.aboutToMerge.feedbackSignal === "string" && isObject(event.aboutToMerge.work)) {
+  if (isObject2(event) && isObject2(event.aboutToMerge) && typeof event.aboutToMerge.feedbackSignal === "string" && isObject2(event.aboutToMerge.work)) {
     return event;
   }
-  if (!isObject(event) || !isObject(event.work) || !isObject(event.decision) || !isObject(event.reason)) {
-    throw new Error("The event file is not a routing record");
-  }
+  const record = readRoutingRecord(event);
+  if ("unreadable" in record)
+    throw new Error(`The event file cannot be read: ${record.unreadable}`);
   return event;
 }
-var isObject = (value) => typeof value === "object" && value !== null;
+var isObject2 = (value) => typeof value === "object" && value !== null;
 function issueForAlert(alert) {
   const { module } = alert.work;
   const work = `the ${roleName(alert.work.fromRole)} work on ${module}`;

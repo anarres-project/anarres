@@ -42,6 +42,39 @@ section 0's remaining items.
 
 ---
 
+## 2026-10-22: Routing records read back through core
+
+- Event files were checked only for the shape of a routing record. Routing's re-run count reads
+  the work's role, module and verdict and the roles of the tasks decided; a record missing its
+  verdict would have been taken as passed work, quietly resetting the count that escalates to a
+  PDC coordinator. `readRoutingRecord` in core now checks what routing relies on, and the adapter
+  refuses an event file it cannot read, so the log read fails rather than mislead.
+- Slip: the reader's case for a decision with no tasks (an alert, a finished module) was written
+  without a test asking for it; the coverage gate found it, and its test passed first time.
+- Stryker on core: 369 mutants, all killed (93 in routing-record.ts).
+
+RED:      gives the record as routing wrote it -> not a function (then the stub) -> expected
+          { unreadable: '' } to deeply equal { …(3) }
+GREEN:    (100 passed)
+RED:      is unreadable when its work gives no verdict, rather than taken as passed
+          -> expected { …(3) } to deeply equal { unreadable }
+GREEN:    (101 passed)
+RED:      is unreadable when its work gives no fromRole / module -> expected { …(3) } (both)
+GREEN:    (103 passed)
+RED:      is unreadable when a task it decided on names no role Anarres has -> expected { …(3) }
+GREEN:    (104 passed)
+RED:      is unreadable when it is not a routing record at all -> Cannot read properties of null
+          (and of undefined; two gave the wrong reason)
+GREEN:    (108 passed)
+RED:      is unreadable when its decision's tasks are not a list of tasks -> decided.every is not a
+          function; Cannot read properties of null
+GREEN:    (110 passed)
+Passed first time: gives a record whose decision was an alert, which has no tasks (see the slip)
+RED:      (adapter) is refused, saying why, when its record is one routing could not rely on
+          -> expected [Function] to throw an error
+GREEN:    (51 passed)
+REFACTOR: the adapter's own shape check gave way to core's reader
+
 ## 2026-10-22: Interrupted merges finished in merge order
 
 - When a run finds merges Divlab began but did not route, it finished them in the order the

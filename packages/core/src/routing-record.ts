@@ -1,4 +1,5 @@
-import type { Role } from "./roles.ts";
+import type { Unreadable } from "./feedback-signal.ts";
+import { ROLE_NAMES, type Role } from "./roles.ts";
 import { type AcceptedWork, failed, type Reason, type RoutingDecision, rule } from "./routing.ts";
 
 /** A routing decision as Divlab records it: the work it came from, what it decided, and why. */
@@ -46,3 +47,39 @@ const rolesSentBack = (decision: RoutingDecision): Role[] =>
   "tasks" in decision
     ? decision.tasks.filter((task) => task.feedbackSignal !== undefined).map((task) => task.role)
     : [];
+
+/** What routing reads from the work in a past record, and what each is called. */
+const WORK_FIELDS = [
+  ["fromRole", "role"],
+  ["module", "module"],
+  ["verdict", "verdict"],
+] as const;
+
+/** A record read back from the event log, checked before routing relies on it. */
+export function readRoutingRecord(value: unknown): RoutingRecord | Unreadable {
+  if (
+    !isObject(value) ||
+    !isObject(value.work) ||
+    !isObject(value.decision) ||
+    !isObject(value.reason)
+  ) {
+    return { unreadable: "it is not a routing record" };
+  }
+  const record = value as RoutingRecord;
+  for (const [field, named] of WORK_FIELDS) {
+    if (typeof record.work[field] !== "string") {
+      return { unreadable: `its work does not give its ${named}` };
+    }
+  }
+  const decided: unknown = "tasks" in record.decision ? record.decision.tasks : [];
+  if (!Array.isArray(decided) || !decided.every(isObject)) {
+    return { unreadable: "its decision's tasks are not a list of tasks" };
+  }
+  if (!decided.every((task) => Object.hasOwn(ROLE_NAMES, task.role as string))) {
+    return { unreadable: "its decision names a role Anarres does not have" };
+  }
+  return record;
+}
+
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;

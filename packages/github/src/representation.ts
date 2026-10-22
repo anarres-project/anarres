@@ -1,4 +1,4 @@
-import { ROLE_NAMES, type Role } from "@anarres/core";
+import { ROLE_NAMES, type Role, readRoutingRecord } from "@anarres/core";
 import type {
   AboutToMerge,
   LogEvent,
@@ -66,14 +66,9 @@ export function eventFromFile(content: string): LogEvent {
   ) {
     return event as AboutToMerge;
   }
-  if (
-    !isObject(event) ||
-    !isObject(event.work) ||
-    !isObject(event.decision) ||
-    !isObject(event.reason)
-  ) {
-    throw new Error("The event file is not a routing record");
-  }
+  const record = readRoutingRecord(event);
+  if ("unreadable" in record)
+    throw new Error(`The event file cannot be read: ${record.unreadable}`);
   return event as RoutingEvent;
 }
 

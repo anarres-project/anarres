@@ -1,0 +1,71 @@
+import { describe, expect, it } from "vitest";
+import { type RoutingRecord, readRoutingRecord } from "../src/index.ts";
+
+/** Coding work sent back to Test, as routing records it. */
+const RECORD: RoutingRecord = {
+  work: {
+    fromRole: "coding",
+    module: "parser",
+    verdict: "fail",
+    impediments: [{ type: "test_failure" }],
+    feedbackSignal: "feedback/C-1.md",
+  },
+  decision: { tasks: [{ role: "test", module: "parser", feedbackSignal: "feedback/C-1.md" }] },
+  reason: { rule: "reported", impediment: "test_failure" },
+};
+
+describe("reading back a routing record from the event log", () => {
+  it("gives the record as routing wrote it", () => {
+    expect(readRoutingRecord(JSON.parse(JSON.stringify(RECORD)))).toEqual(RECORD);
+  });
+
+  it("gives a record whose decision was an alert, which has no tasks", () => {
+    const alert: RoutingRecord = {
+      ...RECORD,
+      decision: { alert: { reason: "re_run_limit" } },
+      reason: { rule: "re_run_limit", role: "test" },
+    };
+    expect(readRoutingRecord(JSON.parse(JSON.stringify(alert)))).toEqual(alert);
+  });
+
+  it("is unreadable when its work gives no verdict, rather than taken as passed", () => {
+    const { verdict: _, ...work } = RECORD.work;
+    expect(readRoutingRecord({ ...RECORD, work })).toEqual({
+      unreadable: "its work does not give its verdict",
+    });
+  });
+
+  it.each([
+    ["fromRole", "role"],
+    ["module", "module"],
+  ] as const)("is unreadable when its work gives no %s", (field, named) => {
+    const work: Partial<RoutingRecord["work"]> = { ...RECORD.work };
+    delete work[field];
+    expect(readRoutingRecord({ ...RECORD, work })).toEqual({
+      unreadable: `its work does not give its ${named}`,
+    });
+  });
+
+  it("is unreadable when a task it decided on names no role Anarres has", () => {
+    const decision = { tasks: [{ role: "tester", module: "parser" }] };
+    expect(readRoutingRecord({ ...RECORD, decision })).toEqual({
+      unreadable: "its decision names a role Anarres does not have",
+    });
+  });
+
+  it.each([null, {}, { work: "coding" }, { work: RECORD.work }])(
+    "is unreadable when it is not a routing record at all: %j",
+    (value) => {
+      expect(readRoutingRecord(value)).toEqual({ unreadable: "it is not a routing record" });
+    },
+  );
+
+  it.each([{ tasks: "test" }, { tasks: [null] }])(
+    "is unreadable when its decision's tasks are not a list of tasks: %j",
+    (decision) => {
+      expect(readRoutingRecord({ ...RECORD, decision })).toEqual({
+        unreadable: "its decision's tasks are not a list of tasks",
+      });
+    },
+  );
+});

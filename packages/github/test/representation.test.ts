@@ -130,6 +130,13 @@ describe("a routing event as a file", () => {
     expect(() => eventFromFile('{"project": "ledger"}')).toThrow("not a routing record");
   });
 
+  it("is refused, saying why, when its record is one routing could not rely on", () => {
+    const { verdict: _, ...work } = EVENT.work;
+    expect(() => eventFromFile(JSON.stringify({ ...EVENT, work }))).toThrow(
+      "its work does not give its verdict",
+    );
+  });
+
   it("makes a log only when every listed event file has been read", () => {
     const texts = new Map([["000001.json", eventFile(EVENT, 1).content]]);
     expect(logFrom(["000001.json", "000002.json"], texts)).toBeUndefined();
