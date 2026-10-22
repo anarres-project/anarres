@@ -37,10 +37,28 @@ pushes that change only documents skip it. An event is appended in one request o
 been read. Each project is set up with the Actions policy that lets Divlab's pull request
 workflow, and no other, run on pull requests once GitHub blocks that event by default. The
 sandbox run's scenarios run in four workers: 11 minutes. Divlab's runs queue rather than being
-dropped when members submit at once, and interrupted merges are finished in merge order. Next:
-section 0's remaining items.
+dropped when members submit at once, and interrupted merges are finished in merge order. Routing
+and merge records are read back through core. Section 0 is done but for the log's read cost
+(deferred). Routing decisions record when Divlab made them. Next: section 1's open items.
 
 ---
+
+## 2026-10-22: Divlab records when it decided
+
+- Each routing decision now records when Divlab made it, in UTC (`decidedAt`). Divlab takes its
+  clock as a parameter: the Action passes the wall clock, the one place it is read; the
+  in-process driver and unit tests pass a fixed time. Events from before have no time, so the
+  field is optional when read back. Merges begun and work not accepted: on the test list.
+- Section 0 is done apart from the log's read cost, deferred by Bernard until a real project
+  nears a few thousand events. Two section 1 items were already done and are ticked: one file
+  per event under `events/`, and several impediments making one revision task.
+
+Acceptance: the record says when Divlab decided -> RED (not yet right): "expected the record to
+          say when Divlab decided, as a UTC time"; GREEN in-process.
+RED:      records when it decided, by its clock, in UTC -> expected { project: 'ledger', …(3) } to
+          match object { decidedAt }
+GREEN:    (40 passed, after the older tests' calls were given the fixed clock, a separate step)
+REFACTOR: none
 
 ## 2026-10-22: Merge records read back through core
 

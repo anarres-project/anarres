@@ -8055,11 +8055,11 @@ var signalOf = (event) => {
   if ("aboutToMerge" in event) return event.aboutToMerge.feedbackSignal;
   return event.notAccepted.feedbackSignal;
 };
-async function onWorkAccepted(event, board, log) {
+async function onWorkAccepted(event, board, log, clock) {
   const { project: project2, task, ...work } = event;
   const history = routingDecisions(await log.read(project2));
   const record = routingRecord(work, history);
-  await log.append({ project: project2, ...record });
+  await log.append({ project: project2, decidedAt: clock().toISOString(), ...record });
   if (task !== void 0) await board.close(project2, task);
   const { decision } = record;
   if ("alert" in decision) {
@@ -8074,7 +8074,7 @@ async function onWorkAccepted(event, board, log) {
     await board.post({ project: event.project, ...task2 });
   }
 }
-async function acceptSignal(project2, path, signal, board, log) {
+async function acceptSignal(project2, path, signal, board, log, clock) {
   const { task, ...work } = signal;
   const researchFor = task === void 0 ? void 0 : (await board.task(project2, task))?.researchFor;
   await onWorkAccepted(
@@ -8086,11 +8086,12 @@ async function acceptSignal(project2, path, signal, board, log) {
       ...task === void 0 ? {} : { task }
     },
     board,
-    log
+    log,
+    clock
   );
 }
 var cannotRead = (path, { unreadable }) => `The feedback signal ${path} cannot be read: ${unreadable}`;
-async function onMerge(project2, repository, board, log) {
+async function onMerge(project2, repository, board, log, clock) {
   const events = await log.read(project2);
   const finished = new Set(events.filter((e) => !("aboutToMerge" in e)).map(signalOf));
   const begun = new Map(
@@ -8101,7 +8102,7 @@ async function onMerge(project2, repository, board, log) {
   const onMain = await repository.feedbackSignals(project2);
   for (const [path, merge] of begun) {
     if (finished.has(path) || !onMain.includes(path)) continue;
-    await acceptSignal(project2, path, merge.aboutToMerge.work, board, log);
+    await acceptSignal(project2, path, merge.aboutToMerge.work, board, log, clock);
   }
   for (const path of onMain) {
     if (finished.has(path) || begun.has(path)) continue;
@@ -8113,7 +8114,7 @@ async function onMerge(project2, repository, board, log) {
     await board.alertNotAccepted(record);
   }
 }
-async function onPullRequest(project2, pullRequest, pullRequests, board, log) {
+async function onPullRequest(project2, pullRequest, pullRequests, board, log, clock) {
   const head = await pullRequests.head(project2, pullRequest);
   const files = await pullRequests.changedFiles(project2, pullRequest);
   const feedback = files.find((file) => file.path.startsWith("feedback/"));
@@ -8135,7 +8136,7 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log) {
     aboutToMerge: { pullRequest, head, feedbackSignal: feedback.path, work: signal }
   });
   await pullRequests.merge(project2, pullRequest, head);
-  await acceptSignal(project2, feedback.path, signal, board, log);
+  await acceptSignal(project2, feedback.path, signal, board, log, clock);
 }
 async function checkProtection(project2, repositories, board) {
   if (await repositories.mainIsProtected(project2)) return;
@@ -8154,8 +8155,12 @@ var github = new GitHubAdapter({ owner, token });
 try {
   const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH ?? "", "utf8"));
   const run = whatToActOn(process.env.GITHUB_EVENT_NAME ?? "", event);
-  if ("pullRequest" in run) await onPullRequest(project, run.pullRequest, github, github, github);
-  else await onMerge(project, github, github, github);
+  const clock = () => /* @__PURE__ */ new Date();
+  if ("pullRequest" in run) {
+    await onPullRequest(project, run.pullRequest, github, github, github, clock);
+  } else {
+    await onMerge(project, github, github, github, clock);
+  }
   await checkProtection(project, github, github);
 } catch (error) {
   console.log(`::error::${error instanceof Error ? error.message : String(error)}`);

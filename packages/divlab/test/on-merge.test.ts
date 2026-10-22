@@ -10,6 +10,9 @@ import {
   type TaskBoard,
 } from "../src/index.ts";
 
+/** Divlab's clock in these tests: a fixed time. */
+const clock = () => new Date("2026-10-22T09:00:00Z");
+
 const untouched = async () => {
   throw new Error("Divlab should not have acted");
 };
@@ -58,7 +61,7 @@ describe("acting on a merge", () => {
 
   it("never routes work that reached main without Divlab merging it", async () => {
     const { seen, watchedBoard, watchedLog } = watching();
-    await onMerge("ledger", onMain(passedSpecification), watchedBoard, watchedLog);
+    await onMerge("ledger", onMain(passedSpecification), watchedBoard, watchedLog, clock);
     expect(seen.posted).toEqual([]);
   });
 
@@ -76,7 +79,7 @@ describe("acting on a merge", () => {
         },
       ],
     };
-    await onMerge("ledger", onMain(passedSpecification), watchedBoard, alreadyRecorded);
+    await onMerge("ledger", onMain(passedSpecification), watchedBoard, alreadyRecorded, clock);
     expect([seen.appended, seen.alerts]).toEqual([[], []]);
   });
 
@@ -96,7 +99,7 @@ describe("acting on a merge", () => {
         },
       ],
     };
-    await onMerge("ledger", onMain(passedSpecification), watchedBoard, begun);
+    await onMerge("ledger", onMain(passedSpecification), watchedBoard, begun, clock);
     expect([seen.posted, seen.alerts]).toEqual([
       [{ project: "ledger", role: "test", module: "parser" }],
       [],
@@ -121,7 +124,7 @@ describe("acting on a merge", () => {
     const listed: Repository = {
       feedbackSignals: async () => ["feedback/FB-1.md", "feedback/FB-2.md"],
     };
-    await onMerge("ledger", listed, watchedBoard, begun);
+    await onMerge("ledger", listed, watchedBoard, begun, clock);
     expect(seen.posted.map((task) => task.module)).toEqual(["lexer", "parser"]);
   });
 
@@ -141,19 +144,19 @@ describe("acting on a merge", () => {
         },
       ],
     };
-    await onMerge("ledger", onMain(passedSpecification), watchedBoard, begunOnly);
+    await onMerge("ledger", onMain(passedSpecification), watchedBoard, begunOnly, clock);
     expect(seen.posted).toEqual([]);
   });
 
   it("alerts PDC coordinators of work that reached main without Divlab merging it", async () => {
     const { seen, watchedBoard, watchedLog } = watching();
-    await onMerge("ledger", onMain(passedSpecification), watchedBoard, watchedLog);
+    await onMerge("ledger", onMain(passedSpecification), watchedBoard, watchedLog, clock);
     expect(seen.alerts).toEqual(seen.appended);
   });
 
   it("records work that reached main without Divlab merging it as not accepted, saying why", async () => {
     const { seen, watchedBoard, watchedLog } = watching();
-    await onMerge("ledger", onMain(passedSpecification), watchedBoard, watchedLog);
+    await onMerge("ledger", onMain(passedSpecification), watchedBoard, watchedLog, clock);
     expect(seen.appended).toEqual([
       {
         project: "ledger",
@@ -167,7 +170,7 @@ describe("acting on a merge", () => {
 
   it("records an unreadable signal on main as not accepted like any other, without stopping", async () => {
     const { seen, watchedBoard, watchedLog } = watching();
-    await onMerge("ledger", onMain("Looks good to me."), watchedBoard, watchedLog);
+    await onMerge("ledger", onMain("Looks good to me."), watchedBoard, watchedLog, clock);
     expect(seen.appended).toEqual([
       {
         project: "ledger",
@@ -203,7 +206,14 @@ describe("acting on a pull request", () => {
 
   it("merges a pull request whose feedback signal it can read", async () => {
     const merged: string[] = [];
-    await onPullRequest("ledger", "7", submitting(merged), { ...board, post: async () => {} }, log);
+    await onPullRequest(
+      "ledger",
+      "7",
+      submitting(merged),
+      { ...board, post: async () => {} },
+      log,
+      clock,
+    );
     expect(merged).toEqual(["7"]);
   });
 
@@ -215,21 +225,21 @@ describe("acting on a pull request", () => {
         posted.push(task);
       },
     };
-    await onPullRequest("ledger", "7", submitting(), posting, log);
+    await onPullRequest("ledger", "7", submitting(), posting, log, clock);
     expect(posted).toEqual([{ project: "ledger", role: "test", module: "parser" }]);
   });
 
   it("does not merge a pull request whose feedback signal it cannot read", async () => {
     const merged: string[] = [];
     const unreadable = { path: "feedback/FB-2.md", text: "Looks good to me." };
-    await onPullRequest("ledger", "8", submitting(merged, [unreadable]), board, log);
+    await onPullRequest("ledger", "8", submitting(merged, [unreadable]), board, log, clock);
     expect(merged).toEqual([]);
   });
 
   it("tells the member why it did not merge their pull request", async () => {
     const refusals: string[] = [];
     const unreadable = { path: "feedback/FB-2.md", text: "Looks good to me." };
-    await onPullRequest("ledger", "8", submitting([], [unreadable], refusals), board, log);
+    await onPullRequest("ledger", "8", submitting([], [unreadable], refusals), board, log, clock);
     expect(refusals).toEqual([
       "8: The feedback signal feedback/FB-2.md cannot be read: it has no feedback signal header",
     ]);
@@ -243,7 +253,14 @@ describe("acting on a pull request", () => {
         merged.push(`${pullRequest} at ${head}`);
       },
     };
-    await onPullRequest("ledger", "7", pullRequests, { ...board, post: async () => {} }, log);
+    await onPullRequest(
+      "ledger",
+      "7",
+      pullRequests,
+      { ...board, post: async () => {} },
+      log,
+      clock,
+    );
     expect(merged).toEqual(["7 at c0ffee"]);
   });
 
@@ -261,7 +278,7 @@ describe("acting on a pull request", () => {
         closed.push(task);
       },
     };
-    await onPullRequest("ledger", "9", submitting([], [forTask]), closing, log);
+    await onPullRequest("ledger", "9", submitting([], [forTask]), closing, log, clock);
     expect(closed).toEqual(["3"]);
   });
 
@@ -279,17 +296,44 @@ describe("acting on a pull request", () => {
       task: async () => ({ researchFor: "coding" }),
       close: async () => {},
     };
-    await onPullRequest("ledger", "10", submitting([], [research]), recorded, log);
+    await onPullRequest("ledger", "10", submitting([], [research]), recorded, log, clock);
     expect(posted.map((task) => task.role)).toEqual(["coding"]);
   });
 
   it("tells the member when their pull request has no feedback signal", async () => {
     const refusals: string[] = [];
     const artefactOnly = { path: "modules/parser/spec.md", text: "# Specification\n" };
-    await onPullRequest("ledger", "11", submitting([], [artefactOnly], refusals), board, log);
+    await onPullRequest(
+      "ledger",
+      "11",
+      submitting([], [artefactOnly], refusals),
+      board,
+      log,
+      clock,
+    );
     expect(refusals).toEqual([
       "11: The pull request has no feedback signal: work needs one, in feedback/, saying what it was for and how it went",
     ]);
+  });
+
+  it("records when it decided, by its clock, in UTC", async () => {
+    const appended: unknown[] = [];
+    const recording: EventLog = {
+      read: async () => [],
+      append: async (event) => {
+        appended.push(event);
+      },
+    };
+    const britishSummerTime = () => new Date("2026-10-22T10:00:00+01:00");
+    await onPullRequest(
+      "ledger",
+      "7",
+      submitting(),
+      { ...board, post: async () => {} },
+      recording,
+      britishSummerTime,
+    );
+    expect(appended.at(-1)).toMatchObject({ decidedAt: "2026-10-22T09:00:00.000Z" });
   });
 
   it("records that it is about to merge, with the work, before it merges", async () => {
@@ -306,7 +350,14 @@ describe("acting on a pull request", () => {
         happened.push(event);
       },
     };
-    await onPullRequest("ledger", "7", pullRequests, { ...board, post: async () => {} }, recording);
+    await onPullRequest(
+      "ledger",
+      "7",
+      pullRequests,
+      { ...board, post: async () => {} },
+      recording,
+      clock,
+    );
     expect(happened.slice(0, 2)).toEqual([
       {
         project: "ledger",

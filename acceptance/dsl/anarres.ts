@@ -291,6 +291,20 @@ export class Anarres {
     );
   }
 
+  async divlabRecordSaysWhenItDecided(work: Work) {
+    const records = await this.recordsOf(work);
+    assert.equal(
+      records.length,
+      1,
+      `expected one record of the ${work.role} work on ${work.module}`,
+    );
+    assert.match(
+      records[0]?.decidedAt ?? "no time recorded",
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/,
+      "expected the record to say when Divlab decided, as a UTC time",
+    );
+  }
+
   async pdcCoordinatorIsAlerted() {
     const alerts = await this.alerts();
     assert.equal(alerts.length, 1, "expected one alert to the PDC coordinators");

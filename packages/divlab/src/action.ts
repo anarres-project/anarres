@@ -17,8 +17,13 @@ const github = new GitHubAdapter({ owner, token });
 try {
   const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH ?? "", "utf8"));
   const run = whatToActOn(process.env.GITHUB_EVENT_NAME ?? "", event);
-  if ("pullRequest" in run) await onPullRequest(project, run.pullRequest, github, github, github);
-  else await onMerge(project, github, github, github);
+  // The edge of the system: the only place Divlab's clock is the wall clock.
+  const clock = () => new Date();
+  if ("pullRequest" in run) {
+    await onPullRequest(project, run.pullRequest, github, github, github, clock);
+  } else {
+    await onMerge(project, github, github, github, clock);
+  }
   await checkProtection(project, github, github);
 } catch (error) {
   console.log(`::error::${error instanceof Error ? error.message : String(error)}`);

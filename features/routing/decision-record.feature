@@ -26,3 +26,8 @@ Feature: Divlab records every routing decision
     Given a project with a module "parser"
     When a member's Coding work on "parser" is accepted with a fail verdict, reporting test failures and an architecture impediment
     Then Divlab's record of the Coding work on "parser" keeps its feedback signal, its verdict and both problems it reported
+
+  Scenario: The record says when Divlab decided
+    Given a project with a module "parser"
+    When a member's Test work on "parser" is accepted with a pass verdict
+    Then Divlab's record of the Test work on "parser" says when Divlab decided, in UTC

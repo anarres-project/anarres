@@ -339,3 +339,10 @@ Then(
     return this.anarres.coordinatorsAlertedOnceOfUnprotectedMain();
   },
 );
+
+Then(
+  "Divlab's record of the {role} work on {string} says when Divlab decided, in UTC",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.divlabRecordSaysWhenItDecided({ role, module });
+  },
+);

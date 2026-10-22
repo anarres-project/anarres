@@ -35,6 +35,8 @@ export type RoutingRecord = {
   };
   outcome: { tasksFor: string[] } | { alert: true } | { moduleDone: true };
   reason: { rule: string; impediment?: string; role?: string };
+  /** When Divlab decided, as it recorded it. */
+  decidedAt?: string;
 };
 
 /** How the DSL reaches Anarres. Each driver invokes the system its own way. */

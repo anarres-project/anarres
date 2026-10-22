@@ -22,6 +22,9 @@ import {
 import { FakeGitHub, Interrupted } from "./fake-github.ts";
 
 /** Submits work to an in-memory fake of GitHub as pull requests, for Divlab to merge. */
+/** Divlab's clock in-process: a fixed time, so no scenario reads the wall clock. */
+const CLOCK = () => new Date("2026-10-22T09:00:00Z");
+
 export class InProcessDriver implements Driver {
   private readonly github = new FakeGitHub();
 
@@ -50,7 +53,7 @@ export class InProcessDriver implements Driver {
   async mergeDirectly(work: AcceptedWork): Promise<void> {
     const { path, text } = feedbackSignalFile(work);
     this.github.mergeFile(work.project, path, text);
-    await onMerge(work.project, this.github, this.github, this.github);
+    await onMerge(work.project, this.github, this.github, this.github, CLOCK);
     await checkProtection(work.project, this.github, this.github);
   }
 
@@ -70,7 +73,7 @@ export class InProcessDriver implements Driver {
   }
 
   async divlabActsAgain(project: string): Promise<void> {
-    await onMerge(project, this.github, this.github, this.github);
+    await onMerge(project, this.github, this.github, this.github, CLOCK);
     await checkProtection(project, this.github, this.github);
   }
 
@@ -109,7 +112,7 @@ export class InProcessDriver implements Driver {
       .find((task) => task.role === fromRole && task.module === work.module);
     const { path, text } = feedbackSignalFile(work, task?.id);
     const pullRequest = this.github.openPullRequest(work.project, [{ path, text }]);
-    await onPullRequest(work.project, pullRequest, this.github, this.github, this.github);
+    await onPullRequest(work.project, pullRequest, this.github, this.github, this.github, CLOCK);
     await checkProtection(work.project, this.github, this.github);
   }
 
@@ -127,7 +130,7 @@ export class InProcessDriver implements Driver {
       };
     });
     for (const { project, pullRequest } of opened) {
-      await onPullRequest(project, pullRequest, this.github, this.github, this.github);
+      await onPullRequest(project, pullRequest, this.github, this.github, this.github, CLOCK);
       await checkProtection(project, this.github, this.github);
     }
   }

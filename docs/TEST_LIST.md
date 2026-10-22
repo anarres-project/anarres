@@ -64,9 +64,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         a new event is numbered after the last, past 1,000 too.
   - [x] a Git tree GitHub reports as truncated (past 100,000 entries) fails the read rather than
         returning part of the log, or none of it when the top level is listed in part;
-  - [ ] reading the log costs a request per 100 events on every run: a busy project needs a
-        cheaper read before then (a checkpoint of what routing needs, say), raised with Bernard
-        first since it changes what the log holds;
+  - [ ] reading the log costs a request per 100 events on every run (about 12 at 1,000 events,
+        102 at 10,000), from Divlab's App's own allowance. Deferred (Bernard, 2026-10-22) until a
+        real project nears a few thousand events; then a checkpoint of what routing needs, or a
+        log per module, both changing what the log holds;
   - [x] a sweep deletes sandbox repositories left behind by an interrupted run (older than an
         hour), before each sandbox run, in both sandbox organisations; only repositories a run
         makes, never one a live run may still be using;
@@ -107,7 +108,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [x] A failed review → Coding; a review reporting a scope gap → Programme Architect.
 - [x] A failed Security & Quality check → Coding.
 - [x] *Blocked* routes exactly as *fail*.
-- [ ] Several impediments → one revision task, for the most upstream owning role; the others ride
+- [x] Several impediments → one revision task, for the most upstream owning role; the others ride
       along in the feedback it carries (Bernard, 2026-10-12).
   - [x] an upstream ambiguity outranks an architecture impediment;
   - [x] an architecture impediment outranks Coding's test failures (killed the surviving
@@ -151,11 +152,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       unresolved for more than three steps.
 - [x] Every routing decision is recorded as an event that names its inputs (the accepted work as
       Divlab received it) and its reason (the rule that decided it).
-  - [ ] the event records when Divlab decided (injected clock, UTC);
+  - [x] the event records when Divlab decided (injected clock, UTC): routing decisions carry
+        `decidedAt`; the Action's clock is the wall clock, the only place it is read;
+  - [ ] merges begun and work not accepted record their time too;
   - [ ] each event has an identifier from an injected generator (one file per event);
   - [ ] a conditional pass's open questions and assumptions are kept in its event (needs them in
         the accepted work first);
-  - [ ] the GitHub adapter writes each event as one file under `events/` in the project
+  - [x] the GitHub adapter writes each event as one file under `events/` in the project
         repository;
   - [ ] if acting on a decision fails after it was recorded, a re-run neither duplicates the event
         nor its tasks (idempotency, once Divlab runs as an Action).

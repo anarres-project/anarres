@@ -29,7 +29,11 @@ export type PostedTask = {
 };
 
 /** A routing decision as recorded in a project's event log. */
-export type RoutingEvent = { project: string } & RoutingRecord;
+/** `decidedAt`: when Divlab decided, in UTC; events recorded before it kept the time have none. */
+export type RoutingEvent = { project: string; decidedAt?: string } & RoutingRecord;
+
+/** Divlab's clock: the time is always given to it, never read from the wall. */
+export type Clock = () => Date;
 
 /** An alert carries the whole decision: what the work reported, and why routing stopped. */
 export type CoordinatorAlert = RoutingEvent;
@@ -104,11 +108,16 @@ export interface EventLog {
   read(project: string): Promise<LogEvent[]>;
 }
 
-async function onWorkAccepted(event: WorkAccepted, board: TaskBoard, log: EventLog): Promise<void> {
+async function onWorkAccepted(
+  event: WorkAccepted,
+  board: TaskBoard,
+  log: EventLog,
+  clock: Clock,
+): Promise<void> {
   const { project, task, ...work } = event;
   const history = routingDecisions(await log.read(project));
   const record = routingRecord(work, history);
-  await log.append({ project, ...record });
+  await log.append({ project, decidedAt: clock().toISOString(), ...record });
   if (task !== undefined) await board.close(project, task);
   const { decision } = record;
   if ("alert" in decision) {
@@ -131,6 +140,7 @@ async function acceptSignal(
   signal: FeedbackSignal,
   board: TaskBoard,
   log: EventLog,
+  clock: Clock,
 ): Promise<void> {
   const { task, ...work } = signal;
   // Research work goes back to the role its task was for, as Divlab recorded on the task.
@@ -146,6 +156,7 @@ async function acceptSignal(
     },
     board,
     log,
+    clock,
   );
 }
 
@@ -158,6 +169,7 @@ export async function onMerge(
   repository: Repository,
   board: TaskBoard,
   log: EventLog,
+  clock: Clock,
 ): Promise<void> {
   // Divlab records every merge it makes, so a signal with no event reached main some other way.
   const events = await log.read(project);
@@ -172,7 +184,7 @@ export async function onMerge(
   // the order it merged.
   for (const [path, merge] of begun) {
     if (finished.has(path) || !onMain.includes(path)) continue;
-    await acceptSignal(project, path, merge.aboutToMerge.work, board, log);
+    await acceptSignal(project, path, merge.aboutToMerge.work, board, log, clock);
   }
   for (const path of onMain) {
     if (finished.has(path) || begun.has(path)) continue;
@@ -193,6 +205,7 @@ export async function onPullRequest(
   pullRequests: PullRequests,
   board: TaskBoard,
   log: EventLog,
+  clock: Clock,
 ): Promise<void> {
   // Read at one commit and merge only that commit: anything pushed since has not been checked.
   const head = await pullRequests.head(project, pullRequest);
@@ -216,7 +229,7 @@ export async function onPullRequest(
     aboutToMerge: { pullRequest, head, feedbackSignal: feedback.path, work: signal },
   });
   await pullRequests.merge(project, pullRequest, head);
-  await acceptSignal(project, feedback.path, signal, board, log);
+  await acceptSignal(project, feedback.path, signal, board, log, clock);
 }
 
 /** Project repositories as Divlab sets them up. */

@@ -37,8 +37,11 @@ export function feedbackSignalFile(work: AcceptedWork, task?: string) {
 export const signalName = (path: string) => path.replace(/^feedback\/(.+)\.md$/, "$1");
 
 /** A routing record as the scenarios speak of it: role names and plain words, not ids. */
-export function inScenarioWords({ work, decision, reason }: RoutingEvent): RoutingRecord {
+export function inScenarioWords(event: RoutingEvent): RoutingRecord {
+  const { work, decision, reason } = event;
+  const decided = (event as { decidedAt?: string }).decidedAt;
   return {
+    ...(decided === undefined ? {} : { decidedAt: decided }),
     work: {
       role: roleNameOf(work.fromRole),
       module: work.module,
