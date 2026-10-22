@@ -66,6 +66,11 @@ GREEN:    (48 passed)
 REFACTOR: none. The adapter's one-line POST has no unit test of its own, like `protectMain`'s;
           the sandbox scenario checks it against GitHub.
 
+- In CI (02b3fbe): 64 of 64 in 42 minutes, 2,146 requests. More than the run before (1,889),
+  almost all in waiting: 535 pull request checks and 521 issue lists, against 502 and 423. How
+  much a run waits depends on how quickly GitHub and Divlab answer that day; polling less is
+  on the test list with the time limit.
+
 ## 2026-10-22: Appending an event in one request
 
 - Each event cost three requests: two Git tree reads to count the log, then the write. Divlab
