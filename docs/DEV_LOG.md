@@ -56,6 +56,7 @@ and merge records are read back through core. Section 0 is done but for the log'
   found at that version (SANDBOX.md says to push first): about 600 requests spent for nothing.
 - dabca7f's CI sandbox run had been stopped by the allowance check, unnoticed at the time; its
   change passed in the next run (41f1897).
+- The next CI run (3836c72, with the plain file names): 67 of 67 in 12 minutes, 2,284 requests.
 
 ## 2026-10-22: A feedback signal's file must be plainly named
 
