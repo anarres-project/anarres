@@ -42,6 +42,26 @@ section 0's remaining items.
 
 ---
 
+## 2026-10-22: Merge records read back through core
+
+- An interrupted merge is routed from the work Divlab recorded as about to merge, so that work is
+  now read back through core as well (`readMergedWork`), with the same check of role, module and
+  verdict as a routing record's work, written once.
+- The sandbox run for 586ab71 (the 500 retry and routing records through core): 65 of 65 in 10½
+  minutes, 2,209 requests.
+- Stryker on core: 373 mutants, all killed.
+
+RED:      gives the work as Divlab recorded it -> not a function (then the stub) -> expected
+          { unreadable: '' } to deeply equal { fromRole: 'test', …(3) }
+GREEN:    (112 passed)
+RED:      is unreadable when it gives no verdict, rather than routed as passed -> expected
+          { fromRole: 'test', …(2) } to deeply equal { unreadable }
+GREEN:    (113 passed)
+REFACTOR: one check of the work's fields, shared by both readers
+RED:      (adapter) is refused, saying why, when the work it was about to merge could not be
+          routed -> expected [Function] to throw an error
+GREEN:    (53 passed)
+
 ## 2026-10-22: A server error from GitHub is retried
 
 - The sandbox run for f9be2f5 failed 1 of 65: GitHub answered 500 to a listing of ready tasks.

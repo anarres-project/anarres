@@ -1,4 +1,4 @@
-import type { Unreadable } from "./feedback-signal.ts";
+import type { FeedbackSignal, Unreadable } from "./feedback-signal.ts";
 import { ROLE_NAMES, type Role } from "./roles.ts";
 import { type AcceptedWork, failed, type Reason, type RoutingDecision, rule } from "./routing.ts";
 
@@ -66,11 +66,8 @@ export function readRoutingRecord(value: unknown): RoutingRecord | Unreadable {
     return { unreadable: "it is not a routing record" };
   }
   const record = value as RoutingRecord;
-  for (const [field, named] of WORK_FIELDS) {
-    if (typeof record.work[field] !== "string") {
-      return { unreadable: `its work does not give its ${named}` };
-    }
-  }
+  const work = unreadableWork(record.work);
+  if (work) return work;
   const decided: unknown = "tasks" in record.decision ? record.decision.tasks : [];
   if (!Array.isArray(decided) || !decided.every(isObject)) {
     return { unreadable: "its decision's tasks are not a list of tasks" };
@@ -79,6 +76,22 @@ export function readRoutingRecord(value: unknown): RoutingRecord | Unreadable {
     return { unreadable: "its decision names a role Anarres does not have" };
   }
   return record;
+}
+
+/** The work Divlab recorded as about to merge, checked before an interrupted merge is routed. */
+export function readMergedWork(value: unknown): FeedbackSignal | Unreadable {
+  return unreadableWork(value as FeedbackSignal) ?? (value as FeedbackSignal);
+}
+
+/** Why the work's own fields cannot be relied on, if they cannot. */
+function unreadableWork(
+  work: Record<(typeof WORK_FIELDS)[number][0], unknown>,
+): Unreadable | undefined {
+  for (const [field, named] of WORK_FIELDS) {
+    if (typeof work[field] !== "string")
+      return { unreadable: `its work does not give its ${named}` };
+  }
+  return undefined;
 }
 
 const isObject = (value: unknown): value is Record<string, unknown> =>

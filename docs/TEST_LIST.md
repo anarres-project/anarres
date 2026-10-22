@@ -56,8 +56,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] event files validated against the routing record's schema, defined once in core
         (`readRoutingRecord`): what routing reads from past records (the work's role, module and
         verdict, and the roles of the tasks decided) must be there, or the log read fails;
-  - [ ] the merge record's work (about to merge) is read through core too: an interrupted merge
-        is routed from it.
+  - [x] the merge record's work (about to merge) is read through core too (`readMergedWork`):
+        an interrupted merge is routed from it.
   - [x] Divlab reads a project's whole event log however long it grows: GitHub's contents
         listing stops at 1,000 files, and one request for 1,001 files' text failed (sandbox
         probe, 2026-10-22). The log is listed from main's Git tree and read 100 files at a time;

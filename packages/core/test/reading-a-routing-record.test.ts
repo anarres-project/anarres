@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type RoutingRecord, readRoutingRecord } from "../src/index.ts";
+import { type RoutingRecord, readMergedWork, readRoutingRecord } from "../src/index.ts";
 
 /** Coding work sent back to Test, as routing records it. */
 const RECORD: RoutingRecord = {
@@ -68,4 +68,19 @@ describe("reading back a routing record from the event log", () => {
       });
     },
   );
+});
+
+describe("reading back the work Divlab recorded as about to merge", () => {
+  const WORK = { fromRole: "test", module: "parser", verdict: "pass", impediments: [] };
+
+  it("gives the work as Divlab recorded it", () => {
+    expect(readMergedWork(JSON.parse(JSON.stringify(WORK)))).toEqual(WORK);
+  });
+
+  it("is unreadable when it gives no verdict, rather than routed as passed", () => {
+    const { verdict: _, ...withoutVerdict } = WORK;
+    expect(readMergedWork(withoutVerdict)).toEqual({
+      unreadable: "its work does not give its verdict",
+    });
+  });
 });

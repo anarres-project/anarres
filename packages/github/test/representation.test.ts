@@ -126,6 +126,21 @@ describe("a routing event as a file", () => {
     expect(eventFromFile(eventFile(begun, 3).content)).toEqual(begun);
   });
 
+  it("is refused, saying why, when the work it was about to merge could not be routed", () => {
+    const begun = {
+      project: "ledger",
+      aboutToMerge: {
+        pullRequest: "7",
+        head: "c0ffee",
+        feedbackSignal: "feedback/T-0144.md",
+        work: { fromRole: "test", module: "parser", impediments: [] },
+      },
+    };
+    expect(() => eventFromFile(JSON.stringify(begun))).toThrow(
+      "its work does not give its verdict",
+    );
+  });
+
   it("is refused when it is not a routing record", () => {
     expect(() => eventFromFile('{"project": "ledger"}')).toThrow("not a routing record");
   });

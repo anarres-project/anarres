@@ -7553,11 +7553,8 @@ function readRoutingRecord(value) {
     return { unreadable: "it is not a routing record" };
   }
   const record = value;
-  for (const [field, named] of WORK_FIELDS) {
-    if (typeof record.work[field] !== "string") {
-      return { unreadable: `its work does not give its ${named}` };
-    }
-  }
+  const work = unreadableWork(record.work);
+  if (work) return work;
   const decided = "tasks" in record.decision ? record.decision.tasks : [];
   if (!Array.isArray(decided) || !decided.every(isObject)) {
     return { unreadable: "its decision's tasks are not a list of tasks" };
@@ -7566,6 +7563,16 @@ function readRoutingRecord(value) {
     return { unreadable: "its decision names a role Anarres does not have" };
   }
   return record;
+}
+function readMergedWork(value) {
+  return unreadableWork(value) ?? value;
+}
+function unreadableWork(work) {
+  for (const [field, named] of WORK_FIELDS) {
+    if (typeof work[field] !== "string")
+      return { unreadable: `its work does not give its ${named}` };
+  }
+  return void 0;
 }
 var isObject = (value) => typeof value === "object" && value !== null;
 
@@ -7603,6 +7610,8 @@ function eventFromFile(content) {
     return event;
   }
   if (isObject2(event) && isObject2(event.aboutToMerge) && typeof event.aboutToMerge.feedbackSignal === "string" && isObject2(event.aboutToMerge.work)) {
+    const work = readMergedWork(event.aboutToMerge.work);
+    if ("unreadable" in work) throw new Error(`The event file cannot be read: ${work.unreadable}`);
     return event;
   }
   const record = readRoutingRecord(event);
