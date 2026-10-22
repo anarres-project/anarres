@@ -40,6 +40,20 @@ sandbox run's scenarios run in four workers: 11 minutes. Next: section 0's remai
 
 ---
 
+## 2026-10-22: The event log is never read in part
+
+- GitHub lists a Git tree only in part past 100,000 entries, and says so. Read in part, the log
+  would undercount re-runs and misnumber new events; with the repository's top level in part, it
+  could even look empty. Either now fails the read, as a log GraphQL has not caught up with does.
+
+RED:      is never read in part, when GitHub lists only part of it -> promise resolved
+          "[ … 249 events ]" instead of rejecting
+GREEN:    (49 passed)
+RED:      is never taken to be empty, when GitHub lists the repository only in part
+          -> promise resolved "[]" instead of rejecting
+GREEN:    (50 passed)
+REFACTOR: one helper reads a tree whole or fails, for both levels (written as the second fix)
+
 ## 2026-10-22: The sandbox run in parallel
 
 - A run's time is Divlab's: 77 pull requests, each waiting for a real Divlab run of 25 to 30

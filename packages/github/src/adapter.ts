@@ -284,17 +284,23 @@ export class GitHubAdapter
    * 1,000 files, which would leave a busy project's log read in part.
    */
   private async eventFiles(project: string): Promise<EventFile[]> {
-    const { tree: root } = await this.call<GitTree>("GET", `${this.repo(project)}/git/trees/main`);
+    const root = await this.wholeTree(project, "main");
     const events = root.find((entry) => entry.path === "events" && entry.type === "tree");
     if (!events) return [];
-    const { tree } = await this.call<GitTree>(
-      "GET",
-      `${this.repo(project)}/git/trees/${events.sha}`,
-    );
+    const tree = await this.wholeTree(project, events.sha);
     return tree
       .filter((entry) => EVENT_FILE.test(entry.path))
       .map((entry) => ({ name: entry.path, sha: entry.sha }))
       .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  /** A Git tree's entries, all of them: decisions must never rest on part of the log. */
+  private async wholeTree(project: string, tree: string): Promise<GitTree["tree"]> {
+    const listed = await this.call<GitTree>("GET", `${this.repo(project)}/git/trees/${tree}`);
+    if (listed.truncated) {
+      throw new GitHubError("GET", `tree ${tree}`, 200, "GitHub listed the tree in part");
+    }
+    return listed.tree;
   }
 
   private openIssue(project: string, issue: NewIssue): Promise<{ number: number }> {
@@ -332,7 +338,7 @@ export type Request = typeof requestGitHub;
 
 const EVENT_FILE = /^\d{6}\.json$/;
 
-type GitTree = { tree: { path: string; type: string; sha: string }[] };
+type GitTree = { tree: { path: string; type: string; sha: string }[]; truncated: boolean };
 type EventFile = { name: string; sha: string };
 
 /**

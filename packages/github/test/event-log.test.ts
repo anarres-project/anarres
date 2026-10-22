@@ -31,7 +31,14 @@ class FakeGitHub {
 
   constructor(
     events: number,
-    private readonly limits: { textsPerRequest?: number; failWritesAfterSaving?: boolean } = {},
+    private readonly limits: {
+      textsPerRequest?: number;
+      failWritesAfterSaving?: boolean;
+      /** GitHub lists only part of a tree past 100,000 entries, and says so. */
+      truncatedTree?: boolean;
+      /** The repository's top level listed in part, leaving the event log out. */
+      truncatedRoot?: boolean;
+    } = {},
   ) {
     for (let n = 1; n <= events; n++) {
       const { path, content } = eventFile(event(n), n);
@@ -62,14 +69,18 @@ class FakeGitHub {
     }
     if (method === "GET" && local === "git/trees/main") {
       return answer(200, {
-        tree: [{ path: "events", type: "tree", sha: "events-tree" }],
-        truncated: false,
+        tree: this.limits.truncatedRoot
+          ? []
+          : [{ path: "events", type: "tree", sha: "events-tree" }],
+        truncated: this.limits.truncatedRoot ?? false,
       });
     }
     if (method === "GET" && local === "git/trees/events-tree") {
       return answer(200, {
-        tree: this.eventNames.map((name) => ({ path: name, type: "blob", sha: `blob-${name}` })),
-        truncated: false,
+        tree: this.eventNames
+          .slice(0, this.limits.truncatedTree ? -1 : undefined)
+          .map((name) => ({ path: name, type: "blob", sha: `blob-${name}` })),
+        truncated: this.limits.truncatedTree ?? false,
       });
     }
     if (method === "POST" && path === "graphql") {
@@ -166,5 +177,15 @@ describe("a project's event log on GitHub", () => {
     await adapter.read("ledger");
     await adapter.append(event(251)).catch(() => {});
     expect(github.files.size).toBe(251);
+  });
+
+  it("is never read in part, when GitHub lists only part of it", async () => {
+    const github = new FakeGitHub(250, { truncatedTree: true });
+    await expect(adapterFor(github).read("ledger")).rejects.toThrow(/in part/);
+  });
+
+  it("is never taken to be empty, when GitHub lists the repository only in part", async () => {
+    const github = new FakeGitHub(250, { truncatedRoot: true });
+    await expect(adapterFor(github).read("ledger")).rejects.toThrow(/in part/);
   });
 });

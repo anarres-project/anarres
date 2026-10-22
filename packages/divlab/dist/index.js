@@ -7961,14 +7961,19 @@ var GitHubAdapter = class {
    * 1,000 files, which would leave a busy project's log read in part.
    */
   async eventFiles(project2) {
-    const { tree: root } = await this.call("GET", `${this.repo(project2)}/git/trees/main`);
+    const root = await this.wholeTree(project2, "main");
     const events = root.find((entry) => entry.path === "events" && entry.type === "tree");
     if (!events) return [];
-    const { tree } = await this.call(
-      "GET",
-      `${this.repo(project2)}/git/trees/${events.sha}`
-    );
+    const tree = await this.wholeTree(project2, events.sha);
     return tree.filter((entry) => EVENT_FILE.test(entry.path)).map((entry) => ({ name: entry.path, sha: entry.sha })).sort((a, b) => a.name.localeCompare(b.name));
+  }
+  /** A Git tree's entries, all of them: decisions must never rest on part of the log. */
+  async wholeTree(project2, tree) {
+    const listed = await this.call("GET", `${this.repo(project2)}/git/trees/${tree}`);
+    if (listed.truncated) {
+      throw new GitHubError("GET", `tree ${tree}`, 200, "GitHub listed the tree in part");
+    }
+    return listed.tree;
   }
   openIssue(project2, issue) {
     return this.call("POST", `${this.repo(project2)}/issues`, issue);

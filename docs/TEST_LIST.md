@@ -51,8 +51,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         listing stops at 1,000 files, and one request for 1,001 files' text failed (sandbox
         probe, 2026-10-22). The log is listed from main's Git tree and read 100 files at a time;
         a new event is numbered after the last, past 1,000 too.
-  - [ ] a Git tree GitHub reports as truncated (past 100,000 entries) fails the read rather than
-        returning part of the log;
+  - [x] a Git tree GitHub reports as truncated (past 100,000 entries) fails the read rather than
+        returning part of the log, or none of it when the top level is listed in part;
   - [ ] reading the log costs a request per 100 events on every run: a busy project needs a
         cheaper read before then (a checkpoint of what routing needs, say), raised with Bernard
         first since it changes what the log holds;
