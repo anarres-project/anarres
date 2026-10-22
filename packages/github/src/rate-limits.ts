@@ -6,8 +6,8 @@ export function retryAfter(
   answer: { status: number; headers: Headers; message: string },
   now: number,
 ): number | undefined {
-  // A failing gateway is usually a passing blip.
-  if (answer.status === 502 || answer.status === 503 || answer.status === 504) return 2_000;
+  // An error of GitHub's own, or a failing gateway, is usually a passing blip.
+  if ([500, 502, 503, 504].includes(answer.status)) return 2_000;
   // GitHub signals rate limits with 403 or 429; anything else is not about them.
   if (answer.status !== 403 && answer.status !== 429) return undefined;
   const retry = answer.headers.get("retry-after");

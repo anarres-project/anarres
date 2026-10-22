@@ -69,4 +69,8 @@ describe("waiting out GitHub's rate limits", () => {
   it("tries again shortly when GitHub's gateway fails", () => {
     expect(retryAfter({ status: 504, headers: new Headers(), message: "" }, NOW)).toBe(2_000);
   });
+
+  it("tries again shortly when GitHub fails with an error of its own", () => {
+    expect(retryAfter({ status: 500, headers: new Headers(), message: "" }, NOW)).toBe(2_000);
+  });
 });

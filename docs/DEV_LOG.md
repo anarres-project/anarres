@@ -42,6 +42,18 @@ section 0's remaining items.
 
 ---
 
+## 2026-10-22: A server error from GitHub is retried
+
+- The sandbox run for f9be2f5 failed 1 of 65: GitHub answered 500 to a listing of ready tasks.
+  The request helper retried a failing gateway (502, 503, 504) but not GitHub's own errors. A 500
+  is now retried the same way, and still only for requests safe to repeat: a write GitHub may
+  have carried out is never retried.
+
+RED:      tries again shortly when GitHub fails with an error of its own -> expected undefined to
+          be 2000
+GREEN:    (52 passed)
+REFACTOR: none
+
 ## 2026-10-22: Routing records read back through core
 
 - Event files were checked only for the shape of a routing record. Routing's re-run count reads

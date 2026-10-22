@@ -7708,7 +7708,7 @@ var UNPROTECTED_MAIN = "unprotected-main";
 
 // ../github/src/rate-limits.ts
 function retryAfter(answer, now) {
-  if (answer.status === 502 || answer.status === 503 || answer.status === 504) return 2e3;
+  if ([500, 502, 503, 504].includes(answer.status)) return 2e3;
   if (answer.status !== 403 && answer.status !== 429) return void 0;
   const retry = answer.headers.get("retry-after");
   if (retry !== null) return Number(retry) * 1e3;
