@@ -43,6 +43,20 @@ and merge records are read back through core. Section 0 is done but for the log'
 
 ---
 
+## 2026-10-22: Intermittent sandbox failures, kept for inspection
+
+- Two CI sandbox runs failed in one worker's repository while the others passed: d5b1284 (its
+  first four pull requests never decided) and 04d85ac (GitHub refused to show a pull request,
+  "too many files changed", after which no task appeared in that repository). The same features
+  at 04d85ac on demand: 32 of 32, all 82 of Divlab's runs successful. Not yet explained; both
+  failures came with four workers at once.
+- The repository was gone before anyone could look. A worker whose scenario failed now keeps
+  its repositories and names them in the log; the sweep removes them after an hour.
+- Slip: a local reproduction ran with an unpushed commit checked out, so Divlab could not be
+  found at that version (SANDBOX.md says to push first): about 600 requests spent for nothing.
+- dabca7f's CI sandbox run had been stopped by the allowance check, unnoticed at the time; its
+  change passed in the next run (41f1897).
+
 ## 2026-10-22: A feedback signal's file must be plainly named
 
 - The file name after `feedback/` is the member's own text, and revision tasks wrote it into

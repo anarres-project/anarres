@@ -1,7 +1,9 @@
 import {
+  After,
   AfterAll,
   BeforeAll,
   type IWorldOptions,
+  Status,
   setDefaultTimeout,
   setWorldConstructor,
   World,
@@ -54,11 +56,21 @@ BeforeAll(async () => {
   await SandboxDriver.sweep();
 });
 
-// ANARRES_SANDBOX_KEEP=1 leaves the run's repository in the sandbox to inspect, until a run an
-// hour or more later sweeps it.
+// A worker whose scenario failed keeps its repositories, so what Divlab did can be looked at.
+let failed = false;
+After(({ result }) => {
+  if (result?.status === Status.FAILED) failed = true;
+});
+
+// ANARRES_SANDBOX_KEEP=1, or a failed scenario, leaves the run's repositories in the sandbox to
+// inspect, until a run an hour or more later sweeps them.
 AfterAll(async () => {
   if (!sandbox) return;
-  if (process.env.ANARRES_SANDBOX_KEEP !== "1") await SandboxDriver.disposeRun();
+  if (failed || process.env.ANARRES_SANDBOX_KEEP === "1") {
+    console.log(`Kept for inspection: ${runRepository(run)} (swept after an hour)`);
+  } else {
+    await SandboxDriver.disposeRun();
+  }
   // What the run cost, so its budget can be watched (the driver's requests; Divlab's runs act as
   // its App, which has an allowance of its own).
   console.log(SandboxDriver.requestsMade().join("\n"));
