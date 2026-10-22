@@ -112,6 +112,24 @@ export class Anarres {
     });
   }
 
+  /** Several members open pull requests together, before Divlab has decided on any of them. */
+  async membersSubmitWorkAtOnce(works: (Work & { verdict: string })[]) {
+    await this.driver.submitWorkAtOnce(
+      works.map((work) => {
+        this.signalsWritten += 1;
+        const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
+        this.feedbackSignals.set(workOn(this.aliased(work)), feedbackSignal);
+        return {
+          impediments: [],
+          ...this.aliased(work),
+          project: this.project,
+          member: this.aliases.of(DEFAULT_MEMBER),
+          feedbackSignal,
+        };
+      }),
+    );
+  }
+
   /** The member opens a pull request with their work; Divlab decides whether to merge it. */
   async memberSubmitsWork(
     work: Work & {

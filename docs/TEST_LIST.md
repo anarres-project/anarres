@@ -27,6 +27,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the sandbox driver observing the real Action: it installs the template's workflow pinned
         to the commit under test, and waits for Divlab's run on each merge (all 57 scenarios in
         CI, about 22 minutes, 2026-10-21);
+  - [x] no Divlab run is dropped: GitHub keeps one run waiting per concurrency group and cancels
+        the rest unless the group queues them (`queue: max`); work three members submitted at
+        once lost a run in the sandbox without it, and all merged with it;
+  - [ ] interrupted merges are finished in the order Divlab merged them (its records), not in
+        the order the feedback signals are listed;
   - [ ] routing in merge order: by Divlab recording each merge it makes, and routing from those
         records rather than by listing the feedback signals (decision 0005), never from Git
         history (section 4).
@@ -216,6 +221,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       scenarios run in four parallel workers, a repository each; 11 minutes in CI.
 - [ ] The sandbox run polls less (pull requests every 2 seconds, issue lists every half second):
       about 2,100 requests a run, mostly waiting.
+- [ ] The allowance check asks every sandbox run for a full run's 2,500 requests, so a run of one
+      scenario is stopped too: scale it by the scenarios the run will do.
 - [x] A project's main branch admits changes only from Divlab's App; no person is exempt
       (`setUpProject` applies the ruleset; the sandbox refused an administrator's direct change
       while Divlab still merged and recorded, 2026-10-21).

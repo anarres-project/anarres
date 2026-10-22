@@ -14,10 +14,11 @@ on:
 permissions: {}
 
 # Shared with the pull request workflow: one Divlab run per project at a time keeps decisions in
-# order.
+# order. Every run waits its turn: by default GitHub keeps only one waiting and cancels the rest.
 concurrency:
   group: divlab
   cancel-in-progress: false
+  queue: max
 
 jobs:
   divlab:

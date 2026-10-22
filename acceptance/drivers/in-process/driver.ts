@@ -113,6 +113,25 @@ export class InProcessDriver implements Driver {
     await checkProtection(work.project, this.github, this.github);
   }
 
+  /** All the pull requests are opened first; then Divlab takes each in turn, as queued runs do. */
+  async submitWorkAtOnce(works: AcceptedWork[]): Promise<void> {
+    const opened = works.map((work) => {
+      const fromRole = roleId(work.role);
+      const task = this.github
+        .readyTasks(work.project)
+        .find((task) => task.role === fromRole && task.module === work.module);
+      const { path, text } = feedbackSignalFile(work, task?.id);
+      return {
+        project: work.project,
+        pullRequest: this.github.openPullRequest(work.project, [{ path, text }]),
+      };
+    });
+    for (const { project, pullRequest } of opened) {
+      await onPullRequest(project, pullRequest, this.github, this.github, this.github);
+      await checkProtection(project, this.github, this.github);
+    }
+  }
+
   async mergedWork(project: string): Promise<string[]> {
     return this.github
       .mergedFiles(project)

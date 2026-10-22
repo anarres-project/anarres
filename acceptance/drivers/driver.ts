@@ -56,6 +56,8 @@ export interface Driver {
   acceptWork(work: AcceptedWork): Promise<void>;
   /** The member opens a pull request with their work, for Divlab to validate and merge. */
   submitWork(work: AcceptedWork): Promise<void>;
+  /** Members open pull requests together, before Divlab has decided on any of them. */
+  submitWorkAtOnce(works: AcceptedWork[]): Promise<void>;
   /** The feedback signals of the submitted work Divlab has merged. */
   mergedWork(project: string): Promise<string[]>;
   /** An administrator, not Divlab, writes to the project's main branch; true if it took. */

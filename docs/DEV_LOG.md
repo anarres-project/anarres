@@ -36,9 +36,34 @@ counts its requests (about 2,000) and does not start without room in GitHub's al
 pushes that change only documents skip it. An event is appended in one request once the log has
 been read. Each project is set up with the Actions policy that lets Divlab's pull request
 workflow, and no other, run on pull requests once GitHub blocks that event by default. The
-sandbox run's scenarios run in four workers: 11 minutes. Next: section 0's remaining items.
+sandbox run's scenarios run in four workers: 11 minutes. Divlab's runs queue rather than being
+dropped when members submit at once. Next: interrupted merges finished in merge order, then
+section 0's remaining items.
 
 ---
+
+## 2026-10-22: No Divlab run is dropped
+
+- Divlab's two workflows share a concurrency group per project, so its runs go one at a time.
+  GitHub keeps at most one run waiting in a group and cancels any earlier waiting run when
+  another arrives (its documentation), so work members submit at nearly the same time could be
+  left unmerged with nobody told. The sandbox submitted one pull request at a time, so never saw
+  it. `queue: max` keeps up to 100 waiting, in order.
+- Slip: the template change came before the acceptance scenario. To keep the outer loop honest,
+  the scenario was then run in the sandbox with the change set aside, and was red: one of three
+  pull requests opened together was never decided (its run dropped). It failed in the When step,
+  waiting past the step's limit, rather than in a Then.
+- A sandbox run of one scenario was then stopped by the allowance check, which asks every run for
+  a full run's 2,500 requests: on the test list.
+
+Acceptance: work several members submit at once is all merged -> RED in the sandbox without
+          `queue: max` (one run dropped: "Divlab neither merged nor refused pull request 2");
+          GREEN in the sandbox with it (5 of 5 steps, 69 requests), and in-process.
+RED:      keeps every run waiting its turn: none is dropped when members submit at once
+          -> expected undefined to be 'max' (both workflows)
+GREEN:    (37 passed)
+REFACTOR: the sandbox driver's submission split into opening the pull request and awaiting
+          Divlab's decision, shared by one submission and several at once
 
 ## 2026-10-22: The event log is never read in part
 

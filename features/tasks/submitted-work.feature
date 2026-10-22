@@ -8,6 +8,13 @@ Feature: Divlab merges the work members submit
     Then Divlab has merged the member's Specification work on "parser"
     And the only task ready for "parser" is a Test task
 
+  Scenario: Work several members submit at once is all merged
+    Given a project with modules "parser", "lexer" and "printer"
+    When members submit Specification work on "parser", "lexer" and "printer" at once, each with a pass verdict
+    Then Divlab has merged the member's Specification work on "parser"
+    And Divlab has merged the member's Specification work on "lexer"
+    And Divlab has merged the member's Specification work on "printer"
+
   Scenario: Work without a feedback signal is not merged, and the member is told why
     Given a project with a module "parser"
     When a member submits Specification work on "parser" without a feedback signal

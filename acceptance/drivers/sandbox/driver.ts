@@ -127,6 +127,33 @@ export class SandboxDriver implements Driver {
    * signals, each in a file of its own, so the branch needs no updating first.
    */
   async submitWork(work: AcceptedWork): Promise<void> {
+    const opened = await this.openPullRequest(work);
+    await this.awaitDecision(
+      work,
+      opened,
+      await this.divlabHasDecidedOn(work.project, opened.number),
+    );
+  }
+
+  /**
+   * All the pull requests are opened before Divlab decides on any. A Divlab run GitHub drops or
+   * fails leaves its pull request unmerged, for the scenario to find.
+   */
+  async submitWorkAtOnce(works: AcceptedWork[]): Promise<void> {
+    const opened = [];
+    for (const work of works) opened.push({ work, ...(await this.openPullRequest(work)) });
+    for (const { work, ...pullRequest } of opened) {
+      const merged = await this.divlabHasDecidedOn(work.project, pullRequest.number).catch(
+        (error: Error) => {
+          console.log(`Pull request ${pullRequest.number} in ${work.project}: ${error.message}`);
+          return false;
+        },
+      );
+      await this.awaitDecision(work, pullRequest, merged);
+    }
+  }
+
+  private async openPullRequest(work: AcceptedWork) {
     const repository = `repos/${this.org}/${work.project}`;
     const fromRole = roleId(work.role);
     const task = (await this.settled(work.project, "ready")).find(
@@ -154,7 +181,14 @@ export class SandboxDriver implements Driver {
       head: `${this.membersOrg}:${branch}`,
       base: "main",
     });
-    const merged = await this.divlabHasDecidedOn(work.project, number);
+    return { number, path, task };
+  }
+
+  private async awaitDecision(
+    work: AcceptedWork,
+    { number, path, task }: { number: number; path: string; task: Issue | undefined },
+    merged: boolean,
+  ): Promise<void> {
     run.submitted.push({
       project: work.project,
       number,

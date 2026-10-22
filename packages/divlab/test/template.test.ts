@@ -50,6 +50,10 @@ describe.each([PULL_REQUEST_WORKFLOW, PUSH_WORKFLOW])(
       expect(divlab?.with).toEqual({ token: expression(`steps.${token?.id}.outputs.token`) });
     });
 
+    it("keeps every run waiting its turn: none is dropped when members submit at once", () => {
+      expect(workflow.concurrency.queue).toBe("max");
+    });
+
     it("gives the workflow's own token no permissions: Divlab acts only with the App's", () => {
       expect(workflow.permissions).toEqual({});
     });

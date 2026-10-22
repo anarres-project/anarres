@@ -15,6 +15,13 @@ Given("a project with a module {string}", function (this: AnarresWorld, module: 
 });
 
 Given(
+  "a project with modules {string}, {string} and {string}",
+  function (this: AnarresWorld, first: string, second: string, third: string) {
+    return this.anarres.projectWithModules(first, second, third);
+  },
+);
+
+Given(
   "a project with modules {string} and {string}",
   function (this: AnarresWorld, first: string, second: string) {
     return this.anarres.projectWithModules(first, second);
@@ -32,6 +39,22 @@ Given(
   "a member's {role} work on {string} was accepted with a {verdict} verdict",
   function (this: AnarresWorld, role: string, module: string, verdict: string) {
     return this.anarres.memberHasWorkAccepted({ role, module, verdict });
+  },
+);
+
+When(
+  "members submit {role} work on {string}, {string} and {string} at once, each with a {verdict} verdict",
+  function (
+    this: AnarresWorld,
+    role: string,
+    first: string,
+    second: string,
+    third: string,
+    verdict: string,
+  ) {
+    return this.anarres.membersSubmitWorkAtOnce(
+      [first, second, third].map((module) => ({ role, module, verdict })),
+    );
   },
 );
 

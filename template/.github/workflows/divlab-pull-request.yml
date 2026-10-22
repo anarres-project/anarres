@@ -9,10 +9,12 @@ on:
 # The workflow's own token gets nothing: Divlab acts only with its App's token.
 permissions: {}
 
-# Shared with the push workflow: one Divlab run per project at a time keeps decisions in order.
+# Shared with the push workflow: one Divlab run per project at a time keeps decisions in
+# order. Every run waits its turn: by default GitHub keeps only one waiting and cancels the rest.
 concurrency:
   group: divlab
   cancel-in-progress: false
+  queue: max
 
 jobs:
   divlab:
