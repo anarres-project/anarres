@@ -35,8 +35,8 @@ read whole past 1,000 events. Interrupted sandbox runs are swept up before the n
 counts its requests (about 2,000) and does not start without room in GitHub's allowance, and
 pushes that change only documents skip it. An event is appended in one request once the log has
 been read. Each project is set up with the Actions policy that lets Divlab's pull request
-workflow, and no other, run on pull requests once GitHub blocks that event by default. Next: the
-sandbox job's time limit, then section 0's remaining items.
+workflow, and no other, run on pull requests once GitHub blocks that event by default. The
+sandbox run's scenarios run in four workers: 11 minutes. Next: section 0's remaining items.
 
 ---
 
@@ -49,6 +49,8 @@ sandbox job's time limit, then section 0's remaining items.
   within a repository, so four go at once. Harness configuration, no behaviour: no test cycle.
 - Locally, the project features: 4 of 4 in 1 minute 13 seconds (1 minute 48 one at a time); both
   sandbox organisations empty afterwards. Each worker prints its own request tally.
+- In CI (aca7a1a): 64 of 64, the job in 11 minutes (42 before); 2,141 requests across the four
+  workers (531, 523, 559, 528), the same as one at a time, spent in a quarter of the time.
 
 ## 2026-10-22: Divlab may check members' pull requests
 

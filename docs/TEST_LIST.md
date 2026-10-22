@@ -212,9 +212,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       rather than merging anything unchecked.
 - [ ] Projects set up before this change (none outside the sandbox yet) need the policy added
       before 2 November.
-- [ ] The sandbox job's 45-minute limit is close (39 and 41½ minutes on 2026-10-22): the
-      scenarios now run in four parallel workers, a repository each; confirm the time in CI,
-      then poll less (pull requests every 2 seconds, issue lists every half second).
+- [x] The sandbox job's 45-minute limit was close (39 and 41½ minutes on 2026-10-22): the
+      scenarios run in four parallel workers, a repository each; 11 minutes in CI.
+- [ ] The sandbox run polls less (pull requests every 2 seconds, issue lists every half second):
+      about 2,100 requests a run, mostly waiting.
 - [x] A project's main branch admits changes only from Divlab's App; no person is exempt
       (`setUpProject` applies the ruleset; the sandbox refused an administrator's direct change
       while Divlab still merged and recorded, 2026-10-21).
