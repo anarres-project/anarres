@@ -56,6 +56,9 @@ appending an event in one request (section 0); before 2 December, the Actions po
   run with room to spare) and fails at once, saying when the allowance resets.
 - Both CI sandbox runs passed, 63 of 63: the event log fix against real GitHub, and the run
   above.
+- The first run with the check (4d292ab) passed, 63 of 63: 2,023 requests counted, while GitHub's
+  reading of the allowance used rose only from 0 to 445 in the same window. Whatever that
+  reading counts, it is not simply the run's requests; on the test list.
 
 RED:      the kind of request is its method and what it asks for, without the repository
           -> Cannot find module (then the stub) -> expected '' to be 'GET issues'
