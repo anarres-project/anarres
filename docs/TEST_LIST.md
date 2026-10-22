@@ -47,9 +47,15 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the driver waits until a ready list holds no task merged work has closed (a lagging list
         once showed a closed task in place of its replacement: 39 of 55 failed on 2026-10-13);
   - [ ] event files validated against the routing record's schema, defined once in core.
-  - [ ] Divlab reads a project's whole event log however long it grows: GitHub lists at most
-        1,000 files in a directory, so a busy project's log would otherwise be read in part,
-        silently (re-run counts, signals already routed).
+  - [x] Divlab reads a project's whole event log however long it grows: GitHub's contents
+        listing stops at 1,000 files, and one request for 1,001 files' text failed (sandbox
+        probe, 2026-10-22). The log is listed from main's Git tree and read 100 files at a time;
+        a new event is numbered after the last, past 1,000 too.
+  - [ ] a Git tree GitHub reports as truncated (past 100,000 entries) fails the read rather than
+        returning part of the log;
+  - [ ] reading the log costs a request per 100 events on every run: a busy project needs a
+        cheaper read before then (a checkpoint of what routing needs, say), raised with Bernard
+        first since it changes what the log holds;
   - [ ] a sweep deletes sandbox repositories left behind by an interrupted run (older than an
         hour), before each sandbox run;
   - [x] the adapter retries when GitHub rate-limits it (`retry-after`), so a busy sandbox run

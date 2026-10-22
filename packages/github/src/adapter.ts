@@ -35,8 +35,13 @@ import { requestGitHub } from "./request.ts";
 export class GitHubAdapter
   implements TaskBoard, EventLog, Repository, PullRequests, ProjectRepositories
 {
-  /** `app`: Divlab's GitHub App, needed only to set projects up. */
-  constructor(private readonly options: { owner: string; token: string; app?: number }) {}
+  /**
+   * `app`: Divlab's GitHub App, needed only to set projects up. `request`: how requests reach
+   * GitHub; the real API unless a test stands in for it.
+   */
+  constructor(
+    private readonly options: { owner: string; token: string; app?: number; request?: Request },
+  ) {}
 
   async protectMain(project: string): Promise<void> {
     if (this.options.app === undefined) throw new Error("Protecting main needs Divlab's App");
@@ -114,7 +119,7 @@ export class GitHubAdapter
   }
 
   async append(event: LogEvent): Promise<void> {
-    const sequence = (await this.eventPaths(event.project)).length + 1;
+    const sequence = (await this.eventFiles(event.project)).length + 1;
     const { path, content } = eventFile(event, sequence);
     // Creating a file that already exists fails, so two runs cannot both take this number.
     await this.call("PUT", `${this.repo(event.project)}/contents/${path}`, {
@@ -125,15 +130,28 @@ export class GitHubAdapter
 
   /**
    * The whole event log. The files are listed with the REST API, which reflects writes at once,
-   * and their contents fetched in one GraphQL request, which can lag behind writes. Divlab's
-   * decisions (re-run counts above all) must never rest on a log missing its latest events, so
-   * the read waits for GraphQL to hold every listed file, and fails rather than return less.
+   * and their contents fetched with GraphQL, a part at a time, which can lag behind writes.
+   * Divlab's decisions (re-run counts above all) must never rest on a log missing its latest
+   * events, so the read waits for GraphQL to hold every listed file, and fails rather than return
+   * less.
    */
   async read(project: string): Promise<LogEvent[]> {
-    const listed = (await this.eventPaths(project)).map((path) => path.slice("events/".length));
+    const listed = await this.eventFiles(project);
     if (listed.length === 0) return [];
     for (let attempt = 1; ; attempt++) {
-      const log = logFrom(listed, await this.eventTexts(project));
+      const texts = new Map<string, string>();
+      for (let start = 0; start < listed.length; start += TEXTS_PER_REQUEST) {
+        for (const [name, text] of await this.eventTexts(
+          project,
+          listed.slice(start, start + TEXTS_PER_REQUEST),
+        )) {
+          texts.set(name, text);
+        }
+      }
+      const log = logFrom(
+        listed.map((file) => file.name),
+        texts,
+      );
       if (log) return log;
       if (attempt === LOG_ATTEMPTS) {
         throw new GitHubError("POST", "graphql (event log)", 200, "the log lags behind its files");
@@ -142,23 +160,28 @@ export class GitHubAdapter
     }
   }
 
-  /** Every event file's text, by name, in one GraphQL request. */
-  private async eventTexts(project: string): Promise<Map<string, string>> {
+  /**
+   * The text of these event files, by name, in one GraphQL request, asked for by their Git object
+   * IDs as variables. A file GraphQL does not hold yet is left out.
+   */
+  private async eventTexts(project: string, files: EventFile[]): Promise<Map<string, string>> {
     const { data, errors } = await this.call<{
-      data?: {
-        repository?: { object?: { entries?: { name: string; object?: { text?: string } }[] } };
-      };
+      data?: { repository?: Record<string, { text?: string } | null> };
       errors?: unknown[];
     }>(
       "POST",
       "graphql",
       {
-        query: `query($owner: String!, $name: String!) {
+        query: `query($owner: String!, $name: String!, ${files.map((_, i) => `$o${i}: GitObjectID!`).join(", ")}) {
           repository(owner: $owner, name: $name) {
-            object(expression: "HEAD:events") { ... on Tree { entries { name object { ... on Blob { text } } } } }
+            ${files.map((_, i) => `e${i}: object(oid: $o${i}) { ... on Blob { text } }`).join("\n            ")}
           }
         }`,
-        variables: { owner: this.options.owner, name: project },
+        variables: {
+          owner: this.options.owner,
+          name: project,
+          ...Object.fromEntries(files.map((file, i) => [`o${i}`, file.sha])),
+        },
       },
       { repeatable: true },
     );
@@ -166,11 +189,12 @@ export class GitHubAdapter
     if (errors?.length || !data?.repository) {
       throw new GitHubError("POST", "graphql (event log)", 200, errors ?? "no such repository");
     }
+    const { repository } = data;
     return new Map(
-      (data.repository.object?.entries ?? []).map((entry) => [
-        entry.name,
-        entry.object?.text ?? "",
-      ]),
+      files.flatMap((file, i) => {
+        const text = repository[`e${i}`]?.text;
+        return text === undefined ? [] : [[file.name, text]];
+      }),
     );
   }
 
@@ -223,18 +247,22 @@ export class GitHubAdapter
     });
   }
 
-  /** The event files, oldest first. */
-  private async eventPaths(project: string): Promise<string[]> {
-    const { status, data } = await this.request<{ name: string; path: string }[]>(
+  /**
+   * The event files, oldest first. Listed from main's Git tree: GitHub's contents listing stops at
+   * 1,000 files, which would leave a busy project's log read in part.
+   */
+  private async eventFiles(project: string): Promise<EventFile[]> {
+    const { tree: root } = await this.call<GitTree>("GET", `${this.repo(project)}/git/trees/main`);
+    const events = root.find((entry) => entry.path === "events" && entry.type === "tree");
+    if (!events) return [];
+    const { tree } = await this.call<GitTree>(
       "GET",
-      `${this.repo(project)}/contents/events`,
+      `${this.repo(project)}/git/trees/${events.sha}`,
     );
-    if (status === 404) return [];
-    if (status !== 200) throw new GitHubError("GET", "events", status, data);
-    return data
-      .filter((file) => EVENT_FILE.test(file.name))
-      .map((file) => file.path)
-      .sort();
+    return tree
+      .filter((entry) => EVENT_FILE.test(entry.path))
+      .map((entry) => ({ name: entry.path, sha: entry.sha }))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }
 
   private openIssue(project: string, issue: NewIssue): Promise<{ number: number }> {
@@ -262,11 +290,24 @@ export class GitHubAdapter
     body?: unknown,
     options?: { repeatable?: boolean },
   ) {
-    return requestGitHub<T>(this.options.token, method, path, body, options);
+    const request = this.options.request ?? requestGitHub;
+    return request<T>(this.options.token, method, path, body, options);
   }
 }
 
+/** One request to GitHub, answered with its status and parsed body. */
+export type Request = typeof requestGitHub;
+
 const EVENT_FILE = /^\d{6}\.json$/;
+
+type GitTree = { tree: { path: string; type: string; sha: string }[] };
+type EventFile = { name: string; sha: string };
+
+/**
+ * How many event files' text to ask GraphQL for at once. Asked for 1,001 in one request, GitHub
+ * failed (sandbox, 2026-10-22); where it starts failing is not known, so this stays cautious.
+ */
+const TEXTS_PER_REQUEST = 100;
 
 /** How many times to ask GraphQL for a log that has caught up with its files, a second apart. */
 const LOG_ATTEMPTS = 10;

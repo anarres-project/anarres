@@ -7729,7 +7729,10 @@ var pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // ../github/src/adapter.ts
 var GitHubAdapter = class {
-  /** `app`: Divlab's GitHub App, needed only to set projects up. */
+  /**
+   * `app`: Divlab's GitHub App, needed only to set projects up. `request`: how requests reach
+   * GitHub; the real API unless a test stands in for it.
+   */
   constructor(options) {
     this.options = options;
   }
@@ -7799,7 +7802,7 @@ var GitHubAdapter = class {
     return data.filter((entry) => entry.type === "file").map((entry) => entry.path);
   }
   async append(event) {
-    const sequence = (await this.eventPaths(event.project)).length + 1;
+    const sequence = (await this.eventFiles(event.project)).length + 1;
     const { path, content } = eventFile(event, sequence);
     await this.call("PUT", `${this.repo(event.project)}/contents/${path}`, {
       message: `Divlab: routing event ${sequence}`,
@@ -7808,15 +7811,28 @@ var GitHubAdapter = class {
   }
   /**
    * The whole event log. The files are listed with the REST API, which reflects writes at once,
-   * and their contents fetched in one GraphQL request, which can lag behind writes. Divlab's
-   * decisions (re-run counts above all) must never rest on a log missing its latest events, so
-   * the read waits for GraphQL to hold every listed file, and fails rather than return less.
+   * and their contents fetched with GraphQL, a part at a time, which can lag behind writes.
+   * Divlab's decisions (re-run counts above all) must never rest on a log missing its latest
+   * events, so the read waits for GraphQL to hold every listed file, and fails rather than return
+   * less.
    */
   async read(project2) {
-    const listed = (await this.eventPaths(project2)).map((path) => path.slice("events/".length));
+    const listed = await this.eventFiles(project2);
     if (listed.length === 0) return [];
     for (let attempt = 1; ; attempt++) {
-      const log = logFrom(listed, await this.eventTexts(project2));
+      const texts = /* @__PURE__ */ new Map();
+      for (let start = 0; start < listed.length; start += TEXTS_PER_REQUEST) {
+        for (const [name, text] of await this.eventTexts(
+          project2,
+          listed.slice(start, start + TEXTS_PER_REQUEST)
+        )) {
+          texts.set(name, text);
+        }
+      }
+      const log = logFrom(
+        listed.map((file) => file.name),
+        texts
+      );
       if (log) return log;
       if (attempt === LOG_ATTEMPTS) {
         throw new GitHubError("POST", "graphql (event log)", 200, "the log lags behind its files");
@@ -7824,29 +7840,37 @@ var GitHubAdapter = class {
       await new Promise((resolve) => setTimeout(resolve, 1e3));
     }
   }
-  /** Every event file's text, by name, in one GraphQL request. */
-  async eventTexts(project2) {
+  /**
+   * The text of these event files, by name, in one GraphQL request, asked for by their Git object
+   * IDs as variables. A file GraphQL does not hold yet is left out.
+   */
+  async eventTexts(project2, files) {
     const { data, errors } = await this.call(
       "POST",
       "graphql",
       {
-        query: `query($owner: String!, $name: String!) {
+        query: `query($owner: String!, $name: String!, ${files.map((_, i) => `$o${i}: GitObjectID!`).join(", ")}) {
           repository(owner: $owner, name: $name) {
-            object(expression: "HEAD:events") { ... on Tree { entries { name object { ... on Blob { text } } } } }
+            ${files.map((_, i) => `e${i}: object(oid: $o${i}) { ... on Blob { text } }`).join("\n            ")}
           }
         }`,
-        variables: { owner: this.options.owner, name: project2 }
+        variables: {
+          owner: this.options.owner,
+          name: project2,
+          ...Object.fromEntries(files.map((file, i) => [`o${i}`, file.sha]))
+        }
       },
       { repeatable: true }
     );
     if (errors?.length || !data?.repository) {
       throw new GitHubError("POST", "graphql (event log)", 200, errors ?? "no such repository");
     }
+    const { repository } = data;
     return new Map(
-      (data.repository.object?.entries ?? []).map((entry) => [
-        entry.name,
-        entry.object?.text ?? ""
-      ])
+      files.flatMap((file, i) => {
+        const text = repository[`e${i}`]?.text;
+        return text === void 0 ? [] : [[file.name, text]];
+      })
     );
   }
   async head(project2, pullRequest) {
@@ -7891,15 +7915,19 @@ var GitHubAdapter = class {
       body: commentForRefusal(reason)
     });
   }
-  /** The event files, oldest first. */
-  async eventPaths(project2) {
-    const { status, data } = await this.request(
+  /**
+   * The event files, oldest first. Listed from main's Git tree: GitHub's contents listing stops at
+   * 1,000 files, which would leave a busy project's log read in part.
+   */
+  async eventFiles(project2) {
+    const { tree: root } = await this.call("GET", `${this.repo(project2)}/git/trees/main`);
+    const events = root.find((entry) => entry.path === "events" && entry.type === "tree");
+    if (!events) return [];
+    const { tree } = await this.call(
       "GET",
-      `${this.repo(project2)}/contents/events`
+      `${this.repo(project2)}/git/trees/${events.sha}`
     );
-    if (status === 404) return [];
-    if (status !== 200) throw new GitHubError("GET", "events", status, data);
-    return data.filter((file) => EVENT_FILE.test(file.name)).map((file) => file.path).sort();
+    return tree.filter((entry) => EVENT_FILE.test(entry.path)).map((entry) => ({ name: entry.path, sha: entry.sha })).sort((a, b) => a.name.localeCompare(b.name));
   }
   openIssue(project2, issue) {
     return this.call("POST", `${this.repo(project2)}/issues`, issue);
@@ -7913,10 +7941,12 @@ var GitHubAdapter = class {
     return data;
   }
   request(method, path, body, options) {
-    return requestGitHub(this.options.token, method, path, body, options);
+    const request = this.options.request ?? requestGitHub;
+    return request(this.options.token, method, path, body, options);
   }
 };
 var EVENT_FILE = /^\d{6}\.json$/;
+var TEXTS_PER_REQUEST = 100;
 var LOG_ATTEMPTS = 10;
 var GitHubError = class extends Error {
   constructor(method, path, status, data) {

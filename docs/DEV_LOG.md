@@ -30,11 +30,32 @@ workflow is the tripwire (anything on main Divlab did not merge is recorded, ale
 routed; an interrupted merge is finished from Divlab's record); every run checks main is still
 protected. Signals must use plain names. Every scenario's work goes through a real pull request;
 the sandbox suite runs them all against the real Action (about 30 minutes), each from a fork in a
-second sandbox organisation playing the members, as real members' work will come. Next: the
-1,000-event log limit and the sandbox sweep (section 0); before 2 December, the Actions policy that
-keeps `pull_request_target` working.
+second sandbox organisation playing the members, as real members' work will come. A project's event log is
+read whole past 1,000 events. Next: the sandbox sweep (section 0); before 2 December, the Actions
+policy that keeps `pull_request_target` working.
 
 ---
+
+## 2026-10-22: The event log past 1,000 events
+
+- A sandbox probe, one commit of 1,001 event files: GitHub's contents listing gave 1,000; the Git
+  tree gave all 1,001, untruncated; one GraphQL request for all their text failed with a 502. So a
+  busy project's log was not just read in part: from the 1,001st event, Divlab would have numbered
+  each new event as one that already existed, and every run would have failed.
+- The adapter now takes the function it sends requests through (a refactor, no change in
+  behaviour), so its unit tests can run against a fake that answers as GitHub did in the probe.
+
+RED:      a project's event log is read whole, however many events it holds
+          -> expected [ …(1000) ] to have a length of 1001 but got 1000
+          (then the fake answered Git trees too, a test-only step: still the same failure)
+GREEN:    listed from main's Git tree (41 passed)
+RED:      is read a part at a time, never asking GitHub for too much at once
+          -> GitHub POST graphql answered 502 (the probe's failure, from a fake told to fail above
+          100 texts; then the fake answered objects asked for by ID, a test-only step: the same)
+GREEN:    text fetched by Git object ID, 100 at a time (42 passed)
+REFACTOR: the test's typing; the fake's unused whole-folder query removed
+TEST:     gives a new event the next number past 1,000: passed first time, since appending
+          already counted through the tree listing; kept as a regression test.
 
 ## 2026-10-22: Work submitted from forks
 
