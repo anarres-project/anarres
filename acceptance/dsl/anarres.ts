@@ -339,6 +339,11 @@ export class Anarres {
     await this.driver.setTrustLevel(this.member(member), level);
   }
 
+  /** PDC coordinators record that the member's second account is theirs: one member, not two. */
+  async secondAccountIsLinked(member: string) {
+    await this.driver.linkAccount(this.member(member), this.member(`${member}-second-account`));
+  }
+
   async memberIsToldTaskNeedsMoreTrust(member: string, role: string, level: string) {
     const told = await this.driver.claimRefusals(this.project);
     const needed = `a ${role} task needs an ${level} member`;

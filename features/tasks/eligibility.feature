@@ -42,3 +42,13 @@ Feature: Who may take a task
     And a member's Coding work on "parser" was accepted with a pass verdict
     When Alice claims the Reviewer task for "parser"
     Then the Reviewer task for "parser" is claimed by Alice
+
+  # Not in the sandbox yet: it has no governance file of its own, and one account plays everyone.
+  @sandbox-wip
+  Scenario: Accounts a PDC coordinator has linked are one member
+    Given a project with a module "parser"
+    And Alice is an established member
+    And a PDC coordinator has linked a second account to Alice
+    And Alice's Coding work on "parser" was accepted with a pass verdict
+    When Alice's second account claims the Reviewer task for "parser"
+    Then Alice's second account is told a member takes only one role in a module

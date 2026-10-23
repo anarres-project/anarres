@@ -51,7 +51,27 @@ anything but an open task is refused; each claim granted is recorded in the log.
 hourly check makes the task ready again (in-process). Divlab never merges a draft. A member can
 give a task back early. Section 3 under way: a member takes one role in a module for its whole
 life (decision 0007), and Divlab refuses a claim that breaks it, or that the member's trust level
-does not allow (in-process: the sandbox needs a governance file of its own).
+does not allow; accounts a PDC coordinator linked are one member (in-process: the sandbox needs
+a governance file of its own). Section 3 is built but for what the sandbox needs.
+
+---
+
+## 2026-10-23: Linked accounts are one member
+
+- The governance file lists a member's linked accounts under them. Core's `memberFor` gives the
+  member an account belongs to, reading the file as data (an account nobody links is itself).
+  Divlab resolves every account to its member before applying any rule, so a linked account
+  shares its member's trust level and history.
+- CI checks the governance file links each account to one member at most (seen failing on an
+  account linked twice).
+
+RED:      is the member a PDC coordinator linked it to -> expected 'alice-2' to be 'alice'
+GREEN:    (17 passed)
+RED:      is the account itself when … (four rows) -> TypeError
+GREEN:    (156 passed)
+RED:      treats an account a PDC coordinator linked to a member as that member
+          -> refused as new, not for one role per module
+GREEN:    (119 passed; 86 scenarios)
 
 ---
 

@@ -16,4 +16,12 @@ describe("the governance file (decision 0007)", () => {
       [],
     );
   });
+
+  it("links each account to one member at most, by name", () => {
+    const links = Object.values(governance.members as Record<string, { linked?: unknown }>).flatMap(
+      (member) => member.linked ?? [],
+    );
+    expect(links.every((account) => typeof account === "string")).toBe(true);
+    expect(new Set(links).size).toBe(links.length);
+  });
 });

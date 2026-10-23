@@ -542,6 +542,10 @@ export class SandboxDriver implements Driver {
     throw new HarnessNotYetBuilt("setting a member's trust level in the sandbox's governance file");
   }
 
+  async linkAccount(): Promise<void> {
+    throw new HarnessNotYetBuilt("a governance file and a second account in the sandbox");
+  }
+
   async timePasses(): Promise<void> {
     throw new HarnessNotYetBuilt("moving GitHub's clock on");
   }

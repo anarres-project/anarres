@@ -100,6 +100,8 @@ export interface Driver {
   release(task: { project: string; role: string; module: string }, member: string): Promise<void>;
   /** PDC coordinators record the member at a trust level, as the governance file does. */
   setTrustLevel(member: string, level: string): Promise<void>;
+  /** PDC coordinators link a second account to a member in the governance file. */
+  linkAccount(member: string, account: string): Promise<void>;
   /** Divlab's clock moves on, as time passes for a project. */
   timePasses(hours: number): Promise<void>;
   /** Divlab's scheduled run checks the project's leases, as it does every hour. */

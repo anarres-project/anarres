@@ -14,4 +14,10 @@ export {
   readRoutingRecord,
   routingRecord,
 } from "./routing-record.ts";
-export { TRUST_LEVELS, type TrustLevel, trustAllows, trustLevelOf } from "./trust-levels.ts";
+export {
+  memberFor,
+  TRUST_LEVELS,
+  type TrustLevel,
+  trustAllows,
+  trustLevelOf,
+} from "./trust-levels.ts";

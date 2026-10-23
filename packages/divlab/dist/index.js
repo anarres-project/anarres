@@ -7402,6 +7402,15 @@ function trustLevelOf(file, member) {
   return TRUST_LEVELS.find((known) => known === level) ?? "new";
 }
 var recorded = (value, name) => typeof value === "object" && value !== null && !Array.isArray(value) && Object.hasOwn(value, name) ? value[name] : void 0;
+function memberFor(file, account) {
+  const members = recorded(file, "members");
+  if (typeof members !== "object" || members === null) return account;
+  const owner2 = Object.keys(members).find((member) => {
+    const linked = recorded(recorded(members, member), "linked");
+    return Array.isArray(linked) && linked.includes(account);
+  });
+  return owner2 ?? account;
+}
 
 // ../core/src/eligibility.ts
 var isRoleInModule = (role) => role !== "research";
@@ -8272,12 +8281,16 @@ async function onClaim(project2, claim, board, log, clock, members) {
     });
     return;
   }
-  const history = parts(await log.read(project2));
   const governance = await members.governanceFile();
-  const allowed = (member) => mayTake(
-    { member, role: task.role, module: task.module },
+  const memberOf = (account) => memberFor(governance, account);
+  const history = parts(await log.read(project2)).map((part) => ({
+    ...part,
+    member: memberOf(part.member)
+  }));
+  const allowed = (account) => mayTake(
+    { member: memberOf(account), role: task.role, module: task.module },
     history,
-    trustLevelOf(governance, member)
+    trustLevelOf(governance, memberOf(account))
   );
   const asker = allowed(claim.member);
   if (asker !== "allowed") {

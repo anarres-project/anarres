@@ -245,6 +245,10 @@ export class InProcessDriver implements Driver {
     this.github.setTrustLevel(member, level);
   }
 
+  async linkAccount(member: string, account: string): Promise<void> {
+    this.github.linkAccount(member, account);
+  }
+
   async timePasses(hours: number): Promise<void> {
     this.now = new Date(this.now.getTime() + hours * 60 * 60 * 1000);
   }

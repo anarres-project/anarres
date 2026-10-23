@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type Role, type TrustLevel, trustAllows, trustLevelOf } from "../src/index.ts";
+import { memberFor, type Role, type TrustLevel, trustAllows, trustLevelOf } from "../src/index.ts";
 
 describe("what a member's trust level lets them take (concept §11, decision 0007)", () => {
   it("does not let a new member take a Reviewer task", () => {
@@ -40,5 +40,22 @@ describe("a member's trust level, as the governance file records it (decision 00
     ["no file at all", undefined, "alice"],
   ])("is new for %s: unknown trust is no trust", (_what, file, member) => {
     expect(trustLevelOf(file, member)).toBe("new");
+  });
+});
+
+describe("the member an account belongs to (concept §6, decision 0007)", () => {
+  it("is the member a PDC coordinator linked it to", () => {
+    const file = { members: { alice: { level: "established", linked: ["alice-2"] } } };
+    expect(memberFor(file, "alice-2")).toBe("alice");
+  });
+
+  it.each([
+    ["no member links it", { members: { alice: { level: "new", linked: ["alice-2"] } } }],
+    ["a member's record names no linked accounts", { members: { alice: { level: "new" } } }],
+    ["the links are not a list", { members: { alice: { linked: "bob" } } }],
+    ["the file is not what Divlab writes", ["bob"]],
+    ["there is no file", undefined],
+  ])("is the account itself when %s", (_what, file) => {
+    expect(memberFor(file, "bob")).toBe("bob");
   });
 });

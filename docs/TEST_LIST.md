@@ -291,7 +291,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] when the earliest claim on a task is not allowed, the earliest that is wins; a member
         barred from the task is told why, whoever holds it;
   - [x] the sandbox shows the refusal, and that a member may revise their own role's work.
-- [ ] Linked accounts are treated as one member.
+- [x] Linked accounts are treated as one member: the governance file lists them under the
+      member; Divlab judges every claim by member, for trust and for one role per module; CI
+      checks no account is linked twice (in-process; the sandbox needs its governance file and a
+      second account).
+  - [ ] a member's merged work recorded under one account and claims under another, before the
+        link was made, are still one member (they are: the rules read the file at claim time;
+        to be shown);
 
 ## 4. Validating contributions
 

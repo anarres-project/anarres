@@ -245,11 +245,16 @@ export class FakeGitHub
     return this.refusedMembers.filter((refusal) => refusal.project === project);
   }
 
-  /** The governance file as PDC coordinators keep it: each member's trust level. */
-  private readonly trustLevels: Record<string, { level: string }> = {};
+  /** The governance file as PDC coordinators keep it: trust levels and linked accounts. */
+  private readonly trustLevels: Record<string, { level?: string; linked?: string[] }> = {};
 
   setTrustLevel(member: string, level: string): void {
-    this.trustLevels[member] = { level };
+    this.trustLevels[member] = { ...this.trustLevels[member], level };
+  }
+
+  linkAccount(member: string, account: string): void {
+    const record = this.trustLevels[member] ?? {};
+    this.trustLevels[member] = { ...record, linked: [...(record.linked ?? []), account] };
   }
 
   async governanceFile(): Promise<unknown> {

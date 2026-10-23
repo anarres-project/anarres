@@ -35,3 +35,14 @@ const recorded = (value: unknown, name: string): unknown =>
   typeof value === "object" && value !== null && !Array.isArray(value) && Object.hasOwn(value, name)
     ? (value as Record<string, unknown>)[name]
     : undefined;
+
+/** The member an account belongs to: the one a PDC coordinator linked it to, or itself. */
+export function memberFor(file: unknown, account: string): string {
+  const members = recorded(file, "members");
+  if (typeof members !== "object" || members === null) return account;
+  const owner = Object.keys(members).find((member) => {
+    const linked = recorded(recorded(members, member), "linked");
+    return Array.isArray(linked) && linked.includes(account);
+  });
+  return owner ?? account;
+}

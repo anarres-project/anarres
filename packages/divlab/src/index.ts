@@ -2,6 +2,7 @@ import {
   type FeedbackSignal,
   leaseHasRunOut,
   mayTake,
+  memberFor,
   type Part,
   type Role,
   type RoutingRecord,
@@ -195,13 +196,18 @@ export async function onClaim(
     return;
   }
   // A member the conflict-of-interest rules bar from the task is told why (decision 0007).
-  const history = parts(await log.read(project));
   const governance = await members.governanceFile();
-  const allowed = (member: string) =>
+  // Accounts a PDC coordinator linked are one member, for every rule (concept §6).
+  const memberOf = (account: string) => memberFor(governance, account);
+  const history = parts(await log.read(project)).map((part) => ({
+    ...part,
+    member: memberOf(part.member),
+  }));
+  const allowed = (account: string) =>
     mayTake(
-      { member, role: task.role, module: task.module },
+      { member: memberOf(account), role: task.role, module: task.module },
       history,
-      trustLevelOf(governance, member),
+      trustLevelOf(governance, memberOf(account)),
     );
   const asker = allowed(claim.member);
   if (asker !== "allowed") {

@@ -347,6 +347,53 @@ describe("who may claim a task (decision 0007)", () => {
       "Divlab did not give you this task: a Reviewer task needs an established member, and you are new",
     ]);
   });
+
+  it("treats an account a PDC coordinator linked to a member as that member", async () => {
+    const refused: Refused[] = [];
+    const reviewTask: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "reviewer", module: "parser" }),
+      comments: async () => [{ member: "alice-2", text: "/claim" }],
+      refuseMember: async (refusal) => {
+        refused.push(refusal);
+      },
+    };
+    const aliceCoded: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          member: "alice",
+          work: {
+            fromRole: "coding",
+            module: "parser",
+            verdict: "pass",
+            impediments: [],
+            feedbackSignal: "feedback/FB-3.md",
+          },
+          decision: { tasks: [{ role: "reviewer", module: "parser" }] },
+          reason: { rule: "passed" },
+        } as LogEvent,
+      ],
+      append: async () => {},
+    };
+    const linked: Members = {
+      governanceFile: async () => ({
+        members: { alice: { level: "established", linked: ["alice-2"] } },
+      }),
+    };
+    const clock = () => new Date("2026-10-23T09:00:00Z");
+    await onClaim(
+      "ledger",
+      { task: "12", member: "alice-2" },
+      reviewTask,
+      aliceCoded,
+      clock,
+      linked,
+    );
+    expect(refused.map((refusal) => refusal.reason)).toEqual([
+      "Divlab did not give you this task: a member takes only one role in a module, and you have worked on it as Coding",
+    ]);
+  });
 });
 
 describe("acting on a release", () => {
