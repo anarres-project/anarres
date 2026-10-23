@@ -50,7 +50,55 @@ anything but an open task is refused; each claim granted is recorded in the log.
 24 hours after the last activity on its task, the claim or draft work by its holder, and Divlab's
 hourly check makes the task ready again (in-process). Divlab never merges a draft. A member can
 give a task back early. Section 3 under way: a member takes one role in a module for its whole
-life (decision 0007), and Divlab refuses a claim that breaks it.
+life (decision 0007), and Divlab refuses a claim that breaks it, or that the member's trust level
+does not allow (in-process: the sandbox needs a governance file of its own).
+
+---
+
+## 2026-10-23: Trust levels
+
+- Core holds what each trust level may take, each role's lowest level stated once, and reads a
+  member's level from the governance file as data: a member it does not list, a level Anarres
+  does not have, a malformed or missing file all mean *new*. The trust check is part of
+  `mayTake`, so core has one statement of who may take a task.
+- Divlab reads the governance file when a member claims a task, through a new port, `Members`.
+  The adapter reads `governance/members.json` from Anarres's repository unless the organisation's
+  `ANARRES_GOVERNANCE` variable names another (the claim workflow passes it; nothing in a
+  member's pull request reaches it). A file it cannot read gives nobody any trust.
+- `governance/members.json` is in the repository, empty for now, with a README; CI checks every
+  level in it, seen failing on a bad one.
+- The scenario where Alice may not review her own code now makes her established first, or she
+  would be refused as new rather than for the reason it is about.
+- Slips: the role table was written whole from decision 0007, then pinned row by row (passed
+  first time); the "a trusted member" wording was written with the first refusal, caught by the
+  coverage gate, then tested (passed first time); the adapter's line for other GitHub errors was
+  taken out, its test watched fail, and put back.
+
+RED:      does not let a new member take a Reviewer task -> expected true to be false
+GREEN:    (hard-coded)
+RED:      lets a new member take a Coding task -> expected false to be true
+GREEN:    (2 passed)
+RED:      is the level PDC coordinators recorded for them -> expected 'new' to be 'established'
+GREEN:    (11 passed)
+RED:      is new for a level Anarres does not have / a file that is not what Divlab writes / no file
+GREEN:    (148 passed)
+RED:      is refused to a member whose trust level is too low for the role -> expected 'allowed' to equal { refused }
+GREEN:    (149 passed)
+RED:      refuses a member whose trust level is too low for the task, saying why
+          -> (every claim test failed: Divlab still called mayTake without a level)
+GREEN:    (116 passed)
+RED:      is read from Anarres's own repository unless the organisation names another -> expected undefined
+GREEN:    (84 passed)
+RED:      is nothing when there is no such file -> Error: GitHub GET … answered 404
+GREEN:    (85 passed)
+RED:      fails, saying what GitHub answered, when GitHub will not give it -> got 'The first argument must be…'
+GREEN:    (86 passed)
+RED:      is nothing when the file is not JSON -> SyntaxError
+GREEN:    (87 passed)
+RED:      is read from the repository the organisation names instead -> expected undefined
+GREEN:    (88 passed)
+RED:      tells Divlab where the organisation keeps its governance file -> expected undefined
+GREEN:    (117 passed; 85 scenarios)
 
 ---
 

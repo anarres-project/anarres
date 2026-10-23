@@ -36,6 +36,11 @@ describe("the project template's pull request workflow (decision 0006)", () => {
 });
 
 describe("the project template's claim workflow", () => {
+  it("tells Divlab where the organisation keeps its governance file, if it names one", () => {
+    const divlab = stepsOf(templateWorkflow(CLAIM_WORKFLOW)).at(-1);
+    expect(divlab?.with?.governance).toBe(expression("vars.ANARRES_GOVERNANCE"));
+  });
+
   it("runs when someone comments on one of the project's issues, and on nothing else", () => {
     expect(templateWorkflow(CLAIM_WORKFLOW).on).toEqual({ issue_comment: { types: ["created"] } });
   });
@@ -66,7 +71,7 @@ describe.each([PULL_REQUEST_WORKFLOW, PUSH_WORKFLOW, CLAIM_WORKFLOW, LEASE_WORKF
         "client-id": expression("vars.DIVLAB_APP_CLIENT_ID"),
         "private-key": expression("secrets.DIVLAB_APP_PRIVATE_KEY"),
       });
-      expect(divlab?.with).toEqual({ token: expression(`steps.${token?.id}.outputs.token`) });
+      expect(divlab?.with?.token).toBe(expression(`steps.${token?.id}.outputs.token`));
     });
 
     it("waits its turn with the project's other Divlab runs, so one acts at a time", () => {

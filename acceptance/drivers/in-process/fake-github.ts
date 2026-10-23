@@ -4,6 +4,7 @@ import type {
   EventLog,
   FinishedModule,
   LogEvent,
+  Members,
   NotAccepted,
   PostedTask,
   ProjectRepositories,
@@ -18,7 +19,7 @@ type OpenTask = PostedTask & { id: string; claimedBy?: string };
 
 /** An in-memory stand-in for the GitHub repositories and issues Divlab works with. */
 export class FakeGitHub
-  implements TaskBoard, EventLog, Repository, PullRequests, ProjectRepositories
+  implements TaskBoard, EventLog, Repository, PullRequests, ProjectRepositories, Members
 {
   readonly repositories = new Map<string, string[]>();
   private readonly files = new Map<string, Map<string, string>>();
@@ -242,6 +243,17 @@ export class FakeGitHub
 
   claimRefusals(project: string): Refused[] {
     return this.refusedMembers.filter((refusal) => refusal.project === project);
+  }
+
+  /** The governance file as PDC coordinators keep it: each member's trust level. */
+  private readonly trustLevels: Record<string, { level: string }> = {};
+
+  setTrustLevel(member: string, level: string): void {
+    this.trustLevels[member] = { level };
+  }
+
+  async governanceFile(): Promise<unknown> {
+    return { members: this.trustLevels };
   }
 
   /** Every open task, whether ready or claimed. */

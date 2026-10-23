@@ -31,3 +31,14 @@ Then(
     return this.anarres.memberIsToldOneRolePerModule(member);
   },
 );
+
+Given("{word} is an established member", function (this: AnarresWorld, member: string) {
+  return this.anarres.memberIsTrusted(member, "established");
+});
+
+Then(
+  "{word} is told a {role} task needs an established member",
+  function (this: AnarresWorld, member: string, role: string) {
+    return this.anarres.memberIsToldTaskNeedsMoreTrust(member, role, "established");
+  },
+);

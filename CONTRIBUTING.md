@@ -65,6 +65,11 @@ needs four values, from a git-ignored `.env` locally, or from the `sandbox` envi
   permissions: read and write for administration (to make and delete forks) and contents (to push
   work); read for metadata. Nothing else: it cannot act on the sandbox organisation itself.
 
+The sandbox's projects read members' trust levels from a governance file of the sandbox's own,
+never from this repository's: an organisation variable, `ANARRES_GOVERNANCE`, names the
+repository in the sandbox organisation that holds `governance/members.json` (decision 0007). Not
+set up yet; until it is, the trust-level scenarios run in-process only.
+
 The sandbox organisation itself needs, under Settings → Actions → General:
 
 - Actions enabled for all repositories;

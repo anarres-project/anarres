@@ -3,8 +3,11 @@ Feature: Who may take a task
   role in a module for its whole life: whoever wrote a module's tests never writes its code, and
   whoever produced any of it never reviews it. Divlab checks this when a member claims a task.
 
+  # Not in the sandbox yet: it has no governance file of its own to set trust levels in.
+  @sandbox-wip
   Scenario: A member who wrote a module's code cannot review it
     Given a project with a module "parser"
+    And Alice is an established member
     And Alice's Coding work on "parser" was accepted with a pass verdict
     When Alice claims the Reviewer task for "parser"
     Then Alice is told a member takes only one role in a module
@@ -21,3 +24,21 @@ Feature: Who may take a task
     And Alice's Coding work on "parser" was accepted with a fail verdict, reporting test failures
     When Alice claims the Coding task for "parser"
     Then the Coding task for "parser" is claimed by Alice
+
+  # Not in the sandbox yet: it has no governance file of its own to set trust levels in.
+  @sandbox-wip
+  Scenario: A new member cannot take a Reviewer task
+    Given a project with a module "parser"
+    And a member's Coding work on "parser" was accepted with a pass verdict
+    When Alice claims the Reviewer task for "parser"
+    Then Alice is told a Reviewer task needs an established member
+    And a Reviewer task for "parser" is ready to claim
+
+  # Not in the sandbox yet: it has no governance file of its own to set trust levels in.
+  @sandbox-wip
+  Scenario: An established member can take a Reviewer task
+    Given a project with a module "parser"
+    And Alice is an established member
+    And a member's Coding work on "parser" was accepted with a pass verdict
+    When Alice claims the Reviewer task for "parser"
+    Then the Reviewer task for "parser" is claimed by Alice

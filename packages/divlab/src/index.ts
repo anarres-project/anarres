@@ -8,6 +8,7 @@ import {
   readFeedbackSignal,
   readSignalFile,
   routingRecord,
+  trustLevelOf,
   type Unreadable,
 } from "@anarres/core";
 import { isClaim } from "./event.ts";
@@ -169,6 +170,12 @@ const mergedParts = (events: readonly LogEvent[]): Part[] =>
         ],
   );
 
+/** Who the members are: the governance file PDC coordinators keep (decision 0007). */
+export interface Members {
+  /** The governance file's contents, as read: data to check, never trusted as it stands. */
+  governanceFile(): Promise<unknown>;
+}
+
 /** A member asks to claim a task. */
 export async function onClaim(
   project: string,
@@ -176,6 +183,7 @@ export async function onClaim(
   board: TaskBoard,
   log: EventLog,
   clock: Clock,
+  members: Members,
 ): Promise<void> {
   const task = await board.task(project, claim.task);
   if (task === undefined) {
@@ -188,8 +196,13 @@ export async function onClaim(
   }
   // A member the conflict-of-interest rules bar from the task is told why (decision 0007).
   const history = parts(await log.read(project));
+  const governance = await members.governanceFile();
   const allowed = (member: string) =>
-    mayTake({ member, role: task.role, module: task.module }, history);
+    mayTake(
+      { member, role: task.role, module: task.module },
+      history,
+      trustLevelOf(governance, member),
+    );
   const asker = allowed(claim.member);
   if (asker !== "allowed") {
     await board.refuseMember({

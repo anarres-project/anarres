@@ -334,6 +334,22 @@ export class Anarres {
     );
   }
 
+  /** PDC coordinators have recorded the member at this trust level. */
+  async memberIsTrusted(member: string, level: string) {
+    await this.driver.setTrustLevel(this.member(member), level);
+  }
+
+  async memberIsToldTaskNeedsMoreTrust(member: string, role: string, level: string) {
+    const told = await this.driver.claimRefusals(this.project);
+    const needed = `a ${role} task needs an ${level} member`;
+    assert.ok(
+      told.some(
+        (refusal) => refusal.member === this.member(member) && refusal.reason.includes(needed),
+      ),
+      `expected ${member} to be told ${needed}; Divlab said: ${JSON.stringify(told)}`,
+    );
+  }
+
   async memberIsToldOneRolePerModule(member: string) {
     const told = await this.driver.claimRefusals(this.project);
     assert.ok(

@@ -7381,9 +7381,37 @@ var ROLE_NAMES = {
 };
 var isRole = (value) => typeof value === "string" && Object.hasOwn(ROLE_NAMES, value);
 
+// ../core/src/trust-levels.ts
+var TRUST_LEVELS = ["new", "established", "trusted", "pdc-coordinator"];
+var LEVEL_NEEDED = {
+  specification: "new",
+  test: "new",
+  coding: "new",
+  research: "new",
+  architecture: "established",
+  reviewer: "established",
+  "security-and-quality": "trusted",
+  "programme-architect": "trusted"
+};
+var levelNeeded = (role) => LEVEL_NEEDED[role];
+function trustAllows(level, role) {
+  return TRUST_LEVELS.indexOf(level) >= TRUST_LEVELS.indexOf(levelNeeded(role));
+}
+function trustLevelOf(file, member) {
+  const level = recorded(recorded(recorded(file, "members"), member), "level");
+  return TRUST_LEVELS.find((known) => known === level) ?? "new";
+}
+var recorded = (value, name) => typeof value === "object" && value !== null && !Array.isArray(value) && Object.hasOwn(value, name) ? value[name] : void 0;
+
 // ../core/src/eligibility.ts
 var isRoleInModule = (role) => role !== "research";
-function mayTake(task, history) {
+function mayTake(task, history, level) {
+  if (!trustAllows(level, task.role)) {
+    const needed = levelNeeded(task.role);
+    return {
+      refused: `a ${ROLE_NAMES[task.role]} task needs ${needed === "established" ? "an" : "a"} ${needed} member, and you are ${level}`
+    };
+  }
   if (!isRoleInModule(task.role)) return "allowed";
   const other = history.find(
     (part) => part.member === task.member && part.module === task.module && isRoleInModule(part.role) && part.role !== task.role
@@ -7855,6 +7883,8 @@ function parsed(text) {
 var pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // ../github/src/adapter.ts
+var GOVERNANCE_REPOSITORY = "anarres-project/anarres";
+var GOVERNANCE_FILE = "governance/members.json";
 var GitHubAdapter = class {
   /**
    * `app`: Divlab's GitHub App, needed only to set projects up. `request`: how requests reach
@@ -7943,6 +7973,19 @@ var GitHubAdapter = class {
     const issue = `${this.repo(project2)}/issues/${task}`;
     const listed = await this.call("GET", issue);
     await this.call("PATCH", issue, { labels: labelsWhenReleased(listed), assignees: [] });
+  }
+  /** The governance file, as read: core checks what it says (decision 0007). */
+  async governanceFile() {
+    const repository = this.options.governance || GOVERNANCE_REPOSITORY;
+    const where = `repos/${repository}/contents/${GOVERNANCE_FILE}`;
+    const { status, data } = await this.request("GET", where);
+    if (status === 404) return void 0;
+    if (status !== 200) throw new GitHubError("GET", where, status, data);
+    try {
+      return JSON.parse(Buffer.from(data.content, "base64").toString("utf8"));
+    } catch {
+      return void 0;
+    }
   }
   async comments(project2, task) {
     const comments = [];
@@ -8219,7 +8262,7 @@ var mergedParts = (events) => routingDecisions(events).flatMap(
     }
   ]
 );
-async function onClaim(project2, claim, board, log, clock) {
+async function onClaim(project2, claim, board, log, clock, members) {
   const task = await board.task(project2, claim.task);
   if (task === void 0) {
     await board.refuseMember({
@@ -8230,7 +8273,12 @@ async function onClaim(project2, claim, board, log, clock) {
     return;
   }
   const history = parts(await log.read(project2));
-  const allowed = (member) => mayTake({ member, role: task.role, module: task.module }, history);
+  const governance = await members.governanceFile();
+  const allowed = (member) => mayTake(
+    { member, role: task.role, module: task.module },
+    history,
+    trustLevelOf(governance, member)
+  );
   const asker = allowed(claim.member);
   if (asker !== "allowed") {
     await board.refuseMember({
@@ -8450,7 +8498,7 @@ if (!owner || !project || !token) {
   console.log("::error::Divlab needs GITHUB_REPOSITORY and a token");
   process.exit(1);
 }
-var github = new GitHubAdapter({ owner, token });
+var github = new GitHubAdapter({ owner, token, governance: process.env.INPUT_GOVERNANCE ?? "" });
 try {
   const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH ?? "", "utf8"));
   const run = whatToActOn(process.env.GITHUB_EVENT_NAME ?? "", event);
@@ -8459,7 +8507,7 @@ try {
   if ("pullRequest" in run) {
     await onPullRequest(project, run.pullRequest, github, github, github, clock);
   } else if ("claim" in run) {
-    await onClaim(project, run.claim, github, github, clock);
+    await onClaim(project, run.claim, github, github, clock, github);
   } else if ("release" in run) {
     await onRelease(project, run.release, github, github, clock);
   } else if ("leases" in run) {

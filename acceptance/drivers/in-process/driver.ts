@@ -175,7 +175,14 @@ export class InProcessDriver implements Driver {
   async claim(task: { project: string; role: string; module: string }, member: string) {
     const id = this.openTaskId(task);
     this.github.comment(task.project, id, member, "/claim");
-    await onClaim(task.project, { task: id, member }, this.github, this.github, this.clock);
+    await onClaim(
+      task.project,
+      { task: id, member },
+      this.github,
+      this.github,
+      this.clock,
+      this.github,
+    );
   }
 
   /** Every member comments first; then Divlab takes `heardFirst`'s run, then the others in turn. */
@@ -187,7 +194,14 @@ export class InProcessDriver implements Driver {
     const id = this.openTaskId(task);
     for (const member of members) this.github.comment(task.project, id, member, "/claim");
     for (const member of [heardFirst, ...members.filter((m) => m !== heardFirst)]) {
-      await onClaim(task.project, { task: id, member }, this.github, this.github, this.clock);
+      await onClaim(
+        task.project,
+        { task: id, member },
+        this.github,
+        this.github,
+        this.clock,
+        this.github,
+      );
     }
   }
 
@@ -225,6 +239,10 @@ export class InProcessDriver implements Driver {
 
   async leaseNotices(project: string): Promise<string[]> {
     return this.github.leaseNotices(project);
+  }
+
+  async setTrustLevel(member: string, level: string): Promise<void> {
+    this.github.setTrustLevel(member, level);
   }
 
   async timePasses(hours: number): Promise<void> {

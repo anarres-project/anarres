@@ -98,6 +98,8 @@ export interface Driver {
   claimedTasks(project: string): Promise<ClaimedTask[]>;
   /** The member asks to give the task back, before its lease runs out. */
   release(task: { project: string; role: string; module: string }, member: string): Promise<void>;
+  /** PDC coordinators record the member at a trust level, as the governance file does. */
+  setTrustLevel(member: string, level: string): Promise<void>;
   /** Divlab's clock moves on, as time passes for a project. */
   timePasses(hours: number): Promise<void>;
   /** Divlab's scheduled run checks the project's leases, as it does every hour. */

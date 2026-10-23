@@ -4,6 +4,9 @@ inputs:
   token:
     description: The token Divlab acts with, the project repository's own by default.
     default: ${{ github.token }}
+  governance:
+    description: The repository holding the governance file, if not Anarres's own.
+    default: ""
 runs:
   using: node24
   main: dist/index.js

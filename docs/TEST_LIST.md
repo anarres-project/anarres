@@ -265,6 +265,18 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 
 - [ ] A new member cannot claim a Reviewer task (decision 0007: what each level may take; trust
       levels and linked accounts in a reviewed file in `governance/`; the sandbox reads its own).
+  - [x] core holds each role's lowest level, once, and reads a member's level from the file as
+        data: unlisted, unknown, malformed or missing all mean new;
+  - [x] Divlab refuses a claim the member's level does not allow, saying which level the task
+        needs; it reads Anarres's governance file unless the organisation's settings name
+        another; a file it cannot read gives nobody any trust;
+  - [x] `governance/members.json` exists (empty: everyone new), and CI checks every level in it;
+  - [ ] the sandbox shows it: needs a governance repository in the sandbox organisation and an
+        organisation variable, `ANARRES_GOVERNANCE`, naming it (Bernard: the sandbox token has
+        no organisation permissions, by design);
+  - [ ] an empty setting means Anarres's own file (written with the setting; to be tested);
+  - [ ] risk marking: a PDC coordinator marks a module high-risk, and new members may not code
+        it (until then every module is low-risk, decision 0007).
 - [x] A member who wrote any artefact in a module cannot review that module (a case of the next).
 - [ ] A member may hold at most one role per module (decision 0007: for the module's whole life;
       merged work and a held task count; Research is not a role in a module).

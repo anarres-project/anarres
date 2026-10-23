@@ -21,7 +21,7 @@ if (!owner || !project || !token) {
   console.log("::error::Divlab needs GITHUB_REPOSITORY and a token");
   process.exit(1);
 }
-const github = new GitHubAdapter({ owner, token });
+const github = new GitHubAdapter({ owner, token, governance: process.env.INPUT_GOVERNANCE ?? "" });
 try {
   const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH ?? "", "utf8"));
   const run = whatToActOn(process.env.GITHUB_EVENT_NAME ?? "", event);
@@ -31,7 +31,7 @@ try {
   if ("pullRequest" in run) {
     await onPullRequest(project, run.pullRequest, github, github, github, clock);
   } else if ("claim" in run) {
-    await onClaim(project, run.claim, github, github, clock);
+    await onClaim(project, run.claim, github, github, clock, github);
   } else if ("release" in run) {
     await onRelease(project, run.release, github, github, clock);
   } else if ("leases" in run) {

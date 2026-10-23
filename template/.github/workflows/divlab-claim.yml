@@ -29,6 +29,10 @@ jobs:
         with:
           client-id: ${{ vars.DIVLAB_APP_CLIENT_ID }}
           private-key: ${{ secrets.DIVLAB_APP_PRIVATE_KEY }}
+      # Who may take which task depends on members' trust levels, kept by PDC coordinators in
+      # Anarres's governance file; an organisation may name its own (the sandbox does). Only the
+      # organisation's settings can: nothing in a member's pull request reaches this.
       - uses: anarres-project/anarres/packages/divlab@main
         with:
           token: ${{ steps.app.outputs.token }}
+          governance: ${{ vars.ANARRES_GOVERNANCE }}

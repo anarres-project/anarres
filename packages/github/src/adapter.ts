@@ -43,6 +43,10 @@ import { requestGitHub } from "./request.ts";
  * Divlab's task board, event log, merged files and members' pull requests on GitHub: each project is a repository owned
  * by `owner`. The only code that calls the GitHub API on Divlab's behalf.
  */
+/** Where PDC coordinators keep members' trust levels and linked accounts (decision 0007). */
+const GOVERNANCE_REPOSITORY = "anarres-project/anarres";
+const GOVERNANCE_FILE = "governance/members.json";
+
 export class GitHubAdapter
   implements TaskBoard, EventLog, Repository, PullRequests, ProjectRepositories
 {
@@ -51,7 +55,14 @@ export class GitHubAdapter
    * GitHub; the real API unless a test stands in for it.
    */
   constructor(
-    private readonly options: { owner: string; token: string; app?: number; request?: Request },
+    private readonly options: {
+      owner: string;
+      token: string;
+      app?: number;
+      request?: Request;
+      /** Where the governance file is, if the organisation names a repository of its own. */
+      governance?: string;
+    },
   ) {}
 
   /** How many events each project's log held when this run last read it. */
@@ -147,6 +158,21 @@ export class GitHubAdapter
     const issue = `${this.repo(project)}/issues/${task}`;
     const listed = await this.call<ListedIssue>("GET", issue);
     await this.call("PATCH", issue, { labels: labelsWhenReleased(listed), assignees: [] });
+  }
+
+  /** The governance file, as read: core checks what it says (decision 0007). */
+  async governanceFile(): Promise<unknown> {
+    const repository = this.options.governance || GOVERNANCE_REPOSITORY;
+    const where = `repos/${repository}/contents/${GOVERNANCE_FILE}`;
+    const { status, data } = await this.request<{ content: string }>("GET", where);
+    if (status === 404) return undefined;
+    if (status !== 200) throw new GitHubError("GET", where, status, data);
+    // A file that cannot be read gives nobody any trust: core reads nothing as everyone new.
+    try {
+      return JSON.parse(Buffer.from(data.content, "base64").toString("utf8"));
+    } catch {
+      return undefined;
+    }
   }
 
   async comments(project: string, task: string): Promise<{ member: string; text: string }[]> {

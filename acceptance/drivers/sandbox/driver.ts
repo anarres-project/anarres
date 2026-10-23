@@ -538,6 +538,10 @@ export class SandboxDriver implements Driver {
     throw new HarnessNotYetBuilt("moving GitHub's clock on");
   }
 
+  async setTrustLevel(): Promise<void> {
+    throw new HarnessNotYetBuilt("setting a member's trust level in the sandbox's governance file");
+  }
+
   async timePasses(): Promise<void> {
     throw new HarnessNotYetBuilt("moving GitHub's clock on");
   }

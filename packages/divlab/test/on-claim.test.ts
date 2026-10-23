@@ -3,11 +3,19 @@ import {
   type ClaimedTask,
   type EventLog,
   type LogEvent,
+  type Members,
   onClaim,
   onRelease,
   type Refused,
   type TaskBoard,
 } from "../src/index.ts";
+
+/** A governance file that lets the tests' members take any task, so other rules are what's tested. */
+const everyoneTrusted: Members = {
+  governanceFile: async () => ({
+    members: { alice: { level: "pdc-coordinator" }, bob: { level: "pdc-coordinator" } },
+  }),
+};
 
 /** A task as the board describes it: the role and module it is for. */
 const TEST_TASK = { role: "test" as const, module: "parser" };
@@ -57,7 +65,7 @@ describe("acting on a claim", () => {
   const log: EventLog = { read: async () => [], append: async () => {} };
   const clock = () => new Date("2026-10-23T09:00:00Z");
   const claiming = (claim: { task: string; member: string }, board: TaskBoard) =>
-    onClaim("ledger", claim, board, log, clock);
+    onClaim("ledger", claim, board, log, clock, everyoneTrusted);
 
   it("marks the task claimed by the member who asked", async () => {
     const { claimed, watched } = watching({ claimsBy: ["alice"] });
@@ -142,7 +150,7 @@ describe("acting on a claim", () => {
       },
     };
     const clock = () => new Date("2026-10-23T09:00:00Z");
-    await onClaim("ledger", { task: "12", member: "alice" }, watched, log, clock);
+    await onClaim("ledger", { task: "12", member: "alice" }, watched, log, clock, everyoneTrusted);
     expect(appended).toEqual([
       {
         project: "ledger",
@@ -187,7 +195,14 @@ describe("who may claim a task (decision 0007)", () => {
       append: async () => {},
     };
     const clock = () => new Date("2026-10-23T09:00:00Z");
-    await onClaim("ledger", { task: "12", member: "alice" }, reviewTask, aliceCoded, clock);
+    await onClaim(
+      "ledger",
+      { task: "12", member: "alice" },
+      reviewTask,
+      aliceCoded,
+      clock,
+      everyoneTrusted,
+    );
     expect([claimed, refused]).toEqual([
       [],
       [
@@ -223,7 +238,14 @@ describe("who may claim a task (decision 0007)", () => {
       append: async () => {},
     };
     const clock = () => new Date("2026-10-23T09:00:00Z");
-    await onClaim("ledger", { task: "12", member: "alice" }, codingTask, aliceHoldsTheTests, clock);
+    await onClaim(
+      "ledger",
+      { task: "12", member: "alice" },
+      codingTask,
+      aliceHoldsTheTests,
+      clock,
+      everyoneTrusted,
+    );
     expect(refused.map((refusal) => refusal.reason)).toEqual([
       "Divlab did not give you this task: a member takes only one role in a module, and you have worked on it as Test",
     ]);
@@ -254,7 +276,14 @@ describe("who may claim a task (decision 0007)", () => {
       append: async () => {},
     };
     const clock = () => new Date("2026-10-23T09:00:00Z");
-    await onClaim("ledger", { task: "12", member: "alice" }, codingTask, heldOnceThenEnded, clock);
+    await onClaim(
+      "ledger",
+      { task: "12", member: "alice" },
+      codingTask,
+      heldOnceThenEnded,
+      clock,
+      everyoneTrusted,
+    );
     expect(claimed.map((claim) => claim.member)).toEqual(["alice"]);
   });
 
@@ -290,8 +319,33 @@ describe("who may claim a task (decision 0007)", () => {
       append: async () => {},
     };
     const clock = () => new Date("2026-10-23T09:00:00Z");
-    await onClaim("ledger", { task: "12", member: "bob" }, reviewTask, aliceCoded, clock);
+    await onClaim(
+      "ledger",
+      { task: "12", member: "bob" },
+      reviewTask,
+      aliceCoded,
+      clock,
+      everyoneTrusted,
+    );
     expect(claimed.map((claim) => claim.member)).toEqual(["bob"]);
+  });
+
+  it("refuses a member whose trust level is too low for the task, saying why", async () => {
+    const refused: Refused[] = [];
+    const reviewTask: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "reviewer", module: "parser" }),
+      refuseMember: async (refusal) => {
+        refused.push(refusal);
+      },
+    };
+    const nobodyListed: Members = { governanceFile: async () => ({ members: {} }) };
+    const log: EventLog = { read: async () => [], append: async () => {} };
+    const clock = () => new Date("2026-10-23T09:00:00Z");
+    await onClaim("ledger", { task: "12", member: "alice" }, reviewTask, log, clock, nobodyListed);
+    expect(refused.map((refusal) => refusal.reason)).toEqual([
+      "Divlab did not give you this task: a Reviewer task needs an established member, and you are new",
+    ]);
   });
 });
 
