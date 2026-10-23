@@ -2,6 +2,7 @@ export { outsideScope } from "./access.ts";
 export { mayTake, type Part } from "./eligibility.ts";
 export {
   type FeedbackSignal,
+  isPlainName,
   readFeedbackSignal,
   readSignalFile,
   type Unreadable,

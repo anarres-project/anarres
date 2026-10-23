@@ -1,4 +1,4 @@
-import { isRole, ROLE_NAMES, type Role } from "@anarres/core";
+import { isPlainName, isRole, ROLE_NAMES, type Role } from "@anarres/core";
 import { eligibility, type LogEvent } from "@anarres/divlab";
 
 /** Anarres's projects, as a member's CLI reads them from GitHub with the member's own login. */
@@ -22,8 +22,10 @@ export async function askForWork(member: string, projects: Projects): Promise<Of
   for (const project of await projects.names()) {
     const mayTake = eligibility(governance, await projects.log(project));
     for (const task of await projects.readyTasks(project)) {
+      // What is offered is shown in the member's session: only plain names, as Divlab writes them.
       if (
         isRole(task.role) &&
+        isPlainName(task.module) &&
         mayTake(member, { role: task.role, module: task.module }) === "allowed"
       ) {
         offers.push({ project, task: task.id, role: task.role, module: task.module });

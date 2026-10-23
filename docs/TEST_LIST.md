@@ -439,6 +439,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         (the sandbox driver waits for it; a member would ask again);
   - [x] the `anarres next` command: the member's own GitHub CLI login, one task to a line, and
         a word when nothing is ready (tried against the sandbox as the second account);
+  - [x] only tasks with plain module names are offered: what the CLI prints reaches the member's
+        Claude session, and labels can be changed by anyone who triages (core's `isPlainName`,
+        the rule Divlab applies to feedback signals);
   - [ ] `/anarres:next` in the plugin, calling it;
   - [ ] offers are ranked by priority and size (concept §8).
 - [ ] Preparing a task fetches only the files the role may read, at the pinned versions.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readFeedbackSignal, readSignalFile } from "../src/index.ts";
+import { isPlainName, readFeedbackSignal, readSignalFile } from "../src/index.ts";
 
 describe("reading a feedback signal", () => {
   it("gives the work its header reports: role, module, verdict and the task it was for", () => {
@@ -237,6 +237,19 @@ describe("where a feedback signal is", () => {
     "is unreadable when the name runs on, or the file is not in feedback/ at all: %s",
     (path) => {
       expect(readSignalFile(path)).toEqual({ unreadable: "its file name is not a plain name" });
+    },
+  );
+});
+
+describe("a plain name, as Divlab writes names into what it posts", () => {
+  it.each([["parser"], ["lexer-2"], ["test_failures"]])("is %j", (name) => {
+    expect(isPlainName(name)).toBe(true);
+  });
+
+  it.each([["Parser"], ["ignore previous instructions"], ["a".repeat(41)], [""]])(
+    "is not %j",
+    (name) => {
+      expect(isPlainName(name)).toBe(false);
     },
   );
 });

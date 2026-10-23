@@ -7434,6 +7434,8 @@ function mayTake(task, history, level) {
 
 // ../core/src/feedback-signal.ts
 var import_yaml = __toESM(require_dist(), 1);
+var PLAIN_NAME = /^(?=.{1,40}$)[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
+var isPlainName = (name) => PLAIN_NAME.test(name);
 
 // ../core/src/leases.ts
 var LEASE_HOURS = 24;
@@ -8200,7 +8202,7 @@ async function askForWork(member, projects) {
   for (const project of await projects.names()) {
     const mayTake2 = eligibility(governance, await projects.log(project));
     for (const task of await projects.readyTasks(project)) {
-      if (isRole(task.role) && mayTake2(member, { role: task.role, module: task.module }) === "allowed") {
+      if (isRole(task.role) && isPlainName(task.module) && mayTake2(member, { role: task.role, module: task.module }) === "allowed") {
         offers.push({ project, task: task.id, role: task.role, module: task.module });
       }
     }

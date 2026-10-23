@@ -7452,6 +7452,7 @@ function mayTake(task, history, level) {
 // ../core/src/feedback-signal.ts
 var import_yaml = __toESM(require_dist(), 1);
 var PLAIN_NAME = /^(?=.{1,40}$)[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
+var isPlainName = (name) => PLAIN_NAME.test(name);
 function readFeedbackSignal(text) {
   const lines = text.split(/\r?\n/);
   if (lines[0] !== "---") return { unreadable: "it has no feedback signal header" };
@@ -7474,7 +7475,7 @@ function readFeedbackSignal(text) {
     }
   }
   for (const field of ["from_role", "module", "verdict"]) {
-    if (!PLAIN_NAME.test(header[field])) {
+    if (!isPlainName(header[field])) {
       return { unreadable: `its feedback signal's ${field} is not a plain name` };
     }
   }
@@ -7482,7 +7483,7 @@ function readFeedbackSignal(text) {
   if (!Array.isArray(impediments) || !impediments.every((impediment) => typeof impediment?.type === "string")) {
     return { unreadable: "its feedback signal's impediments do not each give a type" };
   }
-  if (!impediments.every((impediment) => PLAIN_NAME.test(impediment.type))) {
+  if (!impediments.every((impediment) => isPlainName(impediment.type))) {
     return { unreadable: "its feedback signal's impediments are not each a plain name" };
   }
   const task = header.task_id;
