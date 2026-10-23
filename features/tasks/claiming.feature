@@ -2,8 +2,6 @@ Feature: Members claim tasks
   So that no two members do the same work, a member claims a ready task before starting it,
   and holds it under a lease for a limited time.
 
-  # Not yet in the sandbox: it has not passed there with the second account yet.
-  @sandbox-wip
   Scenario: A member claims a ready task
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
@@ -11,8 +9,6 @@ Feature: Members claim tasks
     Then the Test task for "parser" is claimed by Alice
     And the Test task for "parser" is no longer ready to claim
 
-  # Not yet in the sandbox: it has not passed there with the second account yet.
-  @sandbox-wip
   Scenario: Divlab records each claim it grants, and when
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
@@ -38,8 +34,6 @@ Feature: Members claim tasks
     Then the Test task for "parser" is claimed by Alice
     And Bob is told the task has already been claimed
 
-  # Not yet in the sandbox: it has not passed there with the second account yet.
-  @sandbox-wip
   Scenario: A member can give a task back early
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict

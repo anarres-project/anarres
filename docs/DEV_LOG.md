@@ -57,6 +57,16 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-23: Two members and trust levels in the sandbox
+
+- Bernard approved the second account's token in the sandbox organisation: the 403s were the
+  organisation waiting to approve it. The seven scenarios needing it then passed in the sandbox
+  (300 requests): claiming, the claim record, giving a task back, the draft, a new member
+  refused a Reviewer task, an established member given one, and linked accounts as one member.
+  They run there now. Three scenarios have three members and wait for a third account.
+
+---
+
 ## 2026-10-23: The sandbox's governance file
 
 - `anarres-sandbox/governance` holds the sandbox's governance file, empty to start (created with

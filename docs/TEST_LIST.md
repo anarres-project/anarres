@@ -272,9 +272,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         needs; it reads Anarres's governance file unless the organisation's settings name
         another; a file it cannot read gives nobody any trust;
   - [x] `governance/members.json` exists (empty: everyone new), and CI checks every level in it;
-  - [ ] the sandbox shows it: needs a governance repository in the sandbox organisation and an
-        organisation variable, `ANARRES_GOVERNANCE`, naming it (Bernard: the sandbox token has
-        no organisation permissions, by design);
+  - [x] the sandbox shows it, with its own governance file (`anarres-sandbox/governance`, named
+        by the organisation's `ANARRES_GOVERNANCE`), linked accounts too;
   - [ ] an empty setting means Anarres's own file (written with the setting; to be tested);
   - [ ] risk marking: a PDC coordinator marks a module high-risk, and new members may not code
         it (until then every module is low-risk, decision 0007).

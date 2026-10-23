@@ -24,8 +24,7 @@ Feature: Who may take a task
     When Alice claims the Coding task for "parser"
     Then the Coding task for "parser" is claimed by Alice
 
-  # Not yet in the sandbox: it has not passed there with the sandbox's governance file yet.
-  @governance @sandbox-wip
+  @governance
   Scenario: A new member cannot take a Reviewer task
     Given a project with a module "parser"
     And a member's Coding work on "parser" was accepted with a pass verdict
@@ -33,8 +32,7 @@ Feature: Who may take a task
     Then Alice is told a Reviewer task needs an established member
     And a Reviewer task for "parser" is ready to claim
 
-  # Not yet in the sandbox: it has not passed there with the sandbox's governance file yet.
-  @governance @sandbox-wip
+  @governance
   Scenario: An established member can take a Reviewer task
     Given a project with a module "parser"
     And Alice is an established member
@@ -42,8 +40,7 @@ Feature: Who may take a task
     When Alice claims the Reviewer task for "parser"
     Then the Reviewer task for "parser" is claimed by Alice
 
-  # Not yet in the sandbox: it has not passed there with the sandbox's governance file yet.
-  @governance @sandbox-wip
+  @governance
   Scenario: Accounts a PDC coordinator has linked are one member
     Given a project with a module "parser"
     And Alice is an established member
