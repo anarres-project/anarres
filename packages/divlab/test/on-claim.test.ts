@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   type ClaimedTask,
-  type ClaimRefused,
   type EventLog,
   onClaim,
   onRelease,
+  type Refused,
   type TaskBoard,
 } from "../src/index.ts";
 
@@ -22,7 +22,7 @@ const board: TaskBoard = {
   close: untouched,
   actedOn: untouched,
   markClaimed: untouched,
-  refuseClaim: untouched,
+  refuseMember: untouched,
   comments: untouched,
   releaseClaim: untouched,
   tellLeaseRanOut: untouched,
@@ -43,8 +43,8 @@ describe("acting on a claim", () => {
         claimed.push(claim);
       },
     };
-    const refused: ClaimRefused[] = [];
-    watched.refuseClaim = async (refusal) => {
+    const refused: Refused[] = [];
+    watched.refuseMember = async (refusal) => {
       refused.push(refusal);
     };
     return { claimed, refused, watched };
@@ -71,7 +71,12 @@ describe("acting on a claim", () => {
     const { refused, watched } = watching({ heldBy: "alice", claimsBy: ["alice", "bob"] });
     await claiming({ task: "12", member: "bob" }, watched);
     expect(refused).toEqual([
-      { project: "ledger", task: "12", member: "bob", reason: "it has already been claimed" },
+      {
+        project: "ledger",
+        task: "12",
+        member: "bob",
+        reason: "Divlab did not give you this task: it has already been claimed",
+      },
     ]);
   });
 
@@ -91,7 +96,12 @@ describe("acting on a claim", () => {
     const { refused, watched } = watching({ claimsBy: ["alice", "bob"] });
     await claiming({ task: "12", member: "bob" }, watched);
     expect(refused).toEqual([
-      { project: "ledger", task: "12", member: "bob", reason: "it has already been claimed" },
+      {
+        project: "ledger",
+        task: "12",
+        member: "bob",
+        reason: "Divlab did not give you this task: it has already been claimed",
+      },
     ]);
   });
 
@@ -112,7 +122,7 @@ describe("acting on a claim", () => {
           project: "ledger",
           task: "12",
           member: "alice",
-          reason: "it is not a task anyone can claim",
+          reason: "Divlab did not give you this task: it is not a task anyone can claim",
         },
       ],
     ]);
@@ -151,6 +161,8 @@ describe("acting on a release", () => {
       releaseClaim: async (_project, task) => {
         released.push(task);
       },
+      // What the member is told is looked at by one test; the rest let it happen.
+      refuseMember: async () => {},
     };
     return { released, watched };
   };
@@ -191,6 +203,24 @@ describe("acting on a release", () => {
           released: { task: "12", member: "alice" },
         },
       ],
+    ]);
+  });
+
+  it("tells someone who asks to give back a task they do not hold that only its holder can", async () => {
+    const refused: Refused[] = [];
+    const { watched } = holding("alice");
+    watched.refuseMember = async (refusal) => {
+      refused.push(refusal);
+    };
+    await onRelease("ledger", { task: "12", member: "bob" }, watched, log, clock);
+    expect(refused).toEqual([
+      {
+        project: "ledger",
+        task: "12",
+        member: "bob",
+        reason:
+          "Divlab did not release this task: only the member holding a task can give it back, and you do not hold it",
+      },
     ]);
   });
 });

@@ -7699,8 +7699,8 @@ ${quoted(reason)}`;
 function commentForLeaseRanOut(ranOut) {
   return `@${ranOut.member}, your lease on this task ran out: ${LEASE_HOURS} hours passed without activity on it, so it is ready for anyone to claim again.`;
 }
-function commentForClaimRefusal(refusal) {
-  return `@${refusal.member}, Divlab did not give you this task: ${refusal.reason}.`;
+function commentForRefused(refusal) {
+  return `@${refusal.member}, ${refusal.reason}.`;
 }
 function quoted(text) {
   const longest = Math.max(0, ...(text.match(/`+/g) ?? []).map((run) => run.length));
@@ -7927,9 +7927,9 @@ var GitHubAdapter = class {
       if (listed.length < 100) return comments;
     }
   }
-  async refuseClaim(refusal) {
+  async refuseMember(refusal) {
     await this.call("POST", `${this.repo(refusal.project)}/issues/${refusal.task}/comments`, {
-      body: commentForClaimRefusal(refusal)
+      body: commentForRefused(refusal)
     });
   }
   async actedOn(project2) {
@@ -8166,7 +8166,11 @@ function whatToActOn(name, event) {
 async function onClaim(project2, claim, board, log, clock) {
   const task = await board.task(project2, claim.task);
   if (task === void 0) {
-    await board.refuseClaim({ project: project2, ...claim, reason: "it is not a task anyone can claim" });
+    await board.refuseMember({
+      project: project2,
+      ...claim,
+      reason: "Divlab did not give you this task: it is not a task anyone can claim"
+    });
     return;
   }
   let holder = task.claimedBy;
@@ -8182,11 +8186,22 @@ async function onClaim(project2, claim, board, log, clock) {
     await board.markClaimed({ project: project2, task: claim.task, member: holder });
   }
   if (holder !== claim.member) {
-    await board.refuseClaim({ project: project2, ...claim, reason: "it has already been claimed" });
+    await board.refuseMember({
+      project: project2,
+      ...claim,
+      reason: "Divlab did not give you this task: it has already been claimed"
+    });
   }
 }
 async function onRelease(project2, release, board, log, clock) {
-  if ((await board.task(project2, release.task))?.claimedBy !== release.member) return;
+  if ((await board.task(project2, release.task))?.claimedBy !== release.member) {
+    await board.refuseMember({
+      project: project2,
+      ...release,
+      reason: "Divlab did not release this task: only the member holding a task can give it back, and you do not hold it"
+    });
+    return;
+  }
   const released = { project: project2, decidedAt: clock().toISOString(), released: release };
   await log.append(released);
   await board.releaseClaim(project2, release.task);

@@ -53,6 +53,24 @@ give a task back early.
 
 ---
 
+## 2026-10-23: Someone who does not hold a task cannot give it back, and is told
+
+- A release from anyone but the task's holder now gets a reply saying only the holder can give it
+  back. Claim refusals became refusals in general: Divlab words the whole reason, and the adapter
+  addresses it to the member.
+- The release scenario passed in the sandbox on its own (59 requests), so it runs in both. The
+  full run for e237b29 passed all 70 with the sweep fix.
+- The release fixture in the unit tests now lets a refusal happen, as the claim fixture does:
+  the test it broke checks the task stays with its holder, which still holds.
+
+RED:      (acceptance) Bob is told only the member holding the task can give it back -> AssertionError
+RED:      tells someone who asks to give back a task they do not hold that only its holder can
+          -> expected [] to deeply equal [ { project: 'ledger', …(3) } ]
+GREEN:    (319 passed; 80 scenarios)
+REFACTOR: refuseClaim became refuseMember, its reasons whole sentences
+
+---
+
 ## 2026-10-23: A member is told their lease ran out
 
 - When Divlab frees a task whose lease ran out, it replies on the task to the member who held it.

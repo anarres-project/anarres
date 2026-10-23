@@ -34,8 +34,6 @@ Feature: Members claim tasks
     Then the Test task for "parser" is claimed by Alice
     And Bob is told the task has already been claimed
 
-  # Not yet in the sandbox: it has not passed there yet.
-  @sandbox-wip
   Scenario: A member can give a task back early
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
@@ -51,3 +49,4 @@ Feature: Members claim tasks
     And Alice has claimed the Test task for "parser"
     When Bob releases the Test task for "parser"
     Then the Test task for "parser" is claimed by Alice
+    And Bob is told only the member holding the task can give it back

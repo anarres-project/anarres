@@ -313,6 +313,17 @@ export class Anarres {
     );
   }
 
+  async memberIsToldTheyDoNotHoldTask(member: string) {
+    const told = await this.driver.claimRefusals(this.project);
+    assert.ok(
+      told.some(
+        (refusal) =>
+          refusal.member === this.member(member) && refusal.reason.includes("you do not hold it"),
+      ),
+      `expected ${member} to be told they do not hold the task; Divlab said: ${JSON.stringify(told)}`,
+    );
+  }
+
   async memberIsToldTaskIsTaken(member: string) {
     const told = await this.driver.claimRefusals(this.project);
     assert.ok(

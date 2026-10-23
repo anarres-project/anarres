@@ -86,8 +86,8 @@ export interface TaskBoard {
   tellLeaseRanOut(ranOut: ClaimedTask): Promise<void>;
   /** The task's claim is over: it is ready again, held by nobody. */
   releaseClaim(project: string, task: string): Promise<void>;
-  /** Divlab will not let the member claim the task: they are told why. */
-  refuseClaim(refusal: ClaimRefused): Promise<void>;
+  /** Divlab did not do as the member asked, such as giving them the task: they are told why. */
+  refuseMember(refusal: Refused): Promise<void>;
 }
 
 /** Divlab gave a member a task: recorded before the board shows it. */
@@ -118,8 +118,8 @@ export type Released = {
   released: { task: string; member: string };
 };
 
-/** A claim Divlab refused, and why, in words the member would recognise. */
-export type ClaimRefused = ClaimedTask & { reason: string };
+/** What a member asked of a task that Divlab did not do, and why, in words they would recognise. */
+export type Refused = ClaimedTask & { reason: string };
 
 /** A member holds a task. */
 export type ClaimedTask = { project: string; task: string; member: string };
@@ -134,7 +134,11 @@ export async function onClaim(
 ): Promise<void> {
   const task = await board.task(project, claim.task);
   if (task === undefined) {
-    await board.refuseClaim({ project, ...claim, reason: "it is not a task anyone can claim" });
+    await board.refuseMember({
+      project,
+      ...claim,
+      reason: "Divlab did not give you this task: it is not a task anyone can claim",
+    });
     return;
   }
   let holder = task.claimedBy;
@@ -152,7 +156,11 @@ export async function onClaim(
   }
   // Each member whose claim lost is told by their own claim's run, however the runs were ordered.
   if (holder !== claim.member) {
-    await board.refuseClaim({ project, ...claim, reason: "it has already been claimed" });
+    await board.refuseMember({
+      project,
+      ...claim,
+      reason: "Divlab did not give you this task: it has already been claimed",
+    });
   }
 }
 
@@ -164,7 +172,15 @@ export async function onRelease(
   log: EventLog,
   clock: Clock,
 ): Promise<void> {
-  if ((await board.task(project, release.task))?.claimedBy !== release.member) return;
+  if ((await board.task(project, release.task))?.claimedBy !== release.member) {
+    await board.refuseMember({
+      project,
+      ...release,
+      reason:
+        "Divlab did not release this task: only the member holding a task can give it back, and you do not hold it",
+    });
+    return;
+  }
   const released: Released = { project, decidedAt: clock().toISOString(), released: release };
   await log.append(released);
   await board.releaseClaim(project, release.task);

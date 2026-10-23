@@ -56,3 +56,10 @@ When(
     return this.anarres.memberReleases(member, { role, module });
   },
 );
+
+Then(
+  "{word} is told only the member holding the task can give it back",
+  function (this: AnarresWorld, member: string) {
+    return this.anarres.memberIsToldTheyDoNotHoldTask(member);
+  },
+);

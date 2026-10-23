@@ -111,11 +111,11 @@ describe("refusing a claim", () => {
         return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
       },
     });
-    await adapter.refuseClaim({
+    await adapter.refuseMember({
       project: "ledger",
       task: "12",
       member: "bob",
-      reason: "it has already been claimed",
+      reason: "Divlab did not give you this task: it has already been claimed",
     });
     expect(comments).toEqual([
       { body: "@bob, Divlab did not give you this task: it has already been claimed." },

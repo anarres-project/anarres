@@ -28,7 +28,7 @@ const board: TaskBoard = {
   close: untouched,
   actedOn: async () => [],
   markClaimed: untouched,
-  refuseClaim: untouched,
+  refuseMember: untouched,
   comments: untouched,
   releaseClaim: untouched,
   tellLeaseRanOut: untouched,

@@ -1,6 +1,5 @@
 import type {
   ClaimedTask,
-  ClaimRefused,
   CoordinatorAlert,
   EventLog,
   FinishedModule,
@@ -9,6 +8,7 @@ import type {
   PostedTask,
   ProjectRepositories,
   PullRequests,
+  Refused,
   Repository,
   TaskBoard,
 } from "@anarres/divlab";
@@ -234,14 +234,14 @@ export class FakeGitHub
       .map(({ member, text }) => ({ member, text }));
   }
 
-  private readonly refusedClaims: ClaimRefused[] = [];
+  private readonly refusedMembers: Refused[] = [];
 
-  async refuseClaim(refusal: ClaimRefused): Promise<void> {
-    this.refusedClaims.push(refusal);
+  async refuseMember(refusal: Refused): Promise<void> {
+    this.refusedMembers.push(refusal);
   }
 
-  claimRefusals(project: string): ClaimRefused[] {
-    return this.refusedClaims.filter((refusal) => refusal.project === project);
+  claimRefusals(project: string): Refused[] {
+    return this.refusedMembers.filter((refusal) => refusal.project === project);
   }
 
   /** Every open task, whether ready or claimed. */

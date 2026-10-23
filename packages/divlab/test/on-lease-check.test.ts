@@ -15,7 +15,7 @@ const board: TaskBoard = {
   close: untouched,
   actedOn: untouched,
   markClaimed: untouched,
-  refuseClaim: untouched,
+  refuseMember: untouched,
   comments: untouched,
   releaseClaim: untouched,
   // Telling the member is looked at by one test; the rest let it happen.

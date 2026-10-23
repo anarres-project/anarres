@@ -22,7 +22,7 @@ function project(protectedMain: boolean, alertOpen = false) {
     close: untouched,
     actedOn: untouched,
     markClaimed: untouched,
-    refuseClaim: untouched,
+    refuseMember: untouched,
     comments: untouched,
     releaseClaim: untouched,
     tellLeaseRanOut: untouched,

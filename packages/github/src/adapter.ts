@@ -1,6 +1,5 @@
 import type {
   ClaimedTask,
-  ClaimRefused,
   EventLog,
   FinishedModule,
   LogEvent,
@@ -8,14 +7,15 @@ import type {
   PostedTask,
   ProjectRepositories,
   PullRequests,
+  Refused,
   Repository,
   RoutingEvent,
   TaskBoard,
 } from "@anarres/divlab";
 import {
-  commentForClaimRefusal,
   commentForLeaseRanOut,
   commentForRefusal,
+  commentForRefused,
   decisionOf,
   eventFile,
   issueForAlert,
@@ -163,9 +163,9 @@ export class GitHubAdapter
     }
   }
 
-  async refuseClaim(refusal: ClaimRefused): Promise<void> {
+  async refuseMember(refusal: Refused): Promise<void> {
     await this.call("POST", `${this.repo(refusal.project)}/issues/${refusal.task}/comments`, {
-      body: commentForClaimRefusal(refusal),
+      body: commentForRefused(refusal),
     });
   }
 

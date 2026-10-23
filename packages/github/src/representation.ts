@@ -11,12 +11,12 @@ import type {
   Activity,
   Claimed,
   ClaimedTask,
-  ClaimRefused,
   FinishedModule,
   LeaseRanOut,
   LogEvent,
   NotAccepted,
   PostedTask,
+  Refused,
   Released,
   RoutingEvent,
 } from "@anarres/divlab";
@@ -210,9 +210,9 @@ export function commentForLeaseRanOut(ranOut: ClaimedTask): string {
   return `@${ranOut.member}, your lease on this task ran out: ${LEASE_HOURS} hours passed without activity on it, so it is ready for anyone to claim again.`;
 }
 
-/** Divlab's reply to a member whose claim it refused: its reasons are its own words. */
-export function commentForClaimRefusal(refusal: ClaimRefused): string {
-  return `@${refusal.member}, Divlab did not give you this task: ${refusal.reason}.`;
+/** Divlab's reply to a member it did not do as they asked: its reasons are its own words. */
+export function commentForRefused(refusal: Refused): string {
+  return `@${refusal.member}, ${refusal.reason}.`;
 }
 
 /** Text in a code block, fenced longer than any run of backticks in it, so nothing can close it. */
