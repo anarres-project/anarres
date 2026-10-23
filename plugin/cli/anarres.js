@@ -7369,6 +7369,33 @@ var require_dist = __commonJS({
 // src/main.ts
 import { execFileSync } from "node:child_process";
 
+// ../core/src/access.ts
+var READ_SCOPES = {
+  "programme-architect": () => ["requirements/"],
+  architecture: (module) => [`programme/slices/${module}/`],
+  specification: (module) => [`programme/slices/${module}/`, `modules/${module}/architecture/`],
+  test: (module) => [
+    `programme/slices/${module}/`,
+    `modules/${module}/architecture/`,
+    `modules/${module}/specifications/`
+  ],
+  coding: (module) => [`modules/${module}/specifications/`, `modules/${module}/tests/`],
+  reviewer: (module) => [
+    `programme/slices/${module}/`,
+    `modules/${module}/specifications/`,
+    `modules/${module}/src/`
+  ],
+  "security-and-quality": (module) => [
+    `programme/slices/${module}/`,
+    `modules/${module}/architecture/`,
+    `modules/${module}/src/`
+  ],
+  research: () => []
+};
+function readScope(role, module) {
+  return READ_SCOPES[role](module);
+}
+
 // ../core/src/roles.ts
 var ROLE_NAMES = {
   "programme-architect": "Programme Architect",
@@ -8256,22 +8283,77 @@ async function claim(named2, claiming) {
   await claiming.askToClaim(task.project, task.task);
   return `Asked for ${named2}. Divlab answers on the task's issue: run next to see what is still offered.`;
 }
+function preparation(owner, project, task, member) {
+  const refused = (why) => ({ refused: `Nothing fetched for ${project}: ${why}.` });
+  if (task === void 0) return refused("it is not a task");
+  if (task.claimedBy !== member) return refused("you do not hold it: claim it first");
+  if (task.inputsAt === void 0) {
+    return refused("it does not say which commit its inputs are read at");
+  }
+  return {
+    repository: `${owner}/${project}`,
+    commit: task.inputsAt,
+    paths: readScope(task.role, task.module)
+  };
+}
+function gitSteps(fetch2, into) {
+  const places = fetch2.paths.map((path) => `/${path}`);
+  return [
+    ["init", "--quiet", into],
+    ["-C", into, "sparse-checkout", "set", "--no-cone", ...places],
+    [
+      "-C",
+      into,
+      "fetch",
+      "--quiet",
+      "--depth=1",
+      "--filter=blob:none",
+      `https://github.com/${fetch2.repository}.git`,
+      fetch2.commit
+    ],
+    ["-C", into, "checkout", "--quiet", "--detach", "FETCH_HEAD"]
+  ];
+}
 
 // src/main.ts
 var [command, named] = process.argv.slice(2);
-if (command !== "next" && !(command === "claim" && named)) {
-  console.error("Usage: anarres next | anarres claim project#number");
+if (command !== "next" && !((command === "claim" || command === "prepare") && named)) {
+  console.error(
+    "Usage: anarres next | anarres claim project#number | anarres prepare project#number"
+  );
   process.exit(2);
 }
 try {
   const token = process.env.GITHUB_TOKEN ?? execFileSync("gh", ["auth", "token"], { encoding: "utf8" }).trim();
+  const owner = process.env.ANARRES_ORG ?? "anarres-project";
   const github = new GitHubAdapter({
-    owner: process.env.ANARRES_ORG ?? "anarres-project",
+    owner,
     token,
     governance: process.env.ANARRES_GOVERNANCE ?? ""
   });
   if (command === "claim" && named) {
     console.log(await claim(named, github));
+    process.exit(0);
+  }
+  if (command === "prepare" && named) {
+    const task = taskNamed(named);
+    if (task === void 0) {
+      console.log(`Name the task as the offers do, project#number: ${named} is not one.`);
+      process.exit(1);
+    }
+    const plan = preparation(
+      owner,
+      task.project,
+      await github.task(task.project, task.task),
+      await github.account()
+    );
+    if ("refused" in plan) {
+      console.log(plan.refused);
+      process.exit(1);
+    }
+    const into = `anarres-work/${task.project}-${task.task}`;
+    for (const step of gitSteps(plan, into)) execFileSync("git", step, { stdio: "inherit" });
+    console.log(`Fetched into ${into}, as at ${plan.commit}: ${plan.paths.join(", ")}`);
     process.exit(0);
   }
   const offers = await askForWork(await github.account(), {

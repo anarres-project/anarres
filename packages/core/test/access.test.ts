@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mayRead, outsideScope, type Role } from "../src/index.ts";
+import { mayRead, outsideScope, type Role, readScope } from "../src/index.ts";
 
 describe("what a role's work may change (concept §6)", () => {
   it("does not let Coding change its module's tests", () => {
@@ -106,5 +106,14 @@ describe("what a role's work may read (concept §6)", () => {
         (path) => mayRead("coding", "parser", path),
       ),
     ).toEqual([false, false]);
+  });
+});
+
+describe("the places a role's work reads, as a member's CLI fetches them", () => {
+  it("are the role's read scope for the module", () => {
+    expect(readScope("coding", "parser")).toEqual([
+      "modules/parser/specifications/",
+      "modules/parser/tests/",
+    ]);
   });
 });

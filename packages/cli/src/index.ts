@@ -1,4 +1,4 @@
-import { isPlainName, isRole, ROLE_NAMES, type Role } from "@anarres/core";
+import { isPlainName, isRole, ROLE_NAMES, type Role, readScope } from "@anarres/core";
 import { eligibility, type LogEvent } from "@anarres/divlab";
 
 /** Anarres's projects, as a member's CLI reads them from GitHub with the member's own login. */
@@ -69,4 +69,53 @@ export async function claim(named: string, claiming: Claiming): Promise<string> 
   }
   await claiming.askToClaim(task.project, task.task);
   return `Asked for ${named}. Divlab answers on the task's issue: run next to see what is still offered.`;
+}
+
+/** What preparing a task fetches: the places its role may read, at its pinned commit. */
+export type Preparation =
+  | { repository: string; commit: string; paths: string[] }
+  | { refused: string };
+
+/** How to prepare a task for the member, or why not. */
+export function preparation(
+  owner: string,
+  project: string,
+  task: { role: Role; module: string; claimedBy?: string; inputsAt?: string } | undefined,
+  member: string,
+): Preparation {
+  const refused = (why: string) => ({ refused: `Nothing fetched for ${project}: ${why}.` });
+  if (task === undefined) return refused("it is not a task");
+  if (task.claimedBy !== member) return refused("you do not hold it: claim it first");
+  if (task.inputsAt === undefined) {
+    return refused("it does not say which commit its inputs are read at");
+  }
+  return {
+    repository: `${owner}/${project}`,
+    commit: task.inputsAt,
+    paths: readScope(task.role, task.module),
+  };
+}
+
+/** The git commands, each its arguments, that fetch a prepared task into a folder. */
+export function gitSteps(
+  fetch: { repository: string; commit: string; paths: string[] },
+  into: string,
+): string[][] {
+  // Each place anchored at the repository's root, so the checkout holds it and nothing else.
+  const places = fetch.paths.map((path) => `/${path}`);
+  return [
+    ["init", "--quiet", into],
+    ["-C", into, "sparse-checkout", "set", "--no-cone", ...places],
+    [
+      "-C",
+      into,
+      "fetch",
+      "--quiet",
+      "--depth=1",
+      "--filter=blob:none",
+      `https://github.com/${fetch.repository}.git`,
+      fetch.commit,
+    ],
+    ["-C", into, "checkout", "--quiet", "--detach", "FETCH_HEAD"],
+  ];
 }

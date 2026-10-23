@@ -29,10 +29,11 @@ describe("the Anarres plugin, as members install it (concept §10)", () => {
     const skill = repositoryFile("plugin/skills/next/SKILL.md");
     const frontmatter = parse(skill.split("---")[1] ?? "");
 
-    it("may run two things without asking: the bundled CLI's next and claim, inside the plugin", () => {
+    it("may run three things without asking: the bundled CLI's next, claim and prepare", () => {
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: Claude Code's placeholder, literally.
+      const cli = "node ${CLAUDE_PLUGIN_ROOT}/cli/anarres.js";
       expect(frontmatter["allowed-tools"]).toBe(
-        // biome-ignore lint/suspicious/noTemplateCurlyInString: Claude Code's placeholder, literally.
-        "Bash(node ${CLAUDE_PLUGIN_ROOT}/cli/anarres.js next) Bash(node ${CLAUDE_PLUGIN_ROOT}/cli/anarres.js claim *)",
+        `Bash(${cli} next) Bash(${cli} claim *) Bash(${cli} prepare *)`,
       );
     });
   });

@@ -464,7 +464,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         it, in the issue's words and its decision block; read back only if it is a commit name;
   - [ ] a task decided by work Divlab did not merge (none yet: only merged work is routed) has no
         pinned commit; the CLI must refuse to prepare one;
-  - [ ] the CLI's `prepare` fetches those places at that commit, and nothing else.
+  - [x] the CLI's `prepare` fetches those places at that commit, and nothing else: for a task the
+        member holds, with a pinned commit (else it says why not), a sparse checkout of exactly
+        the role's read scope, by git commands run without a shell (tried by hand against this
+        repository); the skill may run it;
+  - [ ] an acceptance scenario: a member prepares a task they hold and has only its role's inputs
+        (needs the harness to look at what was fetched);
 - [ ] The read-scope hook refuses a file outside the role's scope.
 - [ ] A member who runs out of allowance can hand over partial work.
 

@@ -35,7 +35,7 @@ const isPlainPath = (path: string) =>
 
 /** Whether a role's work may read a path in the project, for the module named in its task. */
 export function mayRead(role: Role, module: string, path: string): boolean {
-  return isPlainPath(path) && READ_SCOPES[role](module).some((scope) => path.startsWith(scope));
+  return isPlainPath(path) && readScope(role, module).some((scope) => path.startsWith(scope));
 }
 
 /**
@@ -66,3 +66,8 @@ const READ_SCOPES: Record<Role, (module: string) => string[]> = {
   ],
   research: () => [],
 };
+
+/** The places a role's work may read, for the module named in its task. */
+export function readScope(role: Role, module: string): string[] {
+  return READ_SCOPES[role](module);
+}

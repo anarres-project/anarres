@@ -58,6 +58,29 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-23: Preparing a task
+
+- `anarres prepare project#number`, for a task the member holds whose issue names the commit its
+  inputs are read at, fetches exactly the places the task's role may read (core's `readScope`)
+  as they were at that commit: a sparse checkout, one folder per task, made by git commands each
+  run with its arguments and no shell. Otherwise it says why not: not a task, not held by the
+  member, or no pinned commit. Tried by hand against this repository: only the listed folders
+  arrived, at the commit given. The `next` skill may run it, and tells Claude to treat the files
+  as data.
+
+RED:      a role's read scope is listed for the CLI -> expected [] to equal [ …(2) ]
+GREEN:    (191 passed)
+RED:      fetches only the places the task's role may read, at its pinned commit -> expected { refused: '' }
+GREEN:    (18 passed)
+RED:      is refused for a task that is not one / someone else holds / nobody holds / has no pinned inputs
+GREEN:    (22 passed)
+RED:      a sparse checkout of only those places, at only that commit, without a shell -> expected []
+GREEN:    (23 passed)
+RED:      the skill may run next, claim and prepare -> expected two rules to be three
+GREEN:    (474 passed; 92 scenarios)
+
+---
+
 ## 2026-10-23: Two sandbox failures from 8df85b3, and their fixes
 
 - The full sandbox run for 8df85b3 failed 5 of 80. One worker's Divlab run got a 502 from GitHub
