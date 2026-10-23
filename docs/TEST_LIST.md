@@ -186,7 +186,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the comment is data: only a comment that is exactly a claim, on a task rather than a pull
         request, from a named commenter, about a task GitHub could have numbered, is a claim;
   - [x] a claimed task still shows the decision it came from was acted on;
-  - [ ] the sandbox runs the claiming scenario (tagged `@sandbox-wip` until it has passed there);
+  - [x] the sandbox runs the claiming scenario;
   - [ ] the claim is recorded in the project's log, with when Divlab took it (auditability);
   - [ ] a claim on an issue that is not a ready task (an alert, a finished module, a member's
         own issue, a closed task) is refused, and the member told why;

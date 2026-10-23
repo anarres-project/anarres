@@ -42,8 +42,8 @@ and merge records are read back through core. Section 0 is done but for the log'
 (deferred). Every event records when Divlab made it; a decision recorded is acted on once, and
 its task closed, even if a run stops between; a feedback signal's file must be plainly named; a
 pull request's run reads the log once. Section 2 under way: a member claims a ready task by
-commenting on it, and Divlab marks it claimed and assigns it to them (in-process; the sandbox run
-next).
+commenting on it, and Divlab marks it claimed and assigns it to them, in-process and in the
+sandbox.
 
 ---
 
@@ -59,8 +59,9 @@ next).
 - A claimed task's issue no longer carries the ready label, so the board's fallback for decisions
   acted on would have missed it, and a re-run could have posted the task again. It now counts
   claimed tasks too.
-- The scenario passes in-process and is tagged `@sandbox-wip` until it has passed in the sandbox.
-  The sandbox driver claims with the sandbox token: one account plays every member.
+- The scenario passed in-process, then in the sandbox on its own (about a minute, 50 requests),
+  so it runs in both. The sandbox driver claims with the sandbox token: one account plays every
+  member.
 - Slip: the first `onClaim` test and its empty stub went in one step, so the missing-symbol
   failure was not shown before the stub; the assertion failure was.
 - The test that used comments as its example of an event Divlab does not act on now uses
