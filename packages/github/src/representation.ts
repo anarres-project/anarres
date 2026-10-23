@@ -25,7 +25,7 @@ import type {
 } from "@anarres/divlab";
 
 /** The label of a task anyone eligible may claim. */
-const READY = "state:ready";
+export const READY = "state:ready";
 /** The label of a task a member holds. */
 const CLAIMED = "state:claimed";
 

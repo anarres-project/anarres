@@ -431,8 +431,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         the member may take, by the same rule Divlab applies to claims (`eligibility`, exported
         from Divlab, so the rule is stated once) (in-process);
   - [ ] a task naming a role Anarres does not have is left out (written for the types; to pin);
-  - [ ] the CLI reads Anarres's projects from GitHub with the member's own login: which projects
-        have ready tasks, each one's log, the governance file;
+  - [x] the CLI reads Anarres's projects from GitHub with the member's own login: which projects
+        have ready tasks (one search of the organisation's issues), each one's ready tasks, its
+        log, the governance file (the adapter's);
+  - [ ] the sandbox shows it (tagged until it has passed there);
+  - [ ] GitHub's search lags behind new issues: a task posted moments ago may not be offered yet
+        (the sandbox driver waits for it; a member would ask again);
   - [ ] the `anarres next` command, and `/anarres:next` in the plugin, calling it;
   - [ ] offers are ranked by priority and size (concept §8).
 - [ ] Preparing a task fetches only the files the role may read, at the pinned versions.

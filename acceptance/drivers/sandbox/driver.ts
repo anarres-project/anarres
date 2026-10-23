@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { askForWork } from "@anarres/cli";
 import {
   type LogEvent,
   type RoutingEvent,
@@ -16,7 +17,7 @@ import type {
   ReadyTask,
   RoutingRecord,
 } from "../driver.ts";
-import { HarnessNotYetBuilt, NotYetImplemented } from "../errors.ts";
+import { HarnessNotYetBuilt } from "../errors.ts";
 import {
   feedbackSignalFile,
   inScenarioWords,
@@ -75,6 +76,8 @@ export class SandboxDriver implements Driver {
   private readonly membersOrg: string;
   /** The scenario member each of this scenario's claims was made for, by the account that made it. */
   private readonly claimants = new Map<string, string>();
+  /** The project this scenario works in. */
+  private projectOfScenario: string | undefined;
   /** The account playing each of the scenario's members: the sandbox's, then the second's. */
   private readonly played = new Map<string, GitHubApi>();
 
@@ -97,6 +100,7 @@ export class SandboxDriver implements Driver {
     _modules: string[],
     options: { unprotected?: boolean } = {},
   ): Promise<void> {
+    this.projectOfScenario = project;
     if (run.expected.has(project)) return;
     await this.github.call("POST", `orgs/${this.org}/repos`, {
       name: project,
@@ -649,8 +653,33 @@ export class SandboxDriver implements Driver {
     });
   }
 
-  async offeredTasks(): Promise<{ role: string; module: string }[]> {
-    throw new NotYetImplemented("asking for work");
+  /**
+   * The member asks for work through the CLI, which reads GitHub with the member's own login.
+   * GitHub's search lags behind new issues, so the driver waits until it sees this project.
+   */
+  async offeredTasks(member: string): Promise<{ role: string; module: string }[]> {
+    const account = await this.playAs(member);
+    // The sandbox's members are judged by its own governance file, as its Divlab judges them.
+    const asMember = new GitHubAdapter({
+      owner: this.org,
+      token: account.token,
+      request: countedRequest,
+      governance: `${this.org}/${SANDBOX_GOVERNANCE}`,
+    });
+    const deadline = Date.now() + LISTS_CATCH_UP_LIMIT;
+    while (
+      !(await asMember.names()).includes(this.projectOfScenario ?? "") &&
+      Date.now() < deadline
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 5_000));
+    }
+    const offers = await askForWork(await loginOf(account), {
+      names: async () => (this.projectOfScenario ? [this.projectOfScenario] : []),
+      readyTasks: (project) => asMember.readyTasks(project),
+      log: (project) => asMember.read(project),
+      governanceFile: () => asMember.governanceFile(),
+    });
+    return offers.map(({ role, module }) => ({ role: roleNameOf(role), module }));
   }
 
   async timePasses(): Promise<void> {
