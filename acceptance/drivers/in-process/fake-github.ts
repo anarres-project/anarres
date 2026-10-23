@@ -1,4 +1,5 @@
 import type {
+  ClaimedTask,
   CoordinatorAlert,
   EventLog,
   FinishedModule,
@@ -11,8 +12,8 @@ import type {
   TaskBoard,
 } from "@anarres/divlab";
 
-/** A task as posted, with the identifier GitHub would give its issue. */
-type OpenTask = PostedTask & { id: string };
+/** A task as posted, with the identifier GitHub would give its issue, and who holds it. */
+type OpenTask = PostedTask & { id: string; claimedBy?: string };
 
 /** An in-memory stand-in for the GitHub repositories and issues Divlab works with. */
 export class FakeGitHub
@@ -200,8 +201,20 @@ export class FakeGitHub
     if (index !== -1) this.openTasks.splice(index, 1);
   }
 
+  async markClaimed(claim: ClaimedTask): Promise<void> {
+    const task = this.openTasks.find((t) => t.project === claim.project && t.id === claim.task);
+    if (task) task.claimedBy = claim.member;
+  }
+
   readyTasks(project: string): OpenTask[] {
-    return this.openTasks.filter((task) => task.project === project);
+    return this.openTasks.filter((task) => task.project === project && !task.claimedBy);
+  }
+
+  claimedTasks(project: string): (OpenTask & { claimedBy: string })[] {
+    return this.openTasks.filter(
+      (task): task is OpenTask & { claimedBy: string } =>
+        task.project === project && task.claimedBy !== undefined,
+    );
   }
 }
 

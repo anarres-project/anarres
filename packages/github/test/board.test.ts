@@ -47,6 +47,20 @@ describe("the decisions a project's issues show Divlab acted on", () => {
     expect(await adapter.actedOn("ledger")).toEqual([]);
   });
 
+  it("include the decision a claimed task came from", async () => {
+    const task = taskFrom("feedback/FB-4.md");
+    const claimed = {
+      ...task,
+      labels: task.labels.map((name) => (name === "state:ready" ? "state:claimed" : name)),
+    };
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: githubWithIssues([claimed]),
+    });
+    expect(await adapter.actedOn("ledger")).toEqual(["feedback/FB-4.md"]);
+  });
+
   it("are read from every page of the project's issues", async () => {
     const issues = Array.from({ length: 150 }, (_, i) => taskFrom(`feedback/FB-${i + 1}.md`));
     const adapter = new GitHubAdapter({
@@ -55,5 +69,30 @@ describe("the decisions a project's issues show Divlab acted on", () => {
       request: githubWithIssues(issues),
     });
     expect(await adapter.actedOn("ledger")).toHaveLength(150);
+  });
+});
+
+describe("marking a task claimed", () => {
+  it("labels its issue claimed instead of ready, and assigns it to the member", async () => {
+    const changes: unknown[] = [];
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string, body?: unknown) => {
+        if (method === "GET" && path === "repos/commons/ledger/issues/12") {
+          const labels = ["role:test", "module:parser", "state:ready"].map((name) => ({ name }));
+          return { status: 200, data: { labels, body: "" } as T };
+        }
+        if (method === "PATCH" && path === "repos/commons/ledger/issues/12") {
+          changes.push(body);
+          return { status: 200, data: {} as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    await adapter.markClaimed({ project: "ledger", task: "12", member: "alice" });
+    expect(changes).toEqual([
+      { labels: ["role:test", "module:parser", "state:claimed"], assignees: ["alice"] },
+    ]);
   });
 });

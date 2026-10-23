@@ -41,7 +41,61 @@ dropped when members submit at once, and interrupted merges are finished in merg
 and merge records are read back through core. Section 0 is done but for the log's read cost
 (deferred). Every event records when Divlab made it; a decision recorded is acted on once, and
 its task closed, even if a run stops between; a feedback signal's file must be plainly named; a
-pull request's run reads the log once. Next: section 2, claiming and leases.
+pull request's run reads the log once. Section 2 under way: a member claims a ready task by
+commenting on it, and Divlab marks it claimed and assigns it to them (in-process; the sandbox run
+next).
+
+---
+
+## 2026-10-23: A member claims a task
+
+- Section 2 starts. A member claims a ready task by commenting `/claim` on it, as the concept
+  document has it (§8). A new template workflow runs Divlab on each new comment; Divlab reads the
+  comment from the event as data, and acts only on a comment that is exactly a claim, on a task
+  rather than a pull request, from a named commenter. Divlab marks the task claimed instead of
+  ready and assigns it to the member: GitHub lets an issue be assigned to anyone who has
+  commented on it, so strangers can claim (GitHub Docs, "Assigning issues and pull requests to
+  other GitHub users").
+- A claimed task's issue no longer carries the ready label, so the board's fallback for decisions
+  acted on would have missed it, and a re-run could have posted the task again. It now counts
+  claimed tasks too.
+- The scenario passes in-process and is tagged `@sandbox-wip` until it has passed in the sandbox.
+  The sandbox driver claims with the sandbox token: one account plays every member.
+- Slip: the first `onClaim` test and its empty stub went in one step, so the missing-symbol
+  failure was not shown before the stub; the assertion failure was.
+- The test that used comments as its example of an event Divlab does not act on now uses
+  discussions: that example stopped being true, not the behaviour.
+
+RED:      marks the task claimed by the member who asked -> expected [] to deeply equal [ {…} ]
+GREEN:    marks the task claimed by the member who asked (56 passed)
+REFACTOR: none
+RED:      labels its issue claimed instead of ready, and assigns it to the member
+          -> expected [] to deeply equal [ { …(2) } ]
+GREEN:    (62 passed)
+REFACTOR: the ready label named once; labelsWhenClaimed
+RED:      include the decision a claimed task came from -> expected [] to deeply equal [ 'feedback/FB-4.md' ]
+GREEN:    (63 passed)
+RED:      acts on a claim when a member comments to claim a task
+          -> Error: Divlab does not act on issue_comment events
+GREEN:    (57 passed)
+RED:      does nothing for a comment that is not a claim -> expected { claim: … } to deeply equal { nothing: true }
+GREEN:    (58 passed)
+RED:      refuses a claim that does not name its task by a whole number -> expected [Function] to throw an error
+GREEN:    (59 passed)
+RED:      refuses a claim naming a task GitHub could not have numbered -> expected [Function] to throw an error
+GREEN:    (60 passed)
+REFACTOR: numberedByGitHub, one rule for pull requests and tasks
+RED:      does nothing for a claim commented on a pull request, which is not a task
+          -> expected { claim: … } to deeply equal { nothing: true }
+GREEN:    (61 passed)
+RED:      refuses a claim that does not say who commented
+          -> got 'Cannot read properties of undefined (…'
+GREEN:    (62 passed)
+RED:      runs when someone comments on one of the project's issues, and on nothing else
+          -> expected undefined to deeply equal { Object (issue_comment) }
+GREEN:    (68 passed)
+          The claim workflow waits its turn with the other Divlab runs: passed first time, since
+          the workflow's shared shape was written with the file; kept as a regression test.
 
 ---
 

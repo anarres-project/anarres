@@ -252,6 +252,20 @@ export class Anarres {
     );
   }
 
+  async memberClaims(member: string, task: Work) {
+    await this.driver.claim({ ...this.aliased(task), project: this.project }, this.member(member));
+  }
+
+  async taskIsClaimedBy(task: Work, member: string) {
+    const expected = this.aliased(task);
+    const claims = await this.driver.claimedTasks(this.project);
+    assert.deepEqual(
+      claims.filter((t) => t.role === expected.role && t.module === expected.module),
+      [{ ...expected, member: this.member(member) }],
+      `expected the ${task.role} task for ${task.module} to be claimed by ${member}`,
+    );
+  }
+
   async taskIsNoLongerReady(task: Work) {
     const expected = this.aliased(task);
     assert.deepEqual(
@@ -350,6 +364,11 @@ export class Anarres {
       [{ module: this.aliases.of(module), reason: { rule: "re_run_limit", role } }],
       `expected one alert saying ${role} is stuck on ${module}`,
     );
+  }
+
+  /** Members are named in scenarios ("Alice"); each scenario has members of its own. */
+  private member(name: string): string {
+    return this.aliases.of(name.toLowerCase());
   }
 
   private aliased<T extends Work>(work: T): T {

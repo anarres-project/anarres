@@ -52,6 +52,11 @@ fail verdict, reporting test failures"):
 The driver waits for Divlab to merge or refuse, and for its record. If Divlab's run fails, the
 step fails with GitHub's own error messages and a link to the run.
 
+**Each claim** ("Alice claims the Test task for parser") is a `/claim` comment on the task's
+issue, made with the sandbox token, as a member's plugin will make it. GitHub starts Divlab's claim
+workflow, and the driver waits until the issue shows the task claimed and assigned. One account
+plays every member, so the driver remembers which scenario member each claim was for.
+
 **Each check** ("the only task ready for parser is a Coding task") reads GitHub as a member or a
 PDC coordinator would: open task issues, escalation issues, finished-module issues, and the event
 files. GitHub's lists lag behind its writes, so the driver waits until they show what the event
@@ -78,6 +83,7 @@ The scenarios are in `features/`, one file per capability. Today:
   inputs and rule; an alert says what was reported and why routing stopped.
 - `tasks/merged-work`: merged work closes the task it was for.
 - `tasks/submitted-work`: Divlab merges the work members submit, and refuses what it cannot accept.
+- `tasks/claiming`: a member claims a ready task by commenting on it.
 - `projects/protected-main`: only Divlab changes a project's main branch; the tripwire; the alert
   when main is not protected.
 
@@ -89,7 +95,7 @@ The scenarios are in `features/`, one file per capability. Today:
 - Divlab handles pull requests from forks, as members' will come, without running their code.
 - `packages/github` uses GitHub's real API correctly: reading a pull request's files, merging only
   at the commit Divlab read, commenting, issues, labels and the event log.
-- Divlab's two workflows take turns, and the tripwire leaves Divlab's own merges alone.
+- Divlab's workflows take turns, and the tripwire leaves Divlab's own merges alone.
 - All of it copes with GitHub's delays, lagging lists and rate limits.
 
 ## Scenarios not yet run in the sandbox
@@ -100,7 +106,7 @@ every such scenario, so none is forgotten. The tag goes once the scenario passes
 
 ## Not covered yet
 
-- Claiming, leases, eligibility and the plugin, which are not built yet.
+- Leases, eligibility and the plugin, which are not built yet; claiming is under way.
 
 The test list (`docs/TEST_LIST.md`) tracks each of these.
 

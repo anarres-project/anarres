@@ -1,4 +1,5 @@
 import type {
+  ClaimedTask,
   EventLog,
   FinishedModule,
   LogEvent,
@@ -21,6 +22,7 @@ import {
   issueForUnprotectedMain,
   issueNumber,
   type ListedIssue,
+  labelsWhenClaimed,
   logFrom,
   type NewIssue,
   policyAllowingDivlabChecks,
@@ -118,6 +120,15 @@ export class GitHubAdapter
     const number = issueNumber(task);
     if (number === undefined) return;
     await this.call("PATCH", `${this.repo(project)}/issues/${number}`, { state: "closed" });
+  }
+
+  async markClaimed(claim: ClaimedTask): Promise<void> {
+    const issue = `${this.repo(claim.project)}/issues/${claim.task}`;
+    const listed = await this.call<ListedIssue>("GET", issue);
+    await this.call("PATCH", issue, {
+      labels: labelsWhenClaimed(listed),
+      assignees: [claim.member],
+    });
   }
 
   async actedOn(project: string): Promise<string[]> {

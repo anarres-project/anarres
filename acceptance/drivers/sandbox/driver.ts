@@ -10,6 +10,7 @@ import {
 import { GitHubAdapter, requestGitHub } from "@anarres/github";
 import type {
   AcceptedWork,
+  ClaimedTask,
   CoordinatorAlert,
   Driver,
   ReadyTask,
@@ -50,6 +51,7 @@ type Issue = {
   labels: { name: string }[];
   body: string | null;
   pull_request?: unknown;
+  assignees?: { login: string }[];
 };
 
 /**
@@ -109,7 +111,7 @@ export class SandboxDriver implements Driver {
       request: countedRequest,
     });
     if (!options.unprotected) await setUpProject(project, divlab);
-    run.expected.set(project, { ready: 0, escalation: 0, done: 0, notAccepted: 0 });
+    run.expected.set(project, { ready: 0, claimed: 0, escalation: 0, done: 0, notAccepted: 0 });
   }
 
   /** The member submits the work and Divlab merges it: accepted work has been merged. */
@@ -404,6 +406,70 @@ export class SandboxDriver implements Driver {
     }
   }
 
+  /**
+   * The member comments to claim the task, as their plugin will, and Divlab's run for the comment
+   * marks it claimed. The sandbox has one account playing every member, so the driver remembers
+   * which member each claim was for.
+   */
+  async claim(task: { project: string; role: string; module: string }, member: string) {
+    const repository = `repos/${this.org}/${task.project}`;
+    const fromRole = roleId(task.role);
+    const issue = (await this.settled(task.project, "ready")).find(
+      (i) => labelValue(i, "role:") === fromRole && labelValue(i, "module:") === task.module,
+    );
+    if (!issue) throw new Error(`No ${task.role} task for ${task.module} is ready to claim`);
+    const started = Date.now();
+    await this.github.call("POST", `${repository}/issues/${issue.number}/comments`, {
+      body: "/claim",
+    });
+    for (let check = 1; ; check++) {
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+      const now = await this.github.call<Issue>("GET", `${repository}/issues/${issue.number}`);
+      const claimant = now.assignees?.[0]?.login;
+      if (now.labels.some((l) => l.name === "state:claimed") && claimant) {
+        run.members.set(claimant, member);
+        break;
+      }
+      if (check % 3 === 0) await this.failIfRunFailed(repository, "issue_comment", started);
+      if (Date.now() - started > RUN_FINISH_LIMIT) {
+        throw new Error(
+          `Divlab did not act on the claim of task ${issue.number} in ${task.project}`,
+        );
+      }
+    }
+    const expected = this.expectedFor(task.project);
+    expected.ready -= 1;
+    expected.claimed += 1;
+    run.closed.add(issueKey(task.project, issue.number));
+  }
+
+  async claimedTasks(project: string): Promise<ClaimedTask[]> {
+    const issues = await this.settled(project, "claimed");
+    return issues.flatMap((issue) => {
+      const role = labelValue(issue, "role:");
+      const module = labelValue(issue, "module:");
+      const login = issue.assignees?.[0]?.login;
+      if (role === undefined || module === undefined || login === undefined) return [];
+      return [{ role: roleNameOf(role), module, member: run.members.get(login) ?? login }];
+    });
+  }
+
+  /** A failed Divlab run for the event, started since the step began, fails the step. */
+  private async failIfRunFailed(repository: string, event: string, since: number) {
+    const { workflow_runs: runs } = await this.github.call<{ workflow_runs: WorkflowRun[] }>(
+      "GET",
+      `${repository}/actions/runs?event=${event}&status=completed`,
+    );
+    const failed = runs.find(
+      (r) => r.conclusion !== "success" && Date.parse(r.created_at) >= since - 5_000,
+    );
+    if (failed) {
+      throw new Error(
+        `Divlab's ${event} run ended ${failed.conclusion}: ${await this.whyRunFailed(repository, failed)} (${failed.html_url})`,
+      );
+    }
+  }
+
   async readyTasks(project: string): Promise<ReadyTask[]> {
     const issues = await this.settled(project, "ready");
     return issues.flatMap((issue) => {
@@ -599,13 +665,13 @@ export class SandboxDriver implements Driver {
   }
 }
 
-type Listing = "ready" | "escalation" | "done" | "notAccepted";
+type Listing = "ready" | "claimed" | "escalation" | "done" | "notAccepted";
 
 /** The App ID of Divlab Sandbox, the sandbox's GitHub App (CONTRIBUTING.md). Not a secret. */
 const DIVLAB_APP_ID = 5414648;
 
-/** The project template's workflows: one for members' pull requests, one for pushes to main. */
-const TEMPLATE_WORKFLOWS = ["anarres.yml", "divlab-pull-request.yml"];
+/** The project template's workflows: for members' pull requests, pushes to main, and claims. */
+const TEMPLATE_WORKFLOWS = ["anarres.yml", "divlab-pull-request.yml", "divlab-claim.yml"];
 
 /** Where Divlab's pull request workflow lives in a project repository. */
 const DIVLAB_PULL_REQUEST_WORKFLOW = ".github/workflows/divlab-pull-request.yml";
@@ -660,8 +726,10 @@ const run = {
   forks: new Map<string, string>(),
   /** What GitHub should show once its issue lists catch up with Divlab's writes. */
   expected: new Map<string, Record<Listing, number>>(),
-  /** The tasks merged work has closed, which a lagging list may still show as ready. */
+  /** The tasks merged work has closed or members have claimed, which a lagging list may still show as ready. */
   closed: new Set<string>(),
+  /** The scenario member each claim was made for, by the account that made it. */
+  members: new Map<string, string>(),
   /** The pull requests members' work was submitted in. */
   submitted: [] as { project: string; number: number; feedbackSignal: string; merged: boolean }[],
 };
@@ -670,6 +738,7 @@ const issueKey = (project: string, number: number) => `${project}#${number}`;
 
 const LISTINGS: Record<Listing, [label: string, state: "open" | "all"]> = {
   ready: ["state:ready", "open"],
+  claimed: ["state:claimed", "open"],
   escalation: ["escalation", "all"],
   done: ["state:done", "all"],
   notAccepted: ["not-accepted", "all"],

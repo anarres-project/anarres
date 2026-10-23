@@ -7582,13 +7582,15 @@ function unreadableWork(work) {
 var isObject = (value) => typeof value === "object" && value !== null;
 
 // ../github/src/representation.ts
+var READY = "state:ready";
+var CLAIMED = "state:claimed";
 function issueForTask(task) {
   return {
     title: `${ROLE_NAMES[task.role]} task for ${task.module}`,
     labels: [
       `role:${task.role}`,
       `module:${task.module}`,
-      "state:ready",
+      READY,
       ...task.researchFor === void 0 ? [] : [`${RESEARCH_FOR}${task.researchFor}`]
     ],
     body: [
@@ -7597,7 +7599,8 @@ function issueForTask(task) {
     ].join("\n")
   };
 }
-var postedByDivlab = (issue) => issue.labels.some(({ name }) => ["state:ready", "escalation", "state:done"].includes(name));
+var postedByDivlab = (issue) => issue.labels.some(({ name }) => [READY, CLAIMED, "escalation", "state:done"].includes(name));
+var labelsWhenClaimed = (issue) => issue.labels.map(({ name }) => name === READY ? CLAIMED : name);
 function taskFromIssue(issue) {
   const label = issue.labels.find(({ name }) => name.startsWith(RESEARCH_FOR));
   return label === void 0 ? {} : { researchFor: label.name.slice(RESEARCH_FOR.length) };
@@ -7868,6 +7871,14 @@ var GitHubAdapter = class {
     if (number === void 0) return;
     await this.call("PATCH", `${this.repo(project2)}/issues/${number}`, { state: "closed" });
   }
+  async markClaimed(claim) {
+    const issue = `${this.repo(claim.project)}/issues/${claim.task}`;
+    const listed = await this.call("GET", issue);
+    await this.call("PATCH", issue, {
+      labels: labelsWhenClaimed(listed),
+      assignees: [claim.member]
+    });
+  }
   async actedOn(project2) {
     const issues = [];
     for (let page = 1; ; page++) {
@@ -8073,19 +8084,33 @@ var GitHubError = class extends Error {
 };
 
 // src/event.ts
+var numberedByGitHub = (number) => Number.isSafeInteger(number) && number >= 1;
 function whatToActOn(name, event) {
   if (name === "pull_request_target") {
     const number = event.pull_request?.number;
-    if (!Number.isSafeInteger(number) || number < 1) {
+    if (!numberedByGitHub(number)) {
       throw new Error("The pull request event does not say which pull request it is about");
     }
     return { pullRequest: String(number) };
   }
   if (name === "push") return { merge: true };
+  if (name === "issue_comment") {
+    const { issue, comment } = event;
+    if (comment.body !== "/claim" || issue.pull_request !== void 0) return { nothing: true };
+    if (!numberedByGitHub(issue.number)) {
+      throw new Error("The comment event does not say which task it is about");
+    }
+    const member = comment.user?.login;
+    if (typeof member !== "string") throw new Error("The comment event does not say who commented");
+    return { claim: { task: String(issue.number), member } };
+  }
   throw new Error(`Divlab does not act on ${name} events`);
 }
 
 // src/index.ts
+async function onClaim(project2, claim, board) {
+  await board.markClaimed({ project: project2, ...claim });
+}
 var routingDecisions = (log) => log.filter((event) => "work" in event);
 var signalOf = (event) => {
   if ("work" in event) return event.work.feedbackSignal;
@@ -8222,8 +8247,11 @@ try {
   const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH ?? "", "utf8"));
   const run = whatToActOn(process.env.GITHUB_EVENT_NAME ?? "", event);
   const clock = () => /* @__PURE__ */ new Date();
+  if ("nothing" in run) process.exit(0);
   if ("pullRequest" in run) {
     await onPullRequest(project, run.pullRequest, github, github, github, clock);
+  } else if ("claim" in run) {
+    await onClaim(project, run.claim, github);
   } else {
     await onMerge(project, github, github, github, clock);
   }

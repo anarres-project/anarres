@@ -8,6 +8,7 @@ const templateText = (name: string) =>
 const templateWorkflow = (name: string) => parse(templateText(name));
 const PULL_REQUEST_WORKFLOW = "divlab-pull-request.yml";
 const PUSH_WORKFLOW = "anarres.yml";
+const CLAIM_WORKFLOW = "divlab-claim.yml";
 
 /** A GitHub Actions expression, as a workflow writes it. */
 const expression = (inside: string) => `\${{ ${inside} }}`;
@@ -28,7 +29,19 @@ describe("the project template's pull request workflow (decision 0006)", () => {
   });
 });
 
-describe.each([PULL_REQUEST_WORKFLOW, PUSH_WORKFLOW])(
+describe("the project template's claim workflow", () => {
+  it("runs when someone comments on one of the project's issues, and on nothing else", () => {
+    expect(templateWorkflow(CLAIM_WORKFLOW).on).toEqual({ issue_comment: { types: ["created"] } });
+  });
+
+  it("waits its turn with the project's other Divlab runs, so claims are decided in turn", () => {
+    expect(templateWorkflow(CLAIM_WORKFLOW).concurrency).toEqual(
+      templateWorkflow(PUSH_WORKFLOW).concurrency,
+    );
+  });
+});
+
+describe.each([PULL_REQUEST_WORKFLOW, PUSH_WORKFLOW, CLAIM_WORKFLOW])(
   "each of the project template's Divlab workflows: %s",
   (name) => {
     const workflow = templateWorkflow(name);

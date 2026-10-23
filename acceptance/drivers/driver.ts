@@ -20,6 +20,13 @@ export type ReadyTask = {
   feedbackSignal?: string;
 };
 
+/** A task a member holds. */
+export type ClaimedTask = {
+  role: string;
+  module: string;
+  member: string;
+};
+
 export type CoordinatorAlert = {
   module: string;
   work: RoutingRecord["work"];
@@ -75,6 +82,9 @@ export interface Driver {
   /** What Divlab told members whose work it did not merge. */
   refusals(project: string): Promise<string[]>;
   readyTasks(project: string): Promise<ReadyTask[]>;
+  /** The member asks to claim the project's ready task for that role and module. */
+  claim(task: { project: string; role: string; module: string }, member: string): Promise<void>;
+  claimedTasks(project: string): Promise<ClaimedTask[]>;
   coordinatorAlerts(project: string): Promise<CoordinatorAlert[]>;
   doneModules(project: string): Promise<string[]>;
   routingRecords(project: string): Promise<RoutingRecord[]>;

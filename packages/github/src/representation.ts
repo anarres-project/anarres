@@ -9,6 +9,11 @@ import type {
   RoutingEvent,
 } from "@anarres/divlab";
 
+/** The label of a task anyone eligible may claim. */
+const READY = "state:ready";
+/** The label of a task a member holds. */
+const CLAIMED = "state:claimed";
+
 /** What GitHub needs to open an issue. */
 export type NewIssue = { title: string; labels: string[]; body: string };
 
@@ -18,7 +23,7 @@ export function issueForTask(task: PostedTask): NewIssue {
     labels: [
       `role:${task.role}`,
       `module:${task.module}`,
-      "state:ready",
+      READY,
       ...(task.researchFor === undefined ? [] : [`${RESEARCH_FOR}${task.researchFor}`]),
     ],
     body: [
@@ -33,7 +38,11 @@ export type ListedIssue = { labels: { name: string }[] };
 
 /** Whether an issue carries a label Divlab gives the tasks, alerts and finished modules it posts. */
 export const postedByDivlab = (issue: ListedIssue) =>
-  issue.labels.some(({ name }) => ["state:ready", "escalation", "state:done"].includes(name));
+  issue.labels.some(({ name }) => [READY, CLAIMED, "escalation", "state:done"].includes(name));
+
+/** A claimed task's labels: what it had, but claimed instead of ready. */
+export const labelsWhenClaimed = (issue: ListedIssue): string[] =>
+  issue.labels.map(({ name }) => (name === READY ? CLAIMED : name));
 
 /** What Divlab recorded on a task when it posted it. */
 export function taskFromIssue(issue: ListedIssue): { researchFor?: string } {

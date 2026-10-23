@@ -1,5 +1,6 @@
 import {
   checkProtection,
+  onClaim,
   onMerge,
   onPullRequest,
   routingDecisions,
@@ -7,6 +8,7 @@ import {
 } from "@anarres/divlab";
 import type {
   AcceptedWork,
+  ClaimedTask,
   CoordinatorAlert,
   Driver,
   ReadyTask,
@@ -151,6 +153,24 @@ export class InProcessDriver implements Driver {
       .mergedFiles(project)
       .filter((path) => path.startsWith("feedback/"))
       .map(signalName);
+  }
+
+  /** The member's claim reaches Divlab as it would from their comment on the task. */
+  async claim(task: { project: string; role: string; module: string }, member: string) {
+    const fromRole = roleId(task.role);
+    const ready = this.github
+      .readyTasks(task.project)
+      .find((t) => t.role === fromRole && t.module === task.module);
+    if (!ready) throw new Error(`No ${task.role} task for ${task.module} is ready to claim`);
+    await onClaim(task.project, { task: ready.id, member }, this.github);
+  }
+
+  async claimedTasks(project: string): Promise<ClaimedTask[]> {
+    return this.github.claimedTasks(project).map(({ role, module, claimedBy }) => ({
+      role: roleName(role),
+      module,
+      member: claimedBy,
+    }));
   }
 
   async readyTasks(project: string): Promise<ReadyTask[]> {

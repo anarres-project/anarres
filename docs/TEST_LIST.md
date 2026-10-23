@@ -181,6 +181,22 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 ## 2. Claiming and leases
 
 - [ ] A member can claim a ready task for a role they are eligible for.
+  - [x] a member comments to claim a task, and Divlab marks it claimed by them and assigns it
+        to them (GitHub lets an issue be assigned to anyone who has commented on it);
+  - [x] the comment is data: only a comment that is exactly a claim, on a task rather than a pull
+        request, from a named commenter, about a task GitHub could have numbered, is a claim;
+  - [x] a claimed task still shows the decision it came from was acted on;
+  - [ ] the sandbox runs the claiming scenario (tagged `@sandbox-wip` until it has passed there);
+  - [ ] the claim is recorded in the project's log, with when Divlab took it (auditability);
+  - [ ] a claim on an issue that is not a ready task (an alert, a finished module, a member's
+        own issue, a closed task) is refused, and the member told why;
+  - [ ] the claimant's name is checked as a GitHub account name before Divlab uses it;
+  - [ ] comments that are not claims cost Divlab as little as possible and do not hold up its
+        other runs (today each one starts a short run that does nothing; filtering earlier needs
+        a check on the event in the workflow, which the template tests forbid, so raise it with
+        Bernard first);
+  - [ ] Divlab's own comments (its refusals) never start a claim run that matters;
+  - [ ] a member submitting work for a task they claimed: the driver finds claimed tasks too.
 - [ ] A claimed task cannot be claimed by anyone else.
 - [ ] When several members claim the same task at once, the first valid claim wins and the others
       are told the task is taken, whatever order GitHub delivers the claims in.

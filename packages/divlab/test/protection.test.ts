@@ -21,6 +21,7 @@ function project(protectedMain: boolean, alertOpen = false) {
     task: untouched,
     close: untouched,
     actedOn: untouched,
+    markClaimed: untouched,
     alertUnprotectedMain: async (name) => {
       alerts.push(name);
     },

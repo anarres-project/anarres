@@ -74,6 +74,19 @@ export interface TaskBoard {
   close(project: string, task: string): Promise<void>;
   /** The feedback signals whose routing decisions the board shows Divlab acted on. */
   actedOn(project: string): Promise<string[]>;
+  markClaimed(claim: ClaimedTask): Promise<void>;
+}
+
+/** A member holds a task. */
+export type ClaimedTask = { project: string; task: string; member: string };
+
+/** A member asks to claim a task. */
+export async function onClaim(
+  project: string,
+  claim: { task: string; member: string },
+  board: TaskBoard,
+): Promise<void> {
+  await board.markClaimed({ project, ...claim });
 }
 
 /** The files merged to a project's main branch. */

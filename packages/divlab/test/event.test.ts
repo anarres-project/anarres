@@ -24,9 +24,57 @@ describe("what Divlab acts on, from the event that started its run", () => {
     );
   });
 
-  it("refuses to act on an event it was not made for", () => {
-    expect(() => whatToActOn("issue_comment", {})).toThrow(
-      "Divlab does not act on issue_comment events",
+  it("acts on a claim when a member comments to claim a task", () => {
+    const comment = {
+      issue: { number: 12 },
+      comment: { body: "/claim", user: { login: "alice" } },
+    };
+    expect(whatToActOn("issue_comment", comment)).toEqual({
+      claim: { task: "12", member: "alice" },
+    });
+  });
+
+  it("does nothing for a comment that is not a claim", () => {
+    const comment = {
+      issue: { number: 12 },
+      comment: { body: "Thanks, looks good", user: { login: "alice" } },
+    };
+    expect(whatToActOn("issue_comment", comment)).toEqual({ nothing: true });
+  });
+
+  it("refuses a claim that does not name its task by a whole number", () => {
+    const comment = {
+      issue: { number: "12/../9" },
+      comment: { body: "/claim", user: { login: "alice" } },
+    };
+    expect(() => whatToActOn("issue_comment", comment)).toThrow(
+      "The comment event does not say which task it is about",
     );
+  });
+
+  it("refuses a claim naming a task GitHub could not have numbered", () => {
+    const comment = { issue: { number: 0 }, comment: { body: "/claim", user: { login: "alice" } } };
+    expect(() => whatToActOn("issue_comment", comment)).toThrow(
+      "The comment event does not say which task it is about",
+    );
+  });
+
+  it("does nothing for a claim commented on a pull request, which is not a task", () => {
+    const comment = {
+      issue: { number: 7, pull_request: { url: "a pull request" } },
+      comment: { body: "/claim", user: { login: "alice" } },
+    };
+    expect(whatToActOn("issue_comment", comment)).toEqual({ nothing: true });
+  });
+
+  it("refuses a claim that does not say who commented", () => {
+    const comment = { issue: { number: 12 }, comment: { body: "/claim" } };
+    expect(() => whatToActOn("issue_comment", comment)).toThrow(
+      "The comment event does not say who commented",
+    );
+  });
+
+  it("refuses to act on an event it was not made for", () => {
+    expect(() => whatToActOn("discussion", {})).toThrow("Divlab does not act on discussion events");
   });
 });
