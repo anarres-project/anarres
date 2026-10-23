@@ -45,7 +45,8 @@ pull request's run reads the log once. Section 2 under way: a member claims a re
 commenting on it, and Divlab marks it claimed and assigns it to them, in-process and in the
 sandbox; a claimed task stays with its holder, and anyone else claiming it is told it has already
 been claimed; of claims made together the first made wins, whichever Divlab hears of first
-(both in-process: the sandbox needs a second account to play another member).
+(both in-process: the sandbox needs a second account to play another member); a claim on
+anything but an open task is refused; each claim granted is recorded in the log.
 
 ---
 
@@ -56,7 +57,10 @@ been claimed; of claims made together the first made wins, whichever Divlab hear
 - A claim is about no feedback signal, and the log's readers took every event to be about one: a
   claim in the log would have crashed the next run on a push (in Divlab) and been refused as
   unreadable (in the adapter). Both now read past it, each driven by a failing test first.
-- In-process now; `@sandbox-wip` until it has passed in the sandbox.
+- It passed in-process, then in the sandbox on its own (48 requests), so it runs in both.
+- The sandbox run for 9c59aef failed one scenario of 67, in escalation: after the fourth re-run a
+  Coding task still showed as ready. Nothing in claiming touches it; it looks like the open
+  intermittent failure (GitHub's lists lagging past the driver's wait). Watching whether it recurs.
 
 RED:      records the claim it grants, saying when by its clock -> expected [] to deeply equal [ {…} ]
 GREEN:    (78 passed)
