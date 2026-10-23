@@ -56,10 +56,13 @@ step fails with GitHub's own error messages and a link to the run.
 issue, made with the sandbox token, as a member's plugin will make it. GitHub starts Divlab's claim
 workflow, and the driver waits until the issue shows the task claimed and assigned.
 
-**One account plays the members**, so a scenario can have only one: Divlab would see two as one
-person and, rightly, refuse what one person may not do twice (one role per module, decision 0007).
-A scenario with two members fails at once with `HarnessNotYetBuilt` and is tagged `@sandbox-wip`
-until a second account plays a second member.
+**Two accounts play the members**: the sandbox's own token a scenario's first member, a second
+account (`anarres-sandbox-member-b`) its second. Each member must be a different account, or
+Divlab would see them as one person and, rightly, refuse what one person may not do twice (one
+role per module, decision 0007). A scenario with three members fails at once with
+`HarnessNotYetBuilt` and is tagged `@sandbox-wip`. Members claiming together comment in order,
+but GitHub decides which comment's run starts first, so the sandbox shows the first claim made
+winning under real GitHub ordering, not a chosen order.
 
 **Each check** ("the only task ready for parser is a Coding task") reads GitHub as a member or a
 PDC coordinator would: open task issues, escalation issues, finished-module issues, and the event

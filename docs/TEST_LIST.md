@@ -211,7 +211,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         been claimed (in-process);
   - [x] only Divlab's claimed label makes a task held: someone assigned a ready task does not
         hold it;
-  - [ ] the sandbox shows it: needs a second account playing another member (Bernard preparing it);
+  - [ ] the sandbox shows it: a second account plays a second member (Bernard, 2026-10-23); this
+        scenario has three members (the earlier work's, Alice and Bob), so it needs a third;
         since one-role-per-module, every scenario where one member works and another claims needs
         it too: claiming, giving back, the claim record and the draft scenario wait for it;
   - [x] a member whose claim was granted by an earlier run (which heard of another claim first)

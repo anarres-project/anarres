@@ -30,13 +30,17 @@ import { GitHubApi } from "./github-api.ts";
 import { countedRequest, summary, tally } from "./request-tally.ts";
 import { leftBehind, sweptBy } from "./sweep.ts";
 
-/** The two sandbox organisations and their tokens, from `.env` locally or the CI environment. */
+/**
+ * The two sandbox organisations and their tokens, from `.env` locally or the CI environment, and
+ * the second account that plays a second member, if there is one.
+ */
 function sandboxSettings() {
   const {
     ANARRES_SANDBOX_ORG: org,
     ANARRES_SANDBOX_TOKEN: token,
     ANARRES_SANDBOX_MEMBERS_ORG: membersOrg,
     ANARRES_SANDBOX_MEMBERS_TOKEN: membersToken,
+    ANARRES_SANDBOX_SECOND_MEMBER_TOKEN: secondMemberToken,
   } = process.env;
   if (!org || !token || !membersOrg || !membersToken) {
     throw new Error(
@@ -44,7 +48,7 @@ function sandboxSettings() {
         "ANARRES_SANDBOX_MEMBERS_ORG and ANARRES_SANDBOX_MEMBERS_TOKEN",
     );
   }
-  return { org, token, membersOrg, membersToken };
+  return { org, token, membersOrg, membersToken, secondMemberToken };
 }
 
 type Issue = {
@@ -71,8 +75,8 @@ export class SandboxDriver implements Driver {
   private readonly membersOrg: string;
   /** The scenario member each of this scenario's claims was made for, by the account that made it. */
   private readonly claimants = new Map<string, string>();
-  /** The scenario members this scenario's one account has acted for: at most one. */
-  private readonly played = new Set<string>();
+  /** The account playing each of the scenario's members: the sandbox's, then the second's. */
+  private readonly played = new Map<string, GitHubApi>();
 
   constructor() {
     const { org, token, membersOrg, membersToken } = sandboxSettings();
@@ -163,7 +167,7 @@ export class SandboxDriver implements Driver {
   }
 
   private async openPullRequest(work: AcceptedWork, { draft = false } = {}) {
-    this.playAs(work.member);
+    const member = await this.playAs(work.member);
     const repository = `repos/${this.org}/${work.project}`;
     const fromRole = roleId(work.role);
     const forWork = (issue: Issue) =>
@@ -196,7 +200,7 @@ export class SandboxDriver implements Driver {
       });
     }
     const { path } = signal;
-    const { number } = await this.github.call<{ number: number }>("POST", `${repository}/pulls`, {
+    const { number } = await member.call<{ number: number }>("POST", `${repository}/pulls`, {
       title: `The ${work.role} work on ${work.module}`,
       head: `${this.membersOrg}:${branch}`,
       base: "main",
@@ -447,21 +451,16 @@ export class SandboxDriver implements Driver {
       (i) => labelValue(i, "role:") === fromRole && labelValue(i, "module:") === task.module,
     );
     if (!issue) throw new Error(`No ${task.role} task for ${task.module} is ready to claim`);
-    this.playAs(member);
+    const account = await this.playAs(member);
     const started = Date.now();
     // Divlab either gives the member the task or replies saying why not: a comment after theirs.
     const before = issue.comments ?? 0;
-    await this.github.call("POST", `${repository}/issues/${issue.number}/comments`, {
-      body: "/claim",
-    });
+    await account.call("POST", `${repository}/issues/${issue.number}/comments`, { body: "/claim" });
     for (let check = 1; ; check++) {
       await new Promise((resolve) => setTimeout(resolve, 2_000));
       const now = await this.github.call<Issue>("GET", `${repository}/issues/${issue.number}`);
       const claimant = now.assignees?.[0]?.login;
-      if (now.labels.some((l) => l.name === "state:claimed") && claimant) {
-        this.claimants.set(claimant, member);
-        break;
-      }
+      if (now.labels.some((l) => l.name === "state:claimed") && claimant) break;
       if ((now.comments ?? 0) > before + 1) return;
       if (check % 3 === 0) await this.failIfRunFailed(repository, "issue_comment", started);
       if (Date.now() - started > RUN_FINISH_LIMIT) {
@@ -476,13 +475,9 @@ export class SandboxDriver implements Driver {
     run.closed.add(issueKey(task.project, issue.number));
   }
 
-  /**
-   * Divlab's replies on the project's open tasks, addressed to a member. One account plays the
-   * scenario's one member, so every reply is to them.
-   */
+  /** Divlab's replies on the project's open tasks, each to the member its account plays. */
   async claimRefusals(project: string): Promise<{ member: string; reason: string }[]> {
     const repository = `repos/${this.org}/${project}`;
-    const [member] = this.played;
     const tasks = [
       ...(await this.settled(project, "ready")),
       ...(await this.settled(project, "claimed")),
@@ -494,26 +489,79 @@ export class SandboxDriver implements Driver {
         `${repository}/issues/${task.number}/comments`,
       );
       for (const { body } of comments) {
-        const reply = body.match(/^@[\w-]+, (.*)\.$/s);
-        if (reply?.[1] && member) refusals.push({ member, reason: reply[1] });
+        const reply = body.match(/^@([\w-]+), (.*)\.$/s);
+        const member = reply?.[1] && this.claimants.get(reply[1]);
+        if (member && reply?.[2]) refusals.push({ member, reason: reply[2] });
       }
     }
     return refusals;
   }
 
   /**
-   * The sandbox has one account, which can play only one of a scenario's members: Divlab would
-   * see two members as one, and rightly refuse what one person may not do twice.
+   * The account that plays a member: the sandbox's own for the scenario's first member, the
+   * second account for its second. Divlab would see two members played by one account as one
+   * person, and rightly refuse what one person may not do twice.
    */
-  private playAs(member: string): void {
-    if (this.played.size > 0 && !this.played.has(member)) {
-      throw new HarnessNotYetBuilt("a second account, so the sandbox can play a second member");
+  private async playAs(member: string): Promise<GitHubApi> {
+    const playing = this.played.get(member);
+    if (playing) return playing;
+    const { secondMemberToken } = sandboxSettings();
+    const accounts = [
+      this.github,
+      ...(secondMemberToken ? [new GitHubApi(secondMemberToken)] : []),
+    ];
+    const account = accounts[this.played.size];
+    if (!account) {
+      throw new HarnessNotYetBuilt(
+        `an account for the scenario's member number ${this.played.size + 1}`,
+      );
     }
-    this.played.add(member);
+    this.played.set(member, account);
+    this.claimants.set(await loginOf(account), member);
+    return account;
   }
 
-  async claimTogether(): Promise<void> {
-    throw new HarnessNotYetBuilt("a second account, so members can claim together");
+  /**
+   * The members comment to claim the task one after another, before Divlab acts on any. GitHub,
+   * not the driver, decides which comment's run starts first, so `heardFirst` cannot be forced
+   * here; what the sandbox shows is that the first claim made wins with real GitHub's ordering.
+   */
+  async claimTogether(
+    task: { project: string; role: string; module: string },
+    members: string[],
+  ): Promise<void> {
+    const repository = `repos/${this.org}/${task.project}`;
+    const fromRole = roleId(task.role);
+    const issue = (await this.settled(task.project, "ready")).find(
+      (i) => labelValue(i, "role:") === fromRole && labelValue(i, "module:") === task.module,
+    );
+    if (!issue) throw new Error(`No ${task.role} task for ${task.module} is ready to claim`);
+    const before = issue.comments ?? 0;
+    const started = Date.now();
+    for (const member of members) {
+      const account = await this.playAs(member);
+      await account.call("POST", `${repository}/issues/${issue.number}/comments`, {
+        body: "/claim",
+      });
+    }
+    // Done when the task is claimed and every member it did not go to has been told.
+    const settledAt = before + members.length + (members.length - 1);
+    for (let check = 1; ; check++) {
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+      const now = await this.github.call<Issue>("GET", `${repository}/issues/${issue.number}`);
+      const claimed = now.labels.some((l) => l.name === "state:claimed");
+      if (claimed && (now.comments ?? 0) >= settledAt) break;
+      if (check % 3 === 0) await this.failIfRunFailed(repository, "issue_comment", started);
+      if (Date.now() - started > RUN_FINISH_LIMIT) {
+        throw new Error(
+          `Divlab did not settle the claims of task ${issue.number} in ${task.project}`,
+        );
+      }
+    }
+    const expected = this.expectedFor(task.project);
+    expected.ready -= 1;
+    expected.claimed += 1;
+    run.closed.add(issueKey(task.project, issue.number));
   }
 
   /** The log's claims, each with the role and module of the task issue it names. */
@@ -586,7 +634,7 @@ export class SandboxDriver implements Driver {
 
   /** The member comments to give the task back, and Divlab's run makes it ready again. */
   async release(task: { project: string; role: string; module: string }, member: string) {
-    this.playAs(member);
+    const account = await this.playAs(member);
     const repository = `repos/${this.org}/${task.project}`;
     const fromRole = roleId(task.role);
     const issue = (await this.settled(task.project, "claimed")).find(
@@ -594,7 +642,7 @@ export class SandboxDriver implements Driver {
     );
     if (!issue) throw new Error(`No ${task.role} task for ${task.module} is claimed`);
     const started = Date.now();
-    await this.github.call("POST", `${repository}/issues/${issue.number}/comments`, {
+    await account.call("POST", `${repository}/issues/${issue.number}/comments`, {
       body: "/release",
     });
     for (let check = 1; ; check++) {
@@ -917,6 +965,8 @@ const run = {
   expected: new Map<string, Record<Listing, number>>(),
   /** The tasks merged work has closed or members have claimed, which a lagging list may still show as ready. */
   closed: new Set<string>(),
+  /** Each sandbox account's login, by its token. */
+  logins: new Map<string, string>(),
   /** The pull requests members' work was submitted in. */
   submitted: [] as { project: string; number: number; feedbackSignal: string; merged: boolean }[],
 };
@@ -933,3 +983,12 @@ const LISTINGS: Record<Listing, [label: string, state: "open" | "all"]> = {
 
 const labelValue = (issue: Issue, prefix: string) =>
   issue.labels.find((label) => label.name.startsWith(prefix))?.name.slice(prefix.length);
+
+/** The GitHub account a sandbox token acts as, asked once per account in a run. */
+async function loginOf(account: GitHubApi): Promise<string> {
+  const known = run.logins.get(account.token);
+  if (known) return known;
+  const { login } = await account.call<{ login: string }>("GET", "user");
+  run.logins.set(account.token, login);
+  return login;
+}

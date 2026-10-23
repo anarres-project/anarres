@@ -65,6 +65,13 @@ needs four values, from a git-ignored `.env` locally, or from the `sandbox` envi
   permissions: read and write for administration (to make and delete forks) and contents (to push
   work); read for metadata. Nothing else: it cannot act on the sandbox organisation itself.
 
+- `ANARRES_SANDBOX_SECOND_MEMBER_TOKEN` (a secret in CI): a fine-grained personal access token of
+  a second GitHub account, a member of the sandbox organisation, so the tests can play a second
+  member. Its resource owner is the sandbox organisation, with access to all its repositories,
+  and these repository permissions: read and write for issues (to claim) and pull requests (to
+  submit work); read for metadata. The sandbox's own token plays a scenario's first member, this
+  one its second; a scenario with more members is not run in the sandbox.
+
 The sandbox's projects read members' trust levels from a governance file of the sandbox's own,
 never from this repository's: an organisation variable, `ANARRES_GOVERNANCE`, names the
 repository in the sandbox organisation that holds `governance/members.json` (decision 0007). Not

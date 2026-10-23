@@ -57,6 +57,21 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-23: A second account plays a second member in the sandbox
+
+- Bernard made a second GitHub account, `anarres-sandbox-member-b`, a member of the sandbox
+  organisation, with a token that may only comment and open pull requests there. The sandbox
+  driver now gives each scenario member an account as they first act: the sandbox's own, then
+  the second. Claims, releases and a member's pull requests are made as that member's account,
+  and Divlab's replies, assignees and claim records are mapped back by account name.
+- Scenarios with two members come back to the sandbox once each has passed there: claiming,
+  the claim record, giving a task back, the draft. Three have three members (whoever did the
+  earlier work, Alice and Bob) and wait for a third account.
+- Correction: the commits held for the allowance's reset at 10:39 were not pushed then, as said;
+  they go out with this one.
+
+---
+
 ## 2026-10-23: Windows line endings
 
 - A feedback signal written with Windows line endings was unreadable: its first line was "---"
