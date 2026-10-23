@@ -20,8 +20,6 @@ Feature: Only Divlab changes a project's main branch
     And a member submits Test work on "parser" with a pass verdict
     Then PDC coordinators have been alerted once that the project's main branch is not protected
 
-  # Not yet in the sandbox: it has not passed there yet.
-  @sandbox-wip
   Scenario: A change reaching main without Divlab, feedback signal or not, is noticed
     Each Divlab run checks every change to main since its last look: GitHub shows who made each,
     and Divlab knows its own merges from its records.

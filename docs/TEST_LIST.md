@@ -388,8 +388,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] Divlab knows its App's account name (the template passes the App's slug);
   - [x] "signed by GitHub" means committed as `web-flow` and verified: a member's own signature
         is not GitHub's;
-  - [ ] the sandbox shows a change caught (tagged until it has passed there), and no false alarm
-        from Divlab's own merges and log writes (runs there now);
+  - [x] the sandbox shows a change caught, and no false alarm from Divlab's own merges and log
+        writes (826cbed: all 79 sandbox scenarios passed with the check after every run);
   - [ ] a project's setup records where checking starts, closing the gap before Divlab first runs;
   - [ ] more than 250 commits between checks (GitHub's compare lists no more): page, or alert;
   - [ ] a feedback signal put straight onto main raises two alerts (not routed; a change not by
