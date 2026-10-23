@@ -442,7 +442,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] only tasks with plain module names are offered: what the CLI prints reaches the member's
         Claude session, and labels can be changed by anyone who triages (core's `isPlainName`,
         the rule Divlab applies to feedback signals);
-  - [ ] `/anarres:next` in the plugin, calling it;
+  - [x] `/anarres:next` in the plugin: this repository is the plugin's marketplace, and the
+        plugin's `next` skill may run one thing without asking, the CLI bundled inside the plugin
+        (an installed plugin reaches nothing outside its folder); it shows the offers as printed
+        and treats them as data;
+  - [ ] the plugin validated by Claude Code itself in CI (`claude plugin validate`), once CI has
+        Claude Code;
+  - [ ] claiming from the plugin (`anarres claim`), then preparing the task (the next items);
   - [ ] offers are ranked by priority and size (concept §8).
 - [ ] Preparing a task fetches only the files the role may read, at the pinned versions.
 - [ ] The read-scope hook refuses a file outside the role's scope.

@@ -1,0 +1,12 @@
+{
+  "name": "anarres",
+  "owner": { "name": "Anarres" },
+  "description": "Anarres: volunteers pooling spare Claude capacity to build software together.",
+  "plugins": [
+    {
+      "name": "anarres",
+      "source": "./plugin",
+      "description": "Find, claim and do Anarres tasks from Claude Code."
+    }
+  ]
+}

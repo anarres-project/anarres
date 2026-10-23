@@ -9,10 +9,7 @@
     "@anarres/divlab": "*",
     "@anarres/github": "*"
   },
-  "bin": {
-    "anarres": "./dist/anarres.js"
-  },
   "scripts": {
-    "bundle": "esbuild src/main.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/anarres.js --legal-comments=eof --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\""
+    "bundle": "esbuild src/main.ts --bundle --platform=node --target=node24 --format=esm --outfile=../../plugin/cli/anarres.js --legal-comments=eof --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\""
   }
 }

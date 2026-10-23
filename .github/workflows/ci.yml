@@ -23,4 +23,4 @@ jobs:
       # The Action and the plugin run the committed bundles, so each must be built from exactly
       # this source.
       - name: The Divlab and CLI bundles match their source
-        run: npm run bundle && git diff --exit-code -- packages/divlab/dist packages/cli/dist
+        run: npm run bundle && git diff --exit-code -- packages/divlab/dist plugin/cli

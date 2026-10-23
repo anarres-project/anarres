@@ -58,6 +58,29 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-23: The plugin's `/anarres:next`
+
+- The plugin exists: `.claude-plugin/marketplace.json` makes this repository its marketplace
+  (`/plugin marketplace add anarres-project/anarres`), and `plugin/` holds it. Its one skill,
+  `next`, runs as `/anarres:next`: it may run exactly one command without asking, the CLI bundled
+  inside the plugin, and it shows the offers as printed, treating them as data written by others.
+- The plugin's format was checked against Claude Code's documentation first: skills are the
+  current form for commands; an installed plugin is a copy of its own folder, so the CLI is
+  bundled into `plugin/cli/` (not `plugin/bin/`, which claude.ai and Cowork would skip); CI
+  checks the bundle matches its source.
+- Tests hold the plugin's shape as the template tests hold the workflows'.
+
+RED:      the plugin is listed by this repository's marketplace -> ENOENT
+GREEN:    (1 passed)
+RED:      it is named as the marketplace names it -> ENOENT
+GREEN:    (2 passed)
+RED:      its next skill may run one thing without asking -> ENOENT
+GREEN:    (3 passed)
+RED:      it carries the CLI it runs, bundled -> ENOENT
+GREEN:    (442 passed; 92 scenarios)
+
+---
+
 ## 2026-10-23: The `anarres next` command
 
 - `packages/cli` has its command, `anarres next`: it reads GitHub with the member's own GitHub
