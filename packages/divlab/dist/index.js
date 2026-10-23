@@ -8027,6 +8027,33 @@ var GitHubAdapter = class {
     await this.call("PATCH", issue, { labels: labelsWhenReleased(listed), assignees: [] });
   }
   /** The governance file, as read: core checks what it says (decision 0007). */
+  /** The project's tasks ready to claim, each read as Divlab reads a task: as data. */
+  async readyTasks(project2) {
+    const issues = await this.call(
+      "GET",
+      `${this.repo(project2)}/issues?labels=${encodeURIComponent(READY)}&state=open&per_page=100`
+    );
+    return issues.flatMap((issue) => {
+      const task = isTask(issue) ? taskFromIssue(issue) : void 0;
+      return task ? [{ id: String(issue.number), role: task.role, module: task.module }] : [];
+    });
+  }
+  /** The account the token acts as: the member, when it is the member's own login. */
+  async account() {
+    const { login } = await this.call("GET", "user");
+    return login;
+  }
+  /** The organisation's projects with a task ready to claim, from one search of its issues. */
+  async names() {
+    const query = encodeURIComponent(
+      `org:${this.options.owner} label:state:ready is:open is:issue`
+    );
+    const { items } = await this.call(
+      "GET",
+      `search/issues?q=${query}&per_page=100`
+    );
+    return [...new Set(items.map((item) => item.repository_url.split("/").at(-1) ?? ""))];
+  }
   async governanceFile() {
     const repository = this.options.governance || GOVERNANCE_REPOSITORY;
     const where = `repos/${repository}/contents/${GOVERNANCE_FILE}`;

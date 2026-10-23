@@ -18,7 +18,7 @@
     "lint": "biome check .",
     "test:wip": "tsx scripts/wip-judge.ts",
     "mutate": "stryker run",
-    "bundle": "npm run bundle -w @anarres/divlab"
+    "bundle": "npm run bundle -w @anarres/divlab && npm run bundle -w @anarres/cli"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

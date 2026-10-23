@@ -430,14 +430,16 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the CLI (`packages/cli`, `askForWork`) offers the ready tasks across Anarres's projects
         the member may take, by the same rule Divlab applies to claims (`eligibility`, exported
         from Divlab, so the rule is stated once) (in-process);
-  - [ ] a task naming a role Anarres does not have is left out (written for the types; to pin);
+  - [x] a task naming a role Anarres does not have is left out (shown failing without the check);
   - [x] the CLI reads Anarres's projects from GitHub with the member's own login: which projects
         have ready tasks (one search of the organisation's issues), each one's ready tasks, its
         log, the governance file (the adapter's);
   - [ ] the sandbox shows it (tagged until it has passed there);
   - [ ] GitHub's search lags behind new issues: a task posted moments ago may not be offered yet
         (the sandbox driver waits for it; a member would ask again);
-  - [ ] the `anarres next` command, and `/anarres:next` in the plugin, calling it;
+  - [x] the `anarres next` command: the member's own GitHub CLI login, one task to a line, and
+        a word when nothing is ready (tried against the sandbox as the second account);
+  - [ ] `/anarres:next` in the plugin, calling it;
   - [ ] offers are ranked by priority and size (concept §8).
 - [ ] Preparing a task fetches only the files the role may read, at the pinned versions.
 - [ ] The read-scope hook refuses a file outside the role's scope.

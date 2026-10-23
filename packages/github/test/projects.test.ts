@@ -58,3 +58,17 @@ describe("a project's ready tasks", () => {
     ]);
   });
 });
+
+describe("the member a CLI acts for", () => {
+  it("is the account GitHub says the member's login is", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) =>
+        method === "GET" && path === "user"
+          ? { status: 200, data: { login: "alice" } as T }
+          : { status: 404, data: { message: `not answered: ${method} ${path}` } as T },
+    });
+    expect(await adapter.account()).toBe("alice");
+  });
+});

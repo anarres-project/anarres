@@ -200,6 +200,12 @@ export class GitHubAdapter
     });
   }
 
+  /** The account the token acts as: the member, when it is the member's own login. */
+  async account(): Promise<string> {
+    const { login } = await this.call<{ login: string }>("GET", "user");
+    return login;
+  }
+
   /** The organisation's projects with a task ready to claim, from one search of its issues. */
   async names(): Promise<string[]> {
     const query = encodeURIComponent(

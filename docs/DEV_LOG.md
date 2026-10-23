@@ -58,6 +58,29 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-23: The `anarres next` command
+
+- `packages/cli` has its command, `anarres next`: it reads GitHub with the member's own GitHub
+  CLI login (never a token of Anarres's), finds the organisation's projects with work ready in
+  one search of their issues, and lists the tasks the member may take, one to a line. It is
+  bundled like Divlab, and CI checks both bundles match their source. Run against the sandbox as
+  the second account, it listed the tasks of the full run then going.
+- A first bundle failed at start-up: its banner's newline went in literally, hiding the `require`
+  setup in the `#!` line. The `#!` line now starts `main.ts`, which esbuild keeps.
+
+RED:      the offers name each task by its project, issue, role and module -> expected '' to be '…'
+GREEN:    (3 passed)
+RED:      say so when there is nothing the member may take -> expected '' to be 'No tasks you may take…'
+GREEN:    (4 passed)
+RED:      the projects with work ready are found in one search -> expected [] to equal [ 'ledger', 'atlas' ]
+GREEN:    (97 passed)
+RED:      a project's ready tasks are its open issues labelled ready -> expected [] to equal [ {…} ]
+GREEN:    (98 passed)
+RED:      the member a CLI acts for is the account GitHub says -> expected '' to be 'alice'
+GREEN:    (430 passed)
+
+---
+
 ## 2026-10-23: A member asks for work
 
 - Section 5 begins. A new package, `packages/cli`, will hold the `anarres` CLI the plugin calls.

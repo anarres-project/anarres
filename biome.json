@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**", "!packages/divlab/dist"]
+    "includes": ["**", "!packages/divlab/dist", "!packages/cli/dist"]
   },
   "formatter": {
     "enabled": true,

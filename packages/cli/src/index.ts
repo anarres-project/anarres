@@ -1,4 +1,4 @@
-import { isRole, type Role } from "@anarres/core";
+import { isRole, ROLE_NAMES, type Role } from "@anarres/core";
 import { eligibility, type LogEvent } from "@anarres/divlab";
 
 /** Anarres's projects, as a member's CLI reads them from GitHub with the member's own login. */
@@ -31,4 +31,15 @@ export async function askForWork(member: string, projects: Projects): Promise<Of
     }
   }
   return offers;
+}
+
+/** The offers as the member sees them, one to a line. */
+export function describeOffers(offers: readonly Offer[]): string {
+  if (offers.length === 0) return "No tasks you may take are ready just now.";
+  return offers
+    .map(
+      (offer) =>
+        `${offer.project}#${offer.task}  ${ROLE_NAMES[offer.role]} task for ${offer.module}`,
+    )
+    .join("\n");
 }
