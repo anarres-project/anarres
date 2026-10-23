@@ -52,6 +52,8 @@ type Issue = {
   body: string | null;
   pull_request?: unknown;
   assignees?: { login: string }[];
+  /** How many comments the issue has. */
+  comments?: number;
 };
 
 /**
@@ -443,6 +445,8 @@ export class SandboxDriver implements Driver {
     if (!issue) throw new Error(`No ${task.role} task for ${task.module} is ready to claim`);
     this.playAs(member);
     const started = Date.now();
+    // Divlab either gives the member the task or replies saying why not: a comment after theirs.
+    const before = issue.comments ?? 0;
     await this.github.call("POST", `${repository}/issues/${issue.number}/comments`, {
       body: "/claim",
     });
@@ -454,6 +458,7 @@ export class SandboxDriver implements Driver {
         this.claimants.set(claimant, member);
         break;
       }
+      if ((now.comments ?? 0) > before + 1) return;
       if (check % 3 === 0) await this.failIfRunFailed(repository, "issue_comment", started);
       if (Date.now() - started > RUN_FINISH_LIMIT) {
         throw new Error(

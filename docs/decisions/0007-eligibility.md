@@ -25,6 +25,18 @@ were settled before any code. Trust levels need a home before the site exists.
   coordinators through reviewed pull requests. Divlab reads it when a task is claimed. A member
   who is not listed is *new*.
 
+- **What each trust level may take** (concept §11, completed 2026-10-23): *new* members take
+  Specification, Test, Coding and Research; *established* add Architecture and Reviewer;
+  *trusted* add Security & Quality and Programme Architect (and Governance, once it is a role).
+  Each level may take what the levels below it may.
+- **Module risk**: until a PDC coordinator can mark a module high-risk, every module is treated
+  as low-risk, so new members may take its Coding tasks.
+- **The governance file also records linked accounts**: accounts a PDC coordinator has linked are
+  one member, for every rule.
+- **The sandbox's trust levels** come from the same kind of file in a repository in the sandbox
+  organisation. Divlab reads this repository's file unless the organisation's own settings name
+  another; nothing in a member's pull request can.
+
 ## Consequences
 
 - Divlab must know who did each piece of merged work: the pull request's author is recorded with

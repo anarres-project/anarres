@@ -263,7 +263,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 
 ## 3. Eligibility and conflict of interest
 
-- [ ] A new member cannot claim a Reviewer task.
+- [ ] A new member cannot claim a Reviewer task (decision 0007: what each level may take; trust
+      levels and linked accounts in a reviewed file in `governance/`; the sandbox reads its own).
 - [x] A member who wrote any artefact in a module cannot review that module (a case of the next).
 - [ ] A member may hold at most one role per module (decision 0007: for the module's whole life;
       merged work and a held task count; Research is not a role in a module).
@@ -277,7 +278,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         not have makes the log unreadable, as other bad records do;
   - [x] when the earliest claim on a task is not allowed, the earliest that is wins; a member
         barred from the task is told why, whoever holds it;
-  - [ ] the sandbox shows the refusal (tagged until it has passed there).
+  - [x] the sandbox shows the refusal, and that a member may revise their own role's work.
 - [ ] Linked accounts are treated as one member.
 
 ## 4. Validating contributions

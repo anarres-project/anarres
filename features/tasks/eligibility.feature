@@ -3,8 +3,6 @@ Feature: Who may take a task
   role in a module for its whole life: whoever wrote a module's tests never writes its code, and
   whoever produced any of it never reviews it. Divlab checks this when a member claims a task.
 
-  # Not yet in the sandbox: it has not passed there yet.
-  @sandbox-wip
   Scenario: A member who wrote a module's code cannot review it
     Given a project with a module "parser"
     And Alice's Coding work on "parser" was accepted with a pass verdict
@@ -12,16 +10,12 @@ Feature: Who may take a task
     Then Alice is told a member takes only one role in a module
     And a Reviewer task for "parser" is ready to claim
 
-  # Not yet in the sandbox: it has not passed there yet.
-  @sandbox-wip
   Scenario: A member who wrote a module's specification cannot write its tests
     Given a project with a module "parser"
     And Alice's Specification work on "parser" was accepted with a pass verdict
     When Alice claims the Test task for "parser"
     Then Alice is told a member takes only one role in a module
 
-  # Not yet in the sandbox: it has not passed there yet.
-  @sandbox-wip
   Scenario: A member may revise work in their own role
     Given a project with a module "parser"
     And Alice's Coding work on "parser" was accepted with a fail verdict, reporting test failures

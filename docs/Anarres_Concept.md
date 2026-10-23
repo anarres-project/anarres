@@ -387,7 +387,7 @@ The March document's "pathogen design-space mapping" project is **explicitly exc
 | Low-effort or fabricated artefacts | Schema checks, CI, sanity checks on state space metrics, reviewer verdicts recorded per member |
 | Malicious content aimed at agents | Sandboxing (§10), `suspicious_content` reporting, PDC coordinator action against the account |
 
-**Trust levels:** *new* (Requirements, Specification, Test, Coding on low-risk modules) → *established* (all producing roles, Reviewer) → *trusted* (Security & Quality, Governance, Programme Architect) → *PDC coordinator*. Trust is earned over time and confirmed by PDC coordinators.
+**Trust levels:** *new* (Requirements, Specification, Test, Coding on low-risk modules, Research) → *established* (all producing roles, including Architecture, and Reviewer) → *trusted* (Security & Quality, Governance, Programme Architect) → *PDC coordinator*. Trust is earned over time and confirmed by PDC coordinators, who record each member's level, and any accounts linked to them, in a reviewed file in `governance/` (decision 0007).
 
 ---
 

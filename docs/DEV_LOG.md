@@ -54,6 +54,19 @@ life (decision 0007), and Divlab refuses a claim that breaks it.
 
 ---
 
+## 2026-10-23: The eligibility scenarios run in the sandbox
+
+- The sandbox driver's claim waited only for the task to show as claimed, so a claim Divlab
+  refused timed out. It now ends on Divlab's reply too. The three eligibility scenarios passed in
+  the sandbox (two at 80 requests, after one at 331 that showed the gap), so they run in both.
+- Bernard settled trust levels (decision 0007, concept §11): new members take Specification,
+  Test, Coding and Research; established add Architecture and Reviewer; trusted add Security &
+  Quality and Programme Architect; every module counts as low-risk until risk can be marked; the
+  governance file also records linked accounts; the sandbox reads a file of its own, named only
+  by its organisation's settings.
+
+---
+
 ## 2026-10-23: The earliest allowed claim wins
 
 - If the earliest claim on a free task came from a member the rules bar, a later member's run
