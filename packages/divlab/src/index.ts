@@ -44,6 +44,8 @@ export type PostedTask = {
   researchFor?: string;
   /** The feedback signal whose routing decision posted the task. */
   decidedOn: string;
+  /** The commit the task's inputs are read at: the merge that decided it. */
+  inputsAt?: string;
 };
 
 /** A module Divlab marks done, and the feedback signal whose routing decision finished it. */
@@ -489,7 +491,11 @@ async function actOn(event: RoutingEvent, board: TaskBoard, log: EventLog): Prom
   } else if ("moduleDone" in decision) {
     await board.markModuleDone({ project, module: event.work.module, decidedOn });
   } else {
-    for (const task of decision.tasks) await board.post({ project, ...task, decidedOn });
+    // A task's inputs are read as they were at the merge that decided it.
+    const inputsAt = event.mergedAs === undefined ? {} : { inputsAt: event.mergedAs };
+    for (const task of decision.tasks) {
+      await board.post({ project, ...task, decidedOn, ...inputsAt });
+    }
   }
   await recordActing(event, log);
 }

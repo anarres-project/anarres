@@ -58,6 +58,35 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-23: Read scopes, and tasks pinned to a commit
+
+- Core holds the access matrix's read scopes beside its write scopes: each module role reads
+  its own module's places and its requirement slice (taken as `programme/slices/<module>/`,
+  mirroring `modules/<module>/`), never another module's and never a path that climbs out.
+  Contracts wait for modules.yaml; a Research task's inputs, for its question.
+- Divlab now posts each task with the commit its inputs are read at: the merge whose work decided
+  it. The task's issue says so in words and in its decision block, read back only if it is a
+  commit name, since anyone who can edit the issue can change its text.
+- The read-scope table was written whole from the concept's matrix and pinned row by row (passed
+  first time); the decision block's `try` was taken out to see its test fail, then put back.
+
+RED:      Coding reads its module's specifications and tests, not its architecture
+GREEN:    (18 passed)
+RED:      Reviewer reads its slice, specifications and code, not its tests
+GREEN:    (183 passed)
+RED:      no role reads another module's place, nor climbs out of its own
+GREEN:    (190 passed)
+RED:      posts each task with the commit its inputs are pinned at -> expected [ undefined ] to equal [ 'm3rg3d' ]
+GREEN:    (141 passed; two tests that pinned the posted task now expect its commit)
+RED:      a task's issue says which commit its inputs are read at -> body without it
+GREEN:    (101 passed)
+RED:      reads back the commit, if it is a commit -> expected undefined
+GREEN:    (103 passed)
+RED:      reads no commit from an edited decision block -> SyntaxError
+GREEN:    (104 passed; 92 scenarios)
+
+---
+
 ## 2026-10-23: Claiming from the plugin
 
 - `anarres claim project#number` posts Divlab's claim comment on the task's issue, as the member.

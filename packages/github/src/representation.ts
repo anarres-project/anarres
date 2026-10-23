@@ -43,7 +43,10 @@ export function issueForTask(task: PostedTask): NewIssue {
     ],
     body: [
       ...(task.feedbackSignal === undefined ? [] : [`Feedback signal: ${task.feedbackSignal}`, ""]),
-      decisionBlock(task.decidedOn),
+      ...(task.inputsAt === undefined
+        ? []
+        : [`Read this task's inputs as they were at commit ${task.inputsAt}.`, ""]),
+      decisionBlock(task.decidedOn, task.inputsAt),
     ].join("\n"),
   };
 }
@@ -51,6 +54,7 @@ export function issueForTask(task: PostedTask): NewIssue {
 /** An issue as GitHub lists it: only what Divlab reads back. */
 export type ListedIssue = {
   labels: { name: string }[];
+  body?: string | null;
   assignees?: { login: string }[];
   state?: string;
 };
@@ -77,7 +81,9 @@ export const labelsWhenClaimed = (issue: ListedIssue): string[] =>
 /** What Divlab recorded on a task when it posted it. */
 export function taskFromIssue(
   issue: ListedIssue,
-): { role: Role; module: string; researchFor?: string; claimedBy?: string } | undefined {
+):
+  | { role: Role; module: string; researchFor?: string; claimedBy?: string; inputsAt?: string }
+  | undefined {
   const labelled = (prefix: string) =>
     issue.labels.find(({ name }) => name.startsWith(prefix))?.name.slice(prefix.length);
   // Labels can be changed by anyone who triages: a task names a role Anarres has, and a module.
@@ -86,9 +92,11 @@ export function taskFromIssue(
   if (!isRole(role) || module === undefined) return undefined;
   const researchFor = labelled(RESEARCH_FOR);
   const claimant = issue.assignees?.[0]?.login;
+  const inputsAt = pinnedCommit(issue.body ?? "");
   return {
     role,
     module,
+    ...(inputsAt === undefined ? {} : { inputsAt }),
     ...(researchFor === undefined ? {} : { researchFor }),
     // Assigning is open to anyone who triages: only Divlab's claimed label makes a task held.
     ...(claimant !== undefined && issue.labels.some(({ name }) => name === CLAIMED)
@@ -332,6 +340,21 @@ export const UNPROTECTED_MAIN = "unprotected-main";
 export const CHANGE_NOT_BY_DIVLAB = "change-not-by-divlab";
 
 /** The feedback signal whose routing decision an issue Divlab posted came from. */
+/**
+ * The commit a task's issue says its inputs are read at, from its decision block: only a commit
+ * name, since anyone who can edit the issue can change its text.
+ */
+function pinnedCommit(body: string): string | undefined {
+  const json = body.match(/```json\n([\s\S]*)\n```$/)?.[1];
+  let inputsAt: unknown;
+  try {
+    inputsAt = (JSON.parse(json ?? "null") as { inputsAt?: unknown } | null)?.inputsAt;
+  } catch {
+    return undefined;
+  }
+  return typeof inputsAt === "string" && /^[0-9a-f]{40}$/.test(inputsAt) ? inputsAt : undefined;
+}
+
 export function decisionOf(body: string): string | undefined {
   const json = body.match(/```json\n([\s\S]*)\n```$/)?.[1];
   const closing = JSON.parse(json ?? "null") as {
@@ -345,11 +368,11 @@ export function decisionOf(body: string): string | undefined {
  * The decision, closing the issue as JSON: a path a member chose stays one line inside the code
  * block, so it can never close it or act as Markdown. An alert closes with its routing record.
  */
-const decisionBlock = (feedbackSignal: string) =>
+const decisionBlock = (feedbackSignal: string, inputsAt?: string) =>
   [
     "Divlab decided this from:",
     "",
     "```json",
-    JSON.stringify({ decidedOn: feedbackSignal }),
+    JSON.stringify({ decidedOn: feedbackSignal, ...(inputsAt === undefined ? {} : { inputsAt }) }),
     "```",
   ].join("\n");

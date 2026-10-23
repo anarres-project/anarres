@@ -115,7 +115,15 @@ describe("acting on a merge", () => {
     };
     await onMerge("ledger", onMain(passedSpecification), watchedBoard, begun, clock);
     expect([seen.posted, seen.alerts]).toEqual([
-      [{ project: "ledger", role: "test", module: "parser", decidedOn: "feedback/FB-9.md" }],
+      [
+        {
+          project: "ledger",
+          role: "test",
+          module: "parser",
+          decidedOn: "feedback/FB-9.md",
+          inputsAt: "merge-of-7",
+        },
+      ],
       [],
     ]);
   });
@@ -657,8 +665,32 @@ describe("acting on a pull request", () => {
     };
     await onPullRequest("ledger", "7", submitting(), posting, log, clock);
     expect(posted).toEqual([
-      { project: "ledger", role: "test", module: "parser", decidedOn: "feedback/FB-1.md" },
+      {
+        project: "ledger",
+        role: "test",
+        module: "parser",
+        decidedOn: "feedback/FB-1.md",
+        inputsAt: "m3rg3d",
+      },
     ]);
+  });
+
+  it("posts each task with the commit its inputs are pinned at: the merge that decided it", async () => {
+    const posted: PostedTask[] = [];
+    await onPullRequest(
+      "ledger",
+      "7",
+      submitting(),
+      {
+        ...board,
+        post: async (task) => {
+          posted.push(task);
+        },
+      },
+      log,
+      clock,
+    );
+    expect(posted.map((task) => task.inputsAt)).toEqual(["m3rg3d"]);
   });
 
   it("tells the board which decision each task comes from, so it is posted once", async () => {

@@ -81,6 +81,56 @@ describe("a task as a GitHub issue", () => {
     ).toEqual(["role:research", "module:parser", "state:ready", "research-for:coding"]);
   });
 
+  it("says which commit the task's inputs are read at, in words and in its decision", () => {
+    const sha = "0123456789abcdef0123456789abcdef01234567";
+    const issue = issueForTask({
+      project: "ledger",
+      role: "coding",
+      module: "parser",
+      decidedOn: "feedback/T-0141.md",
+      inputsAt: sha,
+    });
+    expect(issue.body).toBe(
+      [
+        `Read this task's inputs as they were at commit ${sha}.`,
+        "",
+        "Divlab decided this from:",
+        "",
+        "```json",
+        JSON.stringify({ decidedOn: "feedback/T-0141.md", inputsAt: sha }),
+        "```",
+      ].join("\n"),
+    );
+  });
+
+  it.each([
+    [
+      "a commit",
+      "0123456789abcdef0123456789abcdef01234567",
+      "0123456789abcdef0123456789abcdef01234567",
+    ],
+    ["something that is not a commit", "main; rm -rf ~", undefined],
+  ])("reads back the commit a task's inputs are read at, if it is %s", (_what, written, read) => {
+    const issue = issueForTask({
+      project: "ledger",
+      role: "coding",
+      module: "parser",
+      decidedOn: "feedback/T-0141.md",
+      inputsAt: written,
+    });
+    const task = taskFromIssue({
+      labels: issue.labels.map((name) => ({ name })),
+      body: issue.body,
+    });
+    expect(task?.inputsAt).toBe(read);
+  });
+
+  it("reads no commit from a task whose decision block has been edited into something else", () => {
+    const labels = ["role:test", "module:parser", "state:ready"].map((name) => ({ name }));
+    const body = "Divlab decided this from:\n\n```json\n{ not json\n```";
+    expect(taskFromIssue({ labels, body })?.inputsAt).toBeUndefined();
+  });
+
   it("reads back from a Research task which role it is for", () => {
     const issue = issueForTask({
       project: "ledger",

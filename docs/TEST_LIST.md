@@ -460,7 +460,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         never another module's, and no path that climbs out;
   - [ ] the contracts a module provides and uses (needs the Programme Architect's modules.yaml);
   - [ ] what a Research task reads, as its question names it;
-  - [ ] Divlab posts each task with the commit its inputs are pinned at;
+  - [x] Divlab posts each task with the commit its inputs are pinned at, the merge that decided
+        it, in the issue's words and its decision block; read back only if it is a commit name;
+  - [ ] a task decided by work Divlab did not merge (none yet: only merged work is routed) has no
+        pinned commit; the CLI must refuse to prepare one;
   - [ ] the CLI's `prepare` fetches those places at that commit, and nothing else.
 - [ ] The read-scope hook refuses a file outside the role's scope.
 - [ ] A member who runs out of allowance can hand over partial work.

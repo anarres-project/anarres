@@ -7563,7 +7563,8 @@ function issueForTask(task) {
     ],
     body: [
       ...task.feedbackSignal === void 0 ? [] : [`Feedback signal: ${task.feedbackSignal}`, ""],
-      decisionBlock(task.decidedOn)
+      ...task.inputsAt === void 0 ? [] : [`Read this task's inputs as they were at commit ${task.inputsAt}.`, ""],
+      decisionBlock(task.decidedOn, task.inputsAt)
     ].join("\n")
   };
 }
@@ -7578,9 +7579,11 @@ function taskFromIssue(issue) {
   if (!isRole(role) || module === void 0) return void 0;
   const researchFor = labelled(RESEARCH_FOR);
   const claimant = issue.assignees?.[0]?.login;
+  const inputsAt = pinnedCommit(issue.body ?? "");
   return {
     role,
     module,
+    ...inputsAt === void 0 ? {} : { inputsAt },
     ...researchFor === void 0 ? {} : { researchFor },
     // Assigning is open to anyone who triages: only Divlab's claimed label makes a task held.
     ...claimant !== void 0 && issue.labels.some(({ name }) => name === CLAIMED) ? { claimedBy: claimant } : {}
@@ -7746,16 +7749,26 @@ function issueForUnprotectedMain() {
 }
 var UNPROTECTED_MAIN = "unprotected-main";
 var CHANGE_NOT_BY_DIVLAB = "change-not-by-divlab";
+function pinnedCommit(body) {
+  const json = body.match(/```json\n([\s\S]*)\n```$/)?.[1];
+  let inputsAt;
+  try {
+    inputsAt = JSON.parse(json ?? "null")?.inputsAt;
+  } catch {
+    return void 0;
+  }
+  return typeof inputsAt === "string" && /^[0-9a-f]{40}$/.test(inputsAt) ? inputsAt : void 0;
+}
 function decisionOf(body) {
   const json = body.match(/```json\n([\s\S]*)\n```$/)?.[1];
   const closing = JSON.parse(json ?? "null");
   return closing?.decidedOn ?? closing?.work?.feedbackSignal;
 }
-var decisionBlock = (feedbackSignal) => [
+var decisionBlock = (feedbackSignal, inputsAt) => [
   "Divlab decided this from:",
   "",
   "```json",
-  JSON.stringify({ decidedOn: feedbackSignal }),
+  JSON.stringify({ decidedOn: feedbackSignal, ...inputsAt === void 0 ? {} : { inputsAt } }),
   "```"
 ].join("\n");
 
