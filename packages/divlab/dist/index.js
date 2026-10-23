@@ -7659,657 +7659,9 @@ function unreadableWork(work) {
 }
 var isObject = (value) => typeof value === "object" && value !== null;
 
-// ../github/src/representation.ts
-var READY = "state:ready";
-var CLAIMED = "state:claimed";
-function issueForTask(task) {
-  return {
-    title: `${ROLE_NAMES[task.role]} task for ${task.module}`,
-    labels: [
-      `role:${task.role}`,
-      `module:${task.module}`,
-      READY,
-      ...task.researchFor === void 0 ? [] : [`${RESEARCH_FOR}${task.researchFor}`]
-    ],
-    body: [
-      ...task.feedbackSignal === void 0 ? [] : [`Feedback signal: ${task.feedbackSignal}`, ""],
-      decisionBlock(task.decidedOn)
-    ].join("\n")
-  };
-}
-var postedByDivlab = (issue) => issue.labels.some(({ name }) => [READY, CLAIMED, "escalation", "state:done"].includes(name));
-var isTask = (issue) => issue.state === "open" && issue.labels.some(({ name }) => name === READY || name === CLAIMED);
-var labelsWhenReleased = (issue) => issue.labels.map(({ name }) => name === CLAIMED ? READY : name);
-var labelsWhenClaimed = (issue) => issue.labels.map(({ name }) => name === READY ? CLAIMED : name);
-function taskFromIssue(issue) {
-  const labelled = (prefix) => issue.labels.find(({ name }) => name.startsWith(prefix))?.name.slice(prefix.length);
-  const role = labelled("role:");
-  const module = labelled("module:");
-  if (!isRole(role) || module === void 0) return void 0;
-  const researchFor = labelled(RESEARCH_FOR);
-  const claimant = issue.assignees?.[0]?.login;
-  return {
-    role,
-    module,
-    ...researchFor === void 0 ? {} : { researchFor },
-    // Assigning is open to anyone who triages: only Divlab's claimed label makes a task held.
-    ...claimant !== void 0 && issue.labels.some(({ name }) => name === CLAIMED) ? { claimedBy: claimant } : {}
-  };
-}
-var RESEARCH_FOR = "research-for:";
-function issueNumber(task) {
-  return /^[1-9][0-9]*$/.test(task) ? Number(task) : void 0;
-}
-function eventFile(event, sequence) {
-  return {
-    path: `events/${String(sequence).padStart(6, "0")}.json`,
-    content: `${JSON.stringify(event, null, 2)}
-`
-  };
-}
-var namesTaskAndMember = (value) => isObject2(value) && typeof value.task === "string" && typeof value.member === "string";
-function eventFromFile(content) {
-  const event = JSON.parse(content);
-  if (isObject2(event) && namesTaskAndMember(event.claimed)) {
-    const { role } = event.claimed;
-    if (role !== void 0 && !isRole(role)) {
-      throw new Error(
-        "The event file cannot be read: the claim names a role Anarres does not have"
-      );
-    }
-    return event;
-  }
-  if (isObject2(event) && namesTaskAndMember(event.leaseRanOut)) return event;
-  if (isObject2(event) && namesTaskAndMember(event.activity)) return event;
-  if (isObject2(event) && namesTaskAndMember(event.released)) return event;
-  if (isObject2(event) && isObject2(event.changeNotByDivlab) && typeof event.changeNotByDivlab.commit === "string") {
-    return event;
-  }
-  if (isObject2(event) && isObject2(event.mainChecked) && typeof event.mainChecked.upTo === "string") {
-    return event;
-  }
-  if (isObject2(event) && isObject2(event.actedOn) && typeof event.actedOn.feedbackSignal === "string") {
-    return event;
-  }
-  if (isObject2(event) && isObject2(event.notAccepted) && typeof event.notAccepted.feedbackSignal === "string" && typeof event.notAccepted.reason === "string") {
-    return event;
-  }
-  if (isObject2(event) && isObject2(event.aboutToMerge) && typeof event.aboutToMerge.feedbackSignal === "string" && isObject2(event.aboutToMerge.work)) {
-    const work = readMergedWork(event.aboutToMerge.work);
-    if ("unreadable" in work) throw new Error(`The event file cannot be read: ${work.unreadable}`);
-    return event;
-  }
-  const record = readRoutingRecord(event);
-  if ("unreadable" in record)
-    throw new Error(`The event file cannot be read: ${record.unreadable}`);
-  return event;
-}
-var isObject2 = (value) => typeof value === "object" && value !== null;
-function issueForAlert(alert) {
-  const { module } = alert.work;
-  const work = `the ${roleName(alert.work.fromRole)} work on ${module}`;
-  const reported = alert.work.impediments.map((impediment) => impediment.type).join(", ") || "no problem";
-  const [title, why] = alert.reason.rule === "re_run_limit" ? [
-    `${roleName(alert.reason.role)} has been re-run more than three times on ${module}`,
-    `${roleName(alert.reason.role)} has already been re-run three times for this module, so Divlab has not sent it back again.`
-  ] : [`no rule covers ${work}`, "No routing rule covers that."];
-  return {
-    title: `Escalation: ${title}`,
-    labels: ["escalation", `module:${module}`],
-    body: [
-      `${capitalised(work)} ${alert.work.verdict === "blocked" ? "was blocked" : "failed"}, reporting ${reported}. ${why}`,
-      "",
-      "The routing record:",
-      "",
-      "```json",
-      JSON.stringify(alert, null, 2),
-      "```"
-    ].join("\n")
-  };
-}
-function roleName(id) {
-  const role = Object.keys(ROLE_NAMES).find((role2) => role2 === id);
-  return role ? ROLE_NAMES[role] : id;
-}
-var capitalised = (text) => text.charAt(0).toUpperCase() + text.slice(1);
-function issueForModuleDone({ module, decidedOn }) {
-  return {
-    title: `Module ${module} is done`,
-    labels: [`module:${module}`, "state:done"],
-    body: decisionBlock(decidedOn)
-  };
-}
-function logFrom(listed, texts) {
-  if (!listed.every((name) => texts.has(name))) return void 0;
-  return listed.filter((name) => /^\d{6}\.json$/.test(name)).sort().map((name) => eventFromFile(texts.get(name) ?? ""));
-}
-function commentForRefusal(reason) {
-  return `Divlab has not merged this pull request:
-
-${quoted(reason)}`;
-}
-function commentForLeaseRanOut(ranOut) {
-  return `@${ranOut.member}, your lease on this task ran out: ${LEASE_HOURS} hours passed without activity on it, so it is ready for anyone to claim again.`;
-}
-function commentForRefused(refusal) {
-  return `@${refusal.member}, ${refusal.reason}.`;
-}
-function quoted(text) {
-  const longest = Math.max(0, ...(text.match(/`+/g) ?? []).map((run) => run.length));
-  const fence = "`".repeat(Math.max(3, longest + 1));
-  return `${fence}
-${text}
-${fence}`;
-}
-var MAIN_RULES = ["update", "deletion", "non_fast_forward"];
-function rulesetProtectingMain(app) {
-  return {
-    name: "Only Divlab changes main",
-    target: "branch",
-    enforcement: "active",
-    conditions: { ref_name: { include: ["~DEFAULT_BRANCH"], exclude: [] } },
-    rules: MAIN_RULES.map((type) => ({ type })),
-    bypass_actors: [{ actor_id: app, actor_type: "Integration", bypass_mode: "always" }]
-  };
-}
-function policyAllowingDivlabChecks() {
-  return {
-    name: "Only Divlab checks pull requests",
-    enforcement: "active",
-    conditions: {
-      workflow_path: { include: [".github/workflows/divlab-pull-request.yml"], exclude: [] }
-    },
-    rules: [
-      { type: "restrict_action_events", parameters: { allowed_events: ["pull_request_target"] } }
-    ]
-  };
-}
-function issueForChangeNotByDivlab({ changeNotByDivlab }) {
-  const { commit, author } = changeNotByDivlab;
-  return {
-    title: "Escalation: a change reached main without Divlab",
-    labels: ["escalation", "not-accepted", CHANGE_NOT_BY_DIVLAB],
-    body: `This commit on main was not made by Divlab, so it did not pass Divlab's checks. Its author, as GitHub records it, and the commit:
-
-${quoted(`${author ?? "(no account)"} ${commit}`)}`
-  };
-}
-function issueForNotAccepted({ notAccepted }) {
-  return {
-    title: "Escalation: work reached main without Divlab merging it",
-    labels: ["escalation", "not-accepted"],
-    body: `Divlab has not accepted this feedback signal, and will not route its work: ${notAccepted.reason}.
-
-${quoted(notAccepted.feedbackSignal)}`
-  };
-}
-function protectsMain(rules) {
-  const applied = new Set(rules.map((rule2) => rule2.type));
-  return MAIN_RULES.every((type) => applied.has(type));
-}
-function issueForUnprotectedMain() {
-  return {
-    title: "Escalation: this project's main branch is not protected",
-    labels: ["escalation", UNPROTECTED_MAIN],
-    body: "Divlab found that this project's main branch no longer has the protection that lets only Divlab change it (decision 0006). Until it is restored, anyone with enough access could change main without Divlab's checks. Close this issue once main is protected again; Divlab alerts again if protection is lost later."
-  };
-}
-var UNPROTECTED_MAIN = "unprotected-main";
-var CHANGE_NOT_BY_DIVLAB = "change-not-by-divlab";
-function decisionOf(body) {
-  const json = body.match(/```json\n([\s\S]*)\n```$/)?.[1];
-  const closing = JSON.parse(json ?? "null");
-  return closing?.decidedOn ?? closing?.work?.feedbackSignal;
-}
-var decisionBlock = (feedbackSignal) => [
-  "Divlab decided this from:",
-  "",
-  "```json",
-  JSON.stringify({ decidedOn: feedbackSignal }),
-  "```"
-].join("\n");
-
-// ../github/src/rate-limits.ts
-function retryAfter(answer, now) {
-  if ([500, 502, 503, 504].includes(answer.status)) return 2e3;
-  if (answer.status !== 403 && answer.status !== 429) return void 0;
-  const retry = answer.headers.get("retry-after");
-  if (retry !== null) return Number(retry) * 1e3;
-  if (answer.message.includes("secondary rate limit")) return 6e4;
-  if (answer.headers.get("x-ratelimit-remaining") === "0") {
-    return Number(answer.headers.get("x-ratelimit-reset")) * 1e3 - now;
-  }
-  return void 0;
-}
-
-// ../github/src/request.ts
-var ATTEMPTS = 4;
-var BLIP = 2e3;
-async function requestGitHub(token2, method, path, body, options = {}) {
-  const repeatable = options.repeatable ?? (method === "GET" || method === "DELETE");
-  for (let attempt = 1; ; attempt++) {
-    let response;
-    try {
-      response = await fetch(`https://api.github.com/${path}`, {
-        method,
-        headers: {
-          accept: "application/vnd.github+json",
-          authorization: `Bearer ${token2}`,
-          "x-github-api-version": "2022-11-28"
-        },
-        ...body === void 0 ? {} : { body: JSON.stringify(body) }
-      });
-    } catch (error) {
-      if (!repeatable || attempt === ATTEMPTS) throw error;
-      await pause(BLIP);
-      continue;
-    }
-    const text = await response.text();
-    const data = parsed(text);
-    const message = data?.message;
-    const wait = retryAfter(
-      { status: response.status, headers: response.headers, message: String(message ?? "") },
-      Date.now()
-    );
-    const rateLimited = response.status === 403 || response.status === 429;
-    if (wait === void 0 || !rateLimited && !repeatable || attempt === ATTEMPTS) {
-      return { status: response.status, data };
-    }
-    await pause(wait);
-  }
-}
-function parsed(text) {
-  try {
-    return text ? JSON.parse(text) : void 0;
-  } catch {
-    return void 0;
-  }
-}
-var pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// ../github/src/adapter.ts
-var mainCommit = (listed) => ({
-  sha: listed.sha,
-  author: listed.author?.login,
-  signedByGitHub: listed.committer?.login === "web-flow" && listed.commit.verification?.verified === true
-});
-var GOVERNANCE_REPOSITORY = "anarres-project/anarres";
-var GOVERNANCE_FILE = "governance/members.json";
-var GitHubAdapter = class {
-  /**
-   * `app`: Divlab's GitHub App, needed only to set projects up. `request`: how requests reach
-   * GitHub; the real API unless a test stands in for it.
-   */
-  constructor(options) {
-    this.options = options;
-  }
-  options;
-  /** How many events each project's log held when this run last read it. */
-  eventsRead = /* @__PURE__ */ new Map();
-  async protectMain(project2) {
-    if (this.options.app === void 0) throw new Error("Protecting main needs Divlab's App");
-    await this.call(
-      "POST",
-      `${this.repo(project2)}/rulesets`,
-      rulesetProtectingMain(this.options.app)
-    );
-  }
-  async allowDivlabChecks(project2) {
-    await this.call("POST", `${this.repo(project2)}/actions/policies`, policyAllowingDivlabChecks());
-  }
-  async post(task) {
-    await this.openIssue(task.project, issueForTask(task));
-  }
-  async alertCoordinators(alert) {
-    await this.openIssue(alert.project, issueForAlert(alert));
-  }
-  async alertChangeNotByDivlab(change) {
-    await this.openIssue(change.project, issueForChangeNotByDivlab(change));
-  }
-  async alertNotAccepted(record) {
-    await this.openIssue(record.project, issueForNotAccepted(record));
-  }
-  async alertUnprotectedMain(project2) {
-    await this.openIssue(project2, issueForUnprotectedMain());
-  }
-  async unprotectedMainAlertOpen(project2) {
-    const open = await this.call(
-      "GET",
-      `${this.repo(project2)}/issues?labels=${UNPROTECTED_MAIN}&state=open&per_page=1`
-    );
-    return open.length > 0;
-  }
-  /** The rules GitHub applies to main now, whoever set them: readable with metadata access. */
-  async mainIsProtected(project2) {
-    const rules = await this.call(
-      "GET",
-      `${this.repo(project2)}/rules/branches/main`
-    );
-    return protectsMain(rules);
-  }
-  async markModuleDone(done) {
-    const { project: project2 } = done;
-    const { number } = await this.openIssue(project2, issueForModuleDone(done));
-    await this.call("PATCH", `${this.repo(project2)}/issues/${number}`, { state: "closed" });
-  }
-  async task(project2, task) {
-    const number = issueNumber(task);
-    if (number === void 0) return void 0;
-    const { status, data } = await this.request(
-      "GET",
-      `${this.repo(project2)}/issues/${number}`
-    );
-    if (status === 404) return void 0;
-    if (status !== 200) throw new GitHubError("GET", `issue ${number}`, status, data);
-    if (!isTask(data)) return void 0;
-    return taskFromIssue(data);
-  }
-  async close(project2, task) {
-    const number = issueNumber(task);
-    if (number === void 0) return;
-    await this.call("PATCH", `${this.repo(project2)}/issues/${number}`, { state: "closed" });
-  }
-  async markClaimed(claim) {
-    const issue = `${this.repo(claim.project)}/issues/${claim.task}`;
-    const listed = await this.call("GET", issue);
-    await this.call("PATCH", issue, {
-      labels: labelsWhenClaimed(listed),
-      assignees: [claim.member]
-    });
-  }
-  async tellLeaseRanOut(ranOut) {
-    await this.call("POST", `${this.repo(ranOut.project)}/issues/${ranOut.task}/comments`, {
-      body: commentForLeaseRanOut(ranOut)
-    });
-  }
-  async releaseClaim(project2, task) {
-    const issue = `${this.repo(project2)}/issues/${task}`;
-    const listed = await this.call("GET", issue);
-    await this.call("PATCH", issue, { labels: labelsWhenReleased(listed), assignees: [] });
-  }
-  /** The governance file, as read: core checks what it says (decision 0007). */
-  /** The project's tasks ready to claim, each read as Divlab reads a task: as data. */
-  async readyTasks(project2) {
-    const issues = await this.call(
-      "GET",
-      `${this.repo(project2)}/issues?labels=${encodeURIComponent(READY)}&state=open&per_page=100`
-    );
-    return issues.flatMap((issue) => {
-      const task = isTask(issue) ? taskFromIssue(issue) : void 0;
-      return task ? [{ id: String(issue.number), role: task.role, module: task.module }] : [];
-    });
-  }
-  /** The account the token acts as: the member, when it is the member's own login. */
-  async account() {
-    const { login } = await this.call("GET", "user");
-    return login;
-  }
-  /** The organisation's projects with a task ready to claim, from one search of its issues. */
-  async names() {
-    const query = encodeURIComponent(
-      `org:${this.options.owner} label:state:ready is:open is:issue`
-    );
-    const { items } = await this.call(
-      "GET",
-      `search/issues?q=${query}&per_page=100`
-    );
-    return [...new Set(items.map((item) => item.repository_url.split("/").at(-1) ?? ""))];
-  }
-  async governanceFile() {
-    const repository = this.options.governance || GOVERNANCE_REPOSITORY;
-    const where = `repos/${repository}/contents/${GOVERNANCE_FILE}`;
-    const { status, data } = await this.request("GET", where);
-    if (status === 404) return void 0;
-    if (status !== 200) throw new GitHubError("GET", where, status, data);
-    try {
-      return JSON.parse(Buffer.from(data.content, "base64").toString("utf8"));
-    } catch {
-      return void 0;
-    }
-  }
-  async comments(project2, task) {
-    const comments = [];
-    for (let page = 1; ; page++) {
-      const listed = await this.call("GET", `${this.repo(project2)}/issues/${task}/comments?per_page=100&page=${page}`);
-      comments.push(
-        ...listed.flatMap(
-          ({ user, body, created_at }) => user ? [{ member: user.login, text: body, at: created_at }] : []
-        )
-      );
-      if (listed.length < 100) return comments;
-    }
-  }
-  async refuseMember(refusal) {
-    await this.call("POST", `${this.repo(refusal.project)}/issues/${refusal.task}/comments`, {
-      body: commentForRefused(refusal)
-    });
-  }
-  async actedOn(project2) {
-    const issues = [];
-    for (let page = 1; ; page++) {
-      const listed = await this.call(
-        "GET",
-        `${this.repo(project2)}/issues?state=all&per_page=100&page=${page}`
-      );
-      issues.push(...listed);
-      if (listed.length < 100) break;
-    }
-    return issues.filter(postedByDivlab).flatMap((issue) => decisionOf(issue.body ?? "") ?? []);
-  }
-  async feedbackSignals(project2) {
-    const { status, data } = await this.request(
-      "GET",
-      `${this.repo(project2)}/contents/feedback`
-    );
-    if (status === 404) return [];
-    if (status !== 200) throw new GitHubError("GET", "feedback", status, data);
-    return data.filter((entry) => entry.type === "file").map((entry) => entry.path);
-  }
-  /**
-   * Numbered from the log as this run last saw it, so recording an event is one request. Creating a
-   * file that already exists fails, so two runs cannot both take a number: when another run has
-   * taken it, the event is numbered from the log as it stands.
-   */
-  async append(event) {
-    const seen = this.eventsRead.get(event.project);
-    if (seen !== void 0 && await this.createEvent(event, seen + 1) === "created") return;
-    const sequence = (await this.eventFiles(event.project)).length + 1;
-    if (await this.createEvent(event, sequence) === "taken") {
-      throw new GitHubError(
-        "PUT",
-        `event ${sequence}`,
-        NUMBER_TAKEN,
-        "another run took its number"
-      );
-    }
-  }
-  /** Creates the event's file, numbered `sequence`: "taken" if that file exists already. */
-  async createEvent(event, sequence) {
-    const { path, content } = eventFile(event, sequence);
-    const put = `${this.repo(event.project)}/contents/${path}`;
-    const { status, data } = await this.request("PUT", put, {
-      message: `Divlab: routing event ${sequence}`,
-      content: Buffer.from(content).toString("base64")
-    });
-    if (status === NUMBER_TAKEN) return "taken";
-    if (status < 200 || status >= 300) throw new GitHubError("PUT", put, status, data);
-    this.eventsRead.set(event.project, sequence);
-    return "created";
-  }
-  /**
-   * The whole event log. The files are listed with the REST API, which reflects writes at once,
-   * and their contents fetched with GraphQL, a part at a time, which can lag behind writes.
-   * Divlab's decisions (re-run counts above all) must never rest on a log missing its latest
-   * events, so the read waits for GraphQL to hold every listed file, and fails rather than return
-   * less.
-   */
-  async read(project2) {
-    const listed = await this.eventFiles(project2);
-    this.eventsRead.set(project2, listed.length);
-    if (listed.length === 0) return [];
-    for (let attempt = 1; ; attempt++) {
-      const texts = /* @__PURE__ */ new Map();
-      for (let start = 0; start < listed.length; start += TEXTS_PER_REQUEST) {
-        for (const [name, text] of await this.eventTexts(
-          project2,
-          listed.slice(start, start + TEXTS_PER_REQUEST)
-        )) {
-          texts.set(name, text);
-        }
-      }
-      const log = logFrom(
-        listed.map((file) => file.name),
-        texts
-      );
-      if (log) return log;
-      if (attempt === LOG_ATTEMPTS) {
-        throw new GitHubError("POST", "graphql (event log)", 200, "the log lags behind its files");
-      }
-      await new Promise((resolve) => setTimeout(resolve, 1e3));
-    }
-  }
-  /**
-   * The text of these event files, by name, in one GraphQL request, asked for by their Git object
-   * IDs as variables. A file GraphQL does not hold yet is left out.
-   */
-  async eventTexts(project2, files) {
-    const { data, errors } = await this.call(
-      "POST",
-      "graphql",
-      {
-        query: `query($owner: String!, $name: String!, ${files.map((_, i) => `$o${i}: GitObjectID!`).join(", ")}) {
-          repository(owner: $owner, name: $name) {
-            ${files.map((_, i) => `e${i}: object(oid: $o${i}) { ... on Blob { text } }`).join("\n            ")}
-          }
-        }`,
-        variables: {
-          owner: this.options.owner,
-          name: project2,
-          ...Object.fromEntries(files.map((file, i) => [`o${i}`, file.sha]))
-        }
-      },
-      { repeatable: true }
-    );
-    if (errors?.length || !data?.repository) {
-      throw new GitHubError("POST", "graphql (event log)", 200, errors ?? "no such repository");
-    }
-    const { repository } = data;
-    return new Map(
-      files.flatMap((file, i) => {
-        const text = repository[`e${i}`]?.text;
-        return text === void 0 ? [] : [[file.name, text]];
-      })
-    );
-  }
-  async pullRequest(project2, pullRequest) {
-    const { head, draft, user } = await this.call("GET", `${this.repo(project2)}/pulls/${pullRequest}`);
-    return { head: head.sha, draft, author: user.login };
-  }
-  /**
-   * What the pull request changes, as text read through the API; nothing is checked out. Each
-   * file is read from the project's own copy of the pull request's commits, never by following a
-   * link the pull request supplies.
-   */
-  async changedFiles(project2, pullRequest) {
-    const files = [];
-    for (let page = 1; ; page++) {
-      const listed = await this.call(
-        "GET",
-        `${this.repo(project2)}/pulls/${pullRequest}/files?per_page=100&page=${page}`
-      );
-      for (const file of listed) {
-        if (file.status === "removed") continue;
-        const { content } = await this.call(
-          "GET",
-          `${this.repo(project2)}/git/blobs/${file.sha}`
-        );
-        files.push({ path: file.filename, text: Buffer.from(content, "base64").toString("utf8") });
-      }
-      if (listed.length < 100) return files;
-    }
-  }
-  /** GitHub refuses the merge if the pull request has moved on from `head`. */
-  async head(project2) {
-    const { object } = await this.call(
-      "GET",
-      `${this.repo(project2)}/git/ref/heads/main`
-    );
-    return object.sha;
-  }
-  async commitsSince(project2, since) {
-    const { commits } = await this.call(
-      "GET",
-      `${this.repo(project2)}/compare/${since}...main`
-    );
-    return commits.map(mainCommit);
-  }
-  async mergeCommitOf(project2, pullRequest) {
-    const { merge_commit_sha } = await this.call(
-      "GET",
-      `${this.repo(project2)}/pulls/${pullRequest}`
-    );
-    return merge_commit_sha;
-  }
-  async merge(project2, pullRequest, head) {
-    const { sha } = await this.call(
-      "PUT",
-      `${this.repo(project2)}/pulls/${pullRequest}/merge`,
-      { sha: head, merge_method: "squash" }
-    );
-    return sha;
-  }
-  async refuse(project2, pullRequest, reason) {
-    await this.call("POST", `${this.repo(project2)}/issues/${pullRequest}/comments`, {
-      body: commentForRefusal(reason)
-    });
-  }
-  /**
-   * The event files, oldest first. Listed from main's Git tree: GitHub's contents listing stops at
-   * 1,000 files, which would leave a busy project's log read in part.
-   */
-  async eventFiles(project2) {
-    const root = await this.wholeTree(project2, "main");
-    const events = root.find((entry) => entry.path === "events" && entry.type === "tree");
-    if (!events) return [];
-    const tree = await this.wholeTree(project2, events.sha);
-    return tree.filter((entry) => EVENT_FILE.test(entry.path)).map((entry) => ({ name: entry.path, sha: entry.sha })).sort((a, b) => a.name.localeCompare(b.name));
-  }
-  /** A Git tree's entries, all of them: decisions must never rest on part of the log. */
-  async wholeTree(project2, tree) {
-    const listed = await this.call("GET", `${this.repo(project2)}/git/trees/${tree}`);
-    if (listed.truncated) {
-      throw new GitHubError("GET", `tree ${tree}`, 200, "GitHub listed the tree in part");
-    }
-    return listed.tree;
-  }
-  openIssue(project2, issue) {
-    return this.call("POST", `${this.repo(project2)}/issues`, issue);
-  }
-  repo(project2) {
-    return `repos/${this.options.owner}/${project2}`;
-  }
-  async call(method, path, body, options) {
-    const { status, data } = await this.request(method, path, body, options);
-    if (status < 200 || status >= 300) throw new GitHubError(method, path, status, data);
-    return data;
-  }
-  request(method, path, body, options) {
-    const request = this.options.request ?? requestGitHub;
-    return request(this.options.token, method, path, body, options);
-  }
-};
-var EVENT_FILE = /^\d{6}\.json$/;
-var NUMBER_TAKEN = 422;
-var TEXTS_PER_REQUEST = 100;
-var LOG_ATTEMPTS = 10;
-var GitHubError = class extends Error {
-  constructor(method, path, status, data) {
-    super(`GitHub ${method} ${path} answered ${status}: ${JSON.stringify(data)}`);
-  }
-};
-
 // src/event.ts
-var isClaim = (text) => text === "/claim";
+var isClaim = (text) => text === CLAIM;
+var CLAIM = "/claim";
 var isRelease = (text) => text === "/release";
 var numberedByGitHub = (number) => Number.isSafeInteger(number) && number >= 1;
 function whatToActOn(name, event) {
@@ -8693,6 +8045,659 @@ async function checkProtection(project2, repositories, board) {
   if (await board.unprotectedMainAlertOpen(project2)) return;
   await board.alertUnprotectedMain(project2);
 }
+
+// ../github/src/representation.ts
+var READY = "state:ready";
+var CLAIMED = "state:claimed";
+function issueForTask(task) {
+  return {
+    title: `${ROLE_NAMES[task.role]} task for ${task.module}`,
+    labels: [
+      `role:${task.role}`,
+      `module:${task.module}`,
+      READY,
+      ...task.researchFor === void 0 ? [] : [`${RESEARCH_FOR}${task.researchFor}`]
+    ],
+    body: [
+      ...task.feedbackSignal === void 0 ? [] : [`Feedback signal: ${task.feedbackSignal}`, ""],
+      decisionBlock(task.decidedOn)
+    ].join("\n")
+  };
+}
+var postedByDivlab = (issue) => issue.labels.some(({ name }) => [READY, CLAIMED, "escalation", "state:done"].includes(name));
+var isTask = (issue) => issue.state === "open" && issue.labels.some(({ name }) => name === READY || name === CLAIMED);
+var labelsWhenReleased = (issue) => issue.labels.map(({ name }) => name === CLAIMED ? READY : name);
+var labelsWhenClaimed = (issue) => issue.labels.map(({ name }) => name === READY ? CLAIMED : name);
+function taskFromIssue(issue) {
+  const labelled = (prefix) => issue.labels.find(({ name }) => name.startsWith(prefix))?.name.slice(prefix.length);
+  const role = labelled("role:");
+  const module = labelled("module:");
+  if (!isRole(role) || module === void 0) return void 0;
+  const researchFor = labelled(RESEARCH_FOR);
+  const claimant = issue.assignees?.[0]?.login;
+  return {
+    role,
+    module,
+    ...researchFor === void 0 ? {} : { researchFor },
+    // Assigning is open to anyone who triages: only Divlab's claimed label makes a task held.
+    ...claimant !== void 0 && issue.labels.some(({ name }) => name === CLAIMED) ? { claimedBy: claimant } : {}
+  };
+}
+var RESEARCH_FOR = "research-for:";
+function issueNumber(task) {
+  return /^[1-9][0-9]*$/.test(task) ? Number(task) : void 0;
+}
+function eventFile(event, sequence) {
+  return {
+    path: `events/${String(sequence).padStart(6, "0")}.json`,
+    content: `${JSON.stringify(event, null, 2)}
+`
+  };
+}
+var namesTaskAndMember = (value) => isObject2(value) && typeof value.task === "string" && typeof value.member === "string";
+function eventFromFile(content) {
+  const event = JSON.parse(content);
+  if (isObject2(event) && namesTaskAndMember(event.claimed)) {
+    const { role } = event.claimed;
+    if (role !== void 0 && !isRole(role)) {
+      throw new Error(
+        "The event file cannot be read: the claim names a role Anarres does not have"
+      );
+    }
+    return event;
+  }
+  if (isObject2(event) && namesTaskAndMember(event.leaseRanOut)) return event;
+  if (isObject2(event) && namesTaskAndMember(event.activity)) return event;
+  if (isObject2(event) && namesTaskAndMember(event.released)) return event;
+  if (isObject2(event) && isObject2(event.changeNotByDivlab) && typeof event.changeNotByDivlab.commit === "string") {
+    return event;
+  }
+  if (isObject2(event) && isObject2(event.mainChecked) && typeof event.mainChecked.upTo === "string") {
+    return event;
+  }
+  if (isObject2(event) && isObject2(event.actedOn) && typeof event.actedOn.feedbackSignal === "string") {
+    return event;
+  }
+  if (isObject2(event) && isObject2(event.notAccepted) && typeof event.notAccepted.feedbackSignal === "string" && typeof event.notAccepted.reason === "string") {
+    return event;
+  }
+  if (isObject2(event) && isObject2(event.aboutToMerge) && typeof event.aboutToMerge.feedbackSignal === "string" && isObject2(event.aboutToMerge.work)) {
+    const work = readMergedWork(event.aboutToMerge.work);
+    if ("unreadable" in work) throw new Error(`The event file cannot be read: ${work.unreadable}`);
+    return event;
+  }
+  const record = readRoutingRecord(event);
+  if ("unreadable" in record)
+    throw new Error(`The event file cannot be read: ${record.unreadable}`);
+  return event;
+}
+var isObject2 = (value) => typeof value === "object" && value !== null;
+function issueForAlert(alert) {
+  const { module } = alert.work;
+  const work = `the ${roleName(alert.work.fromRole)} work on ${module}`;
+  const reported = alert.work.impediments.map((impediment) => impediment.type).join(", ") || "no problem";
+  const [title, why] = alert.reason.rule === "re_run_limit" ? [
+    `${roleName(alert.reason.role)} has been re-run more than three times on ${module}`,
+    `${roleName(alert.reason.role)} has already been re-run three times for this module, so Divlab has not sent it back again.`
+  ] : [`no rule covers ${work}`, "No routing rule covers that."];
+  return {
+    title: `Escalation: ${title}`,
+    labels: ["escalation", `module:${module}`],
+    body: [
+      `${capitalised(work)} ${alert.work.verdict === "blocked" ? "was blocked" : "failed"}, reporting ${reported}. ${why}`,
+      "",
+      "The routing record:",
+      "",
+      "```json",
+      JSON.stringify(alert, null, 2),
+      "```"
+    ].join("\n")
+  };
+}
+function roleName(id) {
+  const role = Object.keys(ROLE_NAMES).find((role2) => role2 === id);
+  return role ? ROLE_NAMES[role] : id;
+}
+var capitalised = (text) => text.charAt(0).toUpperCase() + text.slice(1);
+function issueForModuleDone({ module, decidedOn }) {
+  return {
+    title: `Module ${module} is done`,
+    labels: [`module:${module}`, "state:done"],
+    body: decisionBlock(decidedOn)
+  };
+}
+function logFrom(listed, texts) {
+  if (!listed.every((name) => texts.has(name))) return void 0;
+  return listed.filter((name) => /^\d{6}\.json$/.test(name)).sort().map((name) => eventFromFile(texts.get(name) ?? ""));
+}
+function commentForRefusal(reason) {
+  return `Divlab has not merged this pull request:
+
+${quoted(reason)}`;
+}
+function commentForLeaseRanOut(ranOut) {
+  return `@${ranOut.member}, your lease on this task ran out: ${LEASE_HOURS} hours passed without activity on it, so it is ready for anyone to claim again.`;
+}
+function commentForRefused(refusal) {
+  return `@${refusal.member}, ${refusal.reason}.`;
+}
+function quoted(text) {
+  const longest = Math.max(0, ...(text.match(/`+/g) ?? []).map((run) => run.length));
+  const fence = "`".repeat(Math.max(3, longest + 1));
+  return `${fence}
+${text}
+${fence}`;
+}
+var MAIN_RULES = ["update", "deletion", "non_fast_forward"];
+function rulesetProtectingMain(app) {
+  return {
+    name: "Only Divlab changes main",
+    target: "branch",
+    enforcement: "active",
+    conditions: { ref_name: { include: ["~DEFAULT_BRANCH"], exclude: [] } },
+    rules: MAIN_RULES.map((type) => ({ type })),
+    bypass_actors: [{ actor_id: app, actor_type: "Integration", bypass_mode: "always" }]
+  };
+}
+function policyAllowingDivlabChecks() {
+  return {
+    name: "Only Divlab checks pull requests",
+    enforcement: "active",
+    conditions: {
+      workflow_path: { include: [".github/workflows/divlab-pull-request.yml"], exclude: [] }
+    },
+    rules: [
+      { type: "restrict_action_events", parameters: { allowed_events: ["pull_request_target"] } }
+    ]
+  };
+}
+function issueForChangeNotByDivlab({ changeNotByDivlab }) {
+  const { commit, author } = changeNotByDivlab;
+  return {
+    title: "Escalation: a change reached main without Divlab",
+    labels: ["escalation", "not-accepted", CHANGE_NOT_BY_DIVLAB],
+    body: `This commit on main was not made by Divlab, so it did not pass Divlab's checks. Its author, as GitHub records it, and the commit:
+
+${quoted(`${author ?? "(no account)"} ${commit}`)}`
+  };
+}
+function issueForNotAccepted({ notAccepted }) {
+  return {
+    title: "Escalation: work reached main without Divlab merging it",
+    labels: ["escalation", "not-accepted"],
+    body: `Divlab has not accepted this feedback signal, and will not route its work: ${notAccepted.reason}.
+
+${quoted(notAccepted.feedbackSignal)}`
+  };
+}
+function protectsMain(rules) {
+  const applied = new Set(rules.map((rule2) => rule2.type));
+  return MAIN_RULES.every((type) => applied.has(type));
+}
+function issueForUnprotectedMain() {
+  return {
+    title: "Escalation: this project's main branch is not protected",
+    labels: ["escalation", UNPROTECTED_MAIN],
+    body: "Divlab found that this project's main branch no longer has the protection that lets only Divlab change it (decision 0006). Until it is restored, anyone with enough access could change main without Divlab's checks. Close this issue once main is protected again; Divlab alerts again if protection is lost later."
+  };
+}
+var UNPROTECTED_MAIN = "unprotected-main";
+var CHANGE_NOT_BY_DIVLAB = "change-not-by-divlab";
+function decisionOf(body) {
+  const json = body.match(/```json\n([\s\S]*)\n```$/)?.[1];
+  const closing = JSON.parse(json ?? "null");
+  return closing?.decidedOn ?? closing?.work?.feedbackSignal;
+}
+var decisionBlock = (feedbackSignal) => [
+  "Divlab decided this from:",
+  "",
+  "```json",
+  JSON.stringify({ decidedOn: feedbackSignal }),
+  "```"
+].join("\n");
+
+// ../github/src/rate-limits.ts
+function retryAfter(answer, now) {
+  if ([500, 502, 503, 504].includes(answer.status)) return 2e3;
+  if (answer.status !== 403 && answer.status !== 429) return void 0;
+  const retry = answer.headers.get("retry-after");
+  if (retry !== null) return Number(retry) * 1e3;
+  if (answer.message.includes("secondary rate limit")) return 6e4;
+  if (answer.headers.get("x-ratelimit-remaining") === "0") {
+    return Number(answer.headers.get("x-ratelimit-reset")) * 1e3 - now;
+  }
+  return void 0;
+}
+
+// ../github/src/request.ts
+var ATTEMPTS = 4;
+var BLIP = 2e3;
+async function requestGitHub(token2, method, path, body, options = {}) {
+  const repeatable = options.repeatable ?? (method === "GET" || method === "DELETE");
+  for (let attempt = 1; ; attempt++) {
+    let response;
+    try {
+      response = await fetch(`https://api.github.com/${path}`, {
+        method,
+        headers: {
+          accept: "application/vnd.github+json",
+          authorization: `Bearer ${token2}`,
+          "x-github-api-version": "2022-11-28"
+        },
+        ...body === void 0 ? {} : { body: JSON.stringify(body) }
+      });
+    } catch (error) {
+      if (!repeatable || attempt === ATTEMPTS) throw error;
+      await pause(BLIP);
+      continue;
+    }
+    const text = await response.text();
+    const data = parsed(text);
+    const message = data?.message;
+    const wait = retryAfter(
+      { status: response.status, headers: response.headers, message: String(message ?? "") },
+      Date.now()
+    );
+    const rateLimited = response.status === 403 || response.status === 429;
+    if (wait === void 0 || !rateLimited && !repeatable || attempt === ATTEMPTS) {
+      return { status: response.status, data };
+    }
+    await pause(wait);
+  }
+}
+function parsed(text) {
+  try {
+    return text ? JSON.parse(text) : void 0;
+  } catch {
+    return void 0;
+  }
+}
+var pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// ../github/src/adapter.ts
+var mainCommit = (listed) => ({
+  sha: listed.sha,
+  author: listed.author?.login,
+  signedByGitHub: listed.committer?.login === "web-flow" && listed.commit.verification?.verified === true
+});
+var GOVERNANCE_REPOSITORY = "anarres-project/anarres";
+var GOVERNANCE_FILE = "governance/members.json";
+var GitHubAdapter = class {
+  /**
+   * `app`: Divlab's GitHub App, needed only to set projects up. `request`: how requests reach
+   * GitHub; the real API unless a test stands in for it.
+   */
+  constructor(options) {
+    this.options = options;
+  }
+  options;
+  /** How many events each project's log held when this run last read it. */
+  eventsRead = /* @__PURE__ */ new Map();
+  async protectMain(project2) {
+    if (this.options.app === void 0) throw new Error("Protecting main needs Divlab's App");
+    await this.call(
+      "POST",
+      `${this.repo(project2)}/rulesets`,
+      rulesetProtectingMain(this.options.app)
+    );
+  }
+  async allowDivlabChecks(project2) {
+    await this.call("POST", `${this.repo(project2)}/actions/policies`, policyAllowingDivlabChecks());
+  }
+  async post(task) {
+    await this.openIssue(task.project, issueForTask(task));
+  }
+  async alertCoordinators(alert) {
+    await this.openIssue(alert.project, issueForAlert(alert));
+  }
+  async alertChangeNotByDivlab(change) {
+    await this.openIssue(change.project, issueForChangeNotByDivlab(change));
+  }
+  async alertNotAccepted(record) {
+    await this.openIssue(record.project, issueForNotAccepted(record));
+  }
+  async alertUnprotectedMain(project2) {
+    await this.openIssue(project2, issueForUnprotectedMain());
+  }
+  async unprotectedMainAlertOpen(project2) {
+    const open = await this.call(
+      "GET",
+      `${this.repo(project2)}/issues?labels=${UNPROTECTED_MAIN}&state=open&per_page=1`
+    );
+    return open.length > 0;
+  }
+  /** The rules GitHub applies to main now, whoever set them: readable with metadata access. */
+  async mainIsProtected(project2) {
+    const rules = await this.call(
+      "GET",
+      `${this.repo(project2)}/rules/branches/main`
+    );
+    return protectsMain(rules);
+  }
+  async markModuleDone(done) {
+    const { project: project2 } = done;
+    const { number } = await this.openIssue(project2, issueForModuleDone(done));
+    await this.call("PATCH", `${this.repo(project2)}/issues/${number}`, { state: "closed" });
+  }
+  async task(project2, task) {
+    const number = issueNumber(task);
+    if (number === void 0) return void 0;
+    const { status, data } = await this.request(
+      "GET",
+      `${this.repo(project2)}/issues/${number}`
+    );
+    if (status === 404) return void 0;
+    if (status !== 200) throw new GitHubError("GET", `issue ${number}`, status, data);
+    if (!isTask(data)) return void 0;
+    return taskFromIssue(data);
+  }
+  async close(project2, task) {
+    const number = issueNumber(task);
+    if (number === void 0) return;
+    await this.call("PATCH", `${this.repo(project2)}/issues/${number}`, { state: "closed" });
+  }
+  async markClaimed(claim) {
+    const issue = `${this.repo(claim.project)}/issues/${claim.task}`;
+    const listed = await this.call("GET", issue);
+    await this.call("PATCH", issue, {
+      labels: labelsWhenClaimed(listed),
+      assignees: [claim.member]
+    });
+  }
+  async tellLeaseRanOut(ranOut) {
+    await this.call("POST", `${this.repo(ranOut.project)}/issues/${ranOut.task}/comments`, {
+      body: commentForLeaseRanOut(ranOut)
+    });
+  }
+  async releaseClaim(project2, task) {
+    const issue = `${this.repo(project2)}/issues/${task}`;
+    const listed = await this.call("GET", issue);
+    await this.call("PATCH", issue, { labels: labelsWhenReleased(listed), assignees: [] });
+  }
+  /** The governance file, as read: core checks what it says (decision 0007). */
+  /** The project's tasks ready to claim, each read as Divlab reads a task: as data. */
+  async readyTasks(project2) {
+    const issues = await this.call(
+      "GET",
+      `${this.repo(project2)}/issues?labels=${encodeURIComponent(READY)}&state=open&per_page=100`
+    );
+    return issues.flatMap((issue) => {
+      const task = isTask(issue) ? taskFromIssue(issue) : void 0;
+      return task ? [{ id: String(issue.number), role: task.role, module: task.module }] : [];
+    });
+  }
+  /** The member's claim: Divlab's claim comment on the task's issue, made as the member. */
+  async askToClaim(project2, task) {
+    await this.call("POST", `${this.repo(project2)}/issues/${task}/comments`, { body: CLAIM });
+  }
+  /** The account the token acts as: the member, when it is the member's own login. */
+  async account() {
+    const { login } = await this.call("GET", "user");
+    return login;
+  }
+  /** The organisation's projects with a task ready to claim, from one search of its issues. */
+  async names() {
+    const query = encodeURIComponent(
+      `org:${this.options.owner} label:state:ready is:open is:issue`
+    );
+    const { items } = await this.call(
+      "GET",
+      `search/issues?q=${query}&per_page=100`
+    );
+    return [...new Set(items.map((item) => item.repository_url.split("/").at(-1) ?? ""))];
+  }
+  async governanceFile() {
+    const repository = this.options.governance || GOVERNANCE_REPOSITORY;
+    const where = `repos/${repository}/contents/${GOVERNANCE_FILE}`;
+    const { status, data } = await this.request("GET", where);
+    if (status === 404) return void 0;
+    if (status !== 200) throw new GitHubError("GET", where, status, data);
+    try {
+      return JSON.parse(Buffer.from(data.content, "base64").toString("utf8"));
+    } catch {
+      return void 0;
+    }
+  }
+  async comments(project2, task) {
+    const comments = [];
+    for (let page = 1; ; page++) {
+      const listed = await this.call("GET", `${this.repo(project2)}/issues/${task}/comments?per_page=100&page=${page}`);
+      comments.push(
+        ...listed.flatMap(
+          ({ user, body, created_at }) => user ? [{ member: user.login, text: body, at: created_at }] : []
+        )
+      );
+      if (listed.length < 100) return comments;
+    }
+  }
+  async refuseMember(refusal) {
+    await this.call("POST", `${this.repo(refusal.project)}/issues/${refusal.task}/comments`, {
+      body: commentForRefused(refusal)
+    });
+  }
+  async actedOn(project2) {
+    const issues = [];
+    for (let page = 1; ; page++) {
+      const listed = await this.call(
+        "GET",
+        `${this.repo(project2)}/issues?state=all&per_page=100&page=${page}`
+      );
+      issues.push(...listed);
+      if (listed.length < 100) break;
+    }
+    return issues.filter(postedByDivlab).flatMap((issue) => decisionOf(issue.body ?? "") ?? []);
+  }
+  async feedbackSignals(project2) {
+    const { status, data } = await this.request(
+      "GET",
+      `${this.repo(project2)}/contents/feedback`
+    );
+    if (status === 404) return [];
+    if (status !== 200) throw new GitHubError("GET", "feedback", status, data);
+    return data.filter((entry) => entry.type === "file").map((entry) => entry.path);
+  }
+  /**
+   * Numbered from the log as this run last saw it, so recording an event is one request. Creating a
+   * file that already exists fails, so two runs cannot both take a number: when another run has
+   * taken it, the event is numbered from the log as it stands.
+   */
+  async append(event) {
+    const seen = this.eventsRead.get(event.project);
+    if (seen !== void 0 && await this.createEvent(event, seen + 1) === "created") return;
+    const sequence = (await this.eventFiles(event.project)).length + 1;
+    if (await this.createEvent(event, sequence) === "taken") {
+      throw new GitHubError(
+        "PUT",
+        `event ${sequence}`,
+        NUMBER_TAKEN,
+        "another run took its number"
+      );
+    }
+  }
+  /** Creates the event's file, numbered `sequence`: "taken" if that file exists already. */
+  async createEvent(event, sequence) {
+    const { path, content } = eventFile(event, sequence);
+    const put = `${this.repo(event.project)}/contents/${path}`;
+    const { status, data } = await this.request("PUT", put, {
+      message: `Divlab: routing event ${sequence}`,
+      content: Buffer.from(content).toString("base64")
+    });
+    if (status === NUMBER_TAKEN) return "taken";
+    if (status < 200 || status >= 300) throw new GitHubError("PUT", put, status, data);
+    this.eventsRead.set(event.project, sequence);
+    return "created";
+  }
+  /**
+   * The whole event log. The files are listed with the REST API, which reflects writes at once,
+   * and their contents fetched with GraphQL, a part at a time, which can lag behind writes.
+   * Divlab's decisions (re-run counts above all) must never rest on a log missing its latest
+   * events, so the read waits for GraphQL to hold every listed file, and fails rather than return
+   * less.
+   */
+  async read(project2) {
+    const listed = await this.eventFiles(project2);
+    this.eventsRead.set(project2, listed.length);
+    if (listed.length === 0) return [];
+    for (let attempt = 1; ; attempt++) {
+      const texts = /* @__PURE__ */ new Map();
+      for (let start = 0; start < listed.length; start += TEXTS_PER_REQUEST) {
+        for (const [name, text] of await this.eventTexts(
+          project2,
+          listed.slice(start, start + TEXTS_PER_REQUEST)
+        )) {
+          texts.set(name, text);
+        }
+      }
+      const log = logFrom(
+        listed.map((file) => file.name),
+        texts
+      );
+      if (log) return log;
+      if (attempt === LOG_ATTEMPTS) {
+        throw new GitHubError("POST", "graphql (event log)", 200, "the log lags behind its files");
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1e3));
+    }
+  }
+  /**
+   * The text of these event files, by name, in one GraphQL request, asked for by their Git object
+   * IDs as variables. A file GraphQL does not hold yet is left out.
+   */
+  async eventTexts(project2, files) {
+    const { data, errors } = await this.call(
+      "POST",
+      "graphql",
+      {
+        query: `query($owner: String!, $name: String!, ${files.map((_, i) => `$o${i}: GitObjectID!`).join(", ")}) {
+          repository(owner: $owner, name: $name) {
+            ${files.map((_, i) => `e${i}: object(oid: $o${i}) { ... on Blob { text } }`).join("\n            ")}
+          }
+        }`,
+        variables: {
+          owner: this.options.owner,
+          name: project2,
+          ...Object.fromEntries(files.map((file, i) => [`o${i}`, file.sha]))
+        }
+      },
+      { repeatable: true }
+    );
+    if (errors?.length || !data?.repository) {
+      throw new GitHubError("POST", "graphql (event log)", 200, errors ?? "no such repository");
+    }
+    const { repository } = data;
+    return new Map(
+      files.flatMap((file, i) => {
+        const text = repository[`e${i}`]?.text;
+        return text === void 0 ? [] : [[file.name, text]];
+      })
+    );
+  }
+  async pullRequest(project2, pullRequest) {
+    const { head, draft, user } = await this.call("GET", `${this.repo(project2)}/pulls/${pullRequest}`);
+    return { head: head.sha, draft, author: user.login };
+  }
+  /**
+   * What the pull request changes, as text read through the API; nothing is checked out. Each
+   * file is read from the project's own copy of the pull request's commits, never by following a
+   * link the pull request supplies.
+   */
+  async changedFiles(project2, pullRequest) {
+    const files = [];
+    for (let page = 1; ; page++) {
+      const listed = await this.call(
+        "GET",
+        `${this.repo(project2)}/pulls/${pullRequest}/files?per_page=100&page=${page}`
+      );
+      for (const file of listed) {
+        if (file.status === "removed") continue;
+        const { content } = await this.call(
+          "GET",
+          `${this.repo(project2)}/git/blobs/${file.sha}`
+        );
+        files.push({ path: file.filename, text: Buffer.from(content, "base64").toString("utf8") });
+      }
+      if (listed.length < 100) return files;
+    }
+  }
+  /** GitHub refuses the merge if the pull request has moved on from `head`. */
+  async head(project2) {
+    const { object } = await this.call(
+      "GET",
+      `${this.repo(project2)}/git/ref/heads/main`
+    );
+    return object.sha;
+  }
+  async commitsSince(project2, since) {
+    const { commits } = await this.call(
+      "GET",
+      `${this.repo(project2)}/compare/${since}...main`
+    );
+    return commits.map(mainCommit);
+  }
+  async mergeCommitOf(project2, pullRequest) {
+    const { merge_commit_sha } = await this.call(
+      "GET",
+      `${this.repo(project2)}/pulls/${pullRequest}`
+    );
+    return merge_commit_sha;
+  }
+  async merge(project2, pullRequest, head) {
+    const { sha } = await this.call(
+      "PUT",
+      `${this.repo(project2)}/pulls/${pullRequest}/merge`,
+      { sha: head, merge_method: "squash" }
+    );
+    return sha;
+  }
+  async refuse(project2, pullRequest, reason) {
+    await this.call("POST", `${this.repo(project2)}/issues/${pullRequest}/comments`, {
+      body: commentForRefusal(reason)
+    });
+  }
+  /**
+   * The event files, oldest first. Listed from main's Git tree: GitHub's contents listing stops at
+   * 1,000 files, which would leave a busy project's log read in part.
+   */
+  async eventFiles(project2) {
+    const root = await this.wholeTree(project2, "main");
+    const events = root.find((entry) => entry.path === "events" && entry.type === "tree");
+    if (!events) return [];
+    const tree = await this.wholeTree(project2, events.sha);
+    return tree.filter((entry) => EVENT_FILE.test(entry.path)).map((entry) => ({ name: entry.path, sha: entry.sha })).sort((a, b) => a.name.localeCompare(b.name));
+  }
+  /** A Git tree's entries, all of them: decisions must never rest on part of the log. */
+  async wholeTree(project2, tree) {
+    const listed = await this.call("GET", `${this.repo(project2)}/git/trees/${tree}`);
+    if (listed.truncated) {
+      throw new GitHubError("GET", `tree ${tree}`, 200, "GitHub listed the tree in part");
+    }
+    return listed.tree;
+  }
+  openIssue(project2, issue) {
+    return this.call("POST", `${this.repo(project2)}/issues`, issue);
+  }
+  repo(project2) {
+    return `repos/${this.options.owner}/${project2}`;
+  }
+  async call(method, path, body, options) {
+    const { status, data } = await this.request(method, path, body, options);
+    if (status < 200 || status >= 300) throw new GitHubError(method, path, status, data);
+    return data;
+  }
+  request(method, path, body, options) {
+    const request = this.options.request ?? requestGitHub;
+    return request(this.options.token, method, path, body, options);
+  }
+};
+var EVENT_FILE = /^\d{6}\.json$/;
+var NUMBER_TAKEN = 422;
+var TEXTS_PER_REQUEST = 100;
+var LOG_ATTEMPTS = 10;
+var GitHubError = class extends Error {
+  constructor(method, path, status, data) {
+    super(`GitHub ${method} ${path} answered ${status}: ${JSON.stringify(data)}`);
+  }
+};
 
 // src/action.ts
 var [owner, project] = (process.env.GITHUB_REPOSITORY ?? "").split("/");

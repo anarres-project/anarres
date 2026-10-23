@@ -1,5 +1,6 @@
-import { askForWork } from "@anarres/cli";
+import { askForWork, claim } from "@anarres/cli";
 import {
+  CLAIM,
   checkMain,
   checkProtection,
   onClaim,
@@ -186,7 +187,11 @@ export class InProcessDriver implements Driver {
   /** The member comments to claim the task, and the comment's run wakes Divlab, as on GitHub. */
   async claim(task: { project: string; role: string; module: string }, member: string) {
     const id = this.openTaskId(task);
-    this.github.comment(task.project, id, member, "/claim", this.clock().toISOString());
+    // The member claims through their CLI, as the plugin does: it comments on the task's issue.
+    await claim(`${task.project}#${id}`, {
+      askToClaim: async (project, issue) =>
+        this.github.comment(project, issue, member, CLAIM, this.clock().toISOString()),
+    });
     await onClaim(
       task.project,
       { task: id, member },

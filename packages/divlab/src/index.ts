@@ -17,6 +17,8 @@ import {
 } from "@anarres/core";
 import { isClaim } from "./event.ts";
 
+export { CLAIM } from "./event.ts";
+
 export type WorkAccepted = {
   project: string;
   module: string;

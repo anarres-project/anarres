@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { askForWork } from "@anarres/cli";
+import { askForWork, claim } from "@anarres/cli";
 import {
   type LogEvent,
   type RoutingEvent,
@@ -468,7 +468,8 @@ export class SandboxDriver implements Driver {
     const started = Date.now();
     // Divlab either gives the member the task or replies saying why not: a comment after theirs.
     const before = issue.comments ?? 0;
-    await account.call("POST", `${repository}/issues/${issue.number}/comments`, { body: "/claim" });
+    // The member claims through their CLI, as the plugin does, with their own account.
+    await claim(`${task.project}#${issue.number}`, this.asMember(account));
     for (let check = 1; ; check++) {
       await new Promise((resolve) => setTimeout(resolve, 2_000));
       const now = await this.github.call<Issue>("GET", `${repository}/issues/${issue.number}`);
@@ -659,13 +660,7 @@ export class SandboxDriver implements Driver {
    */
   async offeredTasks(member: string): Promise<{ role: string; module: string }[]> {
     const account = await this.playAs(member);
-    // The sandbox's members are judged by its own governance file, as its Divlab judges them.
-    const asMember = new GitHubAdapter({
-      owner: this.org,
-      token: account.token,
-      request: countedRequest,
-      governance: `${this.org}/${SANDBOX_GOVERNANCE}`,
-    });
+    const asMember = this.asMember(account);
     const deadline = Date.now() + LISTS_CATCH_UP_LIMIT;
     while (
       !(await asMember.names()).includes(this.projectOfScenario ?? "") &&
@@ -760,6 +755,17 @@ export class SandboxDriver implements Driver {
       const login = issue.assignees?.[0]?.login;
       if (role === undefined || module === undefined || login === undefined) return [];
       return [{ role: roleNameOf(role), module, member: this.claimants.get(login) ?? login }];
+    });
+  }
+
+  /** GitHub as a member's CLI reads and writes it, with the member's own account. */
+  private asMember(account: GitHubApi): GitHubAdapter {
+    return new GitHubAdapter({
+      owner: this.org,
+      token: account.token,
+      request: countedRequest,
+      // The sandbox's members are judged by its own governance file, as its Divlab judges them.
+      governance: `${this.org}/${SANDBOX_GOVERNANCE}`,
     });
   }
 

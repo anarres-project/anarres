@@ -14,6 +14,7 @@ import type {
   RoutingEvent,
   TaskBoard,
 } from "@anarres/divlab";
+import { CLAIM } from "@anarres/divlab";
 import {
   commentForLeaseRanOut,
   commentForRefusal,
@@ -198,6 +199,11 @@ export class GitHubAdapter
       const task = isTask(issue) ? taskFromIssue(issue) : undefined;
       return task ? [{ id: String(issue.number), role: task.role, module: task.module }] : [];
     });
+  }
+
+  /** The member's claim: Divlab's claim comment on the task's issue, made as the member. */
+  async askToClaim(project: string, task: string): Promise<void> {
+    await this.call("POST", `${this.repo(project)}/issues/${task}/comments`, { body: CLAIM });
   }
 
   /** The account the token acts as: the member, when it is the member's own login. */

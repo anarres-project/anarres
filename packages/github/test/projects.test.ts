@@ -72,3 +72,22 @@ describe("the member a CLI acts for", () => {
     expect(await adapter.account()).toBe("alice");
   });
 });
+
+describe("a member's claim, from their CLI", () => {
+  it("is the claim comment Divlab reads, on the task's issue", async () => {
+    const comments: unknown[] = [];
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string, body?: unknown) => {
+        if (method === "POST" && path === "repos/commons/ledger/issues/4/comments") {
+          comments.push(body);
+          return { status: 201, data: {} as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    await adapter.askToClaim("ledger", "4");
+    expect(comments).toEqual([{ body: "/claim" }]);
+  });
+});

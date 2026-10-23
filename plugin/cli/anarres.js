@@ -7500,13 +7500,54 @@ function readMergedWork(value) {
   return unreadableWork(value) ?? value;
 }
 function unreadableWork(work) {
-  for (const [field, named] of WORK_FIELDS) {
+  for (const [field, named2] of WORK_FIELDS) {
     if (typeof work[field] !== "string")
-      return { unreadable: `its work does not give its ${named}` };
+      return { unreadable: `its work does not give its ${named2}` };
   }
   return void 0;
 }
 var isObject = (value) => typeof value === "object" && value !== null;
+
+// ../divlab/src/event.ts
+var CLAIM = "/claim";
+
+// ../divlab/src/index.ts
+var parts = (events) => [
+  ...mergedParts(events),
+  ...heldParts(events)
+];
+var heldParts = (events) => {
+  const held = /* @__PURE__ */ new Map();
+  for (const event of events) {
+    if ("claimed" in event) {
+      const { task, member, role, module } = event.claimed;
+      if (role !== void 0 && module !== void 0) held.set(task, { member, role, module });
+    }
+    if ("released" in event) held.delete(event.released.task);
+    if ("leaseRanOut" in event) held.delete(event.leaseRanOut.task);
+  }
+  return [...held.values()];
+};
+var mergedParts = (events) => routingDecisions(events).flatMap(
+  (decision) => decision.member === void 0 ? [] : [
+    {
+      member: decision.member,
+      // Routed work's role is one Divlab knows (an unknown one is on the test list).
+      role: decision.work.fromRole,
+      module: decision.work.module
+    }
+  ]
+);
+function eligibility(governance, events) {
+  const memberOf = (account) => memberFor(governance, account);
+  const history = parts(events).map((part) => ({ ...part, member: memberOf(part.member) }));
+  return (account, task) => mayTake(
+    { member: memberOf(account), role: task.role, module: task.module },
+    history,
+    trustLevelOf(governance, memberOf(account))
+  );
+}
+var routingDecisions = (log) => log.filter((event) => "work" in event);
 
 // ../github/src/representation.ts
 var READY = "state:ready";
@@ -7858,12 +7899,12 @@ var GitHubAdapter = class {
     if (number === void 0) return;
     await this.call("PATCH", `${this.repo(project)}/issues/${number}`, { state: "closed" });
   }
-  async markClaimed(claim) {
-    const issue = `${this.repo(claim.project)}/issues/${claim.task}`;
+  async markClaimed(claim2) {
+    const issue = `${this.repo(claim2.project)}/issues/${claim2.task}`;
     const listed = await this.call("GET", issue);
     await this.call("PATCH", issue, {
       labels: labelsWhenClaimed(listed),
-      assignees: [claim.member]
+      assignees: [claim2.member]
     });
   }
   async tellLeaseRanOut(ranOut) {
@@ -7887,6 +7928,10 @@ var GitHubAdapter = class {
       const task = isTask(issue) ? taskFromIssue(issue) : void 0;
       return task ? [{ id: String(issue.number), role: task.role, module: task.module }] : [];
     });
+  }
+  /** The member's claim: Divlab's claim comment on the task's issue, made as the member. */
+  async askToClaim(project, task) {
+    await this.call("POST", `${this.repo(project)}/issues/${task}/comments`, { body: CLAIM });
   }
   /** The account the token acts as: the member, when it is the member's own login. */
   async account() {
@@ -8157,44 +8202,6 @@ var GitHubError = class extends Error {
   }
 };
 
-// ../divlab/src/index.ts
-var parts = (events) => [
-  ...mergedParts(events),
-  ...heldParts(events)
-];
-var heldParts = (events) => {
-  const held = /* @__PURE__ */ new Map();
-  for (const event of events) {
-    if ("claimed" in event) {
-      const { task, member, role, module } = event.claimed;
-      if (role !== void 0 && module !== void 0) held.set(task, { member, role, module });
-    }
-    if ("released" in event) held.delete(event.released.task);
-    if ("leaseRanOut" in event) held.delete(event.leaseRanOut.task);
-  }
-  return [...held.values()];
-};
-var mergedParts = (events) => routingDecisions(events).flatMap(
-  (decision) => decision.member === void 0 ? [] : [
-    {
-      member: decision.member,
-      // Routed work's role is one Divlab knows (an unknown one is on the test list).
-      role: decision.work.fromRole,
-      module: decision.work.module
-    }
-  ]
-);
-function eligibility(governance, events) {
-  const memberOf = (account) => memberFor(governance, account);
-  const history = parts(events).map((part) => ({ ...part, member: memberOf(part.member) }));
-  return (account, task) => mayTake(
-    { member: memberOf(account), role: task.role, module: task.module },
-    history,
-    trustLevelOf(governance, memberOf(account))
-  );
-}
-var routingDecisions = (log) => log.filter((event) => "work" in event);
-
 // src/index.ts
 async function askForWork(member, projects) {
   const governance = await projects.governanceFile();
@@ -8215,11 +8222,24 @@ function describeOffers(offers) {
     (offer) => `${offer.project}#${offer.task}  ${ROLE_NAMES[offer.role]} task for ${offer.module}`
   ).join("\n");
 }
+function taskNamed(named2) {
+  const match = named2.match(TASK_NAME);
+  return match?.[1] && match[2] ? { project: match[1], task: match[2] } : void 0;
+}
+var TASK_NAME = /^(?!\.{1,2}#)([A-Za-z0-9_.-]{1,100})#([1-9][0-9]{0,9})$/;
+async function claim(named2, claiming) {
+  const task = taskNamed(named2);
+  if (task === void 0) {
+    return `Name the task as the offers do, project#number: ${named2} is not one.`;
+  }
+  await claiming.askToClaim(task.project, task.task);
+  return `Asked for ${named2}. Divlab answers on the task's issue: run next to see what is still offered.`;
+}
 
 // src/main.ts
-var [command] = process.argv.slice(2);
-if (command !== "next") {
-  console.error("Usage: anarres next");
+var [command, named] = process.argv.slice(2);
+if (command !== "next" && !(command === "claim" && named)) {
+  console.error("Usage: anarres next | anarres claim project#number");
   process.exit(2);
 }
 try {
@@ -8229,6 +8249,10 @@ try {
     token,
     governance: process.env.ANARRES_GOVERNANCE ?? ""
   });
+  if (command === "claim" && named) {
+    console.log(await claim(named, github));
+    process.exit(0);
+  }
   const offers = await askForWork(await github.account(), {
     names: () => github.names(),
     readyTasks: (project) => github.readyTasks(project),

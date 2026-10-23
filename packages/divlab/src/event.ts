@@ -8,7 +8,10 @@ export type Run =
   | { nothing: true };
 
 /** Whether a comment is a claim: exactly the claim command, nothing more. */
-export const isClaim = (text: unknown): boolean => text === "/claim";
+export const isClaim = (text: unknown): boolean => text === CLAIM;
+
+/** The comment a member makes to claim a task, exactly: their CLI writes it, Divlab reads it. */
+export const CLAIM = "/claim";
 
 /** Whether a comment is a release: exactly the release command, nothing more. */
 const isRelease = (text: unknown): boolean => text === "/release";

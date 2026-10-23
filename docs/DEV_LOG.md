@@ -58,6 +58,29 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-23: Claiming from the plugin
+
+- `anarres claim project#number` posts Divlab's claim comment on the task's issue, as the member.
+  The name is checked strictly first (a repository's name and an issue number GitHub could have
+  given), since it comes from offers made of other people's data; a badly named task asks for
+  nothing. The comment's text is Divlab's `CLAIM`, defined once. The `next` skill may now run
+  `claim` too, and both drivers claim through the CLI, so the scenarios exercise what the plugin
+  runs.
+- Slip: the two claim tests went in together and failed together.
+
+RED:      the task named project#number is that project and issue -> expected undefined to equal {…}
+GREEN:    (1 passed)
+RED:      is none for a fractional number / a non-repository project / two tasks / issue 0 (four rows)
+GREEN:    (15 passed)
+RED:      claiming asks Divlab for it / asks for nothing when badly named (two at once)
+GREEN:    (17 passed)
+RED:      a member's claim from their CLI is the claim comment Divlab reads -> expected [] to equal [ {…} ]
+GREEN:    (438 passed)
+RED:      the next skill may run next and claim -> expected the one rule to be two
+GREEN:    (451 passed; 92 scenarios)
+
+---
+
 ## 2026-10-23: The plugin's `/anarres:next`
 
 - The plugin exists: `.claude-plugin/marketplace.json` makes this repository its marketplace
