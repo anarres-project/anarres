@@ -273,7 +273,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] Divlab records who did each piece of merged work (the pull request's author), through an
         interrupted merge too, and refuses a claim that breaks the rule, saying why;
   - [x] a task is only an issue naming a role Anarres has and a module;
-  - [ ] a task a member holds now counts too (today only merged work does);
+  - [x] a task a member holds now counts too: a claim records the task's role and module, and
+        one given back or run out no longer counts; a claim record naming a role Anarres does
+        not have makes the log unreadable, as other bad records do;
   - [ ] when the earliest claim on a task is not allowed, the earliest that is wins;
   - [ ] the sandbox shows the refusal (tagged until it has passed there).
 - [ ] Linked accounts are treated as one member.

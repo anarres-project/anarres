@@ -7379,6 +7379,7 @@ var ROLE_NAMES = {
   "security-and-quality": "Security & Quality",
   research: "Research"
 };
+var isRole = (value) => typeof value === "string" && Object.hasOwn(ROLE_NAMES, value);
 
 // ../core/src/eligibility.ts
 var isRoleInModule = (role) => role !== "research";
@@ -7628,9 +7629,7 @@ function taskFromIssue(issue) {
   const labelled = (prefix) => issue.labels.find(({ name }) => name.startsWith(prefix))?.name.slice(prefix.length);
   const role = labelled("role:");
   const module = labelled("module:");
-  if (role === void 0 || !Object.hasOwn(ROLE_NAMES, role) || module === void 0) {
-    return void 0;
-  }
+  if (!isRole(role) || module === void 0) return void 0;
   const researchFor = labelled(RESEARCH_FOR);
   const claimant = issue.assignees?.[0]?.login;
   return {
@@ -7655,7 +7654,15 @@ function eventFile(event, sequence) {
 var namesTaskAndMember = (value) => isObject2(value) && typeof value.task === "string" && typeof value.member === "string";
 function eventFromFile(content) {
   const event = JSON.parse(content);
-  if (isObject2(event) && namesTaskAndMember(event.claimed)) return event;
+  if (isObject2(event) && namesTaskAndMember(event.claimed)) {
+    const { role } = event.claimed;
+    if (role !== void 0 && !isRole(role)) {
+      throw new Error(
+        "The event file cannot be read: the claim names a role Anarres does not have"
+      );
+    }
+    return event;
+  }
   if (isObject2(event) && namesTaskAndMember(event.leaseRanOut)) return event;
   if (isObject2(event) && namesTaskAndMember(event.activity)) return event;
   if (isObject2(event) && namesTaskAndMember(event.released)) return event;
@@ -8186,7 +8193,23 @@ function whatToActOn(name, event) {
 }
 
 // src/index.ts
-var parts = (events) => routingDecisions(events).flatMap(
+var parts = (events) => [
+  ...mergedParts(events),
+  ...heldParts(events)
+];
+var heldParts = (events) => {
+  const held = /* @__PURE__ */ new Map();
+  for (const event of events) {
+    if ("claimed" in event) {
+      const { task, member, role, module } = event.claimed;
+      if (role !== void 0 && module !== void 0) held.set(task, { member, role, module });
+    }
+    if ("released" in event) held.delete(event.released.task);
+    if ("leaseRanOut" in event) held.delete(event.leaseRanOut.task);
+  }
+  return [...held.values()];
+};
+var mergedParts = (events) => routingDecisions(events).flatMap(
   (decision) => decision.member === void 0 ? [] : [
     {
       member: decision.member,
@@ -8226,7 +8249,7 @@ async function onClaim(project2, claim, board, log, clock) {
     const claimed = {
       project: project2,
       decidedAt: clock().toISOString(),
-      claimed: { task: claim.task, member: holder }
+      claimed: { task: claim.task, member: holder, role: task.role, module: task.module }
     };
     await log.append(claimed);
     await board.markClaimed({ project: project2, task: claim.task, member: holder });

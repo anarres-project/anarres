@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ROLE_NAMES, type Role } from "../src/index.ts";
+import { isRole, ROLE_NAMES, type Role } from "../src/index.ts";
 
 describe("role names", () => {
   it("names the Security & Quality role as members know it", () => {
@@ -22,5 +22,15 @@ describe("role names", () => {
     ["reviewer", "Reviewer"],
   ])("names the %s role %s", (role, name) => {
     expect(ROLE_NAMES[role]).toBe(name);
+  });
+});
+
+describe("whether something read is a role", () => {
+  it("is for a role Anarres has", () => {
+    expect(isRole("reviewer")).toBe(true);
+  });
+
+  it.each([["bystander"], [12], ["toString"]])("is not for %j", (value) => {
+    expect(isRole(value)).toBe(false);
   });
 });

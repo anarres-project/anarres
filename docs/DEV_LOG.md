@@ -54,6 +54,31 @@ life (decision 0007), and Divlab refuses a claim that breaks it.
 
 ---
 
+## 2026-10-23: A task a member holds counts towards their role
+
+- A claim now records the role and module of its task, so the log alone says which tasks a
+  member holds. Their part in a module is their merged work and the tasks whose latest claim is
+  theirs and was neither given back nor ran out.
+- A claim record's role is checked when read back, since the log can be edited: one naming a role
+  Anarres does not have is refused. `isRole` is core's, used wherever a role is read from outside.
+- Slip: the lines dropping a given-back or run-out claim were written before their test; taken
+  out, both rows failed for the right reason, and they went back.
+
+RED:      refuses a member who holds a task in the module in another role
+          -> Error: Divlab should not have acted (it granted the claim)
+GREEN:    (112 passed; the claim record's test now expects its role and module)
+RED:      does not count a task the member gave back / let run out -> Error: Divlab should not have acted
+GREEN:    (324 passed)
+RED:      is refused, saying why, when a claim names a role Anarres does not have -> expected to throw
+GREEN:    (325 passed)
+RED:      is for a role Anarres has -> expected false to be true
+GREEN:    (hard-coded)
+RED:      is not for "bystander" / 12 / "toString" -> expected true to be false
+GREEN:    (329 passed)
+REFACTOR: isRole in both places the representation reads a role
+
+---
+
 ## 2026-10-23: One role per module
 
 - Bernard settled what the conflict-of-interest rules mean (decision 0007, concept §6 updated): a

@@ -147,7 +147,7 @@ describe("acting on a claim", () => {
       {
         project: "ledger",
         decidedAt: "2026-10-23T09:00:00.000Z",
-        claimed: { task: "12", member: "alice" },
+        claimed: { task: "12", member: "alice", role: "test", module: "parser" },
       },
     ]);
   });
@@ -200,6 +200,62 @@ describe("who may claim a task (decision 0007)", () => {
         },
       ],
     ]);
+  });
+
+  it("refuses a member who holds a task in the module in another role", async () => {
+    const refused: Refused[] = [];
+    const codingTask: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "coding", module: "parser" }),
+      comments: async () => [{ member: "alice", text: "/claim" }],
+      refuseMember: async (refusal) => {
+        refused.push(refusal);
+      },
+    };
+    const aliceHoldsTheTests: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          decidedAt: "2026-10-23T08:00:00.000Z",
+          claimed: { task: "11", member: "alice", role: "test", module: "parser" },
+        },
+      ],
+      append: async () => {},
+    };
+    const clock = () => new Date("2026-10-23T09:00:00Z");
+    await onClaim("ledger", { task: "12", member: "alice" }, codingTask, aliceHoldsTheTests, clock);
+    expect(refused.map((refusal) => refusal.reason)).toEqual([
+      "Divlab did not give you this task: a member takes only one role in a module, and you have worked on it as Test",
+    ]);
+  });
+
+  it.each([
+    ["gave back", { released: { task: "11", member: "alice" } }],
+    ["let run out", { leaseRanOut: { task: "11", member: "alice" } }],
+  ])("does not count a task the member %s: they produced nothing", async (_what, ended) => {
+    const claimed: ClaimedTask[] = [];
+    const codingTask: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "coding", module: "parser" }),
+      comments: async () => [{ member: "alice", text: "/claim" }],
+      markClaimed: async (claim) => {
+        claimed.push(claim);
+      },
+    };
+    const heldOnceThenEnded: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          decidedAt: "2026-10-23T08:00:00.000Z",
+          claimed: { task: "11", member: "alice", role: "test", module: "parser" },
+        },
+        { project: "ledger", decidedAt: "2026-10-23T08:30:00.000Z", ...ended } as LogEvent,
+      ],
+      append: async () => {},
+    };
+    const clock = () => new Date("2026-10-23T09:00:00Z");
+    await onClaim("ledger", { task: "12", member: "alice" }, codingTask, heldOnceThenEnded, clock);
+    expect(claimed.map((claim) => claim.member)).toEqual(["alice"]);
   });
 });
 

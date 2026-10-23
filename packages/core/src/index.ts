@@ -6,7 +6,7 @@ export {
   type Unreadable,
 } from "./feedback-signal.ts";
 export { LEASE_HOURS, leaseHasRunOut } from "./leases.ts";
-export { ROLE_NAMES, type Role } from "./roles.ts";
+export { isRole, ROLE_NAMES, type Role } from "./roles.ts";
 export { type AcceptedWork, type RoutingDecision, route, type Task } from "./routing.ts";
 export {
   type RoutingRecord,

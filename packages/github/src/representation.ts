@@ -1,4 +1,5 @@
 import {
+  isRole,
   LEASE_HOURS,
   ROLE_NAMES,
   type Role,
@@ -80,13 +81,11 @@ export function taskFromIssue(
   // Labels can be changed by anyone who triages: a task names a role Anarres has, and a module.
   const role = labelled("role:");
   const module = labelled("module:");
-  if (role === undefined || !Object.hasOwn(ROLE_NAMES, role) || module === undefined) {
-    return undefined;
-  }
+  if (!isRole(role) || module === undefined) return undefined;
   const researchFor = labelled(RESEARCH_FOR);
   const claimant = issue.assignees?.[0]?.login;
   return {
-    role: role as Role,
+    role,
     module,
     ...(researchFor === undefined ? {} : { researchFor }),
     // Assigning is open to anyone who triages: only Divlab's claimed label makes a task held.
@@ -118,7 +117,15 @@ const namesTaskAndMember = (value: unknown): boolean =>
 /** Event files can be edited by people, so what is read back is checked, never assumed. */
 export function eventFromFile(content: string): LogEvent {
   const event: unknown = JSON.parse(content);
-  if (isObject(event) && namesTaskAndMember(event.claimed)) return event as Claimed;
+  if (isObject(event) && namesTaskAndMember(event.claimed)) {
+    const { role } = event.claimed as { role?: unknown };
+    if (role !== undefined && !isRole(role)) {
+      throw new Error(
+        "The event file cannot be read: the claim names a role Anarres does not have",
+      );
+    }
+    return event as Claimed;
+  }
   if (isObject(event) && namesTaskAndMember(event.leaseRanOut)) return event as LeaseRanOut;
   if (isObject(event) && namesTaskAndMember(event.activity)) return event as Activity;
   if (isObject(event) && namesTaskAndMember(event.released)) return event as Released;

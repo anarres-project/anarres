@@ -102,7 +102,8 @@ export interface TaskBoard {
 export type Claimed = {
   project: string;
   decidedAt: string;
-  claimed: { task: string; member: string };
+  /** The role and module the task is for (absent from claims recorded before Divlab kept them). */
+  claimed: { task: string; member: string; role?: Role; module?: string };
 };
 
 /** A member's lease on a task ran out, with no activity on it: the task is ready again. */
@@ -132,8 +133,29 @@ export type Refused = ClaimedTask & { reason: string };
 /** A member holds a task. */
 export type ClaimedTask = { project: string; task: string; member: string };
 
-/** Each member's part in each module, as the log shows: the work of theirs Divlab merged. */
-const parts = (events: readonly LogEvent[]): Part[] =>
+/**
+ * Each member's part in each module, as the log shows: the work of theirs Divlab merged, and the
+ * tasks they hold, whose latest claim is theirs and was neither given back nor ran out.
+ */
+const parts = (events: readonly LogEvent[]): Part[] => [
+  ...mergedParts(events),
+  ...heldParts(events),
+];
+
+const heldParts = (events: readonly LogEvent[]): Part[] => {
+  const held = new Map<string, Part>();
+  for (const event of events) {
+    if ("claimed" in event) {
+      const { task, member, role, module } = event.claimed;
+      if (role !== undefined && module !== undefined) held.set(task, { member, role, module });
+    }
+    if ("released" in event) held.delete(event.released.task);
+    if ("leaseRanOut" in event) held.delete(event.leaseRanOut.task);
+  }
+  return [...held.values()];
+};
+
+const mergedParts = (events: readonly LogEvent[]): Part[] =>
   routingDecisions(events).flatMap((decision) =>
     decision.member === undefined
       ? []
@@ -185,7 +207,7 @@ export async function onClaim(
     const claimed: Claimed = {
       project,
       decidedAt: clock().toISOString(),
-      claimed: { task: claim.task, member: holder },
+      claimed: { task: claim.task, member: holder, role: task.role, module: task.module },
     };
     await log.append(claimed);
     await board.markClaimed({ project, task: claim.task, member: holder });

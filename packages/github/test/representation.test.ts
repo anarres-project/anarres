@@ -177,6 +177,17 @@ describe("a routing event as a file", () => {
     expect(eventFromFile(eventFile(claimed, 4).content)).toEqual(claimed);
   });
 
+  it("is refused, saying why, when a claim names a role Anarres does not have", () => {
+    const claimed = {
+      project: "ledger",
+      decidedAt: "2026-10-23T09:00:00.000Z",
+      claimed: { task: "12", member: "alice", role: "bystander", module: "parser" },
+    };
+    expect(() => eventFromFile(JSON.stringify(claimed))).toThrow(
+      "The event file cannot be read: the claim names a role Anarres does not have",
+    );
+  });
+
   it("reads back a record that a member's lease ran out", () => {
     const ranOut: LeaseRanOut = {
       project: "ledger",
