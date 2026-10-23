@@ -66,6 +66,11 @@ hourly check makes the task ready again (in-process). Divlab never merges a draf
 - The sandbox runs: 88d9088 passed all 69. f7a16eb failed 8, all in one worker whose fork GitHub
   then reported as an empty repository, while GitHub was answering requests with 504s. Not
   Anarres; on the test list in case it recurs.
+- The draft scenario passed in the sandbox on its own (66 requests), so it runs in both.
+- The sandbox runs for 32f814a and 98e136e were refused scenario by scenario by the allowance
+  check: GitHub's hourly 5,000 had gone. Pushing every commit started more full runs (about 2,200
+  requests each) than an hour holds, on top of single-scenario runs and watching. So pushes are
+  spaced now: at most two full sandbox runs an hour.
 - Slip: the lease check's member test on activity was written before its test; taken out, the
   test failed for the right reason, and it went back.
 

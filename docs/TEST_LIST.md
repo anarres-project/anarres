@@ -247,7 +247,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         activity on the task, and the lease runs from the latest such activity; a draft from
         anyone else renews nothing;
   - [x] Divlab runs again when a member marks a draft ready, and acts on it as on any work;
-  - [ ] the sandbox shows a draft is not merged and is recorded (tagged until it has passed);
+  - [x] the sandbox shows a draft is not merged and is recorded;
   - [ ] each push to a draft is activity too (the workflow runs on it; to be shown);
   - [ ] work for a task whose holder is someone else is refused (section 4);
   - [ ] the sandbox re-forks a project whose fork GitHub reports empty (seen 2026-10-23: one
