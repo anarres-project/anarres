@@ -7453,7 +7453,7 @@ function mayTake(task, history, level) {
 var import_yaml = __toESM(require_dist(), 1);
 var PLAIN_NAME = /^(?=.{1,40}$)[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
 function readFeedbackSignal(text) {
-  const lines = text.split("\n");
+  const lines = text.split(/\r?\n/);
   if (lines[0] !== "---") return { unreadable: "it has no feedback signal header" };
   const end = lines.indexOf("---", 1);
   if (end === -1) return { unreadable: "its header never ends" };

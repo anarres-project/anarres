@@ -57,6 +57,16 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-23: Windows line endings
+
+- A feedback signal written with Windows line endings was unreadable: its first line was "---"
+  and a carriage return. Lines now end at a line feed with or without one.
+
+RED:      reads a signal written with Windows line endings the same -> expected { unreadable } to equal { … }
+GREEN:    (174 passed)
+
+---
+
 ## 2026-10-23: Each role writes only its own place
 
 - Divlab merged whatever files a pull request held, so a member's work could have changed

@@ -23,6 +23,24 @@ describe("reading a feedback signal", () => {
     });
   });
 
+  it("reads a signal written with Windows line endings the same", () => {
+    const signal = [
+      "---",
+      "feedback_signal:",
+      "  from_role: specification",
+      "  module: parser",
+      "  verdict: pass",
+      "---",
+      "",
+    ].join("\r\n");
+    expect(readFeedbackSignal(signal)).toEqual({
+      fromRole: "specification",
+      module: "parser",
+      verdict: "pass",
+      impediments: [],
+    });
+  });
+
   it("gives the problems failed work reports, and no task when it names none", () => {
     const signal = [
       "---",

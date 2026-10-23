@@ -21,7 +21,8 @@ const PLAIN_NAME = /^(?=.{1,40}$)[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
 export type Unreadable = { unreadable: string };
 
 export function readFeedbackSignal(text: string): FeedbackSignal | Unreadable {
-  const lines = text.split("\n");
+  // Written on Windows or not, a line ends at "\n", with or without "\r" before it.
+  const lines = text.split(/\r?\n/);
   if (lines[0] !== "---") return { unreadable: "it has no feedback signal header" };
   const end = lines.indexOf("---", 1);
   if (end === -1) return { unreadable: "its header never ends" };

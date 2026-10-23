@@ -418,7 +418,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         a missing, unterminated or invalid header, a missing role, module or verdict,
         impediments without a type, or a task that is not text or a whole number make it
         unreadable, never guessed at;
-  - [ ] a signal written with Windows line endings is read the same;
+  - [x] a signal written with Windows line endings is read the same;
   - [x] Divlab finds the signals merged since it last ran, and routes each once;
   - [ ] work naming a task that does not exist, or is not the member's (section 4);
   - [ ] a signal that reaches `main` unreadable is recorded once as not accepted, with the
