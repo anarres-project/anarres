@@ -65,8 +65,10 @@ Divlab refuses work that changes files outside its role's place, naming them.
   member. Trust belongs to an account the four workers share, so scenarios that set it are
   tagged `@governance` and run one at a time (Cucumber's `atMostOnePicklePerTag`), and each
   takes out what it recorded when it ends.
-- Not yet run in the sandbox: waiting for the variable, and for the second account's token to
-  be approved.
+- With the variable set, "a member who wrote a module's code cannot review it" passed in the
+  sandbox, Alice made established in the sandbox's file, so it runs there. The scenarios needing
+  the second account still fail at its first write (403 "Resource not accessible by personal
+  access token"); Bernard to check the token's approval, then the organisation's base permission.
 
 ---
 

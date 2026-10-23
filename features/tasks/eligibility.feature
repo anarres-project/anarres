@@ -3,8 +3,7 @@ Feature: Who may take a task
   role in a module for its whole life: whoever wrote a module's tests never writes its code, and
   whoever produced any of it never reviews it. Divlab checks this when a member claims a task.
 
-  # Not yet in the sandbox: it has not passed there with the sandbox's governance file yet.
-  @governance @sandbox-wip
+  @governance
   Scenario: A member who wrote a module's code cannot review it
     Given a project with a module "parser"
     And Alice is an established member
