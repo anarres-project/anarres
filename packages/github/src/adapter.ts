@@ -152,12 +152,13 @@ export class GitHubAdapter
   async comments(project: string, task: string): Promise<{ member: string; text: string }[]> {
     const comments: { member: string; text: string }[] = [];
     for (let page = 1; ; page++) {
-      const listed = await this.call<{ user: { login: string }; body: string }[]>(
+      const listed = await this.call<{ user: { login: string } | null; body: string }[]>(
         "GET",
         `${this.repo(project)}/issues/${task}/comments?per_page=100&page=${page}`,
       );
+      // A deleted account's comments remain, but GitHub names nobody for them.
       comments.push(
-        ...listed.map((comment) => ({ member: comment.user.login, text: comment.body })),
+        ...listed.flatMap(({ user, body }) => (user ? [{ member: user.login, text: body }] : [])),
       );
       if (listed.length < 100) return comments;
     }

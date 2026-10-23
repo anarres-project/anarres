@@ -7429,7 +7429,9 @@ var SIGNAL_FILE = /^feedback\/[A-Za-z0-9-]+\.md$/;
 // ../core/src/leases.ts
 var LEASE_HOURS = 24;
 function leaseHasRunOut(lastActivity, now) {
-  return now.getTime() - Date.parse(lastActivity) >= LEASE_HOURS * 60 * 60 * 1e3;
+  const since = Date.parse(lastActivity);
+  if (Number.isNaN(since)) return true;
+  return now.getTime() - since >= LEASE_HOURS * 60 * 60 * 1e3;
 }
 
 // ../core/src/roles.ts
@@ -7922,7 +7924,7 @@ var GitHubAdapter = class {
         `${this.repo(project2)}/issues/${task}/comments?per_page=100&page=${page}`
       );
       comments.push(
-        ...listed.map((comment) => ({ member: comment.user.login, text: comment.body }))
+        ...listed.flatMap(({ user, body }) => user ? [{ member: user.login, text: body }] : [])
       );
       if (listed.length < 100) return comments;
     }

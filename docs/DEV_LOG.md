@@ -53,6 +53,21 @@ give a task back early.
 
 ---
 
+## 2026-10-23: Two small gaps in claims and leases
+
+- A comment by a deleted account comes from GitHub with no user, and reading the task's comments
+  failed on it. It is now left out: such a claim can win nothing.
+- A lease whose start cannot be read (the log is files people can edit) compared as never
+  running out, holding its task for ever. It now counts as run out.
+
+RED:      leave out a comment whose account has been deleted
+          -> TypeError: Cannot read properties of null (reading 'login')
+GREEN:    (78 passed)
+RED:      has run out if when it began cannot be read -> expected false to be true
+GREEN:    (122 passed)
+
+---
+
 ## 2026-10-23: Someone who does not hold a task cannot give it back, and is told
 
 - A release from anyone but the task's holder now gets a reply saying only the holder can give it

@@ -225,7 +225,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] the sandbox shows it (needs the second account);
   - [ ] when the earliest claim is not valid (once eligibility exists, section 3), the earliest
         valid one wins;
-  - [ ] a comment by a deleted account (GitHub gives no user) is read without failing;
+  - [x] a comment by a deleted account (GitHub gives no user) is left out, not a failure;
   - [ ] if GitHub's comment list lags and shows no claim yet, the member who asked gets the task:
         decided, kept as a test; revisit if the sandbox ever shows a list lagging that far.
 - [ ] A lease expires after 24 hours without activity, and the task becomes ready again.
@@ -235,7 +235,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         task done, or claimed since by someone else or by the same member again, is left alone;
   - [x] the lease running out is recorded in the log, with when, before the board shows it;
   - [x] the member is told their lease ran out (a reply on the task, giving core's 24 hours);
-  - [ ] a claim whose recorded time cannot be read is not taken to hold forever;
+  - [x] a claim whose recorded time cannot be read is not taken to hold forever: it has run out;
   - [ ] the sandbox shows the hourly check runs and frees nothing early (it cannot move GitHub's
         clock on 24 hours, so the scenarios that need that stay in-process);
   - [ ] GitHub turns off scheduled workflows in a public repository after 60 days without

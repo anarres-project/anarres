@@ -148,6 +148,27 @@ describe("a task's comments", () => {
     ]);
   });
 
+  it("leave out a comment whose account has been deleted: GitHub names nobody for it", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/issues/12/comments?per_page=100&page=1"
+        ) {
+          const comments = [
+            { user: null, body: "/claim" },
+            { user: { login: "bob" }, body: "/claim" },
+          ];
+          return { status: 200, data: comments as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.comments("ledger", "12")).toEqual([{ member: "bob", text: "/claim" }]);
+  });
+
   it("are read from every page, so no claim is missed on a busy task", async () => {
     const all = Array.from({ length: 150 }, (_, i) => ({
       user: { login: `m${i}` },
