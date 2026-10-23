@@ -86,4 +86,21 @@ describe("acting on a claim", () => {
     await onClaim("ledger", { task: "12", member: "alice" }, watched);
     expect([claimed, refused]).toEqual([[], []]);
   });
+
+  it("refuses a claim on something that is not a task, such as an alert or a finished task", async () => {
+    const { claimed, refused, watched } = watching({ claimsBy: ["alice"] });
+    watched.task = async () => undefined;
+    await onClaim("ledger", { task: "12", member: "alice" }, watched);
+    expect([claimed, refused]).toEqual([
+      [],
+      [
+        {
+          project: "ledger",
+          task: "12",
+          member: "alice",
+          reason: "it is not a task anyone can claim",
+        },
+      ],
+    ]);
+  });
 });

@@ -170,3 +170,32 @@ describe("a task's comments", () => {
     expect(await adapter.comments("ledger", "12")).toHaveLength(150);
   });
 });
+
+describe("the task an issue number names", () => {
+  /** A project with one issue, number 12, as GitHub would answer for it. */
+  const withIssue = (issue: { labels: string[]; state: string }) =>
+    new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (method === "GET" && path === "repos/commons/ledger/issues/12") {
+          const labels = issue.labels.map((name) => ({ name }));
+          return { status: 200, data: { ...issue, labels, body: "" } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+
+  it("is no task when the issue is an alert to PDC coordinators", async () => {
+    const adapter = withIssue({ labels: ["escalation", "module:parser"], state: "open" });
+    expect(await adapter.task("ledger", "12")).toBeUndefined();
+  });
+
+  it("is no task when the task's issue has been closed: it is done", async () => {
+    const adapter = withIssue({
+      labels: ["role:test", "module:parser", "state:ready"],
+      state: "closed",
+    });
+    expect(await adapter.task("ledger", "12")).toBeUndefined();
+  });
+});

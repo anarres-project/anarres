@@ -534,6 +534,24 @@ describe("acting on a pull request", () => {
     expect(closed).toEqual(["3"]);
   });
 
+  it("never closes an issue the work names that is not a task, such as an alert", async () => {
+    const closed: string[] = [];
+    const namingAnAlert = {
+      path: "feedback/FB-4.md",
+      text: '---\nfeedback_signal:\n  task_id: "3"\n  from_role: test\n  module: parser\n  verdict: pass\n---\n',
+    };
+    const closing: TaskBoard = {
+      ...board,
+      post: async () => {},
+      task: async () => undefined,
+      close: async (_project, task) => {
+        closed.push(task);
+      },
+    };
+    await onPullRequest("ledger", "9", submitting([], [namingAnAlert]), closing, log, clock);
+    expect(closed).toEqual([]);
+  });
+
   it("records which task the work was for in its decision", async () => {
     const appended: unknown[] = [];
     const forTask = {

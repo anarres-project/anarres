@@ -23,6 +23,7 @@ import {
   issueForTask,
   issueForUnprotectedMain,
   issueNumber,
+  isTask,
   type ListedIssue,
   labelsWhenClaimed,
   logFrom,
@@ -115,6 +116,7 @@ export class GitHubAdapter
     );
     if (status === 404) return undefined;
     if (status !== 200) throw new GitHubError("GET", `issue ${number}`, status, data);
+    if (!isTask(data)) return undefined;
     return taskFromIssue(data);
   }
 

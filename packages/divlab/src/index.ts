@@ -98,7 +98,11 @@ export async function onClaim(
   board: TaskBoard,
 ): Promise<void> {
   const task = await board.task(project, claim.task);
-  let holder = task?.claimedBy;
+  if (task === undefined) {
+    await board.refuseClaim({ project, ...claim, reason: "it is not a task anyone can claim" });
+    return;
+  }
+  let holder = task.claimedBy;
   if (holder === undefined) {
     // The first claim made wins, whichever claim's run Divlab hears of first.
     const comments = await board.comments(project, claim.task);
@@ -218,16 +222,17 @@ async function acceptSignal(
   events: LogEvent[],
 ): Promise<void> {
   const { task, ...work } = signal;
+  // Only an issue Divlab posted as a task, still open, is the work's task: nothing else is closed.
+  const posted = task === undefined ? undefined : await board.task(project, task);
   // Research work goes back to the role its task was for, as Divlab recorded on the task.
-  const researchFor =
-    task === undefined ? undefined : (await board.task(project, task))?.researchFor;
+  const researchFor = posted?.researchFor;
   await onWorkAccepted(
     {
       project,
       ...work,
       feedbackSignal: path,
       ...(researchFor === undefined ? {} : { researchFor }),
-      ...(task === undefined ? {} : { task }),
+      ...(task === undefined || posted === undefined ? {} : { task }),
     },
     board,
     log,

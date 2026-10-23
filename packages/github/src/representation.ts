@@ -35,11 +35,22 @@ export function issueForTask(task: PostedTask): NewIssue {
 }
 
 /** An issue as GitHub lists it: only what Divlab reads back. */
-export type ListedIssue = { labels: { name: string }[]; assignees?: { login: string }[] };
+export type ListedIssue = {
+  labels: { name: string }[];
+  assignees?: { login: string }[];
+  state?: string;
+};
 
 /** Whether an issue carries a label Divlab gives the tasks, alerts and finished modules it posts. */
 export const postedByDivlab = (issue: ListedIssue) =>
   issue.labels.some(({ name }) => [READY, CLAIMED, "escalation", "state:done"].includes(name));
+
+/**
+ * Whether an issue is one of Divlab's tasks, ready or claimed, and not an alert or anyone's own.
+ * A closed task keeps its labels but is done.
+ */
+export const isTask = (issue: ListedIssue): boolean =>
+  issue.state === "open" && issue.labels.some(({ name }) => name === READY || name === CLAIMED);
 
 /** A claimed task's labels: what it had, but claimed instead of ready. */
 export const labelsWhenClaimed = (issue: ListedIssue): string[] =>

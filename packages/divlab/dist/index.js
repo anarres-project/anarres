@@ -7600,6 +7600,7 @@ function issueForTask(task) {
   };
 }
 var postedByDivlab = (issue) => issue.labels.some(({ name }) => [READY, CLAIMED, "escalation", "state:done"].includes(name));
+var isTask = (issue) => issue.state === "open" && issue.labels.some(({ name }) => name === READY || name === CLAIMED);
 var labelsWhenClaimed = (issue) => issue.labels.map(({ name }) => name === READY ? CLAIMED : name);
 function taskFromIssue(issue) {
   const label = issue.labels.find(({ name }) => name.startsWith(RESEARCH_FOR));
@@ -7872,6 +7873,7 @@ var GitHubAdapter = class {
     );
     if (status === 404) return void 0;
     if (status !== 200) throw new GitHubError("GET", `issue ${number}`, status, data);
+    if (!isTask(data)) return void 0;
     return taskFromIssue(data);
   }
   async close(project2, task) {
@@ -8137,7 +8139,11 @@ function whatToActOn(name, event) {
 // src/index.ts
 async function onClaim(project2, claim, board) {
   const task = await board.task(project2, claim.task);
-  let holder = task?.claimedBy;
+  if (task === void 0) {
+    await board.refuseClaim({ project: project2, ...claim, reason: "it is not a task anyone can claim" });
+    return;
+  }
+  let holder = task.claimedBy;
   if (holder === void 0) {
     const comments = await board.comments(project2, claim.task);
     holder = comments.find((comment) => isClaim(comment.text))?.member ?? claim.member;
@@ -8183,14 +8189,15 @@ async function actOn(event, board, log) {
 var recordActing = ({ project: project2, work }, log) => log.append({ project: project2, actedOn: { feedbackSignal: work.feedbackSignal } });
 async function acceptSignal(project2, path, signal, board, log, clock, events) {
   const { task, ...work } = signal;
-  const researchFor = task === void 0 ? void 0 : (await board.task(project2, task))?.researchFor;
+  const posted = task === void 0 ? void 0 : await board.task(project2, task);
+  const researchFor = posted?.researchFor;
   await onWorkAccepted(
     {
       project: project2,
       ...work,
       feedbackSignal: path,
       ...researchFor === void 0 ? {} : { researchFor },
-      ...task === void 0 ? {} : { task }
+      ...task === void 0 || posted === void 0 ? {} : { task }
     },
     board,
     log,

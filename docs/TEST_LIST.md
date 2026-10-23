@@ -188,8 +188,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] a claimed task still shows the decision it came from was acted on;
   - [x] the sandbox runs the claiming scenario;
   - [ ] the claim is recorded in the project's log, with when Divlab took it (auditability);
-  - [ ] a claim on an issue that is not a ready task (an alert, a finished module, a member's
-        own issue, a closed task) is refused, and the member told why;
+  - [x] a claim on an issue that is not a task (an alert, a finished module, a member's own
+        issue, a closed task) is refused, and the member told why;
+  - [x] work whose feedback signal names an issue that is not an open task never closes it
+        (found while building the claim check: before, any issue named was closed);
+  - [ ] an acceptance scenario for each of these, once the harness can name a coordinator's alert
+        or a finished task as the thing claimed;
   - [ ] the claimant's name is checked as a GitHub account name before Divlab uses it;
   - [ ] comments that are not claims cost Divlab as little as possible and do not hold up its
         other runs (today each one starts a short run that does nothing; filtering earlier needs

@@ -49,6 +49,31 @@ been claimed; of claims made together the first made wins, whichever Divlab hear
 
 ---
 
+## 2026-10-23: Only a task is a task
+
+- Divlab asked the board for "the task" an issue number names, and the adapter answered for any
+  issue in the project: an alert, a finished task, anyone's own issue. So a claim on an alert
+  would have marked it claimed, and, older than claiming, work whose feedback signal named any
+  issue as its task closed that issue once merged. An issue is now a task only while it is open
+  and carries Divlab's ready or claimed label. A claim on anything else is refused, saying it is
+  not a task anyone can claim; merged work that names something else is routed as usual but
+  closes nothing, and its record names no task. Refusing such work outright is section 4's.
+- Covered by unit tests only, for now: the scenarios cannot yet name an alert or a finished task
+  as the thing claimed or worked on (on the test list).
+
+RED:      is no task when the issue is an alert to PDC coordinators -> expected {} to be undefined
+GREEN:    (262 passed)
+RED:      is no task when the task's issue has been closed: it is done -> expected {} to be undefined
+GREEN:    (263 passed)
+RED:      refuses a claim on something that is not a task, such as an alert or a finished task
+          -> expected [ [ {…} ], [] ] to deeply equal [ [], [ {…} ] ]
+GREEN:    (76 passed)
+RED:      never closes an issue the work names that is not a task, such as an alert
+          -> expected [ '3' ] to deeply equal []
+GREEN:    (265 passed)
+
+---
+
 ## 2026-10-23: The first claim made wins
 
 - Divlab's runs for a project go one at a time, but GitHub need not start them in the order the
