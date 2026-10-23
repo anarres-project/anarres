@@ -27,7 +27,7 @@ import {
 import { shortfall } from "./allowance.ts";
 import { GitHubApi } from "./github-api.ts";
 import { countedRequest, summary, tally } from "./request-tally.ts";
-import { leftBehind } from "./sweep.ts";
+import { leftBehind, sweptBy } from "./sweep.ts";
 
 /** The two sandbox organisations and their tokens, from `.env` locally or the CI environment. */
 function sandboxSettings() {
@@ -666,8 +666,14 @@ export class SandboxDriver implements Driver {
         repositories.push(...listed);
         if (listed.length < 100) break;
       }
+      // Every worker sweeps as the run starts, so others may be deleting the same repositories.
       for (const name of leftBehind(repositories, Date.now())) {
-        await github.call("DELETE", `repos/${owner}/${name}`);
+        const { status, data } = await github.request("DELETE", `repos/${owner}/${name}`);
+        if (!sweptBy(status)) {
+          throw new Error(
+            `GitHub DELETE repos/${owner}/${name} answered ${status}: ${JSON.stringify(data)}`,
+          );
+        }
         console.log(`Swept ${owner}/${name}, left behind by an interrupted run`);
       }
     }

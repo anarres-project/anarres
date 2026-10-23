@@ -18,3 +18,6 @@ export function leftBehind(
     .filter((repository) => now - Date.parse(repository.created_at) > RUN_LIMIT)
     .map((repository) => repository.name);
 }
+
+/** Whether GitHub's answer to deleting a left-behind repository means it is gone or going. */
+export const sweptBy = (status: number): boolean => [204, 404, 409].includes(status);
