@@ -4,8 +4,10 @@ import {
   Before,
   BeforeAll,
   type IWorldOptions,
+  parallelCanAssignHelpers,
   Status,
   setDefaultTimeout,
+  setParallelCanAssign,
   setWorldConstructor,
   World,
 } from "@cucumber/cucumber";
@@ -49,6 +51,10 @@ export class AnarresWorld extends World {
 
 setWorldConstructor(AnarresWorld);
 
+// In the sandbox, trust levels belong to accounts that every worker's scenarios share: scenarios
+// that set them run one at a time.
+setParallelCanAssign(parallelCanAssignHelpers.atMostOnePicklePerTag(["@governance"]));
+
 // Repositories an interrupted run left behind go first.
 BeforeAll(async () => {
   if (!sandbox) return;
@@ -62,9 +68,11 @@ Before(async () => {
 });
 
 // A worker whose scenario failed keeps its repositories, so what Divlab did can be looked at.
+// A scenario that set trust levels in the sandbox puts its governance file back, pass or fail.
 let failed = false;
-After(({ result }) => {
+After(async function (this: AnarresWorld, { result }) {
   if (result?.status === Status.FAILED) failed = true;
+  if (this.driver instanceof SandboxDriver) await this.driver.restoreGovernance();
 });
 
 // ANARRES_SANDBOX_KEEP=1, or a failed scenario, leaves the run's repositories in the sandbox to

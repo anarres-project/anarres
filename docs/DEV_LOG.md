@@ -57,6 +57,19 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-23: The sandbox's governance file
+
+- `anarres-sandbox/governance` holds the sandbox's governance file, empty to start (created with
+  the sandbox token, Bernard agreeing); Bernard adds the organisation variable naming it.
+- The sandbox driver records trust levels and linked accounts there, for the account playing the
+  member. Trust belongs to an account the four workers share, so scenarios that set it are
+  tagged `@governance` and run one at a time (Cucumber's `atMostOnePicklePerTag`), and each
+  takes out what it recorded when it ends.
+- Not yet run in the sandbox: waiting for the variable, and for the second account's token to
+  be approved.
+
+---
+
 ## 2026-10-23: A second account plays a second member in the sandbox
 
 - Bernard made a second GitHub account, `anarres-sandbox-member-b`, a member of the sandbox

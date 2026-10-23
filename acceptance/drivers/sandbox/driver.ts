@@ -590,12 +590,54 @@ export class SandboxDriver implements Driver {
     throw new HarnessNotYetBuilt("moving GitHub's clock on");
   }
 
-  async setTrustLevel(): Promise<void> {
-    throw new HarnessNotYetBuilt("setting a member's trust level in the sandbox's governance file");
+  /**
+   * The sandbox's governance file records the level for the account playing the member. Trust
+   * belongs to the account, which other workers' scenarios share, so scenarios that set it run one
+   * at a time (`@governance`), and each puts the file back afterwards.
+   */
+  async setTrustLevel(member: string, level: string): Promise<void> {
+    const login = await loginOf(await this.playAs(member));
+    await this.changeGovernance((members) => {
+      members[login] = { ...members[login], level };
+    });
+    this.governanceTouched.add(login);
   }
 
-  async linkAccount(): Promise<void> {
-    throw new HarnessNotYetBuilt("a governance file and a second account in the sandbox");
+  /** The sandbox's governance file links the account playing `account` to the member's. */
+  async linkAccount(member: string, account: string): Promise<void> {
+    const owner = await loginOf(await this.playAs(member));
+    const linked = await loginOf(await this.playAs(account));
+    await this.changeGovernance((members) => {
+      const record = members[owner] ?? {};
+      members[owner] = { ...record, linked: [...(record.linked ?? []), linked] };
+    });
+    this.governanceTouched.add(owner);
+  }
+
+  /** The governance file as this scenario found it: the accounts it recorded are taken out. */
+  async restoreGovernance(): Promise<void> {
+    if (this.governanceTouched.size === 0) return;
+    await this.changeGovernance((members) => {
+      for (const login of this.governanceTouched) delete members[login];
+    });
+  }
+
+  private readonly governanceTouched = new Set<string>();
+
+  private async changeGovernance(
+    change: (members: Record<string, { level?: string; linked?: string[] }>) => void,
+  ): Promise<void> {
+    const where = `repos/${this.org}/${SANDBOX_GOVERNANCE}/contents/governance/members.json`;
+    const { content, sha } = await this.github.call<{ content: string; sha: string }>("GET", where);
+    const file = JSON.parse(Buffer.from(content, "base64").toString("utf8")) as {
+      members: Record<string, { level?: string; linked?: string[] }>;
+    };
+    change(file.members);
+    await this.github.call("PUT", where, {
+      message: "Set members for a sandbox scenario",
+      content: Buffer.from(`${JSON.stringify(file, null, 2)}\n`).toString("base64"),
+      sha,
+    });
   }
 
   async timePasses(): Promise<void> {
@@ -891,6 +933,12 @@ export class SandboxDriver implements Driver {
 }
 
 type Listing = "ready" | "claimed" | "escalation" | "done" | "notAccepted";
+
+/**
+ * The sandbox organisation's repository holding its governance file, as its `ANARRES_GOVERNANCE`
+ * variable names it (decision 0007).
+ */
+const SANDBOX_GOVERNANCE = "governance";
 
 /** The App ID of Divlab Sandbox, the sandbox's GitHub App (CONTRIBUTING.md). Not a secret. */
 const DIVLAB_APP_ID = 5414648;
