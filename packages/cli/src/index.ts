@@ -1,4 +1,12 @@
-import { isPlainName, isRole, ROLE_NAMES, type Role, readScope } from "@anarres/core";
+import {
+  isPlainName,
+  isRole,
+  mayRead,
+  outsideScope,
+  ROLE_NAMES,
+  type Role,
+  readScope,
+} from "@anarres/core";
 import { eligibility, type LogEvent } from "@anarres/divlab";
 
 /** Anarres's projects, as a member's CLI reads them from GitHub with the member's own login. */
@@ -118,4 +126,94 @@ export function gitSteps(
     ],
     ["-C", into, "checkout", "--quiet", "--detach", "FETCH_HEAD"],
   ];
+}
+
+/** Whether the member's session may read or write a file while doing a task, and if not why. */
+export function scopeDecision(
+  task: { role: Role; module: string },
+  root: string,
+  path: string,
+  access: "read" | "write",
+): "allowed" | { refused: string } {
+  // Only the task's own folder: not the member's files, nor a folder whose name starts the same.
+  if (!path.startsWith(`${root}/`)) {
+    return {
+      refused: `${path} is outside this task's folder: Anarres keeps a task's session to it`,
+    };
+  }
+  const inFolder = path.slice(root.length + 1);
+  const role = ROLE_NAMES[task.role];
+  if (access === "write") {
+    // Where the role's work writes, its feedback signal included (concept §6).
+    if (outsideScope(task.role, task.module, [inFolder]).length === 0) return "allowed";
+    return {
+      refused: `${inFolder} is outside what ${role} may write for this task: Anarres keeps each role to its own place`,
+    };
+  }
+  if (mayRead(task.role, task.module, inFolder)) return "allowed";
+  return {
+    refused: `${inFolder} is outside what ${role} may read for this task: Anarres keeps each role to its own inputs`,
+  };
+}
+
+/** A tool call as Claude Code gives it to a PreToolUse hook: only what the hook reads. */
+export type ToolCall = { tool_name: string; tool_input: Record<string, unknown>; cwd: string };
+
+/** Claude Code's tools that change a file, and those that search a folder. */
+const WRITING_TOOLS = ["Write", "Edit"];
+const SEARCHING_TOOLS = ["Glob", "Grep"];
+
+/**
+ * A search may go ahead within the task's folder: its sparse checkout holds only what the role may
+ * read. Anywhere else is the member's own files.
+ */
+const searchDecision = (root: string, folder: string): "allowed" | { refused: string } =>
+  folder === root || folder.startsWith(`${root}/`)
+    ? "allowed"
+    : { refused: `${folder} is outside this task's folder: Anarres keeps a task's session to it` };
+
+/** What the read-scope hook tells Claude Code about a tool call: nothing when it may go ahead. */
+export function hookAnswer(
+  call: ToolCall,
+  task: { role: Role; module: string } | undefined,
+  root: string,
+): unknown {
+  const decision = !task
+    ? {
+        refused:
+          "This task's record cannot be read, so its scope is unknown: prepare the task again",
+      }
+    : SEARCHING_TOOLS.includes(call.tool_name)
+      ? searchDecision(root, String(call.tool_input.path ?? call.cwd))
+      : scopeDecision(
+          task,
+          root,
+          String(call.tool_input.file_path),
+          WRITING_TOOLS.includes(call.tool_name) ? "write" : "read",
+        );
+  if (decision === "allowed") return undefined;
+  return {
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
+      permissionDecisionReason: decision.refused,
+    },
+  };
+}
+
+/** The record prepare leaves in a task's folder, naming its role and module. */
+export const TASK_RECORD = ".anarres-task.json";
+
+/** The task a folder's record names, read as data: its role and module, if they are plain. */
+export function taskOfRecord(text: string): { role: Role; module: string } | undefined {
+  let record: { role?: unknown; module?: unknown };
+  try {
+    record = JSON.parse(text) as { role?: unknown; module?: unknown };
+  } catch {
+    return undefined;
+  }
+  const { role, module } = record;
+  return isRole(role) && typeof module === "string" && isPlainName(module)
+    ? { role, module }
+    : undefined;
 }

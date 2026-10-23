@@ -25,6 +25,23 @@ describe("the Anarres plugin, as members install it (concept §10)", () => {
     );
   });
 
+  it("guards Claude's file tools with the read-scope hook, run by the bundled CLI", () => {
+    const { hooks } = JSON.parse(repositoryFile("plugin/hooks/hooks.json"));
+    expect(hooks.PreToolUse).toEqual([
+      {
+        matcher: "Read|Edit|Write|Glob|Grep",
+        hooks: [
+          {
+            type: "command",
+            command: "node",
+            // biome-ignore lint/suspicious/noTemplateCurlyInString: Claude Code's placeholder, literally.
+            args: ["${CLAUDE_PLUGIN_ROOT}/cli/anarres.js", "hook"],
+          },
+        ],
+      },
+    ]);
+  });
+
   describe("its next skill, /anarres:next", () => {
     const skill = repositoryFile("plugin/skills/next/SKILL.md");
     const frontmatter = parse(skill.split("---")[1] ?? "");

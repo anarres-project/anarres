@@ -471,6 +471,15 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] an acceptance scenario: a member prepares a task they hold and has only its role's inputs
         (needs the harness to look at what was fetched);
 - [ ] The read-scope hook refuses a file outside the role's scope.
+  - [x] the plugin's PreToolUse hook, on Claude's file tools (Read, Edit, Write, Glob, Grep),
+        refuses, with a reason Claude sees, a read outside the role's read scope, a write outside
+        its write scope, and anything outside the task's folder; a folder whose record cannot be
+        read is refused entirely; outside any task folder it says nothing (tried by hand with the
+        bundle);
+  - [ ] its limits, stated: it cannot see files read through Bash, or files the member names with
+        `@`; hard enforcement is the sandbox's (concept §10) and permission rules';
+  - [ ] the other file tools (NotebookEdit and any Claude Code adds) are refused in a task
+        folder until judged.
 - [ ] A member who runs out of allowance can hand over partial work.
 
 ## Unsorted

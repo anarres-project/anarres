@@ -58,6 +58,42 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-23: The read-scope hook
+
+- The plugin now declares a PreToolUse hook on Claude's file tools, run by the bundled CLI. In a
+  task's folder (found from the session's working folder upward, by the record `prepare` now
+  leaves there), it refuses a read outside the role's read scope, a write outside its write
+  scope, and any file or search outside the folder, in the JSON form Claude Code documents so
+  Claude sees why. A folder whose record cannot be read is refused entirely: the hook fails
+  closed. Outside any task folder it says nothing. Tried by hand with the bundle.
+- Its limit, from Claude Code's documentation: a hook on the file tools does not see a file read
+  through Bash, or one the member names with `@`. It keeps an honest session to its inputs; the
+  sandbox and permission rules (concept §10) are what enforce it. On the test list.
+- The hook's format was checked against Claude Code's documentation first.
+
+RED:      lets the session read a file its role may read -> expected { refused: '' } to be 'allowed'
+GREEN:    (hard-coded)
+RED:      refuses a file its role may not read, saying why -> expected 'allowed'
+GREEN:    (25 passed)
+RED:      refuses the member's own files / a folder that only starts like the task's
+GREEN:    (27 passed)
+RED:      writes where its role writes, not where it only reads -> wrong decision
+GREEN:    (28 passed)
+RED:      denies a Read outside the scope, giving Claude the reason -> expected undefined
+GREEN:    (29 passed)
+RED:      judges a Write / an Edit as a write
+GREEN:    (31 passed)
+RED:      lets a search of the task's folder go ahead -> denied
+GREEN:    (34 passed)
+RED:      the record gives the task's role and module -> expected undefined
+GREEN:    (38 passed)
+RED:      the hook guards the file tools -> ENOENT (hooks.json)
+GREEN:    (39 passed)
+RED:      denies every call in a folder whose record cannot be read -> TypeError
+GREEN:    (40 passed)
+
+---
+
 ## 2026-10-23: Preparing a task
 
 - `anarres prepare project#number`, for a task the member holds whose issue names the commit its

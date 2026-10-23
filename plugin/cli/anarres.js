@@ -7368,8 +7368,29 @@ var require_dist = __commonJS({
 
 // src/main.ts
 import { execFileSync } from "node:child_process";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 
 // ../core/src/access.ts
+var WRITE_SCOPES = {
+  "programme-architect": () => "programme/",
+  architecture: (module) => `modules/${module}/architecture/`,
+  specification: (module) => `modules/${module}/specifications/`,
+  test: (module) => `modules/${module}/tests/`,
+  coding: (module) => `modules/${module}/src/`,
+  reviewer: (module) => `modules/${module}/reviews/`,
+  "security-and-quality": (module) => `modules/${module}/reviews/`,
+  research: () => "research-briefs/"
+};
+function outsideScope(role, module, paths) {
+  const signal = paths.find((path) => path.startsWith("feedback/"));
+  const scope = WRITE_SCOPES[role](module);
+  return paths.filter((path) => !isPlainPath(path) || path !== signal && !path.startsWith(scope));
+}
+var isPlainPath = (path) => !path.includes("\\") && path.split("/").every((part) => part !== "" && part !== "." && part !== "..");
+function mayRead(role, module, path) {
+  return isPlainPath(path) && readScope(role, module).some((scope) => path.startsWith(scope));
+}
 var READ_SCOPES = {
   "programme-architect": () => ["requirements/"],
   architecture: (module) => [`programme/slices/${module}/`],
@@ -7855,7 +7876,7 @@ function parsed(text) {
     return void 0;
   }
 }
-var pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+var pause = (ms) => new Promise((resolve2) => setTimeout(resolve2, ms));
 
 // ../github/src/adapter.ts
 var mainCommit = (listed) => ({
@@ -8099,7 +8120,7 @@ var GitHubAdapter = class {
       if (attempt === LOG_ATTEMPTS) {
         throw new GitHubError("POST", "graphql (event log)", 200, "the log lags behind its files");
       }
-      await new Promise((resolve) => setTimeout(resolve, 1e3));
+      await new Promise((resolve2) => setTimeout(resolve2, 1e3));
     }
   }
   /**
@@ -8314,9 +8335,75 @@ function gitSteps(fetch2, into) {
     ["-C", into, "checkout", "--quiet", "--detach", "FETCH_HEAD"]
   ];
 }
+function scopeDecision(task, root, path, access) {
+  if (!path.startsWith(`${root}/`)) {
+    return {
+      refused: `${path} is outside this task's folder: Anarres keeps a task's session to it`
+    };
+  }
+  const inFolder = path.slice(root.length + 1);
+  const role = ROLE_NAMES[task.role];
+  if (access === "write") {
+    if (outsideScope(task.role, task.module, [inFolder]).length === 0) return "allowed";
+    return {
+      refused: `${inFolder} is outside what ${role} may write for this task: Anarres keeps each role to its own place`
+    };
+  }
+  if (mayRead(task.role, task.module, inFolder)) return "allowed";
+  return {
+    refused: `${inFolder} is outside what ${role} may read for this task: Anarres keeps each role to its own inputs`
+  };
+}
+var WRITING_TOOLS = ["Write", "Edit"];
+var SEARCHING_TOOLS = ["Glob", "Grep"];
+var searchDecision = (root, folder) => folder === root || folder.startsWith(`${root}/`) ? "allowed" : { refused: `${folder} is outside this task's folder: Anarres keeps a task's session to it` };
+function hookAnswer(call, task, root) {
+  const decision = !task ? {
+    refused: "This task's record cannot be read, so its scope is unknown: prepare the task again"
+  } : SEARCHING_TOOLS.includes(call.tool_name) ? searchDecision(root, String(call.tool_input.path ?? call.cwd)) : scopeDecision(
+    task,
+    root,
+    String(call.tool_input.file_path),
+    WRITING_TOOLS.includes(call.tool_name) ? "write" : "read"
+  );
+  if (decision === "allowed") return void 0;
+  return {
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
+      permissionDecisionReason: decision.refused
+    }
+  };
+}
+var TASK_RECORD = ".anarres-task.json";
+function taskOfRecord(text) {
+  let record;
+  try {
+    record = JSON.parse(text);
+  } catch {
+    return void 0;
+  }
+  const { role, module } = record;
+  return isRole(role) && typeof module === "string" && isPlainName(module) ? { role, module } : void 0;
+}
 
 // src/main.ts
+function taskFolderOf(cwd) {
+  for (let folder = resolve(cwd); ; folder = dirname(folder)) {
+    const record = join(folder, TASK_RECORD);
+    if (existsSync(record))
+      return { root: folder, task: taskOfRecord(readFileSync(record, "utf8")) };
+    if (dirname(folder) === folder) return void 0;
+  }
+}
 var [command, named] = process.argv.slice(2);
+if (command === "hook") {
+  const call = JSON.parse(readFileSync(0, "utf8"));
+  const found = taskFolderOf(call.cwd);
+  const answer = found && hookAnswer(call, found.task, found.root);
+  if (answer) console.log(JSON.stringify(answer));
+  process.exit(0);
+}
 if (command !== "next" && !((command === "claim" || command === "prepare") && named)) {
   console.error(
     "Usage: anarres next | anarres claim project#number | anarres prepare project#number"
@@ -8353,6 +8440,11 @@ try {
     }
     const into = `anarres-work/${task.project}-${task.task}`;
     for (const step of gitSteps(plan, into)) execFileSync("git", step, { stdio: "inherit" });
+    const held = await github.task(task.project, task.task);
+    writeFileSync(
+      join(into, TASK_RECORD),
+      JSON.stringify({ role: held?.role, module: held?.module })
+    );
     console.log(`Fetched into ${into}, as at ${plan.commit}: ${plan.paths.join(", ")}`);
     process.exit(0);
   }
