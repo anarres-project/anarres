@@ -58,6 +58,26 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-23: Two sandbox failures from 8df85b3, and their fixes
+
+- The full sandbox run for 8df85b3 failed 5 of 80. One worker's Divlab run got a 502 from GitHub
+  on its merge, failing its run; that worker's later scenarios were thrown off by it. Divlab
+  now asks GitHub whether a merge it got a server error for happened after all, and carries on
+  with its commit if so; if not, it fails as before.
+- The scenario catching a change to main saw no alert, though it had passed alone. The kept
+  repositories showed why: the driver went on as soon as Divlab recorded its decision, while
+  Divlab's run was still writing; the scenario's direct change landed before Divlab's first check
+  of main, which took it as the project's starting point. The sandbox driver now waits for each
+  Divlab run to finish, marked by the record of how far it checked main that ends every run, and
+  waits for GitHub's list of change alerts to show one for each direct change that took.
+- (Before the setup records where checking starts, the same gap exists for real projects: a
+  change made between setting up and Divlab's first run is not checked. On the test list.)
+
+RED:      carries on with the merge's commit if GitHub merged it after all -> Error: answered 502
+GREEN:    (105 passed); not merged still fails: passed first time, kept
+
+---
+
 ## 2026-10-23: Read scopes, and tasks pinned to a commit
 
 - Core holds the access matrix's read scopes beside its write scopes: each module role reads

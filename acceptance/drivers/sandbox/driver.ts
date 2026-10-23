@@ -263,9 +263,17 @@ export class SandboxDriver implements Driver {
 
   /** Divlab's comments on the pull requests it did not merge. */
   /** The sandbox token is an administrator's: if main refuses it, it refuses every person. */
-  /** The commits PDC coordinators were told reached main without Divlab, from their alerts. */
+  /**
+   * The commits PDC coordinators were told reached main without Divlab, from their alerts, once
+   * GitHub's list shows one for each direct change that took.
+   */
   async changesNotByDivlab(project: string): Promise<string[]> {
-    const issues = await this.issues(project, "change-not-by-divlab", "all");
+    const deadline = Date.now() + LISTS_CATCH_UP_LIMIT;
+    let issues = await this.issues(project, "change-not-by-divlab", "all");
+    while (issues.length < (this.directChanges.get(project) ?? 0) && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+      issues = await this.issues(project, "change-not-by-divlab", "all");
+    }
     return issues.flatMap((issue) => {
       const commit = issue.body?.match(/\n`{3,}\n\S+ (\S+)\n`{3,}$/)?.[1];
       return commit ? [commit] : [];
@@ -278,8 +286,13 @@ export class SandboxDriver implements Driver {
       `repos/${this.org}/${project}/contents/not-through-divlab.md`,
       { message: "A change that skips Divlab", content: Buffer.from("No.\n").toString("base64") },
     );
-    return status >= 200 && status < 300;
+    const took = status >= 200 && status < 300;
+    if (took) this.directChanges.set(project, (this.directChanges.get(project) ?? 0) + 1);
+    return took;
   }
+
+  /** How many changes someone made to each project's main directly, which Divlab will alert. */
+  private readonly directChanges = new Map<string, number>();
 
   /** The workflows the project's active Actions policies allow to run on pull requests. */
   async pullRequestChecks(project: string): Promise<string[]> {
@@ -376,6 +389,25 @@ export class SandboxDriver implements Driver {
     if ("tasks" in decision) expected.ready += decision.tasks.length;
     if ("alert" in decision) expected.escalation += 1;
     if ("moduleDone" in decision) expected.done += 1;
+    await this.runFinished(project, path);
+  }
+
+  /**
+   * Waits for Divlab's run on the work to finish, not just decide: every run ends by checking
+   * main and recording how far it checked, so that record after the decision marks the end. A
+   * step that changes the project while Divlab is still writing would race it.
+   */
+  private async runFinished(project: string, path: string): Promise<void> {
+    const deadline = Date.now() + 60_000;
+    for (;;) {
+      const events = await this.divlab.read(project);
+      const decided = events.findIndex((e) => signalOf(e) === path && "work" in e);
+      if (events.slice(decided + 1).some((e) => "mainChecked" in e)) return;
+      if (Date.now() > deadline) {
+        throw new Error(`Divlab's run on ${path} in ${project} did not finish`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 3_000));
+    }
   }
 
   /** Divlab's record of the work, which it writes just after it merges. */

@@ -456,12 +456,21 @@ export class GitHubAdapter
   }
 
   async merge(project: string, pullRequest: string, head: string): Promise<string> {
-    const { sha } = await this.call<{ sha: string }>(
-      "PUT",
-      `${this.repo(project)}/pulls/${pullRequest}/merge`,
-      { sha: head, merge_method: "squash" },
-    );
-    return sha;
+    const where = `${this.repo(project)}/pulls/${pullRequest}/merge`;
+    const { status, data } = await this.request<{ sha: string }>("PUT", where, {
+      sha: head,
+      merge_method: "squash",
+    });
+    if (status >= 200 && status < 300) return data.sha;
+    // A server error does not say whether the merge happened: GitHub's pull request does.
+    if (status >= 500) {
+      const pull = await this.call<{ merged: boolean; merge_commit_sha: string }>(
+        "GET",
+        `${this.repo(project)}/pulls/${pullRequest}`,
+      );
+      if (pull.merged) return pull.merge_commit_sha;
+    }
+    throw new GitHubError("PUT", where, status, data);
   }
 
   async refuse(project: string, pullRequest: string, reason: string): Promise<void> {

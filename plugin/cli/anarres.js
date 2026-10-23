@@ -8158,12 +8158,20 @@ var GitHubAdapter = class {
     return merge_commit_sha;
   }
   async merge(project, pullRequest, head) {
-    const { sha } = await this.call(
-      "PUT",
-      `${this.repo(project)}/pulls/${pullRequest}/merge`,
-      { sha: head, merge_method: "squash" }
-    );
-    return sha;
+    const where = `${this.repo(project)}/pulls/${pullRequest}/merge`;
+    const { status, data } = await this.request("PUT", where, {
+      sha: head,
+      merge_method: "squash"
+    });
+    if (status >= 200 && status < 300) return data.sha;
+    if (status >= 500) {
+      const pull = await this.call(
+        "GET",
+        `${this.repo(project)}/pulls/${pullRequest}`
+      );
+      if (pull.merged) return pull.merge_commit_sha;
+    }
+    throw new GitHubError("PUT", where, status, data);
   }
   async refuse(project, pullRequest, reason) {
     await this.call("POST", `${this.repo(project)}/issues/${pullRequest}/comments`, {
