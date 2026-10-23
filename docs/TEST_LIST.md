@@ -383,7 +383,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [x] Work that touches files outside the role's write scope is rejected, naming the offending
       paths: core holds the access matrix's write scopes, once, and one feedback signal per task;
       a path with an empty, `.` or `..` part, or a backslash, is outside every scope (in-process);
-  - [ ] the sandbox shows it (tagged until it has passed there);
+  - [x] the sandbox shows it;
   - [ ] the read scopes, for the plugin's sparse checkout and hooks (section 5).
 - [ ] Work without a valid feedback signal is rejected, saying what is missing.
 - [ ] Work for a task the member has not claimed is rejected.

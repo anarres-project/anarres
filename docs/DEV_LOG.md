@@ -67,6 +67,10 @@ Divlab refuses work that changes files outside its role's place, naming them.
 - Scenarios with two members come back to the sandbox once each has passed there: claiming,
   the claim record, giving a task back, the draft. Three have three members (whoever did the
   earlier work, Alice and Bob) and wait for a third account.
+- The write-scope scenario passed in the sandbox, so it runs there. The two-member scenarios
+  failed at the second account's first comment: GitHub answered 403 "Resource not accessible by
+  personal access token", though the account can read the repositories; most likely the
+  organisation is waiting to approve the token (Bernard to check).
 - Correction: the commits held for the allowance's reset at 10:39 were not pushed then, as said;
   they go out with this one.
 
