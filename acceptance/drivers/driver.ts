@@ -102,6 +102,8 @@ export interface Driver {
   claimedTasks(project: string): Promise<ClaimedTask[]>;
   /** The member asks to give the task back, before its lease runs out. */
   release(task: { project: string; role: string; module: string }, member: string): Promise<void>;
+  /** The tasks a member is offered when they ask for work, as their plugin shows them. */
+  offeredTasks(member: string): Promise<{ role: string; module: string }[]>;
   /** PDC coordinators record the member at a trust level, as the governance file does. */
   setTrustLevel(member: string, level: string): Promise<void>;
   /** PDC coordinators link a second account to a member in the governance file. */

@@ -427,6 +427,14 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 ## 5. The member's side (CLI and plugin)
 
 - [ ] A member asking for work is offered ready tasks matching their eligible roles.
+  - [x] the CLI (`packages/cli`, `askForWork`) offers the ready tasks across Anarres's projects
+        the member may take, by the same rule Divlab applies to claims (`eligibility`, exported
+        from Divlab, so the rule is stated once) (in-process);
+  - [ ] a task naming a role Anarres does not have is left out (written for the types; to pin);
+  - [ ] the CLI reads Anarres's projects from GitHub with the member's own login: which projects
+        have ready tasks, each one's log, the governance file;
+  - [ ] the `anarres next` command, and `/anarres:next` in the plugin, calling it;
+  - [ ] offers are ranked by priority and size (concept §8).
 - [ ] Preparing a task fetches only the files the role may read, at the pinned versions.
 - [ ] The read-scope hook refuses a file outside the role's scope.
 - [ ] A member who runs out of allowance can hand over partial work.

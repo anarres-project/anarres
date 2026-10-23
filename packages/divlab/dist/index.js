@@ -8336,6 +8336,15 @@ var mergedParts = (events) => routingDecisions(events).flatMap(
     }
   ]
 );
+function eligibility(governance, events) {
+  const memberOf = (account) => memberFor(governance, account);
+  const history = parts(events).map((part) => ({ ...part, member: memberOf(part.member) }));
+  return (account, task) => mayTake(
+    { member: memberOf(account), role: task.role, module: task.module },
+    history,
+    trustLevelOf(governance, memberOf(account))
+  );
+}
 async function onClaim(project2, claim, board, log, clock, members) {
   const task = await board.task(project2, claim.task);
   if (task === void 0) {
@@ -8346,18 +8355,9 @@ async function onClaim(project2, claim, board, log, clock, members) {
     });
     return;
   }
-  const governance = await members.governanceFile();
-  const memberOf = (account) => memberFor(governance, account);
   const events = await log.read(project2);
-  const history = parts(events).map((part) => ({
-    ...part,
-    member: memberOf(part.member)
-  }));
-  const allowed = (account) => mayTake(
-    { member: memberOf(account), role: task.role, module: task.module },
-    history,
-    trustLevelOf(governance, memberOf(account))
-  );
+  const mayClaim = eligibility(await members.governanceFile(), events);
+  const allowed = (account) => mayClaim(account, task);
   const asker = allowed(claim.member);
   if (asker !== "allowed") {
     await board.refuseMember({

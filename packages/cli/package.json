@@ -1,0 +1,11 @@
+{
+  "name": "@anarres/cli",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@anarres/core": "*",
+    "@anarres/divlab": "*"
+  }
+}

@@ -384,6 +384,29 @@ export class Anarres {
     );
   }
 
+  /** What each member was offered when they last asked for work, by member. */
+  private readonly offers = new Map<string, Work[]>();
+
+  async memberAsksForWork(member: string) {
+    this.offers.set(member, await this.driver.offeredTasks(this.member(member)));
+  }
+
+  async memberIsOffered(member: string, task: Work) {
+    const offered = this.offers.get(member) ?? [];
+    assert.ok(
+      offered.some((t) => t.role === task.role && t.module === this.aliases.of(task.module)),
+      `expected ${member} to be offered the ${task.role} task for ${task.module}; offered ${JSON.stringify(offered)}`,
+    );
+  }
+
+  async memberIsNotOffered(member: string, task: Work) {
+    const offered = this.offers.get(member) ?? [];
+    assert.ok(
+      !offered.some((t) => t.role === task.role && t.module === this.aliases.of(task.module)),
+      `expected ${member} not to be offered the ${task.role} task for ${task.module}`,
+    );
+  }
+
   async memberIsToldTaskIsTaken(member: string) {
     const told = await this.driver.claimRefusals(this.project);
     assert.ok(

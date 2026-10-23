@@ -1,3 +1,4 @@
+import { askForWork } from "@anarres/cli";
 import {
   checkMain,
   checkProtection,
@@ -261,6 +262,18 @@ export class InProcessDriver implements Driver {
 
   async linkAccount(member: string, account: string): Promise<void> {
     this.github.linkAccount(member, account);
+  }
+
+  /** The member asks for work through the CLI their plugin calls, reading the fake GitHub. */
+  async offeredTasks(member: string): Promise<{ role: string; module: string }[]> {
+    const offers = await askForWork(member, {
+      names: async () => [...this.github.repositories.keys()],
+      readyTasks: async (project) =>
+        this.github.readyTasks(project).map(({ id, role, module }) => ({ id, role, module })),
+      log: (project) => this.github.read(project),
+      governanceFile: () => this.github.governanceFile(),
+    });
+    return offers.map(({ role, module }) => ({ role: roleName(role), module }));
   }
 
   async timePasses(hours: number): Promise<void> {

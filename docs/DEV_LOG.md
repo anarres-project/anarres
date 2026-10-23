@@ -51,9 +51,31 @@ anything but an open task is refused; each claim granted is recorded in the log.
 hourly check makes the task ready again (in-process). Divlab never merges a draft. A member can
 give a task back early. Section 3 under way: a member takes one role in a module for its whole
 life (decision 0007), and Divlab refuses a claim that breaks it, or that the member's trust level
-does not allow; accounts a PDC coordinator linked are one member (in-process: the sandbox needs
-a governance file of its own). Section 3 is built but for what the sandbox needs. Section 4:
+does not allow; accounts a PDC coordinator linked are one member. Section 3 is built. Every
+Divlab run checks every change to main. Section 5 has begun: the CLI offers a member the ready
+tasks they may take (in-process). Section 4:
 Divlab refuses work that changes files outside its role's place, naming them.
+
+---
+
+## 2026-10-23: A member asks for work
+
+- Section 5 begins. A new package, `packages/cli`, will hold the `anarres` CLI the plugin calls.
+  Its first piece, `askForWork`, offers a member the ready tasks across Anarres's projects that
+  they may take: their trust level, linked accounts and part in each project, from the
+  governance file and each project's log.
+- The rule for who may take a task was inside Divlab's `onClaim`; it is now Divlab's exported
+  `eligibility`, which `onClaim` and the CLI both use, so it is stated once. A filter written in
+  core for the same purpose a moment before was deleted, unused.
+- The scenario runs in-process; the CLI's reading of GitHub is next.
+- The sandbox run for 826cbed (the main check after every run): see the next entry.
+
+RED:      (core) offers what the member may take -> expected [] to deeply equal [ … ] (later deleted)
+GREEN:    (175 passed)
+REFACTOR: eligibility(governance, events), extracted from onClaim (140 passed)
+RED:      offers the ready tasks, across Anarres's projects, that the member may take
+          -> expected [] to deeply equal [ { project: 'ledger', …(3) } ]
+GREEN:    (411 passed; the scenario passes in-process)
 
 ---
 

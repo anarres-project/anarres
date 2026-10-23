@@ -16,7 +16,7 @@ import type {
   ReadyTask,
   RoutingRecord,
 } from "../driver.ts";
-import { HarnessNotYetBuilt } from "../errors.ts";
+import { HarnessNotYetBuilt, NotYetImplemented } from "../errors.ts";
 import {
   feedbackSignalFile,
   inScenarioWords,
@@ -647,6 +647,10 @@ export class SandboxDriver implements Driver {
       content: Buffer.from(`${JSON.stringify(file, null, 2)}\n`).toString("base64"),
       sha,
     });
+  }
+
+  async offeredTasks(): Promise<{ role: string; module: string }[]> {
+    throw new NotYetImplemented("asking for work");
   }
 
   async timePasses(): Promise<void> {

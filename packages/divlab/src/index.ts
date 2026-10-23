@@ -186,6 +186,23 @@ export interface Members {
   governanceFile(): Promise<unknown>;
 }
 
+/**
+ * Who may take which of a project's tasks: the trust levels and linked accounts in the governance
+ * file, and each member's part in the project as its log shows (concept §6, decision 0007). The
+ * one statement of it Divlab and the member's CLI both use.
+ */
+export function eligibility(governance: unknown, events: readonly LogEvent[]) {
+  // Accounts a PDC coordinator linked are one member, for every rule (concept §6).
+  const memberOf = (account: string) => memberFor(governance, account);
+  const history = parts(events).map((part) => ({ ...part, member: memberOf(part.member) }));
+  return (account: string, task: { role: Role; module: string }) =>
+    mayTake(
+      { member: memberOf(account), role: task.role, module: task.module },
+      history,
+      trustLevelOf(governance, memberOf(account)),
+    );
+}
+
 /** A member asks to claim a task. */
 export async function onClaim(
   project: string,
@@ -205,20 +222,9 @@ export async function onClaim(
     return;
   }
   // A member the conflict-of-interest rules bar from the task is told why (decision 0007).
-  const governance = await members.governanceFile();
-  // Accounts a PDC coordinator linked are one member, for every rule (concept §6).
-  const memberOf = (account: string) => memberFor(governance, account);
   const events = await log.read(project);
-  const history = parts(events).map((part) => ({
-    ...part,
-    member: memberOf(part.member),
-  }));
-  const allowed = (account: string) =>
-    mayTake(
-      { member: memberOf(account), role: task.role, module: task.module },
-      history,
-      trustLevelOf(governance, memberOf(account)),
-    );
+  const mayClaim = eligibility(await members.governanceFile(), events);
+  const allowed = (account: string) => mayClaim(account, task);
   const asker = allowed(claim.member);
   if (asker !== "allowed") {
     await board.refuseMember({
