@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   type EventLog,
+  type LogEvent,
   type NotAccepted,
   onMerge,
   onPullRequest,
@@ -367,37 +368,19 @@ describe("acting on a merge", () => {
     expect(seen.posted).toEqual([]);
   });
 
-  it("reads past the claims in the log, which are about no feedback signal", async () => {
+  it.each([
+    ["a claim", { claimed: { task: "12", member: "alice" } }],
+    ["a lease that ran out", { leaseRanOut: { task: "12", member: "alice" } }],
+    ["activity on a task", { activity: { task: "12", member: "alice" } }],
+  ])("reads past %s in the log, which is about no feedback signal", async (_kind, record) => {
     const { seen, watchedBoard, watchedLog } = watching();
-    const withClaim: EventLog = {
+    const withRecord: EventLog = {
       ...watchedLog,
       read: async () => [
-        {
-          project: "ledger",
-          decidedAt: "2026-10-22T08:00:00.000Z",
-          claimed: { task: "12", member: "alice" },
-        },
+        { project: "ledger", decidedAt: "2026-10-22T08:00:00.000Z", ...record } as LogEvent,
       ],
     };
-    await onMerge("ledger", onMain(passedSpecification), watchedBoard, withClaim, clock);
-    expect(seen.alerts.map((alert) => alert.notAccepted.feedbackSignal)).toEqual([
-      "feedback/FB-9.md",
-    ]);
-  });
-
-  it("reads past leases that ran out in the log, which are about no feedback signal", async () => {
-    const { seen, watchedBoard, watchedLog } = watching();
-    const withLeaseRanOut: EventLog = {
-      ...watchedLog,
-      read: async () => [
-        {
-          project: "ledger",
-          decidedAt: "2026-10-22T08:00:00.000Z",
-          leaseRanOut: { task: "12", member: "alice" },
-        },
-      ],
-    };
-    await onMerge("ledger", onMain(passedSpecification), watchedBoard, withLeaseRanOut, clock);
+    await onMerge("ledger", onMain(passedSpecification), watchedBoard, withRecord, clock);
     expect(seen.alerts.map((alert) => alert.notAccepted.feedbackSignal)).toEqual([
       "feedback/FB-9.md",
     ]);
@@ -450,7 +433,7 @@ describe("acting on a pull request", () => {
     files: { path: string; text: string }[] = [specificationPasses],
     refusals: string[] = [],
   ): PullRequests => ({
-    head: async () => "c0ffee",
+    pullRequest: async () => ({ head: "c0ffee", draft: false, author: "alice" }),
     changedFiles: async () => files,
     merge: async (_project, pullRequest) => {
       merged.push(pullRequest);
@@ -460,6 +443,82 @@ describe("acting on a pull request", () => {
     },
   });
   const log: EventLog = { read: async () => [], append: async () => {} };
+
+  it("does not merge a draft: its member has not finished the work", async () => {
+    const merged: string[] = [];
+    const draft: PullRequests = {
+      ...submitting(merged),
+      pullRequest: async () => ({ head: "c0ffee", draft: true, author: "alice" }),
+    };
+    await onPullRequest("ledger", "7", draft, { ...board, post: async () => {} }, log, clock);
+    expect(merged).toEqual([]);
+  });
+
+  it("records a draft from the member holding its task as activity on the task", async () => {
+    const appended: unknown[] = [];
+    const forTask = {
+      path: "feedback/FB-4.md",
+      text: '---\nfeedback_signal:\n  task_id: "12"\n  from_role: test\n  module: parser\n  verdict: pass\n---\n',
+    };
+    const draft: PullRequests = {
+      ...submitting([], [forTask]),
+      pullRequest: async () => ({ head: "c0ffee", draft: true, author: "alice" }),
+    };
+    const recording: EventLog = {
+      read: async () => [],
+      append: async (event) => {
+        appended.push(event);
+      },
+    };
+    const held: TaskBoard = { ...board, task: async () => ({ claimedBy: "alice" }) };
+    await onPullRequest("ledger", "7", draft, held, recording, clock);
+    expect(appended).toEqual([
+      {
+        project: "ledger",
+        decidedAt: "2026-10-22T09:00:00.000Z",
+        activity: { task: "12", member: "alice" },
+      },
+    ]);
+  });
+
+  it("records no activity for a draft from someone who does not hold its task", async () => {
+    const appended: unknown[] = [];
+    const forTask = {
+      path: "feedback/FB-4.md",
+      text: '---\nfeedback_signal:\n  task_id: "12"\n  from_role: test\n  module: parser\n  verdict: pass\n---\n',
+    };
+    const draft: PullRequests = {
+      ...submitting([], [forTask]),
+      pullRequest: async () => ({ head: "c0ffee", draft: true, author: "mallory" }),
+    };
+    const recording: EventLog = {
+      read: async () => [],
+      append: async (event) => {
+        appended.push(event);
+      },
+    };
+    const held: TaskBoard = { ...board, task: async () => ({ claimedBy: "alice" }) };
+    await onPullRequest("ledger", "7", draft, held, recording, clock);
+    expect(appended).toEqual([]);
+  });
+
+  it("says nothing about a draft with no feedback signal yet, and records nothing", async () => {
+    const merged: string[] = [];
+    const refusals: string[] = [];
+    const appended: unknown[] = [];
+    const draft: PullRequests = {
+      ...submitting(merged, [], refusals),
+      pullRequest: async () => ({ head: "c0ffee", draft: true, author: "alice" }),
+    };
+    const recording: EventLog = {
+      read: async () => [],
+      append: async (event) => {
+        appended.push(event);
+      },
+    };
+    await onPullRequest("ledger", "7", draft, board, recording, clock);
+    expect([merged, refusals, appended]).toEqual([[], [], []]);
+  });
 
   it("merges a pull request whose feedback signal it can read", async () => {
     const merged: string[] = [];

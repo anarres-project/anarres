@@ -3,8 +3,11 @@ name: Divlab (pull requests)
 # Divlab validates a member's pull request and, if it passes, merges it and routes the work
 # (decision 0006). This event runs the workflow as this project's main branch has it, never as
 # the pull request has it, so nothing a pull request changes can run here.
+# A draft is work under way: Divlab never merges one, but counts it as activity on its task. It
+# runs again when the member marks the draft ready.
 on:
   pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 # The workflow's own token gets nothing: Divlab acts only with its App's token.
 permissions: {}

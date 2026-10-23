@@ -123,12 +123,14 @@ export class InProcessDriver implements Driver {
 
   async submitWork(work: AcceptedWork): Promise<void> {
     const fromRole = roleId(work.role);
-    // The member's feedback signal names the task the work was for.
+    // The member's feedback signal names the task the work was for, ready or claimed by them.
     const task = this.github
-      .readyTasks(work.project)
+      .openTasksOf(work.project)
       .find((task) => task.role === fromRole && task.module === work.module);
     const { path, text } = feedbackSignalFile(work, task?.id);
-    const pullRequest = this.github.openPullRequest(work.project, [{ path, text }]);
+    const pullRequest = this.github.openPullRequest(work.project, [{ path, text }], {
+      author: work.member,
+    });
     await onPullRequest(
       work.project,
       pullRequest,
@@ -145,12 +147,14 @@ export class InProcessDriver implements Driver {
     const opened = works.map((work) => {
       const fromRole = roleId(work.role);
       const task = this.github
-        .readyTasks(work.project)
+        .openTasksOf(work.project)
         .find((task) => task.role === fromRole && task.module === work.module);
       const { path, text } = feedbackSignalFile(work, task?.id);
       return {
         project: work.project,
-        pullRequest: this.github.openPullRequest(work.project, [{ path, text }]),
+        pullRequest: this.github.openPullRequest(work.project, [{ path, text }], {
+          author: work.member,
+        }),
       };
     });
     for (const { project, pullRequest } of opened) {
@@ -224,6 +228,24 @@ export class InProcessDriver implements Driver {
 
   async divlabChecksLeases(project: string): Promise<void> {
     await onLeaseCheck(project, this.github, this.github, this.clock);
+  }
+
+  /** The member opens a draft for the task they hold, as their plugin will, early in the work. */
+  async submitDraftWork(work: AcceptedWork): Promise<void> {
+    const id = this.openTaskId(work);
+    const { path, text } = feedbackSignalFile(work, id);
+    const pullRequest = this.github.openPullRequest(work.project, [{ path, text }], {
+      author: work.member,
+      draft: true,
+    });
+    await onPullRequest(
+      work.project,
+      pullRequest,
+      this.github,
+      this.github,
+      this.github,
+      this.clock,
+    );
   }
 
   async claimedTasks(project: string): Promise<ClaimedTask[]> {

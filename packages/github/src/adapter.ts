@@ -290,12 +290,16 @@ export class GitHubAdapter
     );
   }
 
-  async head(project: string, pullRequest: string): Promise<string> {
-    const { head } = await this.call<{ head: { sha: string } }>(
-      "GET",
-      `${this.repo(project)}/pulls/${pullRequest}`,
-    );
-    return head.sha;
+  async pullRequest(
+    project: string,
+    pullRequest: string,
+  ): Promise<{ head: string; draft: boolean; author: string }> {
+    const { head, draft, user } = await this.call<{
+      head: { sha: string };
+      draft: boolean;
+      user: { login: string };
+    }>("GET", `${this.repo(project)}/pulls/${pullRequest}`);
+    return { head: head.sha, draft, author: user.login };
   }
 
   /**

@@ -24,6 +24,15 @@ describe("the project template's pull request workflow (decision 0006)", () => {
   it("runs only as the project's main branch has it, never as a pull request has it", () => {
     expect(Object.keys(workflow.on)).toEqual(["pull_request_target"]);
   });
+
+  it("runs when a member marks a draft ready, as well as when work is opened or pushed to", () => {
+    expect(workflow.on.pull_request_target.types).toEqual([
+      "opened",
+      "synchronize",
+      "reopened",
+      "ready_for_review",
+    ]);
+  });
 });
 
 describe("the project template's claim workflow", () => {

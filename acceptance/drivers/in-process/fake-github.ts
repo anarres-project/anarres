@@ -132,29 +132,38 @@ export class FakeGitHub
     this.files.set(project, files);
   }
 
-  private readonly pullRequests: { project: string; files: { path: string; text: string }[] }[] =
-    [];
+  private readonly pullRequests: {
+    project: string;
+    files: { path: string; text: string }[];
+    author: string;
+    draft: boolean;
+  }[] = [];
   private readonly mergedPullRequests: string[] = [];
 
   /** A member opens a pull request; it is identified by its number, as on GitHub. */
-  openPullRequest(project: string, files: { path: string; text: string }[]): string {
-    this.pullRequests.push({ project, files });
+  openPullRequest(
+    project: string,
+    files: { path: string; text: string }[],
+    { author, draft = false }: { author: string; draft?: boolean },
+  ): string {
+    this.pullRequests.push({ project, files, author, draft });
     return String(this.pullRequests.length);
   }
 
-  async head(_project: string, pullRequest: string): Promise<string> {
-    return `head-of-${pullRequest}`;
+  async pullRequest(_project: string, number: string) {
+    const { author, draft } = this.opened(number);
+    return { head: `head-of-${number}`, draft, author };
   }
 
   async changedFiles(_project: string, pullRequest: string) {
-    return this.pullRequest(pullRequest).files;
+    return this.opened(pullRequest).files;
   }
 
   /** The next merge succeeds, and then Divlab's run stops dead, as if its runner were lost. */
   interruptAfterNextMerge = false;
 
   async merge(project: string, pullRequest: string): Promise<void> {
-    for (const { path, text } of this.pullRequest(pullRequest).files)
+    for (const { path, text } of this.opened(pullRequest).files)
       this.mergeFile(project, path, text);
     this.mergedPullRequests.push(pullRequest);
     if (this.interruptAfterNextMerge) {
@@ -176,12 +185,12 @@ export class FakeGitHub
   /** The files of the pull requests merged into a project. */
   mergedFiles(project: string): string[] {
     return this.mergedPullRequests
-      .map((number) => this.pullRequest(number))
+      .map((number) => this.opened(number))
       .filter((pullRequest) => pullRequest.project === project)
       .flatMap((pullRequest) => pullRequest.files.map((file) => file.path));
   }
 
-  private pullRequest(number: string) {
+  private opened(number: string) {
     const pullRequest = this.pullRequests[Number(number) - 1];
     if (!pullRequest) throw new Error(`There is no pull request ${number}`);
     return pullRequest;

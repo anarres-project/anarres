@@ -47,7 +47,56 @@ sandbox; a claimed task stays with its holder, and anyone else claiming it is to
 been claimed; of claims made together the first made wins, whichever Divlab hears of first
 (both in-process: the sandbox needs a second account to play another member); a claim on
 anything but an open task is refused; each claim granted is recorded in the log. A lease runs out
-24 hours after its claim, and Divlab's hourly check makes the task ready again (in-process).
+24 hours after the last activity on its task, the claim or draft work by its holder, and Divlab's
+hourly check makes the task ready again (in-process). Divlab never merges a draft.
+
+---
+
+## 2026-10-23: Draft work renews the lease
+
+- Divlab merged a draft like any other pull request, though a draft is the member saying the work
+  is not finished. Now it never merges one. A draft whose feedback signal names a task the
+  draft's author holds is recorded as activity on that task, and a lease runs from the latest
+  activity by its holder. A draft with no signal yet is passed over in silence. The pull request
+  workflow now also runs when a draft is marked ready, which by default it did not.
+- `PullRequests.head` became `pullRequest`: the head, the draft flag and the author from one read
+  of GitHub, not three.
+- `signalOf` now names only the kinds of event that carry a feedback signal, so a new kind is about
+  none by default: three kinds in a row had needed a test to stop them crashing it.
+- The sandbox runs: 88d9088 passed all 69. f7a16eb failed 8, all in one worker whose fork GitHub
+  then reported as an empty repository, while GitHub was answering requests with 504s. Not
+  Anarres; on the test list in case it recurs.
+- Slip: the lease check's member test on activity was written before its test; taken out, the
+  test failed for the right reason, and it went back.
+
+RED:      does not merge a draft: its member has not finished the work -> expected [ '7' ] to deeply equal []
+GREEN:    (95 passed)
+RED:      records a draft from the member holding its task as activity on the task
+          -> expected [] to deeply equal [ { project: 'ledger', …(2) } ]
+GREEN:    (96 passed)
+RED:      reads past activity on tasks in the log -> TypeError: Cannot read properties of undefined
+GREEN:    (97 passed)
+REFACTOR: signalOf names only the kinds with a signal; the "reads past" tests are one table
+RED:      records no activity for a draft from someone who does not hold its task
+          -> expected [ {…} ] to deeply equal []
+GREEN:    (98 passed)
+          A draft with no feedback signal yet: passed first time (its early return came with the
+          first draft test, for the types); kept as a regression test.
+RED:      judges a lease by the latest activity on its task, such as draft work
+          -> expected [ '12' ] to deeply equal []
+GREEN:    (100 passed)
+RED:      renews a lease only with activity by the member holding it -> expected [] to deeply equal [ '12' ]
+GREEN:    (101 passed)
+REFACTOR: PullRequests.pullRequest, one read for head, draft and author
+RED:      is read as the commit it is at, whether it is a draft, and who opened it
+          -> expected { …draft: false… } to deeply equal { …draft: true… }
+GREEN:    (296 passed)
+RED:      reads back a record of activity on a task -> Error: The event file cannot be read
+GREEN:    (297 passed)
+REFACTOR: claims, leases and activity share one check when read back
+RED:      runs when a member marks a draft ready, as well as when work is opened or pushed to
+          -> TypeError: Cannot read properties of null (reading 'types')
+GREEN:    (102 passed)
 
 ---
 

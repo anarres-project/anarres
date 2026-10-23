@@ -7629,14 +7629,12 @@ function eventFile(event, sequence) {
 `
   };
 }
+var namesTaskAndMember = (value) => isObject2(value) && typeof value.task === "string" && typeof value.member === "string";
 function eventFromFile(content) {
   const event = JSON.parse(content);
-  if (isObject2(event) && isObject2(event.claimed) && typeof event.claimed.task === "string" && typeof event.claimed.member === "string") {
-    return event;
-  }
-  if (isObject2(event) && isObject2(event.leaseRanOut) && typeof event.leaseRanOut.task === "string" && typeof event.leaseRanOut.member === "string") {
-    return event;
-  }
+  if (isObject2(event) && namesTaskAndMember(event.claimed)) return event;
+  if (isObject2(event) && namesTaskAndMember(event.leaseRanOut)) return event;
+  if (isObject2(event) && namesTaskAndMember(event.activity)) return event;
   if (isObject2(event) && isObject2(event.actedOn) && typeof event.actedOn.feedbackSignal === "string") {
     return event;
   }
@@ -8042,12 +8040,9 @@ var GitHubAdapter = class {
       })
     );
   }
-  async head(project2, pullRequest) {
-    const { head } = await this.call(
-      "GET",
-      `${this.repo(project2)}/pulls/${pullRequest}`
-    );
-    return head.sha;
+  async pullRequest(project2, pullRequest) {
+    const { head, draft, user } = await this.call("GET", `${this.repo(project2)}/pulls/${pullRequest}`);
+    return { head: head.sha, draft, author: user.login };
   }
   /**
    * What the pull request changes, as text read through the API; nothing is checked out. Each
@@ -8179,31 +8174,35 @@ async function onClaim(project2, claim, board, log, clock) {
   }
 }
 async function onLeaseCheck(project2, board, log, clock) {
-  const latest = /* @__PURE__ */ new Map();
+  const leases = /* @__PURE__ */ new Map();
   for (const event of await log.read(project2)) {
-    if ("claimed" in event) latest.set(event.claimed.task, event);
-  }
-  for (const claim of latest.values()) {
-    if (!leaseHasRunOut(claim.decidedAt, clock())) continue;
-    const task = await board.task(project2, claim.claimed.task);
-    if (task?.claimedBy === claim.claimed.member) {
-      const ranOut = {
-        project: project2,
-        decidedAt: clock().toISOString(),
-        leaseRanOut: claim.claimed
-      };
-      await log.append(ranOut);
-      await board.releaseClaim(project2, claim.claimed.task);
+    if ("claimed" in event) {
+      leases.set(event.claimed.task, { ...event.claimed, since: event.decidedAt });
     }
+    if ("activity" in event) {
+      const lease = leases.get(event.activity.task);
+      if (lease?.member === event.activity.member) lease.since = event.decidedAt;
+    }
+  }
+  for (const { task, member, since } of leases.values()) {
+    if (!leaseHasRunOut(since, clock())) continue;
+    if ((await board.task(project2, task))?.claimedBy !== member) continue;
+    const ranOut = {
+      project: project2,
+      decidedAt: clock().toISOString(),
+      leaseRanOut: { task, member }
+    };
+    await log.append(ranOut);
+    await board.releaseClaim(project2, task);
   }
 }
 var routingDecisions = (log) => log.filter((event) => "work" in event);
 var signalOf = (event) => {
-  if ("claimed" in event || "leaseRanOut" in event) return void 0;
   if ("work" in event) return event.work.feedbackSignal;
   if ("aboutToMerge" in event) return event.aboutToMerge.feedbackSignal;
   if ("actedOn" in event) return event.actedOn.feedbackSignal;
-  return event.notAccepted.feedbackSignal;
+  if ("notAccepted" in event) return event.notAccepted.feedbackSignal;
+  return void 0;
 };
 async function onWorkAccepted(event, board, log, clock, events) {
   const { project: project2, task, ...work } = event;
@@ -8287,9 +8286,20 @@ async function onMerge(project2, repository, board, log, clock) {
   }
 }
 async function onPullRequest(project2, pullRequest, pullRequests, board, log, clock) {
-  const head = await pullRequests.head(project2, pullRequest);
+  const { head, draft, author } = await pullRequests.pullRequest(project2, pullRequest);
   const files = await pullRequests.changedFiles(project2, pullRequest);
   const feedback = files.find((file2) => file2.path.startsWith("feedback/"));
+  if (draft) {
+    const signal2 = readFeedbackSignal(feedback?.text ?? "");
+    if ("unreadable" in signal2 || signal2.task === void 0) return;
+    if ((await board.task(project2, signal2.task))?.claimedBy !== author) return;
+    await log.append({
+      project: project2,
+      decidedAt: clock().toISOString(),
+      activity: { task: signal2.task, member: author }
+    });
+    return;
+  }
   if (feedback === void 0) {
     await pullRequests.refuse(
       project2,

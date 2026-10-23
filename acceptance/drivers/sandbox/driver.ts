@@ -157,13 +157,20 @@ export class SandboxDriver implements Driver {
     }
   }
 
-  private async openPullRequest(work: AcceptedWork) {
+  private async openPullRequest(work: AcceptedWork, { draft = false } = {}) {
     const repository = `repos/${this.org}/${work.project}`;
     const fromRole = roleId(work.role);
-    const task = (await this.settled(work.project, "ready")).find(
-      (issue) =>
-        labelValue(issue, "role:") === fromRole && labelValue(issue, "module:") === work.module,
-    );
+    const forWork = (issue: Issue) =>
+      labelValue(issue, "role:") === fromRole && labelValue(issue, "module:") === work.module;
+    // The task the work is for: ready, or claimed by the member doing it.
+    const ready = (await this.settled(work.project, "ready")).find(forWork);
+    const claimed =
+      ready ??
+      (this.expectedFor(work.project).claimed > 0
+        ? (await this.settled(work.project, "claimed")).find(forWork)
+        : undefined);
+    const task = ready ?? claimed;
+    const listing: Listing = ready ? "ready" : "claimed";
     const fork = await this.forkOf(work.project);
     const { object: main } = await this.members.call<{ object: { sha: string } }>(
       "GET",
@@ -184,13 +191,19 @@ export class SandboxDriver implements Driver {
       title: `The ${work.role} work on ${work.module}`,
       head: `${this.membersOrg}:${branch}`,
       base: "main",
+      draft,
     });
-    return { number, path, task };
+    return { number, path, task, listing };
   }
 
   private async awaitDecision(
     work: AcceptedWork,
-    { number, path, task }: { number: number; path: string; task: Issue | undefined },
+    {
+      number,
+      path,
+      task,
+      listing,
+    }: { number: number; path: string; task: Issue | undefined; listing: Listing },
     merged: boolean,
   ): Promise<void> {
     run.submitted.push({
@@ -199,7 +212,7 @@ export class SandboxDriver implements Driver {
       feedbackSignal: work.feedbackSignal,
       merged,
     });
-    if (merged) await this.expectWhatDivlabDecided(work.project, path, task);
+    if (merged) await this.expectWhatDivlabDecided(work.project, path, task, listing);
   }
 
   /**
@@ -318,14 +331,19 @@ export class SandboxDriver implements Driver {
   }
 
   /** What GitHub's lists should show once they catch up with what Divlab recorded for the work. */
-  private async expectWhatDivlabDecided(project: string, path: string, task?: Issue) {
+  private async expectWhatDivlabDecided(
+    project: string,
+    path: string,
+    task: Issue | undefined,
+    listing: Listing,
+  ) {
     // The event log is consistent at once and says what Divlab did; the issue lists lag behind.
     const expected = this.expectedFor(project);
     const event = await this.eventFor(project, path, "routed");
     if (!("work" in event))
       throw new Error(`Divlab recorded no decision for ${path} in ${project}`);
     if (task) {
-      expected.ready -= 1;
+      expected[listing] -= 1;
       run.closed.add(issueKey(project, task.number));
     }
     const { decision } = event;
@@ -484,6 +502,32 @@ export class SandboxDriver implements Driver {
 
   async divlabChecksLeases(): Promise<void> {
     throw new HarnessNotYetBuilt("moving GitHub's clock on");
+  }
+
+  /**
+   * The member opens a draft for the task they hold, as their plugin will, early in the work.
+   * Divlab never merges a draft; the driver waits for its record of the activity.
+   */
+  async submitDraftWork(work: AcceptedWork): Promise<void> {
+    const opened = await this.openPullRequest(work, { draft: true });
+    run.submitted.push({
+      project: work.project,
+      number: opened.number,
+      feedbackSignal: work.feedbackSignal,
+      merged: false,
+    });
+    const task = String(opened.task?.number);
+    const deadline = Date.now() + RUN_FINISH_LIMIT;
+    for (;;) {
+      const events = await this.divlab.read(work.project);
+      if (events.some((e) => "activity" in e && e.activity.task === task)) return;
+      if (Date.now() > deadline) {
+        throw new Error(
+          `Divlab recorded no activity for draft ${opened.number} in ${work.project}`,
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, 3_000));
+    }
   }
 
   async claimedTasks(project: string): Promise<ClaimedTask[]> {

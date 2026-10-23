@@ -282,6 +282,21 @@ export class Anarres {
     );
   }
 
+  /** The member opens their work as a draft: not finished, but under way. */
+  async memberSubmitsDraftWork(member: string, work: Work) {
+    this.signalsWritten += 1;
+    const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
+    this.feedbackSignals.set(workOn(this.aliased(work)), feedbackSignal);
+    await this.driver.submitDraftWork({
+      impediments: [],
+      verdict: "pass",
+      ...this.aliased(work),
+      project: this.project,
+      member: this.member(member),
+      feedbackSignal,
+    });
+  }
+
   async timePasses(hours: number) {
     await this.driver.timePasses(hours);
   }

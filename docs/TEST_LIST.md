@@ -242,6 +242,16 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         activity: a quiet project's leases would stop being checked;
   - [ ] work submitted for a task whose lease ran out (section 4: the task it was claimed for).
 - [ ] Submitting draft work extends the lease.
+  - [x] Divlab never merges a draft, and says nothing about one with no feedback signal yet;
+  - [x] a draft whose feedback signal names a task the draft's author holds is recorded as
+        activity on the task, and the lease runs from the latest such activity; a draft from
+        anyone else renews nothing;
+  - [x] Divlab runs again when a member marks a draft ready, and acts on it as on any work;
+  - [ ] the sandbox shows a draft is not merged and is recorded (tagged until it has passed);
+  - [ ] each push to a draft is activity too (the workflow runs on it; to be shown);
+  - [ ] work for a task whose holder is someone else is refused (section 4);
+  - [ ] the sandbox re-forks a project whose fork GitHub reports empty (seen 2026-10-23: one
+        worker's fork broke mid-run while GitHub was answering 504s, failing its 8 scenarios).
 - [ ] A member can release a task early.
 
 ## 3. Eligibility and conflict of interest

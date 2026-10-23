@@ -102,6 +102,13 @@ export type LeaseRanOut = {
   leaseRanOut: { task: string; member: string };
 };
 
+/** Activity on a task by the member holding it, such as draft work: it renews their lease. */
+export type Activity = {
+  project: string;
+  decidedAt: string;
+  activity: { task: string; member: string };
+};
+
 /** A claim Divlab refused, and why, in words the member would recognise. */
 export type ClaimRefused = ClaimedTask & { reason: string };
 
@@ -147,23 +154,28 @@ export async function onLeaseCheck(
   log: EventLog,
   clock: Clock,
 ): Promise<void> {
-  // Each task's latest claim is the one that holds it now, if any does.
-  const latest = new Map<string, Claimed>();
+  // Each task's latest claim is the one that holds it now, if any does, and its lease runs from
+  // the last activity on the task by that claim's member: the claim, or work since.
+  const leases = new Map<string, { task: string; member: string; since: string }>();
   for (const event of await log.read(project)) {
-    if ("claimed" in event) latest.set(event.claimed.task, event);
-  }
-  for (const claim of latest.values()) {
-    if (!leaseHasRunOut(claim.decidedAt, clock())) continue;
-    const task = await board.task(project, claim.claimed.task);
-    if (task?.claimedBy === claim.claimed.member) {
-      const ranOut: LeaseRanOut = {
-        project,
-        decidedAt: clock().toISOString(),
-        leaseRanOut: claim.claimed,
-      };
-      await log.append(ranOut);
-      await board.releaseClaim(project, claim.claimed.task);
+    if ("claimed" in event) {
+      leases.set(event.claimed.task, { ...event.claimed, since: event.decidedAt });
     }
+    if ("activity" in event) {
+      const lease = leases.get(event.activity.task);
+      if (lease?.member === event.activity.member) lease.since = event.decidedAt;
+    }
+  }
+  for (const { task, member, since } of leases.values()) {
+    if (!leaseHasRunOut(since, clock())) continue;
+    if ((await board.task(project, task))?.claimedBy !== member) continue;
+    const ranOut: LeaseRanOut = {
+      project,
+      decidedAt: clock().toISOString(),
+      leaseRanOut: { task, member },
+    };
+    await log.append(ranOut);
+    await board.releaseClaim(project, task);
   }
 }
 
@@ -175,8 +187,14 @@ export interface Repository {
 
 /** Members' pull requests: what each would change, read as data, and merging it. */
 export interface PullRequests {
-  /** The commit the pull request is at now. */
-  head(project: string, pullRequest: string): Promise<string>;
+  /**
+   * The pull request as it is now: the commit it is at, whether its member marked it a draft (work
+   * under way, not finished), and who opened it, by GitHub's account name.
+   */
+  pullRequest(
+    project: string,
+    pullRequest: string,
+  ): Promise<{ head: string; draft: boolean; author: string }>;
   changedFiles(project: string, pullRequest: string): Promise<{ path: string; text: string }[]>;
   /** Merges the pull request only if it is still at `head`. */
   merge(project: string, pullRequest: string, head: string): Promise<void>;
@@ -200,19 +218,26 @@ export type ActedOn = { project: string; actedOn: { feedbackSignal: string } };
 
 /** What the event log holds: routing decisions and acting on them, merges begun, and what Divlab
  * did not accept. */
-export type LogEvent = RoutingEvent | ActedOn | AboutToMerge | NotAccepted | Claimed | LeaseRanOut;
+export type LogEvent =
+  | RoutingEvent
+  | ActedOn
+  | AboutToMerge
+  | NotAccepted
+  | Claimed
+  | LeaseRanOut
+  | Activity;
 
 /** The routing decisions in a log, which are all its history routing depends on. */
 export const routingDecisions = (log: readonly LogEvent[]): RoutingEvent[] =>
   log.filter((event): event is RoutingEvent => "work" in event);
 
-/** The feedback signal an event is about, whichever kind of event it is; a lease's are about none. */
+/** The feedback signal an event is about, if any: claims, leases and activity are about none. */
 export const signalOf = (event: LogEvent): string | undefined => {
-  if ("claimed" in event || "leaseRanOut" in event) return undefined;
   if ("work" in event) return event.work.feedbackSignal;
   if ("aboutToMerge" in event) return event.aboutToMerge.feedbackSignal;
   if ("actedOn" in event) return event.actedOn.feedbackSignal;
-  return event.notAccepted.feedbackSignal;
+  if ("notAccepted" in event) return event.notAccepted.feedbackSignal;
+  return undefined;
 };
 
 /** Where Divlab records its decisions: one file per event in the project repository. */
@@ -356,9 +381,22 @@ export async function onPullRequest(
   clock: Clock,
 ): Promise<void> {
   // Read at one commit and merge only that commit: anything pushed since has not been checked.
-  const head = await pullRequests.head(project, pullRequest);
+  const { head, draft, author } = await pullRequests.pullRequest(project, pullRequest);
   const files = await pullRequests.changedFiles(project, pullRequest);
   const feedback = files.find((file) => file.path.startsWith("feedback/"));
+  if (draft) {
+    // Work under way: never merged, but activity on the task it is for.
+    const signal = readFeedbackSignal(feedback?.text ?? "");
+    if ("unreadable" in signal || signal.task === undefined) return;
+    // Only the member holding the task renews its lease: nobody else can keep a task held.
+    if ((await board.task(project, signal.task))?.claimedBy !== author) return;
+    await log.append({
+      project,
+      decidedAt: clock().toISOString(),
+      activity: { task: signal.task, member: author },
+    });
+    return;
+  }
   if (feedback === undefined) {
     await pullRequests.refuse(
       project,

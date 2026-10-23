@@ -2,6 +2,7 @@ import { ROLE_NAMES, type Role, readMergedWork, readRoutingRecord } from "@anarr
 import type {
   AboutToMerge,
   ActedOn,
+  Activity,
   Claimed,
   ClaimRefused,
   FinishedModule,
@@ -90,25 +91,16 @@ export function eventFile(event: LogEvent, sequence: number): { path: string; co
   };
 }
 
+/** A claim, a lease that ran out, or activity: each names a task and the member it concerns. */
+const namesTaskAndMember = (value: unknown): boolean =>
+  isObject(value) && typeof value.task === "string" && typeof value.member === "string";
+
 /** Event files can be edited by people, so what is read back is checked, never assumed. */
 export function eventFromFile(content: string): LogEvent {
   const event: unknown = JSON.parse(content);
-  if (
-    isObject(event) &&
-    isObject(event.claimed) &&
-    typeof event.claimed.task === "string" &&
-    typeof event.claimed.member === "string"
-  ) {
-    return event as Claimed;
-  }
-  if (
-    isObject(event) &&
-    isObject(event.leaseRanOut) &&
-    typeof event.leaseRanOut.task === "string" &&
-    typeof event.leaseRanOut.member === "string"
-  ) {
-    return event as LeaseRanOut;
-  }
+  if (isObject(event) && namesTaskAndMember(event.claimed)) return event as Claimed;
+  if (isObject(event) && namesTaskAndMember(event.leaseRanOut)) return event as LeaseRanOut;
+  if (isObject(event) && namesTaskAndMember(event.activity)) return event as Activity;
   if (
     isObject(event) &&
     isObject(event.actedOn) &&

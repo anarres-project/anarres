@@ -69,6 +69,8 @@ export interface Driver {
   acceptWork(work: AcceptedWork): Promise<void>;
   /** The member opens a pull request with their work, for Divlab to validate and merge. */
   submitWork(work: AcceptedWork): Promise<void>;
+  /** The member opens a draft pull request with their work so far. */
+  submitDraftWork(work: AcceptedWork): Promise<void>;
   /** Members open pull requests together, before Divlab has decided on any of them. */
   submitWorkAtOnce(works: AcceptedWork[]): Promise<void>;
   /** The feedback signals of the submitted work Divlab has merged. */

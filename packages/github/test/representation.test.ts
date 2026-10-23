@@ -1,5 +1,6 @@
 import type {
   AboutToMerge,
+  Activity,
   Claimed,
   LeaseRanOut,
   NotAccepted,
@@ -176,6 +177,15 @@ describe("a routing event as a file", () => {
       leaseRanOut: { task: "12", member: "alice" },
     };
     expect(eventFromFile(eventFile(ranOut, 5).content)).toEqual(ranOut);
+  });
+
+  it("reads back a record of activity on a task", () => {
+    const activity: Activity = {
+      project: "ledger",
+      decidedAt: "2026-10-24T08:00:00.000Z",
+      activity: { task: "12", member: "alice" },
+    };
+    expect(eventFromFile(eventFile(activity, 6).content)).toEqual(activity);
   });
 
   it("is refused, saying why, when the work it was about to merge could not be routed", () => {

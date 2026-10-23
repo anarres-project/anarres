@@ -138,4 +138,52 @@ describe("checking a project's leases", () => {
       ],
     ]);
   });
+
+  it("judges a lease by the latest activity on its task, such as draft work", async () => {
+    const released: string[] = [];
+    const watched: TaskBoard = {
+      ...board,
+      task: async () => ({ claimedBy: "alice" }),
+      releaseClaim: async (_project, task) => {
+        released.push(task);
+      },
+    };
+    const workedOnSince: EventLog = {
+      read: async () => [
+        ...(await claimedLongAgo.read("ledger")),
+        {
+          project: "ledger",
+          decidedAt: "2026-10-23T09:00:00.000Z",
+          activity: { task: "12", member: "alice" },
+        },
+      ],
+      append: async () => {},
+    };
+    await onLeaseCheck("ledger", watched, workedOnSince, clock);
+    expect(released).toEqual([]);
+  });
+
+  it("renews a lease only with activity by the member holding it", async () => {
+    const released: string[] = [];
+    const watched: TaskBoard = {
+      ...board,
+      task: async () => ({ claimedBy: "alice" }),
+      releaseClaim: async (_project, task) => {
+        released.push(task);
+      },
+    };
+    const someoneElse: EventLog = {
+      read: async () => [
+        ...(await claimedLongAgo.read("ledger")),
+        {
+          project: "ledger",
+          decidedAt: "2026-10-23T09:00:00.000Z",
+          activity: { task: "12", member: "bob" },
+        },
+      ],
+      append: async () => {},
+    };
+    await onLeaseCheck("ledger", watched, someoneElse, clock);
+    expect(released).toEqual(["12"]);
+  });
 });
