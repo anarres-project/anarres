@@ -72,11 +72,23 @@ export const labelsWhenClaimed = (issue: ListedIssue): string[] =>
   issue.labels.map(({ name }) => (name === READY ? CLAIMED : name));
 
 /** What Divlab recorded on a task when it posted it. */
-export function taskFromIssue(issue: ListedIssue): { researchFor?: string; claimedBy?: string } {
-  const label = issue.labels.find(({ name }) => name.startsWith(RESEARCH_FOR));
+export function taskFromIssue(
+  issue: ListedIssue,
+): { role: Role; module: string; researchFor?: string; claimedBy?: string } | undefined {
+  const labelled = (prefix: string) =>
+    issue.labels.find(({ name }) => name.startsWith(prefix))?.name.slice(prefix.length);
+  // Labels can be changed by anyone who triages: a task names a role Anarres has, and a module.
+  const role = labelled("role:");
+  const module = labelled("module:");
+  if (role === undefined || !Object.hasOwn(ROLE_NAMES, role) || module === undefined) {
+    return undefined;
+  }
+  const researchFor = labelled(RESEARCH_FOR);
   const claimant = issue.assignees?.[0]?.login;
   return {
-    ...(label === undefined ? {} : { researchFor: label.name.slice(RESEARCH_FOR.length) }),
+    role: role as Role,
+    module,
+    ...(researchFor === undefined ? {} : { researchFor }),
     // Assigning is open to anyone who triages: only Divlab's claimed label makes a task held.
     ...(claimant !== undefined && issue.labels.some(({ name }) => name === CLAIMED)
       ? { claimedBy: claimant }

@@ -23,6 +23,8 @@ Feature: Leases
     And Divlab checks the project's leases
     Then the Test task for "parser" is claimed by Alice
 
+  # Not in the sandbox: one account plays every member there, so it cannot show two members.
+  @sandbox-wip
   Scenario: Divlab does not merge draft work
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict

@@ -151,7 +151,7 @@ Every role also writes one feedback signal per task to `feedback/`. Only Divlab 
 
 **Conflict-of-interest rules**, enforced by Divlab when a task is claimed:
 
-- A member may hold at most one role per module.
+- A member may hold at most one role per module, over the module's whole life: their merged work and any task they hold count, and they may always revise their own role's work. Research is not a role in a module (decision 0007).
 - A member who produced any artefact in a module (Architecture, Specification, Test or Coding) may not take the Reviewer or Security & Quality role for that module.
 - Two accounts that are linked by a PDC coordinator, or flagged as suspected duplicates, are treated as one member.
 

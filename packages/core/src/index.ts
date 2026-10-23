@@ -1,3 +1,4 @@
+export { mayTake, type Part } from "./eligibility.ts";
 export {
   type FeedbackSignal,
   readFeedbackSignal,

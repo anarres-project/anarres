@@ -18,7 +18,7 @@ Then(
 Given(
   "{word} has claimed the {role} task for {string}",
   function (this: AnarresWorld, member: string, role: string, module: string) {
-    return this.anarres.memberClaims(member, { role, module });
+    return this.anarres.memberHasClaimed(member, { role, module });
   },
 );
 

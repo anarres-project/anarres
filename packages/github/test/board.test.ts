@@ -212,6 +212,15 @@ describe("the task an issue number names", () => {
     expect(await adapter.task("ledger", "12")).toBeUndefined();
   });
 
+  it.each([
+    ["no role", ["module:parser", "state:ready"]],
+    ["a role Anarres does not have", ["role:bystander", "module:parser", "state:ready"]],
+    ["no module", ["role:test", "state:ready"]],
+  ])("is no task when the issue names %s", async (_what, labels) => {
+    const adapter = withIssue({ labels, state: "open" });
+    expect(await adapter.task("ledger", "12")).toBeUndefined();
+  });
+
   it("is no task when the task's issue has been closed: it is done", async () => {
     const adapter = withIssue({
       labels: ["role:test", "module:parser", "state:ready"],

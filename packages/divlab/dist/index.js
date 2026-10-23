@@ -308,26 +308,26 @@ var require_directives = __commonJS({
           this.tags = Object.assign({}, _Directives.defaultTags);
           this.atNextDocument = false;
         }
-        const parts = line.trim().split(/[ \t]+/);
-        const name = parts.shift();
+        const parts2 = line.trim().split(/[ \t]+/);
+        const name = parts2.shift();
         switch (name) {
           case "%TAG": {
-            if (parts.length !== 2) {
+            if (parts2.length !== 2) {
               onError(0, "%TAG directive should contain exactly two parts");
-              if (parts.length < 2)
+              if (parts2.length < 2)
                 return false;
             }
-            const [handle, prefix] = parts;
+            const [handle, prefix] = parts2;
             this.tags[handle] = prefix;
             return true;
           }
           case "%YAML": {
             this.yaml.explicit = true;
-            if (parts.length !== 1) {
+            if (parts2.length !== 1) {
               onError(0, "%YAML directive should contain exactly one part");
               return false;
             }
-            const [version] = parts;
+            const [version] = parts2;
             if (version === "1.1" || version === "1.2") {
               this.yaml.version = version;
               return true;
@@ -3064,9 +3064,9 @@ var require_timestamp = __commonJS({
     var stringifyNumber = require_stringifyNumber();
     function parseSexagesimal(str, asBigInt) {
       const sign = str[0];
-      const parts = sign === "-" || sign === "+" ? str.substring(1) : str;
+      const parts2 = sign === "-" || sign === "+" ? str.substring(1) : str;
       const num = (n) => asBigInt ? BigInt(n) : Number(n);
-      const res = parts.replace(/_/g, "").split(":").reduce((res2, p) => res2 * num(60) + num(p), num(0));
+      const res = parts2.replace(/_/g, "").split(":").reduce((res2, p) => res2 * num(60) + num(p), num(0));
       return sign === "-" ? num(-1) * res : res;
     }
     function stringifySexagesimal(node) {
@@ -3082,18 +3082,18 @@ var require_timestamp = __commonJS({
         value *= num(-1);
       }
       const _60 = num(60);
-      const parts = [value % _60];
+      const parts2 = [value % _60];
       if (value < 60) {
-        parts.unshift(0);
+        parts2.unshift(0);
       } else {
-        value = (value - parts[0]) / _60;
-        parts.unshift(value % _60);
+        value = (value - parts2[0]) / _60;
+        parts2.unshift(value % _60);
         if (value >= 60) {
-          value = (value - parts[0]) / _60;
-          parts.unshift(value);
+          value = (value - parts2[0]) / _60;
+          parts2.unshift(value);
         }
       }
-      return sign + parts.map((n) => String(n).padStart(2, "0")).join(":").replace(/000000\d*$/, "");
+      return sign + parts2.map((n) => String(n).padStart(2, "0")).join(":").replace(/000000\d*$/, "");
     }
     var intTime = {
       identify: (value) => typeof value === "bigint" || Number.isInteger(value),
@@ -7368,6 +7368,31 @@ var require_dist = __commonJS({
 // src/action.ts
 import { readFileSync } from "node:fs";
 
+// ../core/src/roles.ts
+var ROLE_NAMES = {
+  "programme-architect": "Programme Architect",
+  architecture: "Architecture",
+  specification: "Specification",
+  test: "Test",
+  coding: "Coding",
+  reviewer: "Reviewer",
+  "security-and-quality": "Security & Quality",
+  research: "Research"
+};
+
+// ../core/src/eligibility.ts
+var isRoleInModule = (role) => role !== "research";
+function mayTake(task, history) {
+  if (!isRoleInModule(task.role)) return "allowed";
+  const other = history.find(
+    (part) => part.member === task.member && part.module === task.module && isRoleInModule(part.role) && part.role !== task.role
+  );
+  if (other === void 0) return "allowed";
+  return {
+    refused: `a member takes only one role in a module, and you have worked on it as ${ROLE_NAMES[other.role]}`
+  };
+}
+
 // ../core/src/feedback-signal.ts
 var import_yaml = __toESM(require_dist(), 1);
 var PLAIN_NAME = /^(?=.{1,40}$)[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
@@ -7433,18 +7458,6 @@ function leaseHasRunOut(lastActivity, now) {
   if (Number.isNaN(since)) return true;
   return now.getTime() - since >= LEASE_HOURS * 60 * 60 * 1e3;
 }
-
-// ../core/src/roles.ts
-var ROLE_NAMES = {
-  "programme-architect": "Programme Architect",
-  architecture: "Architecture",
-  specification: "Specification",
-  test: "Test",
-  coding: "Coding",
-  reviewer: "Reviewer",
-  "security-and-quality": "Security & Quality",
-  research: "Research"
-};
 
 // ../core/src/routing.ts
 var MODULE_PIPELINE = [
@@ -7612,10 +7625,18 @@ var isTask = (issue) => issue.state === "open" && issue.labels.some(({ name }) =
 var labelsWhenReleased = (issue) => issue.labels.map(({ name }) => name === CLAIMED ? READY : name);
 var labelsWhenClaimed = (issue) => issue.labels.map(({ name }) => name === READY ? CLAIMED : name);
 function taskFromIssue(issue) {
-  const label = issue.labels.find(({ name }) => name.startsWith(RESEARCH_FOR));
+  const labelled = (prefix) => issue.labels.find(({ name }) => name.startsWith(prefix))?.name.slice(prefix.length);
+  const role = labelled("role:");
+  const module = labelled("module:");
+  if (role === void 0 || !Object.hasOwn(ROLE_NAMES, role) || module === void 0) {
+    return void 0;
+  }
+  const researchFor = labelled(RESEARCH_FOR);
   const claimant = issue.assignees?.[0]?.login;
   return {
-    ...label === void 0 ? {} : { researchFor: label.name.slice(RESEARCH_FOR.length) },
+    role,
+    module,
+    ...researchFor === void 0 ? {} : { researchFor },
     // Assigning is open to anyone who triages: only Divlab's claimed label makes a task held.
     ...claimant !== void 0 && issue.labels.some(({ name }) => name === CLAIMED) ? { claimedBy: claimant } : {}
   };
@@ -8165,6 +8186,16 @@ function whatToActOn(name, event) {
 }
 
 // src/index.ts
+var parts = (events) => routingDecisions(events).flatMap(
+  (decision) => decision.member === void 0 ? [] : [
+    {
+      member: decision.member,
+      // Routed work's role is one Divlab knows (an unknown one is on the test list).
+      role: decision.work.fromRole,
+      module: decision.work.module
+    }
+  ]
+);
 async function onClaim(project2, claim, board, log, clock) {
   const task = await board.task(project2, claim.task);
   if (task === void 0) {
@@ -8177,8 +8208,21 @@ async function onClaim(project2, claim, board, log, clock) {
   }
   let holder = task.claimedBy;
   if (holder === void 0) {
+    const events = await log.read(project2);
     const comments = await board.comments(project2, claim.task);
     holder = comments.find((comment) => isClaim(comment.text))?.member ?? claim.member;
+    const eligible = mayTake(
+      { member: holder, role: task.role, module: task.module },
+      parts(events)
+    );
+    if (eligible !== "allowed") {
+      await board.refuseMember({
+        project: project2,
+        ...claim,
+        reason: `Divlab did not give you this task: ${eligible.refused}`
+      });
+      return;
+    }
     const claimed = {
       project: project2,
       decidedAt: clock().toISOString(),
@@ -8241,12 +8285,13 @@ var signalOf = (event) => {
   return void 0;
 };
 async function onWorkAccepted(event, board, log, clock, events) {
-  const { project: project2, task, ...work } = event;
+  const { project: project2, task, member, ...work } = event;
   const record = routingRecord(work, routingDecisions(events));
   const decided = {
     project: project2,
     decidedAt: clock().toISOString(),
     ...task === void 0 ? {} : { task },
+    ...member === void 0 ? {} : { member },
     ...record
   };
   await log.append(decided);
@@ -8267,7 +8312,7 @@ async function actOn(event, board, log) {
   await recordActing(event, log);
 }
 var recordActing = ({ project: project2, work }, log) => log.append({ project: project2, actedOn: { feedbackSignal: work.feedbackSignal } });
-async function acceptSignal(project2, path, signal, board, log, clock, events) {
+async function acceptSignal(project2, path, signal, board, log, clock, events, member) {
   const { task, ...work } = signal;
   const posted = task === void 0 ? void 0 : await board.task(project2, task);
   const researchFor = posted?.researchFor;
@@ -8277,7 +8322,8 @@ async function acceptSignal(project2, path, signal, board, log, clock, events) {
       ...work,
       feedbackSignal: path,
       ...researchFor === void 0 ? {} : { researchFor },
-      ...task === void 0 || posted === void 0 ? {} : { task }
+      ...task === void 0 || posted === void 0 ? {} : { task },
+      ...member === void 0 ? {} : { member }
     },
     board,
     log,
@@ -8308,7 +8354,8 @@ async function onMerge(project2, repository, board, log, clock) {
   const onMain = await repository.feedbackSignals(project2);
   for (const [path, merge] of begun) {
     if (finished.has(path) || !onMain.includes(path)) continue;
-    await acceptSignal(project2, path, merge.aboutToMerge.work, board, log, clock, events);
+    const { work, member } = merge.aboutToMerge;
+    await acceptSignal(project2, path, work, board, log, clock, events, member);
   }
   for (const path of onMain) {
     if (finished.has(path) || begun.has(path)) continue;
@@ -8358,10 +8405,16 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
   await log.append({
     project: project2,
     decidedAt: clock().toISOString(),
-    aboutToMerge: { pullRequest, head, feedbackSignal: feedback.path, work: signal }
+    aboutToMerge: {
+      pullRequest,
+      head,
+      feedbackSignal: feedback.path,
+      member: author,
+      work: signal
+    }
   });
   await pullRequests.merge(project2, pullRequest, head);
-  await acceptSignal(project2, feedback.path, signal, board, log, clock, events);
+  await acceptSignal(project2, feedback.path, signal, board, log, clock, events, author);
 }
 async function checkProtection(project2, repositories, board) {
   if (await repositories.mainIsProtected(project2)) return;

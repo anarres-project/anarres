@@ -49,7 +49,62 @@ been claimed; of claims made together the first made wins, whichever Divlab hear
 anything but an open task is refused; each claim granted is recorded in the log. A lease runs out
 24 hours after the last activity on its task, the claim or draft work by its holder, and Divlab's
 hourly check makes the task ready again (in-process). Divlab never merges a draft. A member can
-give a task back early.
+give a task back early. Section 3 under way: a member takes one role in a module for its whole
+life (decision 0007), and Divlab refuses a claim that breaks it.
+
+---
+
+## 2026-10-23: One role per module
+
+- Bernard settled what the conflict-of-interest rules mean (decision 0007, concept §6 updated): a
+  member takes one role in a module for its whole life; their merged work and any task they hold
+  count; revising their own role's work is allowed; Research is not a role in a module; trust
+  levels will live in a file in `governance/`.
+- Core decides it (`mayTake`). Divlab now records who did each piece of merged work, the pull
+  request's author, in the about-to-merge record and the decision, so an interrupted merge keeps
+  it too. When it gives a free task to a member, it checks the rule against the log and refuses,
+  saying why, if the member has worked on the module in another role.
+- A task is now only an issue naming a role Anarres has and a module: anyone who triages can
+  change labels.
+- The scenarios had cast one member twice: unnamed work was done by the DSL's default member,
+  "alice", the same member as the scenarios' Alice, so the rule refused her claims. The default
+  member is now "someone". One scenario ("give a task back early") had passed for nothing, its
+  claim refused unnoticed: a Given that a member has claimed a task now checks the claim took.
+- In the sandbox one account plays every member, so scenarios with two members cannot run there
+  until a second account exists; the claiming, giving-back, claim-record and draft scenarios are
+  tagged again. The sandbox driver now reads Divlab's replies on tasks, for the one-member
+  eligibility scenarios.
+- "A member may revise work in their own role" passed first time: nothing refused anything yet.
+  Kept as a guard against the rule reaching too far.
+- Slip: two table tests failed several rows at once (the label checks).
+
+RED:      is refused to a member who has done other work in the module -> expected 'allowed' to deeply equal { refused }
+GREEN:    (hard-coded on any part)
+RED:      is allowed when the other work in the module is someone else's -> expected { refused } to be 'allowed'
+GREEN:    (2 passed)
+RED:      is allowed when the member's other work is on another module -> expected { refused } to be 'allowed'
+GREEN:    (3 passed)
+RED:      is allowed for more work in the member's own role -> expected { refused } to be 'allowed'
+GREEN:    (4 passed)
+RED:      is allowed for Research, which is not a role in the module -> expected { refused } to be 'allowed'
+GREEN:    (5 passed)
+RED:      is allowed after Research on the module -> expected { refused } to be 'allowed'
+GREEN:    (128 passed)
+REFACTOR: isRoleInModule, one statement of what Research is
+RED:      records who did the work in its decision -> expected { … } to match object { member: 'alice' }
+GREEN:    (109 passed)
+RED:      keeps who did the work when it finishes an interrupted merge -> expected { … } to match object { member }
+GREEN:    (110 passed)
+RED:      records that it is about to merge, with the work and who did it -> deep equality failed
+GREEN:    (316 passed)
+RED:      refuses a member who has done other work in the module, saying why
+          -> expected [ [ {…} ], [] ] to deeply equal [ [], [ {…} ] ]
+GREEN:    (111 passed)
+RED:      reads back the role and module a task is for -> expected {} to match object { role, module }
+GREEN:    (318 passed); four tests that pinned the whole task now check what each was about
+RED:      is no task when the issue names no role / a role Anarres does not have / no module
+          -> expected {…} to be undefined
+GREEN:    (321 passed; 83 scenarios)
 
 ---
 

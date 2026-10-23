@@ -68,6 +68,8 @@ export class SandboxDriver implements Driver {
   private readonly membersOrg: string;
   /** The scenario member each of this scenario's claims was made for, by the account that made it. */
   private readonly claimants = new Map<string, string>();
+  /** The scenario members this scenario's one account has acted for: at most one. */
+  private readonly played = new Set<string>();
 
   constructor() {
     const { org, token, membersOrg, membersToken } = sandboxSettings();
@@ -158,6 +160,7 @@ export class SandboxDriver implements Driver {
   }
 
   private async openPullRequest(work: AcceptedWork, { draft = false } = {}) {
+    this.playAs(work.member);
     const repository = `repos/${this.org}/${work.project}`;
     const fromRole = roleId(work.role);
     const forWork = (issue: Issue) =>
@@ -438,9 +441,7 @@ export class SandboxDriver implements Driver {
       (i) => labelValue(i, "role:") === fromRole && labelValue(i, "module:") === task.module,
     );
     if (!issue) throw new Error(`No ${task.role} task for ${task.module} is ready to claim`);
-    if ([...this.claimants.values()].some((other) => other !== member)) {
-      throw new HarnessNotYetBuilt("a second account, so a second member can claim");
-    }
+    this.playAs(member);
     const started = Date.now();
     await this.github.call("POST", `${repository}/issues/${issue.number}/comments`, {
       body: "/claim",
@@ -466,8 +467,40 @@ export class SandboxDriver implements Driver {
     run.closed.add(issueKey(task.project, issue.number));
   }
 
-  async claimRefusals(_project: string): Promise<{ member: string; reason: string }[]> {
-    throw new HarnessNotYetBuilt("a second account, so the sandbox can tell members' claims apart");
+  /**
+   * Divlab's replies on the project's open tasks, addressed to a member. One account plays the
+   * scenario's one member, so every reply is to them.
+   */
+  async claimRefusals(project: string): Promise<{ member: string; reason: string }[]> {
+    const repository = `repos/${this.org}/${project}`;
+    const [member] = this.played;
+    const tasks = [
+      ...(await this.settled(project, "ready")),
+      ...(await this.settled(project, "claimed")),
+    ];
+    const refusals = [];
+    for (const task of tasks) {
+      const comments = await this.github.call<{ body: string }[]>(
+        "GET",
+        `${repository}/issues/${task.number}/comments`,
+      );
+      for (const { body } of comments) {
+        const reply = body.match(/^@[\w-]+, (.*)\.$/s);
+        if (reply?.[1] && member) refusals.push({ member, reason: reply[1] });
+      }
+    }
+    return refusals;
+  }
+
+  /**
+   * The sandbox has one account, which can play only one of a scenario's members: Divlab would
+   * see two members as one, and rightly refuse what one person may not do twice.
+   */
+  private playAs(member: string): void {
+    if (this.played.size > 0 && !this.played.has(member)) {
+      throw new HarnessNotYetBuilt("a second account, so the sandbox can play a second member");
+    }
+    this.played.add(member);
   }
 
   async claimTogether(): Promise<void> {
@@ -536,9 +569,7 @@ export class SandboxDriver implements Driver {
 
   /** The member comments to give the task back, and Divlab's run makes it ready again. */
   async release(task: { project: string; role: string; module: string }, member: string) {
-    if (this.claimants.size > 0 && ![...this.claimants.values()].includes(member)) {
-      throw new HarnessNotYetBuilt("a second account, so a second member can give a task back");
-    }
+    this.playAs(member);
     const repository = `repos/${this.org}/${task.project}`;
     const fromRole = roleId(task.role);
     const issue = (await this.settled(task.project, "claimed")).find(

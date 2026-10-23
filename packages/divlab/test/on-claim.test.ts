@@ -2,11 +2,15 @@ import { describe, expect, it } from "vitest";
 import {
   type ClaimedTask,
   type EventLog,
+  type LogEvent,
   onClaim,
   onRelease,
   type Refused,
   type TaskBoard,
 } from "../src/index.ts";
+
+/** A task as the board describes it: the role and module it is for. */
+const TEST_TASK = { role: "test" as const, module: "parser" };
 
 const untouched = async () => {
   throw new Error("Divlab should not have acted");
@@ -37,7 +41,7 @@ describe("acting on a claim", () => {
     const claimed: ClaimedTask[] = [];
     const watched: TaskBoard = {
       ...board,
-      task: async () => (heldBy === undefined ? {} : { claimedBy: heldBy }),
+      task: async () => (heldBy === undefined ? TEST_TASK : { ...TEST_TASK, claimedBy: heldBy }),
       comments: async () => claimsBy.map((member) => ({ member, text: "/claim" })),
       markClaimed: async (claim) => {
         claimed.push(claim);
@@ -149,6 +153,56 @@ describe("acting on a claim", () => {
   });
 });
 
+describe("who may claim a task (decision 0007)", () => {
+  it("refuses a member who has done other work in the module, saying why", async () => {
+    const claimed: ClaimedTask[] = [];
+    const refused: Refused[] = [];
+    const reviewTask: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "reviewer", module: "parser" }),
+      comments: async () => [{ member: "alice", text: "/claim" }],
+      markClaimed: async (claim) => {
+        claimed.push(claim);
+      },
+      refuseMember: async (refusal) => {
+        refused.push(refusal);
+      },
+    };
+    const aliceCoded: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          member: "alice",
+          work: {
+            fromRole: "coding",
+            module: "parser",
+            verdict: "pass",
+            impediments: [],
+            feedbackSignal: "feedback/FB-3.md",
+          },
+          decision: { tasks: [{ role: "reviewer", module: "parser" }] },
+          reason: { rule: "passed" },
+        } as LogEvent,
+      ],
+      append: async () => {},
+    };
+    const clock = () => new Date("2026-10-23T09:00:00Z");
+    await onClaim("ledger", { task: "12", member: "alice" }, reviewTask, aliceCoded, clock);
+    expect([claimed, refused]).toEqual([
+      [],
+      [
+        {
+          project: "ledger",
+          task: "12",
+          member: "alice",
+          reason:
+            "Divlab did not give you this task: a member takes only one role in a module, and you have worked on it as Coding",
+        },
+      ],
+    ]);
+  });
+});
+
 describe("acting on a release", () => {
   const log: EventLog = { read: async () => [], append: async () => {} };
   const clock = () => new Date("2026-10-23T09:00:00Z");
@@ -157,7 +211,7 @@ describe("acting on a release", () => {
     const released: string[] = [];
     const watched: TaskBoard = {
       ...board,
-      task: async () => ({ claimedBy: heldBy }),
+      task: async () => ({ ...TEST_TASK, claimedBy: heldBy }),
       releaseClaim: async (_project, task) => {
         released.push(task);
       },

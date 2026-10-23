@@ -1,6 +1,8 @@
 import {
   type FeedbackSignal,
   leaseHasRunOut,
+  mayTake,
+  type Part,
   type Role,
   type RoutingRecord,
   readFeedbackSignal,
@@ -21,6 +23,8 @@ export type WorkAccepted = {
   researchFor?: string;
   /** The task the work was done for, as the member's pull request names it. */
   task?: string;
+  /** Who did the work: the member whose pull request Divlab merged. */
+  member?: string;
 };
 
 export type PostedTask = {
@@ -43,6 +47,8 @@ export type RoutingEvent = {
   decidedAt?: string;
   /** The task the work was for, closed when the decision is acted on. */
   task?: string;
+  /** Who did the work, for the conflict-of-interest rules (decision 0007). */
+  member?: string;
 } & RoutingRecord;
 
 /** Divlab's clock: the time is always given to it, never read from the wall. */
@@ -74,7 +80,9 @@ export interface TaskBoard {
   task(
     project: string,
     task: string,
-  ): Promise<(Pick<PostedTask, "researchFor"> & { claimedBy?: string }) | undefined>;
+  ): Promise<
+    (Pick<PostedTask, "role" | "module" | "researchFor"> & { claimedBy?: string }) | undefined
+  >;
   /** The task is done: nobody can claim it any more. */
   close(project: string, task: string): Promise<void>;
   /** The feedback signals whose routing decisions the board shows Divlab acted on. */
@@ -124,6 +132,21 @@ export type Refused = ClaimedTask & { reason: string };
 /** A member holds a task. */
 export type ClaimedTask = { project: string; task: string; member: string };
 
+/** Each member's part in each module, as the log shows: the work of theirs Divlab merged. */
+const parts = (events: readonly LogEvent[]): Part[] =>
+  routingDecisions(events).flatMap((decision) =>
+    decision.member === undefined
+      ? []
+      : [
+          {
+            member: decision.member,
+            // Routed work's role is one Divlab knows (an unknown one is on the test list).
+            role: decision.work.fromRole as Role,
+            module: decision.work.module,
+          },
+        ],
+  );
+
 /** A member asks to claim a task. */
 export async function onClaim(
   project: string,
@@ -143,9 +166,22 @@ export async function onClaim(
   }
   let holder = task.claimedBy;
   if (holder === undefined) {
+    const events = await log.read(project);
     // The first claim made wins, whichever claim's run Divlab hears of first.
     const comments = await board.comments(project, claim.task);
     holder = comments.find((comment) => isClaim(comment.text))?.member ?? claim.member;
+    const eligible = mayTake(
+      { member: holder, role: task.role, module: task.module },
+      parts(events),
+    );
+    if (eligible !== "allowed") {
+      await board.refuseMember({
+        project,
+        ...claim,
+        reason: `Divlab did not give you this task: ${eligible.refused}`,
+      });
+      return;
+    }
     const claimed: Claimed = {
       project,
       decidedAt: clock().toISOString(),
@@ -250,7 +286,14 @@ export type AboutToMerge = {
   project: string;
   /** When Divlab decided to merge, in UTC (absent from events recorded before it kept the time). */
   decidedAt?: string;
-  aboutToMerge: { pullRequest: string; head: string; feedbackSignal: string; work: FeedbackSignal };
+  aboutToMerge: {
+    pullRequest: string;
+    head: string;
+    feedbackSignal: string;
+    work: FeedbackSignal;
+    /** Who opened the pull request (absent from events recorded before Divlab kept it). */
+    member?: string;
+  };
 };
 
 /** Divlab has done what a routing decision called for on the board: written just after it. */
@@ -299,12 +342,13 @@ async function onWorkAccepted(
   clock: Clock,
   events: LogEvent[],
 ): Promise<void> {
-  const { project, task, ...work } = event;
+  const { project, task, member, ...work } = event;
   const record = routingRecord(work, routingDecisions(events));
   const decided: RoutingEvent = {
     project,
     decidedAt: clock().toISOString(),
     ...(task === undefined ? {} : { task }),
+    ...(member === undefined ? {} : { member }),
     ...record,
   };
   await log.append(decided);
@@ -339,6 +383,7 @@ async function acceptSignal(
   log: EventLog,
   clock: Clock,
   events: LogEvent[],
+  member?: string,
 ): Promise<void> {
   const { task, ...work } = signal;
   // Only an issue Divlab posted as a task, still open, is the work's task: nothing else is closed.
@@ -352,6 +397,7 @@ async function acceptSignal(
       feedbackSignal: path,
       ...(researchFor === undefined ? {} : { researchFor }),
       ...(task === undefined || posted === undefined ? {} : { task }),
+      ...(member === undefined ? {} : { member }),
     },
     board,
     log,
@@ -397,7 +443,8 @@ export async function onMerge(
   // the order it merged.
   for (const [path, merge] of begun) {
     if (finished.has(path) || !onMain.includes(path)) continue;
-    await acceptSignal(project, path, merge.aboutToMerge.work, board, log, clock, events);
+    const { work, member } = merge.aboutToMerge;
+    await acceptSignal(project, path, work, board, log, clock, events, member);
   }
   for (const path of onMain) {
     if (finished.has(path) || begun.has(path)) continue;
@@ -460,10 +507,16 @@ export async function onPullRequest(
   await log.append({
     project,
     decidedAt: clock().toISOString(),
-    aboutToMerge: { pullRequest, head, feedbackSignal: feedback.path, work: signal },
+    aboutToMerge: {
+      pullRequest,
+      head,
+      feedbackSignal: feedback.path,
+      member: author,
+      work: signal,
+    },
   });
   await pullRequests.merge(project, pullRequest, head);
-  await acceptSignal(project, feedback.path, signal, board, log, clock, events);
+  await acceptSignal(project, feedback.path, signal, board, log, clock, events, author);
 }
 
 /** Project repositories as Divlab sets them up. */

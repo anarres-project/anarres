@@ -54,8 +54,12 @@ step fails with GitHub's own error messages and a link to the run.
 
 **Each claim** ("Alice claims the Test task for parser") is a `/claim` comment on the task's
 issue, made with the sandbox token, as a member's plugin will make it. GitHub starts Divlab's claim
-workflow, and the driver waits until the issue shows the task claimed and assigned. One account
-plays every member, so the driver remembers which scenario member each claim was for.
+workflow, and the driver waits until the issue shows the task claimed and assigned.
+
+**One account plays the members**, so a scenario can have only one: Divlab would see two as one
+person and, rightly, refuse what one person may not do twice (one role per module, decision 0007).
+A scenario with two members fails at once with `HarnessNotYetBuilt` and is tagged `@sandbox-wip`
+until a second account plays a second member.
 
 **Each check** ("the only task ready for parser is a Coding task") reads GitHub as a member or a
 PDC coordinator would: open task issues, escalation issues, finished-module issues, and the event

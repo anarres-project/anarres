@@ -88,9 +88,9 @@ describe("a task as a GitHub issue", () => {
       researchFor: "coding",
       decidedOn: "feedback/T-0141.md",
     });
-    expect(taskFromIssue({ labels: issue.labels.map((name) => ({ name })) })).toEqual({
-      researchFor: "coding",
-    });
+    expect(taskFromIssue({ labels: issue.labels.map((name) => ({ name })) })?.researchFor).toBe(
+      "coding",
+    );
   });
 
   it("reads back nothing more from a task that is not Research", () => {
@@ -100,19 +100,25 @@ describe("a task as a GitHub issue", () => {
       module: "parser",
       decidedOn: "feedback/T-0141.md",
     });
-    expect(taskFromIssue({ labels: issue.labels.map((name) => ({ name })) })).toEqual({});
+    expect(taskFromIssue({ labels: issue.labels.map((name) => ({ name })) })).toEqual({
+      role: "test",
+      module: "parser",
+    });
   });
 
   it("reads a ready task as held by nobody, even if someone has been assigned it", () => {
     const labels = ["role:test", "module:parser", "state:ready"].map((name) => ({ name }));
-    expect(taskFromIssue({ labels, assignees: [{ login: "carol" }] })).toEqual({});
+    expect(taskFromIssue({ labels, assignees: [{ login: "carol" }] })?.claimedBy).toBeUndefined();
+  });
+
+  it("reads back the role and module a task is for", () => {
+    const labels = ["role:reviewer", "module:parser", "state:ready"].map((name) => ({ name }));
+    expect(taskFromIssue({ labels })).toMatchObject({ role: "reviewer", module: "parser" });
   });
 
   it("reads back who holds a claimed task", () => {
     const labels = ["role:test", "module:parser", "state:claimed"].map((name) => ({ name }));
-    expect(taskFromIssue({ labels, assignees: [{ login: "alice" }] })).toEqual({
-      claimedBy: "alice",
-    });
+    expect(taskFromIssue({ labels, assignees: [{ login: "alice" }] })?.claimedBy).toBe("alice");
   });
 });
 

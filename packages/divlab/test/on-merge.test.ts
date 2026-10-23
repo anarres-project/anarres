@@ -14,6 +14,9 @@ import {
 /** Divlab's clock in these tests: a fixed time. */
 const clock = () => new Date("2026-10-22T09:00:00Z");
 
+/** A task as the board describes it: the role and module it is for. */
+const TEST_TASK = { role: "test" as const, module: "parser" };
+
 const untouched = async () => {
   throw new Error("Divlab should not have acted");
 };
@@ -111,6 +114,29 @@ describe("acting on a merge", () => {
       [{ project: "ledger", role: "test", module: "parser", decidedOn: "feedback/FB-9.md" }],
       [],
     ]);
+  });
+
+  it("keeps who did the work when it finishes an interrupted merge", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    const begun: EventLog = {
+      ...watchedLog,
+      read: async () => [
+        {
+          project: "ledger",
+          aboutToMerge: {
+            pullRequest: "7",
+            head: "c0ffee",
+            feedbackSignal: "feedback/FB-9.md",
+            member: "alice",
+            work: { fromRole: "specification", module: "parser", verdict: "pass", impediments: [] },
+          },
+        },
+      ],
+    };
+    await onMerge("ledger", onMain(passedSpecification), watchedBoard, begun, clock);
+    expect(seen.appended.find((event) => "work" in (event as object))).toMatchObject({
+      member: "alice",
+    });
   });
 
   it("finishes interrupted merges in the order it merged them, not the order they are listed", async () => {
@@ -471,7 +497,7 @@ describe("acting on a pull request", () => {
         appended.push(event);
       },
     };
-    const held: TaskBoard = { ...board, task: async () => ({ claimedBy: "alice" }) };
+    const held: TaskBoard = { ...board, task: async () => ({ ...TEST_TASK, claimedBy: "alice" }) };
     await onPullRequest("ledger", "7", draft, held, recording, clock);
     expect(appended).toEqual([
       {
@@ -498,7 +524,7 @@ describe("acting on a pull request", () => {
         appended.push(event);
       },
     };
-    const held: TaskBoard = { ...board, task: async () => ({ claimedBy: "alice" }) };
+    const held: TaskBoard = { ...board, task: async () => ({ ...TEST_TASK, claimedBy: "alice" }) };
     await onPullRequest("ledger", "7", draft, held, recording, clock);
     expect(appended).toEqual([]);
   });
@@ -622,7 +648,7 @@ describe("acting on a pull request", () => {
     const closing: TaskBoard = {
       ...board,
       post: async () => {},
-      task: async () => ({}),
+      task: async () => TEST_TASK,
       close: async (_project, task) => {
         closed.push(task);
       },
@@ -664,7 +690,7 @@ describe("acting on a pull request", () => {
     const closing: TaskBoard = {
       ...board,
       post: async () => {},
-      task: async () => ({}),
+      task: async () => TEST_TASK,
       close: async () => {},
     };
     await onPullRequest("ledger", "9", submitting([], [forTask]), closing, recording, clock);
@@ -672,6 +698,28 @@ describe("acting on a pull request", () => {
       (event) => typeof event === "object" && event !== null && "work" in event,
     );
     expect(decision).toMatchObject({ task: "3" });
+  });
+
+  it("records who did the work in its decision: the member who opened the pull request", async () => {
+    const appended: unknown[] = [];
+    const recording: EventLog = {
+      read: async () => [],
+      append: async (event) => {
+        appended.push(event);
+      },
+    };
+    await onPullRequest(
+      "ledger",
+      "9",
+      submitting(),
+      { ...board, post: async () => {} },
+      recording,
+      clock,
+    );
+    const decision = appended.find(
+      (event) => typeof event === "object" && event !== null && "work" in event,
+    );
+    expect(decision).toMatchObject({ member: "alice" });
   });
 
   it("sends passed Research back to the role its task was for, as Divlab recorded on the task", async () => {
@@ -685,7 +733,7 @@ describe("acting on a pull request", () => {
       post: async (task) => {
         posted.push(task);
       },
-      task: async () => ({ researchFor: "coding" }),
+      task: async () => ({ ...TEST_TASK, researchFor: "coding" }),
       close: async () => {},
     };
     await onPullRequest("ledger", "10", submitting([], [research]), recorded, log, clock);
@@ -836,7 +884,7 @@ describe("acting on a pull request", () => {
     expect(reads).toBe(1);
   });
 
-  it("records that it is about to merge, with the work, before it merges", async () => {
+  it("records that it is about to merge, with the work and who did it, before it merges", async () => {
     const happened: unknown[] = [];
     const pullRequests: PullRequests = {
       ...submitting(),
@@ -866,6 +914,7 @@ describe("acting on a pull request", () => {
           pullRequest: "7",
           head: "c0ffee",
           feedbackSignal: "feedback/FB-1.md",
+          member: "alice",
           work: { fromRole: "specification", module: "parser", verdict: "pass", impediments: [] },
         },
       },

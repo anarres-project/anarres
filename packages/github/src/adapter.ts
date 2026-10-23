@@ -109,7 +109,7 @@ export class GitHubAdapter
     await this.call("PATCH", `${this.repo(project)}/issues/${number}`, { state: "closed" });
   }
 
-  async task(project: string, task: string): Promise<{ researchFor?: string } | undefined> {
+  async task(project: string, task: string): Promise<ReturnType<typeof taskFromIssue>> {
     const number = issueNumber(task);
     if (number === undefined) return undefined;
     const { status, data } = await this.request<ListedIssue>(

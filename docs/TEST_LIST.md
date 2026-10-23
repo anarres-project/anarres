@@ -211,7 +211,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         been claimed (in-process);
   - [x] only Divlab's claimed label makes a task held: someone assigned a ready task does not
         hold it;
-  - [ ] the sandbox shows it: needs a second account playing another member (Bernard to decide);
+  - [ ] the sandbox shows it: needs a second account playing another member (Bernard preparing it);
+        since one-role-per-module, every scenario where one member works and another claims needs
+        it too: claiming, giving back, the claim record and the draft scenario wait for it;
   - [x] a member whose claim was granted by an earlier run (which heard of another claim first)
         is left alone, not told the task is taken;
   - [ ] a member claiming again a task they already hold is told they hold it (today: silence);
@@ -263,8 +265,17 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 ## 3. Eligibility and conflict of interest
 
 - [ ] A new member cannot claim a Reviewer task.
-- [ ] A member who wrote any artefact in a module cannot review that module.
-- [ ] A member may hold at most one role per module.
+- [x] A member who wrote any artefact in a module cannot review that module (a case of the next).
+- [ ] A member may hold at most one role per module (decision 0007: for the module's whole life;
+      merged work and a held task count; Research is not a role in a module).
+  - [x] core decides it: refused for other work by the member in the module, allowed for others'
+        work, other modules, their own role, and Research either way;
+  - [x] Divlab records who did each piece of merged work (the pull request's author), through an
+        interrupted merge too, and refuses a claim that breaks the rule, saying why;
+  - [x] a task is only an issue naming a role Anarres has and a module;
+  - [ ] a task a member holds now counts too (today only merged work does);
+  - [ ] when the earliest claim on a task is not allowed, the earliest that is wins;
+  - [ ] the sandbox shows the refusal (tagged until it has passed there).
 - [ ] Linked accounts are treated as one member.
 
 ## 4. Validating contributions

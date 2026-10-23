@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { type EventLog, onLeaseCheck, type TaskBoard } from "../src/index.ts";
 
+/** A task as the board describes it: the role and module it is for. */
+const TEST_TASK = { role: "test" as const, module: "parser" };
+
 const untouched = async () => {
   throw new Error("Divlab should not have acted");
 };
@@ -42,7 +45,7 @@ describe("checking a project's leases", () => {
     const released: string[] = [];
     const watched: TaskBoard = {
       ...board,
-      task: async () => ({ claimedBy: "alice" }),
+      task: async () => ({ ...TEST_TASK, claimedBy: "alice" }),
       releaseClaim: async (_project, task) => {
         released.push(task);
       },
@@ -78,7 +81,7 @@ describe("checking a project's leases", () => {
     const released: string[] = [];
     const watched: TaskBoard = {
       ...board,
-      task: async () => ({ claimedBy: "bob" }),
+      task: async () => ({ ...TEST_TASK, claimedBy: "bob" }),
       releaseClaim: async (_project, task) => {
         released.push(task);
       },
@@ -91,7 +94,7 @@ describe("checking a project's leases", () => {
     const released: string[] = [];
     const watched: TaskBoard = {
       ...board,
-      task: async () => ({ claimedBy: "alice" }),
+      task: async () => ({ ...TEST_TASK, claimedBy: "alice" }),
       releaseClaim: async (_project, task) => {
         released.push(task);
       },
@@ -116,7 +119,7 @@ describe("checking a project's leases", () => {
     const appended: unknown[] = [];
     const watched: TaskBoard = {
       ...board,
-      task: async () => ({ claimedBy: "alice" }),
+      task: async () => ({ ...TEST_TASK, claimedBy: "alice" }),
       releaseClaim: async () => {
         seen.push("released");
       },
@@ -145,7 +148,7 @@ describe("checking a project's leases", () => {
     const released: string[] = [];
     const watched: TaskBoard = {
       ...board,
-      task: async () => ({ claimedBy: "alice" }),
+      task: async () => ({ ...TEST_TASK, claimedBy: "alice" }),
       releaseClaim: async (_project, task) => {
         released.push(task);
       },
@@ -169,7 +172,7 @@ describe("checking a project's leases", () => {
     const released: string[] = [];
     const watched: TaskBoard = {
       ...board,
-      task: async () => ({ claimedBy: "alice" }),
+      task: async () => ({ ...TEST_TASK, claimedBy: "alice" }),
       releaseClaim: async (_project, task) => {
         released.push(task);
       },
@@ -193,7 +196,7 @@ describe("checking a project's leases", () => {
     const told: unknown[] = [];
     const watched: TaskBoard = {
       ...board,
-      task: async () => ({ claimedBy: "alice" }),
+      task: async () => ({ ...TEST_TASK, claimedBy: "alice" }),
       releaseClaim: async () => {},
       tellLeaseRanOut: async (ranOut) => {
         told.push(ranOut);

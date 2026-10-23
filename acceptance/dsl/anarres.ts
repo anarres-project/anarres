@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import type { CoordinatorAlert, Driver, RoutingRecord } from "../drivers/driver.ts";
 import type { Aliases } from "./aliases.ts";
 
-const DEFAULT_MEMBER = "alice";
+/** Whoever does the work a scenario does not name a member for: never one it names. */
+const DEFAULT_MEMBER = "someone";
 
 type Work = { role: string; module: string };
 
@@ -111,7 +112,10 @@ export class Anarres {
     );
   }
 
-  async memberHasWorkAccepted(work: Work & { verdict: string; impediments?: string[] }) {
+  async memberHasWorkAccepted(
+    work: Work & { verdict: string; impediments?: string[] },
+    member = DEFAULT_MEMBER,
+  ) {
     // Every piece of work has a feedback signal of its own.
     this.signalsWritten += 1;
     const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
@@ -120,7 +124,7 @@ export class Anarres {
       impediments: [],
       ...this.aliased(work),
       project: this.project,
-      member: this.aliases.of(DEFAULT_MEMBER),
+      member: this.member(member),
       feedbackSignal,
     });
   }
@@ -252,6 +256,12 @@ export class Anarres {
     );
   }
 
+  /** A claim a scenario relies on: it must have taken, or the scenario proves nothing. */
+  async memberHasClaimed(member: string, task: Work) {
+    await this.memberClaims(member, task);
+    await this.taskIsClaimedBy(task, member);
+  }
+
   async memberClaims(member: string, task: Work) {
     await this.driver.claim({ ...this.aliased(task), project: this.project }, this.member(member));
   }
@@ -321,6 +331,18 @@ export class Anarres {
           refusal.member === this.member(member) && refusal.reason.includes("you do not hold it"),
       ),
       `expected ${member} to be told they do not hold the task; Divlab said: ${JSON.stringify(told)}`,
+    );
+  }
+
+  async memberIsToldOneRolePerModule(member: string) {
+    const told = await this.driver.claimRefusals(this.project);
+    assert.ok(
+      told.some(
+        (refusal) =>
+          refusal.member === this.member(member) &&
+          refusal.reason.includes("a member takes only one role in a module"),
+      ),
+      `expected ${member} to be told a member takes only one role in a module; Divlab said: ${JSON.stringify(told)}`,
     );
   }
 
