@@ -282,6 +282,14 @@ export class Anarres {
     );
   }
 
+  async timePasses(hours: number) {
+    await this.driver.timePasses(hours);
+  }
+
+  async divlabChecksLeases() {
+    await this.driver.divlabChecksLeases(this.project);
+  }
+
   async memberIsToldTaskIsTaken(member: string) {
     const told = await this.driver.claimRefusals(this.project);
     assert.ok(

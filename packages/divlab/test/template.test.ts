@@ -9,6 +9,7 @@ const templateWorkflow = (name: string) => parse(templateText(name));
 const PULL_REQUEST_WORKFLOW = "divlab-pull-request.yml";
 const PUSH_WORKFLOW = "anarres.yml";
 const CLAIM_WORKFLOW = "divlab-claim.yml";
+const LEASE_WORKFLOW = "divlab-leases.yml";
 
 /** A GitHub Actions expression, as a workflow writes it. */
 const expression = (inside: string) => `\${{ ${inside} }}`;
@@ -23,25 +24,21 @@ describe("the project template's pull request workflow (decision 0006)", () => {
   it("runs only as the project's main branch has it, never as a pull request has it", () => {
     expect(Object.keys(workflow.on)).toEqual(["pull_request_target"]);
   });
-
-  it("waits its turn with the project's other Divlab runs, so one acts at a time", () => {
-    expect(workflow.concurrency).toEqual(templateWorkflow(PUSH_WORKFLOW).concurrency);
-  });
 });
 
 describe("the project template's claim workflow", () => {
   it("runs when someone comments on one of the project's issues, and on nothing else", () => {
     expect(templateWorkflow(CLAIM_WORKFLOW).on).toEqual({ issue_comment: { types: ["created"] } });
   });
+});
 
-  it("waits its turn with the project's other Divlab runs, so claims are decided in turn", () => {
-    expect(templateWorkflow(CLAIM_WORKFLOW).concurrency).toEqual(
-      templateWorkflow(PUSH_WORKFLOW).concurrency,
-    );
+describe("the project template's lease workflow", () => {
+  it("runs every hour, and on nothing else", () => {
+    expect(templateWorkflow(LEASE_WORKFLOW).on).toEqual({ schedule: [{ cron: "17 * * * *" }] });
   });
 });
 
-describe.each([PULL_REQUEST_WORKFLOW, PUSH_WORKFLOW, CLAIM_WORKFLOW])(
+describe.each([PULL_REQUEST_WORKFLOW, PUSH_WORKFLOW, CLAIM_WORKFLOW, LEASE_WORKFLOW])(
   "each of the project template's Divlab workflows: %s",
   (name) => {
     const workflow = templateWorkflow(name);
@@ -61,6 +58,11 @@ describe.each([PULL_REQUEST_WORKFLOW, PUSH_WORKFLOW, CLAIM_WORKFLOW])(
         "private-key": expression("secrets.DIVLAB_APP_PRIVATE_KEY"),
       });
       expect(divlab?.with).toEqual({ token: expression(`steps.${token?.id}.outputs.token`) });
+    });
+
+    it("waits its turn with the project's other Divlab runs, so one acts at a time", () => {
+      expect(workflow.concurrency.group).toBe("divlab");
+      expect(workflow.concurrency["cancel-in-progress"]).toBe(false);
     });
 
     it("keeps every run waiting its turn: none is dropped when members submit at once", () => {

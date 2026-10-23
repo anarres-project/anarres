@@ -1,4 +1,10 @@
-import type { AboutToMerge, Claimed, NotAccepted, RoutingEvent } from "@anarres/divlab";
+import type {
+  AboutToMerge,
+  Claimed,
+  LeaseRanOut,
+  NotAccepted,
+  RoutingEvent,
+} from "@anarres/divlab";
 import { describe, expect, it } from "vitest";
 import {
   commentForRefusal,
@@ -161,6 +167,15 @@ describe("a routing event as a file", () => {
       claimed: { task: "12", member: "alice" },
     };
     expect(eventFromFile(eventFile(claimed, 4).content)).toEqual(claimed);
+  });
+
+  it("reads back a record that a member's lease ran out", () => {
+    const ranOut: LeaseRanOut = {
+      project: "ledger",
+      decidedAt: "2026-10-24T09:00:00.000Z",
+      leaseRanOut: { task: "12", member: "alice" },
+    };
+    expect(eventFromFile(eventFile(ranOut, 5).content)).toEqual(ranOut);
   });
 
   it("is refused, saying why, when the work it was about to merge could not be routed", () => {

@@ -7426,6 +7426,12 @@ function readSignalFile(path) {
 }
 var SIGNAL_FILE = /^feedback\/[A-Za-z0-9-]+\.md$/;
 
+// ../core/src/leases.ts
+var LEASE_HOURS = 24;
+function leaseHasRunOut(lastActivity, now) {
+  return now.getTime() - Date.parse(lastActivity) >= LEASE_HOURS * 60 * 60 * 1e3;
+}
+
 // ../core/src/roles.ts
 var ROLE_NAMES = {
   "programme-architect": "Programme Architect",
@@ -7601,6 +7607,7 @@ function issueForTask(task) {
 }
 var postedByDivlab = (issue) => issue.labels.some(({ name }) => [READY, CLAIMED, "escalation", "state:done"].includes(name));
 var isTask = (issue) => issue.state === "open" && issue.labels.some(({ name }) => name === READY || name === CLAIMED);
+var labelsWhenReleased = (issue) => issue.labels.map(({ name }) => name === CLAIMED ? READY : name);
 var labelsWhenClaimed = (issue) => issue.labels.map(({ name }) => name === READY ? CLAIMED : name);
 function taskFromIssue(issue) {
   const label = issue.labels.find(({ name }) => name.startsWith(RESEARCH_FOR));
@@ -7625,6 +7632,9 @@ function eventFile(event, sequence) {
 function eventFromFile(content) {
   const event = JSON.parse(content);
   if (isObject2(event) && isObject2(event.claimed) && typeof event.claimed.task === "string" && typeof event.claimed.member === "string") {
+    return event;
+  }
+  if (isObject2(event) && isObject2(event.leaseRanOut) && typeof event.leaseRanOut.task === "string" && typeof event.leaseRanOut.member === "string") {
     return event;
   }
   if (isObject2(event) && isObject2(event.actedOn) && typeof event.actedOn.feedbackSignal === "string") {
@@ -7892,6 +7902,11 @@ var GitHubAdapter = class {
       assignees: [claim.member]
     });
   }
+  async releaseClaim(project2, task) {
+    const issue = `${this.repo(project2)}/issues/${task}`;
+    const listed = await this.call("GET", issue);
+    await this.call("PATCH", issue, { labels: labelsWhenReleased(listed), assignees: [] });
+  }
   async comments(project2, task) {
     const comments = [];
     for (let page = 1; ; page++) {
@@ -8126,6 +8141,7 @@ function whatToActOn(name, event) {
     return { pullRequest: String(number) };
   }
   if (name === "push") return { merge: true };
+  if (name === "schedule") return { leases: true };
   if (name === "issue_comment") {
     const { issue, comment } = event;
     if (!isClaim(comment.body) || issue.pull_request !== void 0) return { nothing: true };
@@ -8162,9 +8178,28 @@ async function onClaim(project2, claim, board, log, clock) {
     await board.refuseClaim({ project: project2, ...claim, reason: "it has already been claimed" });
   }
 }
+async function onLeaseCheck(project2, board, log, clock) {
+  const latest = /* @__PURE__ */ new Map();
+  for (const event of await log.read(project2)) {
+    if ("claimed" in event) latest.set(event.claimed.task, event);
+  }
+  for (const claim of latest.values()) {
+    if (!leaseHasRunOut(claim.decidedAt, clock())) continue;
+    const task = await board.task(project2, claim.claimed.task);
+    if (task?.claimedBy === claim.claimed.member) {
+      const ranOut = {
+        project: project2,
+        decidedAt: clock().toISOString(),
+        leaseRanOut: claim.claimed
+      };
+      await log.append(ranOut);
+      await board.releaseClaim(project2, claim.claimed.task);
+    }
+  }
+}
 var routingDecisions = (log) => log.filter((event) => "work" in event);
 var signalOf = (event) => {
-  if ("claimed" in event) return void 0;
+  if ("claimed" in event || "leaseRanOut" in event) return void 0;
   if ("work" in event) return event.work.feedbackSignal;
   if ("aboutToMerge" in event) return event.aboutToMerge.feedbackSignal;
   if ("actedOn" in event) return event.actedOn.feedbackSignal;
@@ -8305,6 +8340,8 @@ try {
     await onPullRequest(project, run.pullRequest, github, github, github, clock);
   } else if ("claim" in run) {
     await onClaim(project, run.claim, github, github, clock);
+  } else if ("leases" in run) {
+    await onLeaseCheck(project, github, github, clock);
   } else {
     await onMerge(project, github, github, github, clock);
   }

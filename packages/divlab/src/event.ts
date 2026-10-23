@@ -3,6 +3,7 @@ export type Run =
   | { merge: true }
   | { pullRequest: string }
   | { claim: { task: string; member: string } }
+  | { leases: true }
   | { nothing: true };
 
 /** Whether a comment is a claim: exactly the claim command, nothing more. */
@@ -22,6 +23,7 @@ export function whatToActOn(name: string, event: unknown): Run {
     return { pullRequest: String(number) };
   }
   if (name === "push") return { merge: true };
+  if (name === "schedule") return { leases: true };
   if (name === "issue_comment") {
     const { issue, comment } = event as {
       issue: { number: unknown; pull_request?: unknown };

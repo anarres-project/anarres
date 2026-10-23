@@ -106,7 +106,9 @@ every such scenario, so none is forgotten. The tag goes once the scenario passes
 
 ## Not covered yet
 
-- Leases, eligibility and the plugin, which are not built yet; claiming is under way.
+- Eligibility and the plugin, which are not built yet; claiming and leases are under way. The
+  lease scenarios need 24 hours to pass, which the sandbox cannot make happen, so they run
+  in-process only; the sandbox installs the hourly lease workflow with the rest of the template.
 
 The test list (`docs/TEST_LIST.md`) tracks each of these.
 

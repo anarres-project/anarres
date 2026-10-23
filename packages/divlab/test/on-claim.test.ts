@@ -23,6 +23,7 @@ const board: TaskBoard = {
   markClaimed: untouched,
   refuseClaim: untouched,
   comments: untouched,
+  releaseClaim: untouched,
 };
 
 describe("acting on a claim", () => {

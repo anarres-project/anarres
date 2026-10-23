@@ -29,6 +29,7 @@ const board: TaskBoard = {
   markClaimed: untouched,
   refuseClaim: untouched,
   comments: untouched,
+  releaseClaim: untouched,
 };
 
 describe("acting on a merge", () => {
@@ -379,6 +380,24 @@ describe("acting on a merge", () => {
       ],
     };
     await onMerge("ledger", onMain(passedSpecification), watchedBoard, withClaim, clock);
+    expect(seen.alerts.map((alert) => alert.notAccepted.feedbackSignal)).toEqual([
+      "feedback/FB-9.md",
+    ]);
+  });
+
+  it("reads past leases that ran out in the log, which are about no feedback signal", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    const withLeaseRanOut: EventLog = {
+      ...watchedLog,
+      read: async () => [
+        {
+          project: "ledger",
+          decidedAt: "2026-10-22T08:00:00.000Z",
+          leaseRanOut: { task: "12", member: "alice" },
+        },
+      ],
+    };
+    await onMerge("ledger", onMain(passedSpecification), watchedBoard, withLeaseRanOut, clock);
     expect(seen.alerts.map((alert) => alert.notAccepted.feedbackSignal)).toEqual([
       "feedback/FB-9.md",
     ]);

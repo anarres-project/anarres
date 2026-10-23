@@ -94,6 +94,10 @@ export interface Driver {
     heardFirst: string,
   ): Promise<void>;
   claimedTasks(project: string): Promise<ClaimedTask[]>;
+  /** Divlab's clock moves on, as time passes for a project. */
+  timePasses(hours: number): Promise<void>;
+  /** Divlab's scheduled run checks the project's leases, as it does every hour. */
+  divlabChecksLeases(project: string): Promise<void>;
   /** The claims Divlab's log records it granted, each with when. */
   claimRecords(project: string): Promise<(ClaimedTask & { claimedAt: string })[]>;
   /** What Divlab told members whose claims it refused. */

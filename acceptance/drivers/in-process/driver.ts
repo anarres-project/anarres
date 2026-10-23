@@ -1,6 +1,7 @@
 import {
   checkProtection,
   onClaim,
+  onLeaseCheck,
   onMerge,
   onPullRequest,
   routingDecisions,
@@ -24,11 +25,14 @@ import {
 import { FakeGitHub, Interrupted } from "./fake-github.ts";
 
 /** Submits work to an in-memory fake of GitHub as pull requests, for Divlab to merge. */
-/** Divlab's clock in-process: a fixed time, so no scenario reads the wall clock. */
-const CLOCK = () => new Date("2026-10-22T09:00:00Z");
+/** Divlab's clock in-process starts at a fixed time, so no scenario reads the wall clock. */
+const START = "2026-10-22T09:00:00Z";
 
 export class InProcessDriver implements Driver {
   private readonly github = new FakeGitHub();
+  /** Divlab's clock: it moves only when a scenario says time passes. */
+  private now = new Date(START);
+  private readonly clock = () => this.now;
 
   async createProject(
     project: string,
@@ -55,7 +59,7 @@ export class InProcessDriver implements Driver {
   async mergeDirectly(work: AcceptedWork): Promise<void> {
     const { path, text } = feedbackSignalFile(work);
     this.github.mergeFile(work.project, path, text);
-    await onMerge(work.project, this.github, this.github, this.github, CLOCK);
+    await onMerge(work.project, this.github, this.github, this.github, this.clock);
     await checkProtection(work.project, this.github, this.github);
   }
 
@@ -86,7 +90,7 @@ export class InProcessDriver implements Driver {
   }
 
   async divlabActsAgain(project: string): Promise<void> {
-    await onMerge(project, this.github, this.github, this.github, CLOCK);
+    await onMerge(project, this.github, this.github, this.github, this.clock);
     await checkProtection(project, this.github, this.github);
   }
 
@@ -125,7 +129,14 @@ export class InProcessDriver implements Driver {
       .find((task) => task.role === fromRole && task.module === work.module);
     const { path, text } = feedbackSignalFile(work, task?.id);
     const pullRequest = this.github.openPullRequest(work.project, [{ path, text }]);
-    await onPullRequest(work.project, pullRequest, this.github, this.github, this.github, CLOCK);
+    await onPullRequest(
+      work.project,
+      pullRequest,
+      this.github,
+      this.github,
+      this.github,
+      this.clock,
+    );
     await checkProtection(work.project, this.github, this.github);
   }
 
@@ -143,7 +154,7 @@ export class InProcessDriver implements Driver {
       };
     });
     for (const { project, pullRequest } of opened) {
-      await onPullRequest(project, pullRequest, this.github, this.github, this.github, CLOCK);
+      await onPullRequest(project, pullRequest, this.github, this.github, this.github, this.clock);
       await checkProtection(project, this.github, this.github);
     }
   }
@@ -159,7 +170,7 @@ export class InProcessDriver implements Driver {
   async claim(task: { project: string; role: string; module: string }, member: string) {
     const id = this.openTaskId(task);
     this.github.comment(task.project, id, member, "/claim");
-    await onClaim(task.project, { task: id, member }, this.github, this.github, CLOCK);
+    await onClaim(task.project, { task: id, member }, this.github, this.github, this.clock);
   }
 
   /** Every member comments first; then Divlab takes `heardFirst`'s run, then the others in turn. */
@@ -171,7 +182,7 @@ export class InProcessDriver implements Driver {
     const id = this.openTaskId(task);
     for (const member of members) this.github.comment(task.project, id, member, "/claim");
     for (const member of [heardFirst, ...members.filter((m) => m !== heardFirst)]) {
-      await onClaim(task.project, { task: id, member }, this.github, this.github, CLOCK);
+      await onClaim(task.project, { task: id, member }, this.github, this.github, this.clock);
     }
   }
 
@@ -205,6 +216,14 @@ export class InProcessDriver implements Driver {
         },
       ];
     });
+  }
+
+  async timePasses(hours: number): Promise<void> {
+    this.now = new Date(this.now.getTime() + hours * 60 * 60 * 1000);
+  }
+
+  async divlabChecksLeases(project: string): Promise<void> {
+    await onLeaseCheck(project, this.github, this.github, this.clock);
   }
 
   async claimedTasks(project: string): Promise<ClaimedTask[]> {

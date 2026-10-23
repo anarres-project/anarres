@@ -5,6 +5,7 @@ import type {
   Claimed,
   ClaimRefused,
   FinishedModule,
+  LeaseRanOut,
   LogEvent,
   NotAccepted,
   PostedTask,
@@ -53,6 +54,10 @@ export const postedByDivlab = (issue: ListedIssue) =>
 export const isTask = (issue: ListedIssue): boolean =>
   issue.state === "open" && issue.labels.some(({ name }) => name === READY || name === CLAIMED);
 
+/** A released task's labels: what it had, but ready again instead of claimed. */
+export const labelsWhenReleased = (issue: ListedIssue): string[] =>
+  issue.labels.map(({ name }) => (name === CLAIMED ? READY : name));
+
 /** A claimed task's labels: what it had, but claimed instead of ready. */
 export const labelsWhenClaimed = (issue: ListedIssue): string[] =>
   issue.labels.map(({ name }) => (name === READY ? CLAIMED : name));
@@ -95,6 +100,14 @@ export function eventFromFile(content: string): LogEvent {
     typeof event.claimed.member === "string"
   ) {
     return event as Claimed;
+  }
+  if (
+    isObject(event) &&
+    isObject(event.leaseRanOut) &&
+    typeof event.leaseRanOut.task === "string" &&
+    typeof event.leaseRanOut.member === "string"
+  ) {
+    return event as LeaseRanOut;
   }
   if (
     isObject(event) &&

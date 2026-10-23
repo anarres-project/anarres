@@ -240,6 +240,11 @@ export class FakeGitHub
     return this.openTasks.filter((task) => task.project === project);
   }
 
+  async releaseClaim(project: string, id: string): Promise<void> {
+    const task = this.openTasks.find((t) => t.project === project && t.id === id);
+    if (task) delete task.claimedBy;
+  }
+
   readyTasks(project: string): OpenTask[] {
     return this.openTasks.filter((task) => task.project === project && !task.claimedBy);
   }

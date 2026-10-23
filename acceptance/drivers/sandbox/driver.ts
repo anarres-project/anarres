@@ -478,6 +478,14 @@ export class SandboxDriver implements Driver {
     return records;
   }
 
+  async timePasses(): Promise<void> {
+    throw new HarnessNotYetBuilt("moving GitHub's clock on");
+  }
+
+  async divlabChecksLeases(): Promise<void> {
+    throw new HarnessNotYetBuilt("moving GitHub's clock on");
+  }
+
   async claimedTasks(project: string): Promise<ClaimedTask[]> {
     const issues = await this.settled(project, "claimed");
     return issues.flatMap((issue) => {
@@ -705,8 +713,13 @@ type Listing = "ready" | "claimed" | "escalation" | "done" | "notAccepted";
 /** The App ID of Divlab Sandbox, the sandbox's GitHub App (CONTRIBUTING.md). Not a secret. */
 const DIVLAB_APP_ID = 5414648;
 
-/** The project template's workflows: for members' pull requests, pushes to main, and claims. */
-const TEMPLATE_WORKFLOWS = ["anarres.yml", "divlab-pull-request.yml", "divlab-claim.yml"];
+/** The project template's workflows: members' pull requests, pushes to main, claims, leases. */
+const TEMPLATE_WORKFLOWS = [
+  "anarres.yml",
+  "divlab-pull-request.yml",
+  "divlab-claim.yml",
+  "divlab-leases.yml",
+];
 
 /** Where Divlab's pull request workflow lives in a project repository. */
 const DIVLAB_PULL_REQUEST_WORKFLOW = ".github/workflows/divlab-pull-request.yml";

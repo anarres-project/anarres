@@ -1,0 +1,34 @@
+name: Divlab (leases)
+
+# Every hour Divlab checks the project's leases: a task whose lease has run out, with no activity
+# on it for 24 hours, is ready again for anyone to claim.
+# Off the hour: GitHub may delay or drop scheduled runs at the start of the hour, when load is
+# highest. A lease can run on for up to an hour past its 24 before the check frees it.
+on:
+  schedule:
+    - cron: "17 * * * *"
+
+# The workflow's own token gets nothing: Divlab acts only with its App's token.
+permissions: {}
+
+# Shared with the other Divlab workflows: one Divlab run per project at a time keeps decisions in
+# order. Every run waits its turn: by default GitHub keeps only one waiting and cancels the rest.
+concurrency:
+  group: divlab
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  divlab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Pinned to a commit: this job holds the App's key.
+      - id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.DIVLAB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.DIVLAB_APP_PRIVATE_KEY }}
+      - uses: anarres-project/anarres/packages/divlab@main
+        with:
+          token: ${{ steps.app.outputs.token }}

@@ -26,6 +26,7 @@ import {
   isTask,
   type ListedIssue,
   labelsWhenClaimed,
+  labelsWhenReleased,
   logFrom,
   type NewIssue,
   policyAllowingDivlabChecks,
@@ -133,6 +134,12 @@ export class GitHubAdapter
       labels: labelsWhenClaimed(listed),
       assignees: [claim.member],
     });
+  }
+
+  async releaseClaim(project: string, task: string): Promise<void> {
+    const issue = `${this.repo(project)}/issues/${task}`;
+    const listed = await this.call<ListedIssue>("GET", issue);
+    await this.call("PATCH", issue, { labels: labelsWhenReleased(listed), assignees: [] });
   }
 
   async comments(project: string, task: string): Promise<{ member: string; text: string }[]> {

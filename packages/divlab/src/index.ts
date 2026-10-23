@@ -1,5 +1,6 @@
 import {
   type FeedbackSignal,
+  leaseHasRunOut,
   type Role,
   type RoutingRecord,
   readFeedbackSignal,
@@ -81,6 +82,8 @@ export interface TaskBoard {
   markClaimed(claim: ClaimedTask): Promise<void>;
   /** The comments on a task's issue, earliest first, and who made each. */
   comments(project: string, task: string): Promise<{ member: string; text: string }[]>;
+  /** The task's claim is over: it is ready again, held by nobody. */
+  releaseClaim(project: string, task: string): Promise<void>;
   /** Divlab will not let the member claim the task: they are told why. */
   refuseClaim(refusal: ClaimRefused): Promise<void>;
 }
@@ -90,6 +93,13 @@ export type Claimed = {
   project: string;
   decidedAt: string;
   claimed: { task: string; member: string };
+};
+
+/** A member's lease on a task ran out, with no activity on it: the task is ready again. */
+export type LeaseRanOut = {
+  project: string;
+  decidedAt: string;
+  leaseRanOut: { task: string; member: string };
 };
 
 /** A claim Divlab refused, and why, in words the member would recognise. */
@@ -130,6 +140,33 @@ export async function onClaim(
   }
 }
 
+/** Divlab's scheduled run: every claim whose lease has run out is given up. */
+export async function onLeaseCheck(
+  project: string,
+  board: TaskBoard,
+  log: EventLog,
+  clock: Clock,
+): Promise<void> {
+  // Each task's latest claim is the one that holds it now, if any does.
+  const latest = new Map<string, Claimed>();
+  for (const event of await log.read(project)) {
+    if ("claimed" in event) latest.set(event.claimed.task, event);
+  }
+  for (const claim of latest.values()) {
+    if (!leaseHasRunOut(claim.decidedAt, clock())) continue;
+    const task = await board.task(project, claim.claimed.task);
+    if (task?.claimedBy === claim.claimed.member) {
+      const ranOut: LeaseRanOut = {
+        project,
+        decidedAt: clock().toISOString(),
+        leaseRanOut: claim.claimed,
+      };
+      await log.append(ranOut);
+      await board.releaseClaim(project, claim.claimed.task);
+    }
+  }
+}
+
 /** The files merged to a project's main branch. */
 export interface Repository {
   /** Where each feedback signal merged so far can be found, in no particular order. */
@@ -163,15 +200,15 @@ export type ActedOn = { project: string; actedOn: { feedbackSignal: string } };
 
 /** What the event log holds: routing decisions and acting on them, merges begun, and what Divlab
  * did not accept. */
-export type LogEvent = RoutingEvent | ActedOn | AboutToMerge | NotAccepted | Claimed;
+export type LogEvent = RoutingEvent | ActedOn | AboutToMerge | NotAccepted | Claimed | LeaseRanOut;
 
 /** The routing decisions in a log, which are all its history routing depends on. */
 export const routingDecisions = (log: readonly LogEvent[]): RoutingEvent[] =>
   log.filter((event): event is RoutingEvent => "work" in event);
 
-/** The feedback signal an event is about, whichever kind of event it is; a claim is about none. */
+/** The feedback signal an event is about, whichever kind of event it is; a lease's are about none. */
 export const signalOf = (event: LogEvent): string | undefined => {
-  if ("claimed" in event) return undefined;
+  if ("claimed" in event || "leaseRanOut" in event) return undefined;
   if ("work" in event) return event.work.feedbackSignal;
   if ("aboutToMerge" in event) return event.aboutToMerge.feedbackSignal;
   if ("actedOn" in event) return event.actedOn.feedbackSignal;

@@ -229,6 +229,18 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] if GitHub's comment list lags and shows no claim yet, the member who asked gets the task:
         decided, kept as a test; revisit if the sandbox ever shows a list lagging that far.
 - [ ] A lease expires after 24 hours without activity, and the task becomes ready again.
+  - [x] when a lease runs out (at 24 hours exactly, or later), the task is ready again for anyone,
+        assigned to nobody (core holds the 24 hours; Divlab checks every hour, off the hour);
+  - [x] only a task's latest claim counts, and only while its member still holds the task: a
+        task done, or claimed since by someone else or by the same member again, is left alone;
+  - [x] the lease running out is recorded in the log, with when, before the board shows it;
+  - [ ] the member is told their lease ran out (a reply on the task);
+  - [ ] a claim whose recorded time cannot be read is not taken to hold forever;
+  - [ ] the sandbox shows the hourly check runs and frees nothing early (it cannot move GitHub's
+        clock on 24 hours, so the scenarios that need that stay in-process);
+  - [ ] GitHub turns off scheduled workflows in a public repository after 60 days without
+        activity: a quiet project's leases would stop being checked;
+  - [ ] work submitted for a task whose lease ran out (section 4: the task it was claimed for).
 - [ ] Submitting draft work extends the lease.
 - [ ] A member can release a task early.
 

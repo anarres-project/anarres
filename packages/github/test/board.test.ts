@@ -199,3 +199,28 @@ describe("the task an issue number names", () => {
     expect(await adapter.task("ledger", "12")).toBeUndefined();
   });
 });
+
+describe("releasing a claim", () => {
+  it("labels its issue ready instead of claimed, and assigns it to nobody", async () => {
+    const changes: unknown[] = [];
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string, body?: unknown) => {
+        if (method === "GET" && path === "repos/commons/ledger/issues/12") {
+          const labels = ["role:test", "module:parser", "state:claimed"].map((name) => ({ name }));
+          return { status: 200, data: { labels, body: "" } as T };
+        }
+        if (method === "PATCH" && path === "repos/commons/ledger/issues/12") {
+          changes.push(body);
+          return { status: 200, data: {} as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    await adapter.releaseClaim("ledger", "12");
+    expect(changes).toEqual([
+      { labels: ["role:test", "module:parser", "state:ready"], assignees: [] },
+    ]);
+  });
+});

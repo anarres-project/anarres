@@ -46,7 +46,67 @@ commenting on it, and Divlab marks it claimed and assigns it to them, in-process
 sandbox; a claimed task stays with its holder, and anyone else claiming it is told it has already
 been claimed; of claims made together the first made wins, whichever Divlab hears of first
 (both in-process: the sandbox needs a second account to play another member); a claim on
-anything but an open task is refused; each claim granted is recorded in the log.
+anything but an open task is refused; each claim granted is recorded in the log. A lease runs out
+24 hours after its claim, and Divlab's hourly check makes the task ready again (in-process).
+
+---
+
+## 2026-10-23: Leases run out
+
+- A lease runs out 24 hours after the last activity on its task: today that is the claim, until
+  draft work counts as activity (next). The 24 hours are core's, defined once; at exactly 24 hours
+  the lease has run out.
+- A new template workflow runs Divlab every hour, at 17 minutes past (GitHub may delay or drop
+  scheduled runs at the start of the hour). Divlab reads the log for each task's latest claim,
+  and where that lease has run out and its member still holds the task, records that the lease
+  ran out and makes the task ready again, assigned to nobody. A task whose work is done, or that
+  has been claimed since, by anyone, is left alone.
+- The lease record, like the claim record, is about no feedback signal; Divlab and the adapter
+  read past it, each shown failing first.
+- The in-process driver's clock now moves when a scenario says time passes; before, every run
+  used one fixed time. The sandbox cannot move GitHub's clock, so both lease scenarios are
+  `@sandbox-wip`.
+- Template tests: the check that each workflow waits its turn with the others moved into the
+  checks every Divlab workflow shares (group and no cancelling, as comparing with the push
+  workflow had checked).
+- Slip: `signalOf`'s new branch was written before a test asked for it; taken out, its test failed
+  for the right reason, and it went back.
+
+RED:      has run out 25 hours after the last activity on its task -> expected false to be true
+GREEN:    (hard-coded)
+RED:      still holds 23 hours after the last activity -> expected true to be false
+GREEN:    (120 passed)
+RED:      has run out at exactly 24 hours: that is when it expires -> expected false to be true
+GREEN:    (121 passed)
+RED:      makes a task ready again when its lease has run out -> expected [] to deeply equal [ '12' ]
+GREEN:    (1 passed)
+RED:      leaves alone a task the claim no longer holds, such as one whose work is done
+          -> expected [ '12' ] to deeply equal []
+GREEN:    (2 passed)
+RED:      leaves alone a task another member has claimed since -> expected [ '12' ] to deeply equal []
+GREEN:    (3 passed)
+RED:      judges a task's lease by its latest claim, so a member who claimed again keeps it
+          -> expected [ '12' ] to deeply equal []
+GREEN:    (83 passed)
+REFACTOR: each task's latest claim is found first, then judged
+RED:      records that the lease ran out, and when it found it had, before the board shows it
+          -> expected [ [ 'released' ], [] ] to deeply equal [ [ 'recorded', 'released' ], …(1) ]
+GREEN:    (84 passed)
+RED:      reads past leases that ran out in the log -> TypeError: Cannot read properties of undefined
+GREEN:    (85 passed)
+RED:      labels its issue ready instead of claimed, and assigns it to nobody
+          -> expected [] to deeply equal [ { …(2) } ]
+GREEN:    (72 passed)
+RED:      reads back a record that a member's lease ran out
+          -> Error: The event file cannot be read: it is not a routing record
+GREEN:    (279 passed)
+RED:      checks the project's leases when its schedule comes round
+          -> Error: Divlab does not act on schedule events
+GREEN:    (86 passed)
+RED:      the lease workflow runs every hour, and on nothing else
+          -> expected { schedule: [ { cron: '0 * * * *' } ] } to deeply equal { Object (schedule) }
+GREEN:    (92 passed)
+REFACTOR: the template's shared workflow checks include waiting a turn
 
 ---
 
