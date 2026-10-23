@@ -32,3 +32,37 @@ export function outsideScope(role: Role, module: string, paths: readonly string[
 const isPlainPath = (path: string) =>
   !path.includes("\\") &&
   path.split("/").every((part) => part !== "" && part !== "." && part !== "..");
+
+/** Whether a role's work may read a path in the project, for the module named in its task. */
+export function mayRead(role: Role, module: string, path: string): boolean {
+  return isPlainPath(path) && READ_SCOPES[role](module).some((scope) => path.startsWith(scope));
+}
+
+/**
+ * What each role's work may read, for the module named in its task: the access matrix's read
+ * scopes (concept §6), defined here and nowhere else. A module's requirement slice is
+ * `programme/slices/<module>/`. Contracts wait for the Programme Architect's modules.yaml; what a
+ * Research task reads, its question names.
+ */
+const READ_SCOPES: Record<Role, (module: string) => string[]> = {
+  "programme-architect": () => ["requirements/"],
+  architecture: (module) => [`programme/slices/${module}/`],
+  specification: (module) => [`programme/slices/${module}/`, `modules/${module}/architecture/`],
+  test: (module) => [
+    `programme/slices/${module}/`,
+    `modules/${module}/architecture/`,
+    `modules/${module}/specifications/`,
+  ],
+  coding: (module) => [`modules/${module}/specifications/`, `modules/${module}/tests/`],
+  reviewer: (module) => [
+    `programme/slices/${module}/`,
+    `modules/${module}/specifications/`,
+    `modules/${module}/src/`,
+  ],
+  "security-and-quality": (module) => [
+    `programme/slices/${module}/`,
+    `modules/${module}/architecture/`,
+    `modules/${module}/src/`,
+  ],
+  research: () => [],
+};

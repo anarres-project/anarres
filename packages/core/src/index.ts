@@ -1,4 +1,4 @@
-export { outsideScope } from "./access.ts";
+export { mayRead, outsideScope } from "./access.ts";
 export { mayTake, type Part } from "./eligibility.ts";
 export {
   type FeedbackSignal,

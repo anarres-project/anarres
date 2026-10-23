@@ -455,6 +455,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] preparing the claimed task (the next item);
   - [ ] offers are ranked by priority and size (concept §8).
 - [ ] Preparing a task fetches only the files the role may read, at the pinned versions.
+  - [x] core holds the access matrix's read scopes beside its write scopes, once: each module
+        role reads its own module's places and its requirement slice (`programme/slices/<m>/`),
+        never another module's, and no path that climbs out;
+  - [ ] the contracts a module provides and uses (needs the Programme Architect's modules.yaml);
+  - [ ] what a Research task reads, as its question names it;
+  - [ ] Divlab posts each task with the commit its inputs are pinned at;
+  - [ ] the CLI's `prepare` fetches those places at that commit, and nothing else.
 - [ ] The read-scope hook refuses a file outside the role's scope.
 - [ ] A member who runs out of allowance can hand over partial work.
 

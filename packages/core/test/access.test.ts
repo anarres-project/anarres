@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { outsideScope, type Role } from "../src/index.ts";
+import { mayRead, outsideScope, type Role } from "../src/index.ts";
 
 describe("what a role's work may change (concept §6)", () => {
   it("does not let Coding change its module's tests", () => {
@@ -51,5 +51,60 @@ describe("what a role's work may change (concept §6)", () => {
     ["uses the other slash", "modules/parser/src/..\\..\\x"],
   ])("counts as outside a role's place a path that %s", (_what, path) => {
     expect(outsideScope("coding", "parser", [path])).toEqual([path]);
+  });
+});
+
+describe("what a role's work may read (concept §6)", () => {
+  it("lets Coding read its module's specifications and tests, and not its architecture", () => {
+    expect(
+      [
+        "modules/parser/specifications/lexing.md",
+        "modules/parser/tests/lexer.test.ts",
+        "modules/parser/architecture/overview.md",
+      ].map((path) => mayRead("coding", "parser", path)),
+    ).toEqual([true, true, false]);
+  });
+
+  it("lets Reviewer read its module's requirement slice, specifications and code, not its tests", () => {
+    expect(
+      [
+        "programme/slices/parser/requirements.md",
+        "modules/parser/specifications/lexing.md",
+        "modules/parser/src/lexer.ts",
+        "modules/parser/tests/lexer.test.ts",
+      ].map((path) => mayRead("reviewer", "parser", path)),
+    ).toEqual([true, true, true, false]);
+  });
+
+  it.each<[Role, string[], string[]]>([
+    ["programme-architect", ["requirements/r1.md"], ["programme/slices/parser/s.md"]],
+    ["architecture", ["programme/slices/parser/s.md"], ["modules/parser/specifications/a.md"]],
+    [
+      "specification",
+      ["programme/slices/parser/s.md", "modules/parser/architecture/a.md"],
+      ["modules/parser/tests/t.ts"],
+    ],
+    [
+      "test",
+      ["modules/parser/architecture/a.md", "modules/parser/specifications/a.md"],
+      ["modules/parser/src/x.ts"],
+    ],
+    [
+      "security-and-quality",
+      ["modules/parser/architecture/a.md", "modules/parser/src/x.ts"],
+      ["modules/parser/tests/t.ts"],
+    ],
+    ["research", [], ["modules/parser/src/x.ts"]],
+  ])("lets %s read %j and not %j", (role, readable, unreadable) => {
+    expect(readable.every((path) => mayRead(role, "parser", path))).toBe(true);
+    expect(unreadable.some((path) => mayRead(role, "parser", path))).toBe(false);
+  });
+
+  it("does not let a role read another module's place, nor climb out of its own", () => {
+    expect(
+      ["modules/lexer/specifications/a.md", "modules/parser/specifications/../../../.env"].map(
+        (path) => mayRead("coding", "parser", path),
+      ),
+    ).toEqual([false, false]);
   });
 });
