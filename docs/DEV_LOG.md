@@ -64,6 +64,8 @@ Divlab refuses work that changes files outside its role's place, naming them.
   (300 requests): claiming, the claim record, giving a task back, the draft, a new member
   refused a Reviewer task, an established member given one, and linked accounts as one member.
   They run there now. Three scenarios have three members and wait for a third account.
+- The full sandbox run for 46cb1c2 passed all 78, the `@governance` scenarios one at a time
+  across the four workers.
 
 ---
 
