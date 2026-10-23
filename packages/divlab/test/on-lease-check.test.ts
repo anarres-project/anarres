@@ -18,6 +18,8 @@ const board: TaskBoard = {
   refuseClaim: untouched,
   comments: untouched,
   releaseClaim: untouched,
+  // Telling the member is looked at by one test; the rest let it happen.
+  tellLeaseRanOut: async () => {},
 };
 
 /** Divlab's clock in these tests: 25 hours after the claim below. */
@@ -185,5 +187,19 @@ describe("checking a project's leases", () => {
     };
     await onLeaseCheck("ledger", watched, someoneElse, clock);
     expect(released).toEqual(["12"]);
+  });
+
+  it("tells the member their lease ran out, on the task", async () => {
+    const told: unknown[] = [];
+    const watched: TaskBoard = {
+      ...board,
+      task: async () => ({ claimedBy: "alice" }),
+      releaseClaim: async () => {},
+      tellLeaseRanOut: async (ranOut) => {
+        told.push(ranOut);
+      },
+    };
+    await onLeaseCheck("ledger", watched, claimedLongAgo, clock);
+    expect(told).toEqual([{ project: "ledger", task: "12", member: "alice" }]);
   });
 });

@@ -25,6 +25,7 @@ const board: TaskBoard = {
   refuseClaim: untouched,
   comments: untouched,
   releaseClaim: untouched,
+  tellLeaseRanOut: untouched,
 };
 
 describe("acting on a claim", () => {

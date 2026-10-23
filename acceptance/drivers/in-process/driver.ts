@@ -223,6 +223,10 @@ export class InProcessDriver implements Driver {
     });
   }
 
+  async leaseNotices(project: string): Promise<string[]> {
+    return this.github.leaseNotices(project);
+  }
+
   async timePasses(hours: number): Promise<void> {
     this.now = new Date(this.now.getTime() + hours * 60 * 60 * 1000);
   }

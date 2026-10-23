@@ -224,3 +224,26 @@ describe("releasing a claim", () => {
     ]);
   });
 });
+
+describe("telling a member their lease ran out", () => {
+  it("replies on the task's issue to the member, saying the task is ready again", async () => {
+    const comments: unknown[] = [];
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string, body?: unknown) => {
+        if (method === "POST" && path === "repos/commons/ledger/issues/12/comments") {
+          comments.push(body);
+          return { status: 201, data: {} as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    await adapter.tellLeaseRanOut({ project: "ledger", task: "12", member: "alice" });
+    expect(comments).toEqual([
+      {
+        body: "@alice, your lease on this task ran out: 24 hours passed without activity on it, so it is ready for anyone to claim again.",
+      },
+    ]);
+  });
+});

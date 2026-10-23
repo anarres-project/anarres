@@ -102,6 +102,8 @@ export interface Driver {
   timePasses(hours: number): Promise<void>;
   /** Divlab's scheduled run checks the project's leases, as it does every hour. */
   divlabChecksLeases(project: string): Promise<void>;
+  /** The members Divlab told that their lease ran out. */
+  leaseNotices(project: string): Promise<string[]>;
   /** The claims Divlab's log records it granted, each with when. */
   claimRecords(project: string): Promise<(ClaimedTask & { claimedAt: string })[]>;
   /** What Divlab told members whose claims it refused. */

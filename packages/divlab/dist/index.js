@@ -7696,6 +7696,9 @@ function commentForRefusal(reason) {
 
 ${quoted(reason)}`;
 }
+function commentForLeaseRanOut(ranOut) {
+  return `@${ranOut.member}, your lease on this task ran out: ${LEASE_HOURS} hours passed without activity on it, so it is ready for anyone to claim again.`;
+}
 function commentForClaimRefusal(refusal) {
   return `@${refusal.member}, Divlab did not give you this task: ${refusal.reason}.`;
 }
@@ -7899,6 +7902,11 @@ var GitHubAdapter = class {
     await this.call("PATCH", issue, {
       labels: labelsWhenClaimed(listed),
       assignees: [claim.member]
+    });
+  }
+  async tellLeaseRanOut(ranOut) {
+    await this.call("POST", `${this.repo(ranOut.project)}/issues/${ranOut.task}/comments`, {
+      body: commentForLeaseRanOut(ranOut)
     });
   }
   async releaseClaim(project2, task) {
@@ -8204,6 +8212,7 @@ async function onLeaseCheck(project2, board, log, clock) {
     };
     await log.append(ranOut);
     await board.releaseClaim(project2, task);
+    await board.tellLeaseRanOut({ project: project2, task, member });
   }
 }
 var routingDecisions = (log) => log.filter((event) => "work" in event);

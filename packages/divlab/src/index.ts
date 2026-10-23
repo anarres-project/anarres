@@ -82,6 +82,8 @@ export interface TaskBoard {
   markClaimed(claim: ClaimedTask): Promise<void>;
   /** The comments on a task's issue, earliest first, and who made each. */
   comments(project: string, task: string): Promise<{ member: string; text: string }[]>;
+  /** The member is told, on the task, that their lease on it ran out. */
+  tellLeaseRanOut(ranOut: ClaimedTask): Promise<void>;
   /** The task's claim is over: it is ready again, held by nobody. */
   releaseClaim(project: string, task: string): Promise<void>;
   /** Divlab will not let the member claim the task: they are told why. */
@@ -197,6 +199,7 @@ export async function onLeaseCheck(
     };
     await log.append(ranOut);
     await board.releaseClaim(project, task);
+    await board.tellLeaseRanOut({ project, task, member });
   }
 }
 

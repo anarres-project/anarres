@@ -496,6 +496,10 @@ export class SandboxDriver implements Driver {
     return records;
   }
 
+  async leaseNotices(): Promise<string[]> {
+    throw new HarnessNotYetBuilt("moving GitHub's clock on");
+  }
+
   async timePasses(): Promise<void> {
     throw new HarnessNotYetBuilt("moving GitHub's clock on");
   }

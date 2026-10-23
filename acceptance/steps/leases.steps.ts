@@ -1,4 +1,4 @@
-import { When } from "@cucumber/cucumber";
+import { Then, When } from "@cucumber/cucumber";
 import type { AnarresWorld } from "../support/world.ts";
 
 When("{int} hours pass without activity on the task", function (this: AnarresWorld, hours: number) {
@@ -15,3 +15,7 @@ When(
     return this.anarres.memberSubmitsDraftWork(member, { role, module });
   },
 );
+
+Then("{word} is told the lease on the task ran out", function (this: AnarresWorld, member: string) {
+  return this.anarres.memberIsToldLeaseRanOut(member);
+});

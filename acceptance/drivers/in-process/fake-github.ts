@@ -249,6 +249,17 @@ export class FakeGitHub
     return this.openTasks.filter((task) => task.project === project);
   }
 
+  /** Divlab's messages to members whose lease ran out: written when it tells them. */
+  private readonly leaseMessages: ClaimedTask[] = [];
+
+  async tellLeaseRanOut(ranOut: ClaimedTask): Promise<void> {
+    this.leaseMessages.push(ranOut);
+  }
+
+  leaseNotices(project: string): string[] {
+    return this.leaseMessages.filter((m) => m.project === project).map((m) => m.member);
+  }
+
   async releaseClaim(project: string, id: string): Promise<void> {
     const task = this.openTasks.find((t) => t.project === project && t.id === id);
     if (task) delete task.claimedBy;

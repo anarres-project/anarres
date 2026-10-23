@@ -25,6 +25,7 @@ function project(protectedMain: boolean, alertOpen = false) {
     refuseClaim: untouched,
     comments: untouched,
     releaseClaim: untouched,
+    tellLeaseRanOut: untouched,
     alertUnprotectedMain: async (name) => {
       alerts.push(name);
     },

@@ -14,6 +14,7 @@ import type {
 } from "@anarres/divlab";
 import {
   commentForClaimRefusal,
+  commentForLeaseRanOut,
   commentForRefusal,
   decisionOf,
   eventFile,
@@ -133,6 +134,12 @@ export class GitHubAdapter
     await this.call("PATCH", issue, {
       labels: labelsWhenClaimed(listed),
       assignees: [claim.member],
+    });
+  }
+
+  async tellLeaseRanOut(ranOut: ClaimedTask): Promise<void> {
+    await this.call("POST", `${this.repo(ranOut.project)}/issues/${ranOut.task}/comments`, {
+      body: commentForLeaseRanOut(ranOut),
     });
   }
 

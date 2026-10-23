@@ -11,6 +11,7 @@ Feature: Leases
     When 25 hours pass without activity on the task
     And Divlab checks the project's leases
     Then a Test task for "parser" is ready to claim
+    And Alice is told the lease on the task ran out
 
   # Not in the sandbox: its clock is GitHub's, and nothing can move it on 24 hours.
   @sandbox-wip

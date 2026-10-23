@@ -305,6 +305,14 @@ export class Anarres {
     await this.driver.divlabChecksLeases(this.project);
   }
 
+  async memberIsToldLeaseRanOut(member: string) {
+    assert.deepEqual(
+      await this.driver.leaseNotices(this.project),
+      [this.member(member)],
+      `expected ${member} to be told the lease ran out`,
+    );
+  }
+
   async memberIsToldTaskIsTaken(member: string) {
     const told = await this.driver.claimRefusals(this.project);
     assert.ok(

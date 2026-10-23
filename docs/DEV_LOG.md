@@ -53,6 +53,23 @@ give a task back early.
 
 ---
 
+## 2026-10-23: A member is told their lease ran out
+
+- When Divlab frees a task whose lease ran out, it replies on the task to the member who held it.
+  The message gives the lease's length from core, not a second copy of the number.
+- Slip: driven from the unit tests first; the acceptance scenario's new step was added after, and
+  watched fail on its assertion (the fake told nobody) before the fake kept the message.
+
+RED:      tells the member their lease ran out, on the task -> expected [] to deeply equal [ {…} ]
+GREEN:    (107 passed)
+RED:      replies on the task's issue to the member, saying the task is ready again
+          -> expected [] to deeply equal [ Array(1) ]
+GREEN:    (305 passed)
+RED:      (acceptance) Alice is told the lease on the task ran out -> AssertionError: expected [ 'alice-s…' ], got []
+GREEN:    (80 scenarios passed)
+
+---
+
 ## 2026-10-23: A member gives a task back
 
 - A member holding a task comments `/release` on it; Divlab records the release and makes the

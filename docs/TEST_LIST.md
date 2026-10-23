@@ -234,7 +234,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] only a task's latest claim counts, and only while its member still holds the task: a
         task done, or claimed since by someone else or by the same member again, is left alone;
   - [x] the lease running out is recorded in the log, with when, before the board shows it;
-  - [ ] the member is told their lease ran out (a reply on the task);
+  - [x] the member is told their lease ran out (a reply on the task, giving core's 24 hours);
   - [ ] a claim whose recorded time cannot be read is not taken to hold forever;
   - [ ] the sandbox shows the hourly check runs and frees nothing early (it cannot move GitHub's
         clock on 24 hours, so the scenarios that need that stay in-process);

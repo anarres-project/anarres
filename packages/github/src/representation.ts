@@ -1,9 +1,16 @@
-import { ROLE_NAMES, type Role, readMergedWork, readRoutingRecord } from "@anarres/core";
+import {
+  LEASE_HOURS,
+  ROLE_NAMES,
+  type Role,
+  readMergedWork,
+  readRoutingRecord,
+} from "@anarres/core";
 import type {
   AboutToMerge,
   ActedOn,
   Activity,
   Claimed,
+  ClaimedTask,
   ClaimRefused,
   FinishedModule,
   LeaseRanOut,
@@ -196,6 +203,11 @@ export function logFrom(listed: string[], texts: Map<string, string>): LogEvent[
 /** The reason is quoted in a code block, so text a member wrote can never act as Markdown. */
 export function commentForRefusal(reason: string): string {
   return `Divlab has not merged this pull request:\n\n${quoted(reason)}`;
+}
+
+/** Divlab's reply to a member whose lease on a task ran out. */
+export function commentForLeaseRanOut(ranOut: ClaimedTask): string {
+  return `@${ranOut.member}, your lease on this task ran out: ${LEASE_HOURS} hours passed without activity on it, so it is ready for anyone to claim again.`;
 }
 
 /** Divlab's reply to a member whose claim it refused: its reasons are its own words. */
