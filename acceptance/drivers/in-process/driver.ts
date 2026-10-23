@@ -22,6 +22,7 @@ import {
   roleId,
   roleName,
   signalName,
+  workFiles,
 } from "../scenario-words.ts";
 import { FakeGitHub, Interrupted } from "./fake-github.ts";
 
@@ -128,8 +129,7 @@ export class InProcessDriver implements Driver {
     const task = this.github
       .openTasksOf(work.project)
       .find((task) => task.role === fromRole && task.module === work.module);
-    const { path, text } = feedbackSignalFile(work, task?.id);
-    const pullRequest = this.github.openPullRequest(work.project, [{ path, text }], {
+    const pullRequest = this.github.openPullRequest(work.project, workFiles(work, task?.id), {
       author: work.member,
     });
     await onPullRequest(
@@ -150,10 +150,9 @@ export class InProcessDriver implements Driver {
       const task = this.github
         .openTasksOf(work.project)
         .find((task) => task.role === fromRole && task.module === work.module);
-      const { path, text } = feedbackSignalFile(work, task?.id);
       return {
         project: work.project,
-        pullRequest: this.github.openPullRequest(work.project, [{ path, text }], {
+        pullRequest: this.github.openPullRequest(work.project, workFiles(work, task?.id), {
           author: work.member,
         }),
       };

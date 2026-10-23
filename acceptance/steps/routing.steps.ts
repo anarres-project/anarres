@@ -372,3 +372,17 @@ Then(
     return this.anarres.divlabRecordSaysWhenItDecided({ role, module });
   },
 );
+
+When(
+  "a member submits {role} work on {string} that also changes the module's tests",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.memberSubmitsWork({ role, module, verdict: "pass", changesTests: true });
+  },
+);
+
+Then(
+  "the member is told their work changes files outside what {role} may change",
+  function (this: AnarresWorld, role: string) {
+    return this.anarres.memberIsToldWhy(`changes files outside what ${role} may change`);
+  },
+);

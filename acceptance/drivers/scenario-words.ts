@@ -35,6 +35,18 @@ export function feedbackSignalFile(work: AcceptedWork, task?: string) {
   return { path: `feedback/${name}.md`, text: `${header.join("\n")}\n` };
 }
 
+/** Every file a member's work changes: its feedback signal, and any others the scenario says. */
+export function workFiles(work: AcceptedWork, task?: string) {
+  return [feedbackSignalFile(work, task), ...otherFiles(work)];
+}
+
+/** The files a member's work changes besides its feedback signal, as the scenario says. */
+export function otherFiles(work: AcceptedWork) {
+  return work.changesTests
+    ? [{ path: `modules/${work.module}/tests/${work.feedbackSignal}.md`, text: "# Tests\n" }]
+    : [];
+}
+
 /** What makes a feedback signal file's name more than a plain name, in the scenarios. */
 const NOT_PLAIN = "_*see*";
 

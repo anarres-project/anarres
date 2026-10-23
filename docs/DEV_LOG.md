@@ -52,7 +52,42 @@ hourly check makes the task ready again (in-process). Divlab never merges a draf
 give a task back early. Section 3 under way: a member takes one role in a module for its whole
 life (decision 0007), and Divlab refuses a claim that breaks it, or that the member's trust level
 does not allow; accounts a PDC coordinator linked are one member (in-process: the sandbox needs
-a governance file of its own). Section 3 is built but for what the sandbox needs.
+a governance file of its own). Section 3 is built but for what the sandbox needs. Section 4:
+Divlab refuses work that changes files outside its role's place, naming them.
+
+---
+
+## 2026-10-23: Each role writes only its own place
+
+- Divlab merged whatever files a pull request held, so a member's work could have changed
+  anything in the project, Divlab's own workflows included. Core now holds the access matrix's
+  write scopes (concept §6), once: each module role writes its own folder in its own module,
+  the Programme Architect `programme/`, Research `research-briefs/`, and every role one feedback
+  signal. Divlab refuses work that changes anything else before recording or merging it, naming
+  the paths. A path with an empty, `.` or `..` part, or a backslash, is outside every scope.
+- Work naming a role Anarres does not have is refused, saying so (it would have crashed the
+  scope check, and before that been routed as the start of a pipeline).
+- The scenarios can now give work files besides its signal (`workFiles`), in both drivers.
+- The write-scope table was written whole from the concept's matrix, then pinned row by row
+  (passed first time).
+
+RED:      does not let Coding change its module's tests -> expected [] to deeply equal [ Array(1) ]
+GREEN:    (hard-coded)
+RED:      lets work add its one feedback signal -> expected [ 'feedback/FB-7.md' ] to deeply equal []
+GREEN:    (2 passed)
+RED:      does not let work change a second feedback signal -> expected [] to deeply equal [ 'feedback/FB-3.md' ]
+GREEN:    (3 passed)
+RED:      lets Specification change its module's specifications, and not its code -> wrong paths
+GREEN:    (4 passed; 13 with every role pinned)
+RED:      counts as outside a path that climbs out / names its place oddly / has an empty part / uses
+          the other slash -> (four rows) expected [] to deeply equal [ path ]
+GREEN:    (173 passed; core branches 100%)
+RED:      does not merge work that changes files outside its role's place, and names them
+          -> Error: Divlab should not have acted
+GREEN:    (121 passed)
+RED:      does not merge work from a role Anarres does not have, and says so
+          -> TypeError: WRITE_SCOPES[role] is not a function
+GREEN:    (122 passed; 86 scenarios)
 
 ---
 

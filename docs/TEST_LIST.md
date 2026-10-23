@@ -379,8 +379,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       that it is about to merge, with the work it checked, before it merges, so the tripwire
       finishes from that record and never reads Git history (in-process; the sandbox cannot stop
       the real Action on cue, so the scenario is `@sandbox-wip`).
-- [ ] Work that touches files outside the role's write scope is rejected, naming the offending
-      paths.
+- [x] Work that touches files outside the role's write scope is rejected, naming the offending
+      paths: core holds the access matrix's write scopes, once, and one feedback signal per task;
+      a path with an empty, `.` or `..` part, or a backslash, is outside every scope (in-process);
+  - [ ] the sandbox shows it (tagged until it has passed there);
+  - [ ] the read scopes, for the plugin's sparse checkout and hooks (section 5).
 - [ ] Work without a valid feedback signal is rejected, saying what is missing.
 - [ ] Work for a task the member has not claimed is rejected.
 - [x] A feedback signal whose role, module, verdict or impediment types are not plain names
@@ -389,7 +392,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       (in the sandbox too).
 - [ ] Work naming a module the project does not have is refused (needs the Programme Architect's
       `modules.yaml`; until then a project has one module: concept §5, "start whole").
-- [ ] Coding work that changes tests is rejected.
+- [x] Coding work that changes tests is rejected (a case of the write scopes).
 - [ ] Work based on inputs that have since changed is flagged as stale.
 
 ## 4a. Any language (hosted projects)
@@ -421,8 +424,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] a signal that reaches `main` unreadable is recorded once as not accepted, with the
         reason, and PDC coordinators are alerted once; the other signals are still routed
         (decision 0005);
-- Work from a role Divlab does not recognise is rejected, not routed (today `route` treats an
-  unknown role as the start of the pipeline; untested, so section 4 must cover it).
+- [x] Work from a role Divlab does not recognise is rejected, not routed: the member is told the
+  role is not one Anarres has.
 - The task posted on GitHub links to its feedback signal at the merged commit (needs Divlab as an
   Action and `packages/github`).
 - Later: a PDC coordinator reopens a done module, for example after a bug report or a Governance

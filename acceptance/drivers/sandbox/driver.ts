@@ -20,6 +20,7 @@ import { HarnessNotYetBuilt } from "../errors.ts";
 import {
   feedbackSignalFile,
   inScenarioWords,
+  otherFiles,
   roleId,
   roleNameOf,
   signalName,
@@ -186,12 +187,15 @@ export class SandboxDriver implements Driver {
       ref: `refs/heads/${branch}`,
       sha: main.sha,
     });
-    const { path, text } = feedbackSignalFile(work, task && String(task.number));
-    await this.members.call("PUT", `repos/${fork}/contents/${path}`, {
-      message: `The ${work.role} work on ${work.module}`,
-      content: Buffer.from(text).toString("base64"),
-      branch,
-    });
+    const signal = feedbackSignalFile(work, task && String(task.number));
+    for (const { path, text } of [...otherFiles(work), signal]) {
+      await this.members.call("PUT", `repos/${fork}/contents/${path}`, {
+        message: `The ${work.role} work on ${work.module}`,
+        content: Buffer.from(text).toString("base64"),
+        branch,
+      });
+    }
+    const { path } = signal;
     const { number } = await this.github.call<{ number: number }>("POST", `${repository}/pulls`, {
       title: `The ${work.role} work on ${work.module}`,
       head: `${this.membersOrg}:${branch}`,

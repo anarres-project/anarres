@@ -7368,6 +7368,24 @@ var require_dist = __commonJS({
 // src/action.ts
 import { readFileSync } from "node:fs";
 
+// ../core/src/access.ts
+var WRITE_SCOPES = {
+  "programme-architect": () => "programme/",
+  architecture: (module) => `modules/${module}/architecture/`,
+  specification: (module) => `modules/${module}/specifications/`,
+  test: (module) => `modules/${module}/tests/`,
+  coding: (module) => `modules/${module}/src/`,
+  reviewer: (module) => `modules/${module}/reviews/`,
+  "security-and-quality": (module) => `modules/${module}/reviews/`,
+  research: () => "research-briefs/"
+};
+function outsideScope(role, module, paths) {
+  const signal = paths.find((path) => path.startsWith("feedback/"));
+  const scope = WRITE_SCOPES[role](module);
+  return paths.filter((path) => !isPlainPath(path) || path !== signal && !path.startsWith(scope));
+}
+var isPlainPath = (path) => !path.includes("\\") && path.split("/").every((part) => part !== "" && part !== "." && part !== "..");
+
 // ../core/src/roles.ts
 var ROLE_NAMES = {
   "programme-architect": "Programme Architect",
@@ -8481,6 +8499,28 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
   const signal = readFeedbackSignal(feedback.text);
   if ("unreadable" in signal) {
     await pullRequests.refuse(project2, pullRequest, cannotRead(feedback.path, signal));
+    return;
+  }
+  const role = signal.fromRole;
+  if (!isRole(role)) {
+    await pullRequests.refuse(
+      project2,
+      pullRequest,
+      `The feedback signal ${feedback.path} names a role Anarres does not have: ${role}`
+    );
+    return;
+  }
+  const outside = outsideScope(
+    role,
+    signal.module,
+    files.map((changed) => changed.path)
+  );
+  if (outside.length > 0) {
+    await pullRequests.refuse(
+      project2,
+      pullRequest,
+      `The work changes files outside what ${ROLE_NAMES[role]} may change: ${outside.join(", ")}`
+    );
     return;
   }
   const events = await log.read(project2);

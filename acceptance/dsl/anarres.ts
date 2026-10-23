@@ -155,6 +155,7 @@ export class Anarres {
       withoutFeedbackSignal?: boolean;
       moduleNotPlain?: boolean;
       fileNameNotPlain?: boolean;
+      changesTests?: boolean;
     },
   ) {
     this.signalsWritten += 1;

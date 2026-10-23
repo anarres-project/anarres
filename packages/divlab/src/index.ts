@@ -1,9 +1,12 @@
 import {
   type FeedbackSignal,
+  isRole,
   leaseHasRunOut,
   mayTake,
   memberFor,
+  outsideScope,
   type Part,
+  ROLE_NAMES,
   type Role,
   type RoutingRecord,
   readFeedbackSignal,
@@ -544,6 +547,29 @@ export async function onPullRequest(
   const signal = readFeedbackSignal(feedback.text);
   if ("unreadable" in signal) {
     await pullRequests.refuse(project, pullRequest, cannotRead(feedback.path, signal));
+    return;
+  }
+  const role = signal.fromRole;
+  if (!isRole(role)) {
+    await pullRequests.refuse(
+      project,
+      pullRequest,
+      `The feedback signal ${feedback.path} names a role Anarres does not have: ${role}`,
+    );
+    return;
+  }
+  // Each role writes only its own place (concept §6): nothing else, such as Divlab's own workflows.
+  const outside = outsideScope(
+    role,
+    signal.module,
+    files.map((changed) => changed.path),
+  );
+  if (outside.length > 0) {
+    await pullRequests.refuse(
+      project,
+      pullRequest,
+      `The work changes files outside what ${ROLE_NAMES[role]} may change: ${outside.join(", ")}`,
+    );
     return;
   }
   const events = await log.read(project);

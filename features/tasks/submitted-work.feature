@@ -62,3 +62,14 @@ Feature: Divlab merges the work members submit
     And Divlab was interrupted just after recording its decision on a member's Test work on "parser"
     When Divlab next acts on the project
     Then the only task ready for "parser" is a Coding task
+
+  # Not yet in the sandbox: it has not passed there yet.
+  @sandbox-wip
+  Scenario: Work that changes files outside its role's scope is not merged
+    Coding writes a module's code, never its tests: whoever writes the code must not be able to
+    change what checks it.
+
+    Given a project with a module "parser"
+    When a member submits Coding work on "parser" that also changes the module's tests
+    Then Divlab has not merged the member's Coding work on "parser"
+    And the member is told their work changes files outside what Coding may change

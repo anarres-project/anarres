@@ -547,6 +547,54 @@ describe("acting on a pull request", () => {
     expect([merged, refusals, appended]).toEqual([[], [], []]);
   });
 
+  it("does not merge work that changes files outside its role's place, and names them", async () => {
+    const [merged, refusals]: string[][] = [[], []];
+    const codingWithTests = [
+      {
+        path: "feedback/FB-5.md",
+        text: "---\nfeedback_signal:\n  from_role: coding\n  module: parser\n  verdict: pass\n---\n",
+      },
+      { path: "modules/parser/src/lexer.ts", text: "export {};\n" },
+      { path: "modules/parser/tests/lexer.test.ts", text: "// changed\n" },
+    ];
+    await onPullRequest(
+      "ledger",
+      "7",
+      submitting(merged, codingWithTests, refusals),
+      board,
+      log,
+      clock,
+    );
+    expect([merged, refusals]).toEqual([
+      [],
+      [
+        "7: The work changes files outside what Coding may change: modules/parser/tests/lexer.test.ts",
+      ],
+    ]);
+  });
+
+  it("does not merge work from a role Anarres does not have, and says so", async () => {
+    const [merged, refusals]: string[][] = [[], []];
+    const fromNowhere = [
+      {
+        path: "feedback/FB-6.md",
+        text: "---\nfeedback_signal:\n  from_role: oracle\n  module: parser\n  verdict: pass\n---\n",
+      },
+    ];
+    await onPullRequest(
+      "ledger",
+      "7",
+      submitting(merged, fromNowhere, refusals),
+      board,
+      log,
+      clock,
+    );
+    expect([merged, refusals]).toEqual([
+      [],
+      ["7: The feedback signal feedback/FB-6.md names a role Anarres does not have: oracle"],
+    ]);
+  });
+
   it("merges a pull request whose feedback signal it can read", async () => {
     const merged: string[] = [];
     await onPullRequest(
