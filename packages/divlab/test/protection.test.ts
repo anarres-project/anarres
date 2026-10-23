@@ -26,6 +26,7 @@ function project(protectedMain: boolean, alertOpen = false) {
     comments: untouched,
     releaseClaim: untouched,
     tellLeaseRanOut: untouched,
+    alertChangeNotByDivlab: untouched,
     alertUnprotectedMain: async (name) => {
       alerts.push(name);
     },

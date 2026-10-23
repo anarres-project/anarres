@@ -77,6 +77,8 @@ export interface Driver {
   submitWorkAtOnce(works: AcceptedWork[]): Promise<void>;
   /** The feedback signals of the submitted work Divlab has merged. */
   mergedWork(project: string): Promise<string[]>;
+  /** The commits PDC coordinators were alerted reached main without Divlab. */
+  changesNotByDivlab(project: string): Promise<string[]>;
   /** An administrator, not Divlab, writes to the project's main branch; true if it took. */
   changeMainDirectly(project: string): Promise<boolean>;
   /** What the project lets act on members' pull requests: "Divlab" for Divlab's checks. */

@@ -259,6 +259,15 @@ export class SandboxDriver implements Driver {
 
   /** Divlab's comments on the pull requests it did not merge. */
   /** The sandbox token is an administrator's: if main refuses it, it refuses every person. */
+  /** The commits PDC coordinators were told reached main without Divlab, from their alerts. */
+  async changesNotByDivlab(project: string): Promise<string[]> {
+    const issues = await this.issues(project, "change-not-by-divlab", "all");
+    return issues.flatMap((issue) => {
+      const commit = issue.body?.match(/\n`{3,}\n\S+ (\S+)\n`{3,}$/)?.[1];
+      return commit ? [commit] : [];
+    });
+  }
+
   async changeMainDirectly(project: string): Promise<boolean> {
     const { status } = await this.github.request(
       "PUT",
@@ -926,8 +935,13 @@ export class SandboxDriver implements Driver {
     // routing alerts.
     const notRouting = (issue: Issue) =>
       issue.labels.some((l) => l.name === "not-accepted" || l.name === "unprotected-main");
+    // Alerts of a change Divlab did not make are not accepted too, but no feedback signal's.
+    const aChange = (issue: Issue) => issue.labels.some((l) => l.name === "change-not-by-divlab");
     return issues.filter(
-      (issue) => issue.pull_request === undefined && (label !== "escalation" || !notRouting(issue)),
+      (issue) =>
+        issue.pull_request === undefined &&
+        (label !== "escalation" || !notRouting(issue)) &&
+        (label !== "not-accepted" || !aChange(issue)),
     );
   }
 }

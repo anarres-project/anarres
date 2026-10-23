@@ -1,4 +1,5 @@
 import {
+  checkMain,
   checkProtection,
   onClaim,
   onLeaseCheck,
@@ -24,7 +25,7 @@ import {
   signalName,
   workFiles,
 } from "../scenario-words.ts";
-import { FakeGitHub, Interrupted } from "./fake-github.ts";
+import { DIVLAB_ACCOUNT, FakeGitHub, Interrupted } from "./fake-github.ts";
 
 /** Submits work to an in-memory fake of GitHub as pull requests, for Divlab to merge. */
 /** Divlab's clock in-process starts at a fixed time, so no scenario reads the wall clock. */
@@ -53,6 +54,17 @@ export class InProcessDriver implements Driver {
     }
   }
 
+  /** What every Divlab run ends with, as the Action does: main's protection, and its changes. */
+  private async afterRun(project: string): Promise<void> {
+    await checkProtection(project, this.github, this.github);
+    await checkMain(project, this.github, this.github, this.github, this.clock, DIVLAB_ACCOUNT);
+  }
+
+  /** The commits PDC coordinators were alerted reached main without Divlab. */
+  async changesNotByDivlab(project: string): Promise<string[]> {
+    return this.github.changesNotByDivlab(project);
+  }
+
   async changeMainDirectly(project: string): Promise<boolean> {
     return this.github.changeMainDirectly(project);
   }
@@ -62,7 +74,7 @@ export class InProcessDriver implements Driver {
     const { path, text } = feedbackSignalFile(work);
     this.github.mergeFile(work.project, path, text);
     await onMerge(work.project, this.github, this.github, this.github, this.clock);
-    await checkProtection(work.project, this.github, this.github);
+    await this.afterRun(work.project);
   }
 
   async unmergedWorkAlerts(project: string): Promise<string[]> {
@@ -93,7 +105,7 @@ export class InProcessDriver implements Driver {
 
   async divlabActsAgain(project: string): Promise<void> {
     await onMerge(project, this.github, this.github, this.github, this.clock);
-    await checkProtection(project, this.github, this.github);
+    await this.afterRun(project);
   }
 
   async pullRequestChecks(project: string): Promise<string[]> {
@@ -140,7 +152,7 @@ export class InProcessDriver implements Driver {
       this.github,
       this.clock,
     );
-    await checkProtection(work.project, this.github, this.github);
+    await this.afterRun(work.project);
   }
 
   /** All the pull requests are opened first; then Divlab takes each in turn, as queued runs do. */
@@ -159,7 +171,7 @@ export class InProcessDriver implements Driver {
     });
     for (const { project, pullRequest } of opened) {
       await onPullRequest(project, pullRequest, this.github, this.github, this.github, this.clock);
-      await checkProtection(project, this.github, this.github);
+      await this.afterRun(project);
     }
   }
 
@@ -182,6 +194,7 @@ export class InProcessDriver implements Driver {
       this.clock,
       this.github,
     );
+    await this.afterRun(task.project);
   }
 
   /** Every member comments first; then Divlab takes `heardFirst`'s run, then the others in turn. */
@@ -202,6 +215,7 @@ export class InProcessDriver implements Driver {
         this.clock,
         this.github,
       );
+      await this.afterRun(task.project);
     }
   }
 
@@ -255,6 +269,7 @@ export class InProcessDriver implements Driver {
 
   async divlabChecksLeases(project: string): Promise<void> {
     await onLeaseCheck(project, this.github, this.github, this.clock);
+    await this.afterRun(project);
   }
 
   /** The member opens a draft for the task they hold, as their plugin will, early in the work. */
@@ -273,6 +288,7 @@ export class InProcessDriver implements Driver {
       this.github,
       this.clock,
     );
+    await this.afterRun(work.project);
   }
 
   /** The member comments to give the task back, and the comment's run wakes Divlab. */
@@ -280,6 +296,7 @@ export class InProcessDriver implements Driver {
     const id = this.openTaskId(task);
     this.github.comment(task.project, id, member, "/release", this.clock().toISOString());
     await onRelease(task.project, { task: id, member }, this.github, this.github, this.clock);
+    await this.afterRun(task.project);
   }
 
   async claimedTasks(project: string): Promise<ClaimedTask[]> {

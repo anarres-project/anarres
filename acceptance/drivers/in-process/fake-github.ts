@@ -1,9 +1,11 @@
 import type {
+  ChangeNotByDivlab,
   ClaimedTask,
   CoordinatorAlert,
   EventLog,
   FinishedModule,
   LogEvent,
+  MainCommit,
   Members,
   NotAccepted,
   PostedTask,
@@ -13,6 +15,9 @@ import type {
   Repository,
   TaskBoard,
 } from "@anarres/divlab";
+
+/** Divlab's account in the fake: the name its log writes are made under. */
+export const DIVLAB_ACCOUNT = "divlab[bot]";
 
 /** A task as posted, with the identifier GitHub would give its issue, and who holds it. */
 type OpenTask = PostedTask & { id: string; claimedBy?: string };
@@ -63,6 +68,8 @@ export class FakeGitHub
 
   async append(event: LogEvent): Promise<void> {
     this.events.push(event);
+    // Divlab's log writes are its own commits, which GitHub signs.
+    this.commitTo(event.project, { author: DIVLAB_ACCOUNT, signedByGitHub: true });
     if (this.interruptAfterNextDecision && "work" in event) {
       this.interruptAfterNextDecision = false;
       throw new Interrupted();
@@ -123,14 +130,60 @@ export class FakeGitHub
 
   /** Someone other than Divlab writes to main: it takes only if main is unprotected. */
   changeMainDirectly(project: string): boolean {
-    return !this.protectedMains.has(project);
+    if (this.protectedMains.has(project)) return false;
+    this.commitTo(project, { author: "someone-else", signedByGitHub: false });
+    return true;
   }
 
-  /** A file reaches the project's main branch. */
-  mergeFile(project: string, path: string, text: string): void {
+  /**
+   * A file reaches the project's main branch as one commit: by someone other than Divlab, unless
+   * `by` says whose it is and whether GitHub signed it.
+   */
+  mergeFile(
+    project: string,
+    path: string,
+    text: string,
+    by: Omit<MainCommit, "sha"> = { author: "someone-else", signedByGitHub: false },
+  ): void {
+    this.writeFile(project, path, text);
+    this.commitTo(project, by);
+  }
+
+  private writeFile(project: string, path: string, text: string): void {
     const files = this.files.get(project) ?? new Map<string, string>();
     files.set(path, text);
     this.files.set(project, files);
+  }
+
+  /** Main's commits, oldest first, as GitHub records who made each. */
+  private readonly mainCommits = new Map<string, MainCommit[]>();
+
+  private commitTo(project: string, by: Omit<MainCommit, "sha">): void {
+    const commits = this.mainCommits.get(project) ?? [];
+    commits.push({ sha: `${project}-commit-${commits.length + 1}`, ...by });
+    this.mainCommits.set(project, commits);
+  }
+
+  async head(project: string): Promise<string> {
+    return this.mainCommits.get(project)?.at(-1)?.sha ?? `${project}-commit-0`;
+  }
+
+  async commitsSince(project: string, since: string): Promise<MainCommit[]> {
+    const commits = this.mainCommits.get(project) ?? [];
+    return commits.slice(commits.findIndex((commit) => commit.sha === since) + 1);
+  }
+
+  private readonly changeAlerts: ChangeNotByDivlab[] = [];
+
+  async alertChangeNotByDivlab(change: ChangeNotByDivlab): Promise<void> {
+    this.changeAlerts.push(change);
+  }
+
+  /** The commits PDC coordinators were alerted Divlab did not make. */
+  changesNotByDivlab(project: string): string[] {
+    return this.changeAlerts
+      .filter((alert) => alert.project === project)
+      .map((alert) => alert.changeNotByDivlab.commit);
   }
 
   private readonly pullRequests: {
@@ -163,19 +216,26 @@ export class FakeGitHub
   /** The next merge succeeds, and then Divlab's run stops dead, as if its runner were lost. */
   interruptAfterNextMerge = false;
 
-  async mergeCommitOf(_project: string, pullRequest: string): Promise<string> {
-    return `merge-of-${pullRequest}`;
+  /** The commit each merged pull request's merge made. */
+  private readonly mergeShas = new Map<string, string>();
+
+  async mergeCommitOf(project: string, pullRequest: string): Promise<string> {
+    return this.mergeShas.get(`${project}#${pullRequest}`) ?? "";
   }
 
+  /** Divlab merges: the commit carries the pull request's author, and GitHub signs it. */
   async merge(project: string, pullRequest: string): Promise<string> {
-    for (const { path, text } of this.opened(pullRequest).files)
-      this.mergeFile(project, path, text);
+    const { files, author } = this.opened(pullRequest);
+    for (const { path, text } of files) this.writeFile(project, path, text);
+    this.commitTo(project, { author, signedByGitHub: true });
+    const sha = await this.head(project);
+    this.mergeShas.set(`${project}#${pullRequest}`, sha);
     this.mergedPullRequests.push(pullRequest);
     if (this.interruptAfterNextMerge) {
       this.interruptAfterNextMerge = false;
       throw new Interrupted();
     }
-    return `merge-of-${pullRequest}`;
+    return sha;
   }
 
   private readonly refused: { project: string; reason: string }[] = [];

@@ -35,6 +35,7 @@ const board: TaskBoard = {
   comments: untouched,
   releaseClaim: untouched,
   tellLeaseRanOut: untouched,
+  alertChangeNotByDivlab: untouched,
 };
 
 describe("acting on a merge", () => {
@@ -44,6 +45,8 @@ describe("acting on a merge", () => {
   const onMain = (_text: string): Repository => ({
     feedbackSignals: async () => ["feedback/FB-9.md"],
     mergeCommitOf: async (_project, pullRequest) => `merge-of-${pullRequest}`,
+    commitsSince: async () => [],
+    head: async () => "h3ad",
   });
   /** A board and log that keep what Divlab does, for the test to look at. */
   const watching = () => {
@@ -159,6 +162,8 @@ describe("acting on a merge", () => {
     const merged: Repository = {
       ...onMain(passedSpecification),
       mergeCommitOf: async (_project, pullRequest) => `merge-of-${pullRequest}`,
+      commitsSince: async () => [],
+      head: async () => "h3ad",
     };
     await onMerge("ledger", merged, watchedBoard, begun, clock);
     expect(seen.appended.find((event) => "work" in (event as object))).toMatchObject({
@@ -184,6 +189,8 @@ describe("acting on a merge", () => {
     const listed: Repository = {
       feedbackSignals: async () => ["feedback/FB-1.md", "feedback/FB-2.md"],
       mergeCommitOf: async (_project, pullRequest) => `merge-of-${pullRequest}`,
+      commitsSince: async () => [],
+      head: async () => "h3ad",
     };
     await onMerge("ledger", listed, watchedBoard, begun, clock);
     expect(seen.posted.map((task) => task.module)).toEqual(["lexer", "parser"]);
@@ -234,6 +241,8 @@ describe("acting on a merge", () => {
         "feedback/FB-4.md",
       ],
       mergeCommitOf: async (_project, pullRequest) => `merge-of-${pullRequest}`,
+      commitsSince: async () => [],
+      head: async () => "h3ad",
     };
     const alerting: TaskBoard = {
       ...board,

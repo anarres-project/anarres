@@ -10,11 +10,13 @@ import type {
   AboutToMerge,
   ActedOn,
   Activity,
+  ChangeNotByDivlab,
   Claimed,
   ClaimedTask,
   FinishedModule,
   LeaseRanOut,
   LogEvent,
+  MainChecked,
   NotAccepted,
   PostedTask,
   Refused,
@@ -129,6 +131,20 @@ export function eventFromFile(content: string): LogEvent {
   if (isObject(event) && namesTaskAndMember(event.leaseRanOut)) return event as LeaseRanOut;
   if (isObject(event) && namesTaskAndMember(event.activity)) return event as Activity;
   if (isObject(event) && namesTaskAndMember(event.released)) return event as Released;
+  if (
+    isObject(event) &&
+    isObject(event.changeNotByDivlab) &&
+    typeof event.changeNotByDivlab.commit === "string"
+  ) {
+    return event as ChangeNotByDivlab;
+  }
+  if (
+    isObject(event) &&
+    isObject(event.mainChecked) &&
+    typeof event.mainChecked.upTo === "string"
+  ) {
+    return event as MainChecked;
+  }
   if (
     isObject(event) &&
     isObject(event.actedOn) &&
@@ -276,6 +292,16 @@ export function policyAllowingDivlabChecks() {
   };
 }
 
+/** The commit and its author go only in a code block, never in the title or the words. */
+export function issueForChangeNotByDivlab({ changeNotByDivlab }: ChangeNotByDivlab): NewIssue {
+  const { commit, author } = changeNotByDivlab;
+  return {
+    title: "Escalation: a change reached main without Divlab",
+    labels: ["escalation", "not-accepted", CHANGE_NOT_BY_DIVLAB],
+    body: `This commit on main was not made by Divlab, so it did not pass Divlab's checks. Its author, as GitHub records it, and the commit:\n\n${quoted(`${author ?? "(no account)"} ${commit}`)}`,
+  };
+}
+
 /** The path the member chose goes only in a code block, never in the title or the words. */
 export function issueForNotAccepted({ notAccepted }: NotAccepted): NewIssue {
   return {
@@ -302,6 +328,8 @@ export function issueForUnprotectedMain(): NewIssue {
 
 /** The label on Divlab's alert that a project's main branch is not protected. */
 export const UNPROTECTED_MAIN = "unprotected-main";
+/** The label of an alert of a change on main that Divlab did not make. */
+export const CHANGE_NOT_BY_DIVLAB = "change-not-by-divlab";
 
 /** The feedback signal whose routing decision an issue Divlab posted came from. */
 export function decisionOf(body: string): string | undefined {

@@ -176,6 +176,22 @@ export class Anarres {
     this.directChangeTook = await this.driver.changeMainDirectly(this.project);
   }
 
+  async coordinatorsAlertedOfChangeNotByDivlab() {
+    assert.equal(
+      (await this.driver.changesNotByDivlab(this.project)).length,
+      1,
+      "expected one alert that a change reached main without Divlab",
+    );
+  }
+
+  async noCoordinatorAlertedOfChangeNotByDivlab() {
+    assert.deepEqual(
+      await this.driver.changesNotByDivlab(this.project),
+      [],
+      "expected no alert that a change reached main without Divlab",
+    );
+  }
+
   async theChangeIsRefused() {
     assert.equal(this.directChangeTook, false, "expected the change to main to be refused");
   }

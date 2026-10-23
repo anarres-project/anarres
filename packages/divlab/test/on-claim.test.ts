@@ -38,6 +38,7 @@ const board: TaskBoard = {
   comments: untouched,
   releaseClaim: untouched,
   tellLeaseRanOut: untouched,
+  alertChangeNotByDivlab: untouched,
 };
 
 describe("acting on a claim", () => {

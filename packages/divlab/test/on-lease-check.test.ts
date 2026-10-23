@@ -23,6 +23,7 @@ const board: TaskBoard = {
   releaseClaim: untouched,
   // Telling the member is looked at by one test; the rest let it happen.
   tellLeaseRanOut: async () => {},
+  alertChangeNotByDivlab: untouched,
 };
 
 /** Divlab's clock in these tests: 25 hours after the claim below. */

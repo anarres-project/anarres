@@ -7721,6 +7721,12 @@ function eventFromFile(content) {
   if (isObject2(event) && namesTaskAndMember(event.leaseRanOut)) return event;
   if (isObject2(event) && namesTaskAndMember(event.activity)) return event;
   if (isObject2(event) && namesTaskAndMember(event.released)) return event;
+  if (isObject2(event) && isObject2(event.changeNotByDivlab) && typeof event.changeNotByDivlab.commit === "string") {
+    return event;
+  }
+  if (isObject2(event) && isObject2(event.mainChecked) && typeof event.mainChecked.upTo === "string") {
+    return event;
+  }
   if (isObject2(event) && isObject2(event.actedOn) && typeof event.actedOn.feedbackSignal === "string") {
     return event;
   }
@@ -7817,6 +7823,16 @@ function policyAllowingDivlabChecks() {
     ]
   };
 }
+function issueForChangeNotByDivlab({ changeNotByDivlab }) {
+  const { commit, author } = changeNotByDivlab;
+  return {
+    title: "Escalation: a change reached main without Divlab",
+    labels: ["escalation", "not-accepted", CHANGE_NOT_BY_DIVLAB],
+    body: `This commit on main was not made by Divlab, so it did not pass Divlab's checks. Its author, as GitHub records it, and the commit:
+
+${quoted(`${author ?? "(no account)"} ${commit}`)}`
+  };
+}
 function issueForNotAccepted({ notAccepted }) {
   return {
     title: "Escalation: work reached main without Divlab merging it",
@@ -7838,6 +7854,7 @@ function issueForUnprotectedMain() {
   };
 }
 var UNPROTECTED_MAIN = "unprotected-main";
+var CHANGE_NOT_BY_DIVLAB = "change-not-by-divlab";
 function decisionOf(body) {
   const json = body.match(/```json\n([\s\S]*)\n```$/)?.[1];
   const closing = JSON.parse(json ?? "null");
@@ -7910,6 +7927,11 @@ function parsed(text) {
 var pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // ../github/src/adapter.ts
+var mainCommit = (listed) => ({
+  sha: listed.sha,
+  author: listed.author?.login,
+  signedByGitHub: listed.committer?.login === "web-flow" && listed.commit.verification?.verified === true
+});
 var GOVERNANCE_REPOSITORY = "anarres-project/anarres";
 var GOVERNANCE_FILE = "governance/members.json";
 var GitHubAdapter = class {
@@ -7939,6 +7961,9 @@ var GitHubAdapter = class {
   }
   async alertCoordinators(alert) {
     await this.openIssue(alert.project, issueForAlert(alert));
+  }
+  async alertChangeNotByDivlab(change) {
+    await this.openIssue(change.project, issueForChangeNotByDivlab(change));
   }
   async alertNotAccepted(record) {
     await this.openIssue(record.project, issueForNotAccepted(record));
@@ -8176,11 +8201,34 @@ var GitHubAdapter = class {
     }
   }
   /** GitHub refuses the merge if the pull request has moved on from `head`. */
+  async head(project2) {
+    const { object } = await this.call(
+      "GET",
+      `${this.repo(project2)}/git/ref/heads/main`
+    );
+    return object.sha;
+  }
+  async commitsSince(project2, since) {
+    const { commits } = await this.call(
+      "GET",
+      `${this.repo(project2)}/compare/${since}...main`
+    );
+    return commits.map(mainCommit);
+  }
+  async mergeCommitOf(project2, pullRequest) {
+    const { merge_commit_sha } = await this.call(
+      "GET",
+      `${this.repo(project2)}/pulls/${pullRequest}`
+    );
+    return merge_commit_sha;
+  }
   async merge(project2, pullRequest, head) {
-    await this.call("PUT", `${this.repo(project2)}/pulls/${pullRequest}/merge`, {
-      sha: head,
-      merge_method: "squash"
-    });
+    const { sha } = await this.call(
+      "PUT",
+      `${this.repo(project2)}/pulls/${pullRequest}/merge`,
+      { sha: head, merge_method: "squash" }
+    );
+    return sha;
   }
   async refuse(project2, pullRequest, reason) {
     await this.call("POST", `${this.repo(project2)}/issues/${pullRequest}/comments`, {
@@ -8410,13 +8458,14 @@ var signalOf = (event) => {
   return void 0;
 };
 async function onWorkAccepted(event, board, log, clock, events) {
-  const { project: project2, task, member, ...work } = event;
+  const { project: project2, task, member, mergedAs, ...work } = event;
   const record = routingRecord(work, routingDecisions(events));
   const decided = {
     project: project2,
     decidedAt: clock().toISOString(),
     ...task === void 0 ? {} : { task },
     ...member === void 0 ? {} : { member },
+    ...mergedAs === void 0 ? {} : { mergedAs },
     ...record
   };
   await log.append(decided);
@@ -8437,7 +8486,8 @@ async function actOn(event, board, log) {
   await recordActing(event, log);
 }
 var recordActing = ({ project: project2, work }, log) => log.append({ project: project2, actedOn: { feedbackSignal: work.feedbackSignal } });
-async function acceptSignal(project2, path, signal, board, log, clock, events, member) {
+async function acceptSignal(project2, path, signal, board, log, clock, events, merged) {
+  const { member, mergedAs } = merged;
   const { task, ...work } = signal;
   const posted = task === void 0 ? void 0 : await board.task(project2, task);
   const researchFor = posted?.researchFor;
@@ -8448,7 +8498,8 @@ async function acceptSignal(project2, path, signal, board, log, clock, events, m
       feedbackSignal: path,
       ...researchFor === void 0 ? {} : { researchFor },
       ...task === void 0 || posted === void 0 ? {} : { task },
-      ...member === void 0 ? {} : { member }
+      ...member === void 0 ? {} : { member },
+      ...mergedAs === void 0 ? {} : { mergedAs }
     },
     board,
     log,
@@ -8479,8 +8530,12 @@ async function onMerge(project2, repository, board, log, clock) {
   const onMain = await repository.feedbackSignals(project2);
   for (const [path, merge] of begun) {
     if (finished.has(path) || !onMain.includes(path)) continue;
-    const { work, member } = merge.aboutToMerge;
-    await acceptSignal(project2, path, work, board, log, clock, events, member);
+    const { work, member, pullRequest } = merge.aboutToMerge;
+    const mergedAs = await repository.mergeCommitOf(project2, pullRequest);
+    await acceptSignal(project2, path, work, board, log, clock, events, {
+      ...member === void 0 ? {} : { member },
+      mergedAs
+    });
   }
   for (const path of onMain) {
     if (finished.has(path) || begun.has(path)) continue;
@@ -8560,8 +8615,50 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
       work: signal
     }
   });
-  await pullRequests.merge(project2, pullRequest, head);
-  await acceptSignal(project2, feedback.path, signal, board, log, clock, events, author);
+  const mergedAs = await pullRequests.merge(project2, pullRequest, head);
+  await acceptSignal(project2, feedback.path, signal, board, log, clock, events, {
+    member: author,
+    mergedAs
+  });
+}
+async function checkMain(project2, repository, board, log, clock, divlab) {
+  const events = await log.read(project2);
+  const merges = new Set(routingDecisions(events).flatMap((decision) => decision.mergedAs ?? []));
+  const recorded2 = new Set(
+    events.flatMap(
+      (event) => "changeNotByDivlab" in event ? [event.changeNotByDivlab.commit] : []
+    )
+  );
+  const since = events.findLast((event) => "mainChecked" in event);
+  if (since === void 0) {
+    await log.append({
+      project: project2,
+      decidedAt: clock().toISOString(),
+      mainChecked: { upTo: await repository.head(project2) }
+    });
+    return;
+  }
+  const commits = await repository.commitsSince(project2, since.mainChecked.upTo);
+  for (const commit of commits) {
+    if (commit.author === divlab && commit.signedByGitHub) continue;
+    if (merges.has(commit.sha) || recorded2.has(commit.sha)) continue;
+    const change = {
+      project: project2,
+      decidedAt: clock().toISOString(),
+      changeNotByDivlab: { commit: commit.sha, author: commit.author }
+    };
+    await log.append(change);
+    await board.alertChangeNotByDivlab(change);
+  }
+  const last = commits.at(-1);
+  if (last !== void 0) {
+    const checked = {
+      project: project2,
+      decidedAt: clock().toISOString(),
+      mainChecked: { upTo: last.sha }
+    };
+    await log.append(checked);
+  }
 }
 async function checkProtection(project2, repositories, board) {
   if (await repositories.mainIsProtected(project2)) return;
@@ -8594,6 +8691,9 @@ try {
     await onMerge(project, github, github, github, clock);
   }
   await checkProtection(project, github, github);
+  const app = process.env.INPUT_APP;
+  if (!app) throw new Error("Divlab needs its App's name (the app input) to check main's changes");
+  await checkMain(project, github, github, github, clock, `${app}[bot]`);
 } catch (error) {
   console.log(`::error::${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);

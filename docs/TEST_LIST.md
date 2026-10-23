@@ -382,10 +382,18 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] Divlab records the commit each merge made;
   - [x] a merge finished by a later run, after an interrupted one, has its commit recorded too,
         as GitHub gives it;
-  - [ ] each run checks the commits since the last check, alerting once for any not Divlab's,
-        and records how far it checked;
-  - [ ] a project's setup records where checking starts;
-  - [ ] Divlab knows its App's account name (the template passes it).
+  - [x] each run checks the commits since the last check, alerting once for any not Divlab's,
+        and records how far it checked; a project never checked starts from main as it stands
+        (its setting up), with no alert;
+  - [x] Divlab knows its App's account name (the template passes the App's slug);
+  - [x] "signed by GitHub" means committed as `web-flow` and verified: a member's own signature
+        is not GitHub's;
+  - [ ] the sandbox shows a change caught (tagged until it has passed there), and no false alarm
+        from Divlab's own merges and log writes (runs there now);
+  - [ ] a project's setup records where checking starts, closing the gap before Divlab first runs;
+  - [ ] more than 250 commits between checks (GitHub's compare lists no more): page, or alert;
+  - [ ] a feedback signal put straight onto main raises two alerts (not routed; a change not by
+        Divlab): one would do;
 - [x] Divlab records each merge as it makes it, and routes from those records, so work is routed
       in the order Divlab merged it.
 - [x] A run interrupted between merging and recording is finished by the next run: Divlab records

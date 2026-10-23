@@ -74,6 +74,11 @@ describe.each([PULL_REQUEST_WORKFLOW, PUSH_WORKFLOW, CLAIM_WORKFLOW, LEASE_WORKF
       expect(divlab?.with?.token).toBe(expression(`steps.${token?.id}.outputs.token`));
     });
 
+    it("tells Divlab its App's name, so it knows its own changes to main from anyone's", () => {
+      const [token, divlab] = steps;
+      expect(divlab?.with?.app).toBe(expression(`steps.${token?.id}.outputs.app-slug`));
+    });
+
     it("waits its turn with the project's other Divlab runs, so one acts at a time", () => {
       expect(workflow.concurrency.group).toBe("divlab");
       expect(workflow.concurrency["cancel-in-progress"]).toBe(false);

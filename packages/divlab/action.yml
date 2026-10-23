@@ -4,6 +4,9 @@ inputs:
   token:
     description: The token Divlab acts with, the project repository's own by default.
     default: ${{ github.token }}
+  app:
+    description: The slug of Divlab's GitHub App, so Divlab knows its own changes to main.
+    default: ""
   governance:
     description: The repository holding the governance file, if not Anarres's own.
     default: ""

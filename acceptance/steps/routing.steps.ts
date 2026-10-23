@@ -386,3 +386,17 @@ Then(
     return this.anarres.memberIsToldWhy(`changes files outside what ${role} may change`);
   },
 );
+
+Then(
+  "a PDC coordinator is alerted that a change reached main without Divlab",
+  function (this: AnarresWorld) {
+    return this.anarres.coordinatorsAlertedOfChangeNotByDivlab();
+  },
+);
+
+Then(
+  "no PDC coordinator is alerted that a change reached main without Divlab",
+  function (this: AnarresWorld) {
+    return this.anarres.noCoordinatorAlertedOfChangeNotByDivlab();
+  },
+);

@@ -99,6 +99,8 @@ export interface TaskBoard {
   markClaimed(claim: ClaimedTask): Promise<void>;
   /** The comments on a task's issue, earliest first, and who made each. */
   comments(project: string, task: string): Promise<{ member: string; text: string; at?: string }[]>;
+  /** PDC coordinators are told of a change on main that Divlab did not make. */
+  alertChangeNotByDivlab(change: ChangeNotByDivlab): Promise<void>;
   /** The member is told, on the task, that their lease on it ran out. */
   tellLeaseRanOut(ranOut: ClaimedTask): Promise<void>;
   /** The task's claim is over: it is ready again, held by nobody. */
@@ -352,7 +354,24 @@ export interface Repository {
   feedbackSignals(project: string): Promise<string[]>;
   /** The commit a merged pull request's merge made on main. */
   mergeCommitOf(project: string, pullRequest: string): Promise<string>;
+  /** Main's commits after `since`, oldest first. */
+  commitsSince(project: string, since: string): Promise<MainCommit[]>;
+  /** The commit main is at now. */
+  head(project: string): Promise<string>;
 }
+
+/** A commit on main, as GitHub vouches for it: its author's account, and whether GitHub signed it. */
+export type MainCommit = { sha: string; author: string | undefined; signedByGitHub: boolean };
+
+/** How far Divlab has checked main's commits: the next run checks those after this one. */
+export type MainChecked = { project: string; decidedAt: string; mainChecked: { upTo: string } };
+
+/** A change reached main that Divlab did not make: recorded once, and PDC coordinators alerted. */
+export type ChangeNotByDivlab = {
+  project: string;
+  decidedAt: string;
+  changeNotByDivlab: { commit: string; author: string | undefined };
+};
 
 /** Members' pull requests: what each would change, read as data, and merging it. */
 export interface PullRequests {
@@ -402,7 +421,9 @@ export type LogEvent =
   | Claimed
   | LeaseRanOut
   | Activity
-  | Released;
+  | Released
+  | ChangeNotByDivlab
+  | MainChecked;
 
 /** The routing decisions in a log, which are all its history routing depends on. */
 export const routingDecisions = (log: readonly LogEvent[]): RoutingEvent[] =>
@@ -644,6 +665,59 @@ export async function onPullRequest(
     member: author,
     mergedAs,
   });
+}
+
+/**
+ * Every Divlab run checks the commits on main since its last check: each must be Divlab's own, a
+ * log write GitHub signed as made by Divlab's account, or a merge Divlab recorded.
+ */
+export async function checkMain(
+  project: string,
+  repository: Repository,
+  board: TaskBoard,
+  log: EventLog,
+  clock: Clock,
+  divlab: string,
+): Promise<void> {
+  const events = await log.read(project);
+  // A merge's commit carries its member as author: only Divlab's record tells it apart.
+  const merges = new Set(routingDecisions(events).flatMap((decision) => decision.mergedAs ?? []));
+  const recorded = new Set(
+    events.flatMap((event) =>
+      "changeNotByDivlab" in event ? [event.changeNotByDivlab.commit] : [],
+    ),
+  );
+  const since = events.findLast((event) => "mainChecked" in event) as MainChecked | undefined;
+  if (since === undefined) {
+    // Never checked: main as it stands is the project as it was set up, the place to start.
+    await log.append({
+      project,
+      decidedAt: clock().toISOString(),
+      mainChecked: { upTo: await repository.head(project) },
+    });
+    return;
+  }
+  const commits = await repository.commitsSince(project, since.mainChecked.upTo);
+  for (const commit of commits) {
+    if (commit.author === divlab && commit.signedByGitHub) continue;
+    if (merges.has(commit.sha) || recorded.has(commit.sha)) continue;
+    const change: ChangeNotByDivlab = {
+      project,
+      decidedAt: clock().toISOString(),
+      changeNotByDivlab: { commit: commit.sha, author: commit.author },
+    };
+    await log.append(change);
+    await board.alertChangeNotByDivlab(change);
+  }
+  const last = commits.at(-1);
+  if (last !== undefined) {
+    const checked: MainChecked = {
+      project,
+      decidedAt: clock().toISOString(),
+      mainChecked: { upTo: last.sha },
+    };
+    await log.append(checked);
+  }
 }
 
 /** Project repositories as Divlab sets them up. */

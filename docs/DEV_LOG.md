@@ -57,6 +57,63 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-23: Every change to main is checked
+
+- Bernard chose (2026-10-23) for each Divlab run to check main's commits since its last look,
+  over waking Divlab for every push. A commit is Divlab's if GitHub signed it as made by
+  Divlab's App (its log writes: committed as `web-flow`, verified, author the App's account) or
+  it is a merge Divlab recorded. Looking in the sandbox first showed why the record is needed: a
+  merge's commit carries the member as its author, exactly as a person's merge through the
+  website would.
+- So Divlab records the commit each merge made (and, finishing an interrupted merge, asks
+  GitHub for it). Each run checks the commits since its last check, records and alerts once any
+  that are not Divlab's (an escalation labelled `change-not-by-divlab`), and records how far it
+  checked. A project never checked starts from main as it stands. The template passes Divlab its
+  App's slug; the Action runs the check after every run.
+- The fake GitHub now has commits: Divlab's log writes, its merges (the member as author, signed
+  by GitHub), and anyone else's. A guard scenario checks Divlab's own changes raise no alarm.
+- Slips: the "(no account)" wording and some adapter stubs went in with their tests; the
+  scenario that catches a change passed first time (built from the unit tests up).
+
+RED:      records the commit its merge made -> expected { … } to match object { mergedAs }
+GREEN:    (126 passed)
+RED:      merging gives the commit GitHub's merge made -> expected undefined to be 'm3rg3d'
+GREEN:    (403 passed)
+RED:      records the commit of a merge it finishes after an interrupted run -> expected { … } to match { mergedAs }
+GREEN:    (127 passed)
+RED:      a merged pull request's commit is the one GitHub says its merge made -> expected '' to be 'm3rg3d'
+GREEN:    (405 passed)
+RED:      alerts PDC coordinators of a commit on main that Divlab did not make -> expected [] to equal [ {…} ]
+GREEN:    (1 passed)
+RED:      leaves alone a commit GitHub signed as made by Divlab's account -> expected [ {…} ] to equal []
+GREEN:    (2 passed)
+RED:      alerts a commit naming Divlab's account that GitHub did not sign -> expected [] to equal [ 'f0f0f0' ]
+GREEN:    (3 passed)
+RED:      leaves alone a merge Divlab recorded, though its commit carries the member as author
+GREEN:    (4 passed)
+RED:      records a change it did not make in the project's log -> expected [] to contain { … }
+GREEN:    (132 passed)
+RED:      alerts a change only once -> expected [ {…} ] to equal []
+GREEN:    (133 passed)
+RED:      records how far it checked -> expected [] to equal [ { mainChecked } ]
+GREEN:    (134 passed)
+RED:      checks only the commits since its last check -> expected [ undefined ] to equal [ 'b2' ]
+GREEN:    (135 passed)
+RED:      starts from main as it stands when it has never checked -> Error: Divlab should not have acted
+GREEN:    (136 passed; the earlier check tests now start from a checkpoint, as they describe)
+RED:      main's commits since the last check, with author and signer -> expected [] to equal [ … ]
+GREEN:    (92 passed)
+RED:      main's head is the one main's reference points to -> expected '' to be 'h3ad'
+GREEN:    (93 passed)
+RED:      reads back a record of a change not by Divlab / of how far Divlab checked -> cannot be read
+GREEN:    (95 passed)
+RED:      the alert names the commit and its author, quoted as text -> expected { title: '' … }
+GREEN:    (96 passed)
+RED:      tells Divlab its App's name -> expected undefined (four workflows)
+GREEN:    (140 passed; 91 scenarios)
+
+---
+
 ## 2026-10-23: Old claims do not win a freed task
 
 - GitHub stops a public repository's scheduled runs after 60 days without activity, so a quiet

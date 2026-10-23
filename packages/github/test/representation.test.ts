@@ -14,6 +14,7 @@ import {
   eventFile,
   eventFromFile,
   issueForAlert,
+  issueForChangeNotByDivlab,
   issueForModuleDone,
   issueForNotAccepted,
   issueForTask,
@@ -213,6 +214,17 @@ describe("a routing event as a file", () => {
       released: { task: "12", member: "alice" },
     };
     expect(eventFromFile(eventFile(released, 7).content)).toEqual(released);
+  });
+
+  it.each([
+    [
+      "a change that reached main without Divlab",
+      { changeNotByDivlab: { commit: "c0ffee", author: "mallory" } },
+    ],
+    ["how far Divlab has checked main", { mainChecked: { upTo: "c0ffee" } }],
+  ])("reads back a record of %s", (_what, record) => {
+    const event = { project: "ledger", decidedAt: "2026-10-23T09:00:00.000Z", ...record };
+    expect(eventFromFile(eventFile(event as never, 8).content)).toEqual(event);
   });
 
   it("is refused, saying why, when the work it was about to merge could not be routed", () => {
@@ -465,5 +477,27 @@ describe("the decision an issue Divlab posted came from", () => {
       sly,
       ["```json", "```"],
     ]);
+  });
+});
+
+describe("an alert of a change on main Divlab did not make, as a GitHub issue", () => {
+  it("tells PDC coordinators which commit it was and whose, quoted as text", () => {
+    expect(
+      issueForChangeNotByDivlab({
+        project: "ledger",
+        decidedAt: "2026-10-23T09:00:00.000Z",
+        changeNotByDivlab: { commit: "c0ffee", author: "mallory" },
+      }),
+    ).toEqual({
+      title: "Escalation: a change reached main without Divlab",
+      labels: ["escalation", "not-accepted", "change-not-by-divlab"],
+      body: [
+        "This commit on main was not made by Divlab, so it did not pass Divlab's checks. Its author, as GitHub records it, and the commit:",
+        "",
+        "```",
+        "mallory c0ffee",
+        "```",
+      ].join("\n"),
+    });
   });
 });

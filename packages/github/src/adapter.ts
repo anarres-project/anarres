@@ -1,8 +1,10 @@
 import type {
+  ChangeNotByDivlab,
   ClaimedTask,
   EventLog,
   FinishedModule,
   LogEvent,
+  MainCommit,
   NotAccepted,
   PostedTask,
   ProjectRepositories,
@@ -19,6 +21,7 @@ import {
   decisionOf,
   eventFile,
   issueForAlert,
+  issueForChangeNotByDivlab,
   issueForModuleDone,
   issueForNotAccepted,
   issueForTask,
@@ -43,6 +46,25 @@ import { requestGitHub } from "./request.ts";
  * Divlab's task board, event log, merged files and members' pull requests on GitHub: each project is a repository owned
  * by `owner`. The only code that calls the GitHub API on Divlab's behalf.
  */
+/** A commit as GitHub lists it: only what Divlab reads. */
+type ListedCommit = {
+  sha: string;
+  author: { login: string } | null;
+  committer: { login: string } | null;
+  commit: { verification?: { verified: boolean } };
+};
+
+/**
+ * A commit as Divlab judges it. GitHub signs, as `web-flow`, the commits it makes for an
+ * account through its API or website; a member's own signature on their commit is not GitHub's.
+ */
+const mainCommit = (listed: ListedCommit): MainCommit => ({
+  sha: listed.sha,
+  author: listed.author?.login,
+  signedByGitHub:
+    listed.committer?.login === "web-flow" && listed.commit.verification?.verified === true,
+});
+
 /** Where PDC coordinators keep members' trust levels and linked accounts (decision 0007). */
 const GOVERNANCE_REPOSITORY = "anarres-project/anarres";
 const GOVERNANCE_FILE = "governance/members.json";
@@ -87,6 +109,10 @@ export class GitHubAdapter
 
   async alertCoordinators(alert: RoutingEvent): Promise<void> {
     await this.openIssue(alert.project, issueForAlert(alert));
+  }
+
+  async alertChangeNotByDivlab(change: ChangeNotByDivlab): Promise<void> {
+    await this.openIssue(change.project, issueForChangeNotByDivlab(change));
   }
 
   async alertNotAccepted(record: NotAccepted): Promise<void> {
@@ -368,6 +394,22 @@ export class GitHubAdapter
   }
 
   /** GitHub refuses the merge if the pull request has moved on from `head`. */
+  async head(project: string): Promise<string> {
+    const { object } = await this.call<{ object: { sha: string } }>(
+      "GET",
+      `${this.repo(project)}/git/ref/heads/main`,
+    );
+    return object.sha;
+  }
+
+  async commitsSince(project: string, since: string): Promise<MainCommit[]> {
+    const { commits } = await this.call<{ commits: ListedCommit[] }>(
+      "GET",
+      `${this.repo(project)}/compare/${since}...main`,
+    );
+    return commits.map(mainCommit);
+  }
+
   async mergeCommitOf(project: string, pullRequest: string): Promise<string> {
     const { merge_commit_sha } = await this.call<{ merge_commit_sha: string }>(
       "GET",

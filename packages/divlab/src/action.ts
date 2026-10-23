@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { GitHubAdapter } from "@anarres/github";
 import { whatToActOn } from "./event.ts";
 import {
+  checkMain,
   checkProtection,
   onClaim,
   onLeaseCheck,
@@ -40,6 +41,10 @@ try {
     await onMerge(project, github, github, github, clock);
   }
   await checkProtection(project, github, github);
+  // Every run looks at main's changes since the last look: Divlab's own carry its App's name.
+  const app = process.env.INPUT_APP;
+  if (!app) throw new Error("Divlab needs its App's name (the app input) to check main's changes");
+  await checkMain(project, github, github, github, clock, `${app}[bot]`);
 } catch (error) {
   console.log(`::error::${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);
