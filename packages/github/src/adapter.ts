@@ -368,6 +368,14 @@ export class GitHubAdapter
   }
 
   /** GitHub refuses the merge if the pull request has moved on from `head`. */
+  async mergeCommitOf(project: string, pullRequest: string): Promise<string> {
+    const { merge_commit_sha } = await this.call<{ merge_commit_sha: string }>(
+      "GET",
+      `${this.repo(project)}/pulls/${pullRequest}`,
+    );
+    return merge_commit_sha;
+  }
+
   async merge(project: string, pullRequest: string, head: string): Promise<string> {
     const { sha } = await this.call<{ sha: string }>(
       "PUT",

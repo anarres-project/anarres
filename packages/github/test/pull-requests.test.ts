@@ -37,3 +37,19 @@ describe("merging a member's pull request", () => {
     expect(await adapter.merge("ledger", "7", "c0ffee")).toBe("m3rg3d");
   });
 });
+
+describe("a merged pull request's commit", () => {
+  it("is the commit GitHub says its merge made", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (method === "GET" && path === "repos/commons/ledger/pulls/7") {
+          return { status: 200, data: { merged: true, merge_commit_sha: "m3rg3d" } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.mergeCommitOf("ledger", "7")).toBe("m3rg3d");
+  });
+});

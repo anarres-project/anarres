@@ -163,6 +163,10 @@ export class FakeGitHub
   /** The next merge succeeds, and then Divlab's run stops dead, as if its runner were lost. */
   interruptAfterNextMerge = false;
 
+  async mergeCommitOf(_project: string, pullRequest: string): Promise<string> {
+    return `merge-of-${pullRequest}`;
+  }
+
   async merge(project: string, pullRequest: string): Promise<string> {
     for (const { path, text } of this.opened(pullRequest).files)
       this.mergeFile(project, path, text);

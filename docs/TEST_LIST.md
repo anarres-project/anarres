@@ -380,8 +380,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       made by Divlab's App (its log writes) or it is a merge Divlab recorded: a merge's commit
       carries the member as author, so only Divlab's record tells it apart (seen in the sandbox).
   - [x] Divlab records the commit each merge made;
-  - [ ] a merge finished by a later run, after an interrupted one, has its commit recorded too
-        (GitHub says who merged the pull request, and as what);
+  - [x] a merge finished by a later run, after an interrupted one, has its commit recorded too,
+        as GitHub gives it;
   - [ ] each run checks the commits since the last check, alerting once for any not Divlab's,
         and records how far it checked;
   - [ ] a project's setup records where checking starts;

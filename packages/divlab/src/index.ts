@@ -350,6 +350,8 @@ async function endLease(ranOut: ClaimedTask, board: TaskBoard, log: EventLog, cl
 export interface Repository {
   /** Where each feedback signal merged so far can be found, in no particular order. */
   feedbackSignals(project: string): Promise<string[]>;
+  /** The commit a merged pull request's merge made on main. */
+  mergeCommitOf(project: string, pullRequest: string): Promise<string>;
 }
 
 /** Members' pull requests: what each would change, read as data, and merging it. */
@@ -537,9 +539,12 @@ export async function onMerge(
   // the order it merged.
   for (const [path, merge] of begun) {
     if (finished.has(path) || !onMain.includes(path)) continue;
-    const { work, member } = merge.aboutToMerge;
+    const { work, member, pullRequest } = merge.aboutToMerge;
+    // The run that merged it stopped before recording the merge's commit: GitHub has it.
+    const mergedAs = await repository.mergeCommitOf(project, pullRequest);
     await acceptSignal(project, path, work, board, log, clock, events, {
       ...(member === undefined ? {} : { member }),
+      mergedAs,
     });
   }
   for (const path of onMain) {

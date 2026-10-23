@@ -43,6 +43,7 @@ describe("acting on a merge", () => {
   /** One feedback signal on main; the tripwire never needs to read what it says. */
   const onMain = (_text: string): Repository => ({
     feedbackSignals: async () => ["feedback/FB-9.md"],
+    mergeCommitOf: async (_project, pullRequest) => `merge-of-${pullRequest}`,
   });
   /** A board and log that keep what Divlab does, for the test to look at. */
   const watching = () => {
@@ -139,6 +140,32 @@ describe("acting on a merge", () => {
     });
   });
 
+  it("records the commit of a merge it finishes after an interrupted run, as GitHub gives it", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    const begun: EventLog = {
+      ...watchedLog,
+      read: async () => [
+        {
+          project: "ledger",
+          aboutToMerge: {
+            pullRequest: "7",
+            head: "c0ffee",
+            feedbackSignal: "feedback/FB-9.md",
+            work: { fromRole: "specification", module: "parser", verdict: "pass", impediments: [] },
+          },
+        },
+      ],
+    };
+    const merged: Repository = {
+      ...onMain(passedSpecification),
+      mergeCommitOf: async (_project, pullRequest) => `merge-of-${pullRequest}`,
+    };
+    await onMerge("ledger", merged, watchedBoard, begun, clock);
+    expect(seen.appended.find((event) => "work" in (event as object))).toMatchObject({
+      mergedAs: "merge-of-7",
+    });
+  });
+
   it("finishes interrupted merges in the order it merged them, not the order they are listed", async () => {
     const { seen, watchedBoard, watchedLog } = watching();
     const merged = (feedbackSignal: string, module: string) => ({
@@ -156,6 +183,7 @@ describe("acting on a merge", () => {
     };
     const listed: Repository = {
       feedbackSignals: async () => ["feedback/FB-1.md", "feedback/FB-2.md"],
+      mergeCommitOf: async (_project, pullRequest) => `merge-of-${pullRequest}`,
     };
     await onMerge("ledger", listed, watchedBoard, begun, clock);
     expect(seen.posted.map((task) => task.module)).toEqual(["lexer", "parser"]);
@@ -205,6 +233,7 @@ describe("acting on a merge", () => {
         "feedback/FB-3.md",
         "feedback/FB-4.md",
       ],
+      mergeCommitOf: async (_project, pullRequest) => `merge-of-${pullRequest}`,
     };
     const alerting: TaskBoard = {
       ...board,
