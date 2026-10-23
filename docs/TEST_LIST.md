@@ -451,7 +451,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] claiming from the plugin: `anarres claim project#number` posts Divlab's claim comment as
         the member (the text defined once, in Divlab), checking the name strictly first; the
         skill may run it, and both drivers now claim through it;
-  - [ ] the CLI says how a claim went (held, or Divlab's reason), reading only Divlab's replies;
+  - [x] the CLI says how a claim went (held by the member, by someone else, not yet, or no
+        task), waiting up to a minute and a half, from what Divlab sets on the task, never the
+        text of replies;
   - [ ] preparing the claimed task (the next item);
   - [ ] offers are ranked by priority and size (concept §8).
 - [ ] Preparing a task fetches only the files the role may read, at the pinned versions.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { claim, taskNamed } from "../src/index.ts";
+import { claim, claimOutcome, taskNamed } from "../src/index.ts";
 
 describe("the task a member names to claim, as the offers name it", () => {
   it("is the project and issue number written project#number", () => {
@@ -38,5 +38,24 @@ describe("claiming a task", () => {
       },
     });
     expect(said).toBe("Name the task as the offers do, project#number: ../orgs#4 is not one.");
+  });
+});
+
+describe("how a claim went, from what Divlab set on the task", () => {
+  it("is held when Divlab gave the task to the member", () => {
+    expect(claimOutcome("ledger#4", { claimedBy: "alice" }, "alice")).toBe(
+      "You hold ledger#4: prepare it to begin.",
+    );
+  });
+
+  it.each([
+    [
+      { claimedBy: "bob" },
+      "Someone else holds ledger#4: see the task's issue, and run next again.",
+    ],
+    [{}, "Divlab has not given ledger#4 to you yet: see the task's issue, and run next again."],
+    [undefined, "ledger#4 is not a task anyone can claim now: run next again."],
+  ])("says so when the task is %j", (task, said) => {
+    expect(claimOutcome("ledger#4", task, "alice")).toBe(said);
   });
 });

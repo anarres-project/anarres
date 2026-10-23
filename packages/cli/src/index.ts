@@ -217,3 +217,20 @@ export function taskOfRecord(text: string): { role: Role; module: string } | und
     ? { role, module }
     : undefined;
 }
+
+/**
+ * How a member's claim went, from what Divlab sets on the task (its claimed label and assignee),
+ * never from the text of replies, which anyone could write.
+ */
+export function claimOutcome(
+  named: string,
+  task: { claimedBy?: string } | undefined,
+  member: string,
+): string {
+  if (task === undefined) return `${named} is not a task anyone can claim now: run next again.`;
+  if (task.claimedBy === member) return `You hold ${named}: prepare it to begin.`;
+  if (task.claimedBy !== undefined) {
+    return `Someone else holds ${named}: see the task's issue, and run next again.`;
+  }
+  return `Divlab has not given ${named} to you yet: see the task's issue, and run next again.`;
+}

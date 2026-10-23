@@ -6,6 +6,7 @@ import { GitHubAdapter } from "@anarres/github";
 import {
   askForWork,
   claim,
+  claimOutcome,
   describeOffers,
   gitSteps,
   hookAnswer,
@@ -58,7 +59,20 @@ try {
     governance: process.env.ANARRES_GOVERNANCE ?? "",
   });
   if (command === "claim" && named) {
-    console.log(await claim(named, github));
+    const asked = await claim(named, github);
+    const task = taskNamed(named);
+    if (task === undefined) {
+      console.log(asked);
+      process.exit(1);
+    }
+    // Divlab's run takes a moment: watch what it sets on the task, for a minute and a half.
+    const member = await github.account();
+    let held = await github.task(task.project, task.task);
+    for (let check = 0; held?.claimedBy === undefined && check < 18; check++) {
+      await new Promise((resolve) => setTimeout(resolve, 5_000));
+      held = await github.task(task.project, task.task);
+    }
+    console.log(claimOutcome(named, held, member));
     process.exit(0);
   }
   if (command === "prepare" && named) {

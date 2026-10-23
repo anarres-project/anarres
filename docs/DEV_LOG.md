@@ -58,6 +58,20 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-23: The CLI says how a claim went
+
+- `anarres claim` now waits, up to a minute and a half, for Divlab's run, and says how the claim
+  went: the member holds it, someone else does, Divlab has not answered yet, or it is no task. It
+  reads only what Divlab sets on the task, its claimed label and assignee, never the text of
+  replies, which anyone could write.
+
+RED:      held when Divlab gave the task to the member -> expected '' to be 'You hold ledger#4…'
+GREEN:    (hard-coded)
+RED:      someone else holds it / not yet / no task (three rows)
+GREEN:    (44 passed); the someone-else wording changed in the test first, then the code
+
+---
+
 ## 2026-10-23: The read-scope hook
 
 - The plugin now declares a PreToolUse hook on Claude's file tools, run by the bundled CLI. In a

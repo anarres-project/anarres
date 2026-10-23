@@ -26,8 +26,8 @@ list shows it, `project#number`, and nothing else:
 node ${CLAUDE_PLUGIN_ROOT}/cli/anarres.js claim project#number
 ```
 
-Divlab decides the claim and answers on the task's issue. Tell the member what the command
-printed.
+Divlab decides the claim; the command waits for its answer and says how it went. Tell the
+member what it printed.
 
 Once the member holds the task, fetch what its role may read, with the Bash tool, giving the
 same name, and nothing else:

@@ -8386,6 +8386,14 @@ function taskOfRecord(text) {
   const { role, module } = record;
   return isRole(role) && typeof module === "string" && isPlainName(module) ? { role, module } : void 0;
 }
+function claimOutcome(named2, task, member) {
+  if (task === void 0) return `${named2} is not a task anyone can claim now: run next again.`;
+  if (task.claimedBy === member) return `You hold ${named2}: prepare it to begin.`;
+  if (task.claimedBy !== void 0) {
+    return `Someone else holds ${named2}: see the task's issue, and run next again.`;
+  }
+  return `Divlab has not given ${named2} to you yet: see the task's issue, and run next again.`;
+}
 
 // src/main.ts
 function taskFolderOf(cwd) {
@@ -8419,7 +8427,19 @@ try {
     governance: process.env.ANARRES_GOVERNANCE ?? ""
   });
   if (command === "claim" && named) {
-    console.log(await claim(named, github));
+    const asked = await claim(named, github);
+    const task = taskNamed(named);
+    if (task === void 0) {
+      console.log(asked);
+      process.exit(1);
+    }
+    const member = await github.account();
+    let held = await github.task(task.project, task.task);
+    for (let check = 0; held?.claimedBy === void 0 && check < 18; check++) {
+      await new Promise((resolve2) => setTimeout(resolve2, 5e3));
+      held = await github.task(task.project, task.task);
+    }
+    console.log(claimOutcome(named, held, member));
     process.exit(0);
   }
   if (command === "prepare" && named) {
