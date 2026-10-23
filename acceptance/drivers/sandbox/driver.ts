@@ -663,7 +663,7 @@ export class SandboxDriver implements Driver {
    */
   private async settled(project: string, listing: Listing): Promise<Issue[]> {
     const [label, state] = LISTINGS[listing];
-    const deadline = Date.now() + 30_000;
+    const deadline = Date.now() + LISTS_CATCH_UP_LIMIT;
     for (;;) {
       const issues = await this.issues(project, label, state);
       const stale =
@@ -675,7 +675,7 @@ export class SandboxDriver implements Driver {
       ) {
         return issues;
       }
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
     }
   }
 
@@ -750,6 +750,13 @@ type WorkflowRun = {
  * scenario (2,400 for 67, in CI on 2026-10-22), more for one that merges several times in a row.
  */
 const REQUESTS_A_SCENARIO_NEEDS = 200;
+
+/**
+ * How long GitHub's issue lists may take to show what the event log says Divlab did. Usually a
+ * few seconds; on 2026-10-23 they lagged past the 30 seconds this was, failing three scenarios
+ * in two runs though Divlab had posted every task.
+ */
+const LISTS_CATCH_UP_LIMIT = 120_000;
 
 /** How long Divlab may take to decide on a pull request, within a step's timeout. */
 const RUN_FINISH_LIMIT = 240_000;

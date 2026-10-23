@@ -59,8 +59,12 @@ anything but an open task is refused; each claim granted is recorded in the log.
   unreadable (in the adapter). Both now read past it, each driven by a failing test first.
 - It passed in-process, then in the sandbox on its own (48 requests), so it runs in both.
 - The sandbox run for 9c59aef failed one scenario of 67, in escalation: after the fourth re-run a
-  Coding task still showed as ready. Nothing in claiming touches it; it looks like the open
-  intermittent failure (GitHub's lists lagging past the driver's wait). Watching whether it recurs.
+  Coding task still showed as ready. The run for c48cb7f then failed two (both rows of "a failed
+  review or security check sends the code back to Coding", in two workers, in the same minute):
+  the Coding task was not listed. Its kept repository shows Divlab posted it correctly and every
+  Divlab run succeeded; GitHub's ready list had not shown it within the driver's 30-second wait.
+  So the driver now waits up to two minutes for the lists, polling every two seconds instead of
+  every half second, so the longer wait costs no more requests.
 
 RED:      records the claim it grants, saying when by its clock -> expected [] to deeply equal [ {…} ]
 GREEN:    (78 passed)
