@@ -4,6 +4,7 @@ import {
   onLeaseCheck,
   onMerge,
   onPullRequest,
+  onRelease,
   routingDecisions,
   setUpProject,
 } from "@anarres/divlab";
@@ -246,6 +247,13 @@ export class InProcessDriver implements Driver {
       this.github,
       this.clock,
     );
+  }
+
+  /** The member comments to give the task back, and the comment's run wakes Divlab. */
+  async release(task: { project: string; role: string; module: string }, member: string) {
+    const id = this.openTaskId(task);
+    this.github.comment(task.project, id, member, "/release");
+    await onRelease(task.project, { task: id, member }, this.github, this.github, this.clock);
   }
 
   async claimedTasks(project: string): Promise<ClaimedTask[]> {

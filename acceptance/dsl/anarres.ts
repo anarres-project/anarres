@@ -316,6 +316,13 @@ export class Anarres {
     );
   }
 
+  async memberReleases(member: string, task: Work) {
+    await this.driver.release(
+      { ...this.aliased(task), project: this.project },
+      this.member(member),
+    );
+  }
+
   async taskIsClaimedBy(task: Work, member: string) {
     const expected = this.aliased(task);
     const claims = await this.driver.claimedTasks(this.project);

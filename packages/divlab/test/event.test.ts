@@ -34,6 +34,16 @@ describe("what Divlab acts on, from the event that started its run", () => {
     });
   });
 
+  it("acts on a release when a member comments to give a task back", () => {
+    const comment = {
+      issue: { number: 12 },
+      comment: { body: "/release", user: { login: "alice" } },
+    };
+    expect(whatToActOn("issue_comment", comment)).toEqual({
+      release: { task: "12", member: "alice" },
+    });
+  });
+
   it("does nothing for a comment that is not a claim", () => {
     const comment = {
       issue: { number: 12 },

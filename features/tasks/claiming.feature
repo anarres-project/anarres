@@ -33,3 +33,21 @@ Feature: Members claim tasks
     When Alice and then Bob claim the Test task for "parser", and Divlab hears of Bob's claim first
     Then the Test task for "parser" is claimed by Alice
     And Bob is told the task has already been claimed
+
+  # Not yet in the sandbox: it has not passed there yet.
+  @sandbox-wip
+  Scenario: A member can give a task back early
+    Given a project with a module "parser"
+    And a member's Specification work on "parser" was accepted with a pass verdict
+    And Alice has claimed the Test task for "parser"
+    When Alice releases the Test task for "parser"
+    Then a Test task for "parser" is ready to claim
+
+  # Not in the sandbox: one account plays every member there, so it cannot show two members.
+  @sandbox-wip
+  Scenario: Only the member holding a task can give it back
+    Given a project with a module "parser"
+    And a member's Specification work on "parser" was accepted with a pass verdict
+    And Alice has claimed the Test task for "parser"
+    When Bob releases the Test task for "parser"
+    Then the Test task for "parser" is claimed by Alice

@@ -7635,6 +7635,7 @@ function eventFromFile(content) {
   if (isObject2(event) && namesTaskAndMember(event.claimed)) return event;
   if (isObject2(event) && namesTaskAndMember(event.leaseRanOut)) return event;
   if (isObject2(event) && namesTaskAndMember(event.activity)) return event;
+  if (isObject2(event) && namesTaskAndMember(event.released)) return event;
   if (isObject2(event) && isObject2(event.actedOn) && typeof event.actedOn.feedbackSignal === "string") {
     return event;
   }
@@ -8126,6 +8127,7 @@ var GitHubError = class extends Error {
 
 // src/event.ts
 var isClaim = (text) => text === "/claim";
+var isRelease = (text) => text === "/release";
 var numberedByGitHub = (number) => Number.isSafeInteger(number) && number >= 1;
 function whatToActOn(name, event) {
   if (name === "pull_request_target") {
@@ -8139,13 +8141,15 @@ function whatToActOn(name, event) {
   if (name === "schedule") return { leases: true };
   if (name === "issue_comment") {
     const { issue, comment } = event;
-    if (!isClaim(comment.body) || issue.pull_request !== void 0) return { nothing: true };
+    const command = isClaim(comment.body) ? "claim" : isRelease(comment.body) ? "release" : void 0;
+    if (command === void 0 || issue.pull_request !== void 0) return { nothing: true };
     if (!numberedByGitHub(issue.number)) {
       throw new Error("The comment event does not say which task it is about");
     }
     const member = comment.user?.login;
     if (typeof member !== "string") throw new Error("The comment event does not say who commented");
-    return { claim: { task: String(issue.number), member } };
+    const asked = { task: String(issue.number), member };
+    return command === "claim" ? { claim: asked } : { release: asked };
   }
   throw new Error(`Divlab does not act on ${name} events`);
 }
@@ -8172,6 +8176,12 @@ async function onClaim(project2, claim, board, log, clock) {
   if (holder !== claim.member) {
     await board.refuseClaim({ project: project2, ...claim, reason: "it has already been claimed" });
   }
+}
+async function onRelease(project2, release, board, log, clock) {
+  if ((await board.task(project2, release.task))?.claimedBy !== release.member) return;
+  const released = { project: project2, decidedAt: clock().toISOString(), released: release };
+  await log.append(released);
+  await board.releaseClaim(project2, release.task);
 }
 async function onLeaseCheck(project2, board, log, clock) {
   const leases = /* @__PURE__ */ new Map();
@@ -8350,6 +8360,8 @@ try {
     await onPullRequest(project, run.pullRequest, github, github, github, clock);
   } else if ("claim" in run) {
     await onClaim(project, run.claim, github, github, clock);
+  } else if ("release" in run) {
+    await onRelease(project, run.release, github, github, clock);
   } else if ("leases" in run) {
     await onLeaseCheck(project, github, github, clock);
   } else {

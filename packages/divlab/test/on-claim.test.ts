@@ -4,6 +4,7 @@ import {
   type ClaimRefused,
   type EventLog,
   onClaim,
+  onRelease,
   type TaskBoard,
 } from "../src/index.ts";
 
@@ -133,6 +134,62 @@ describe("acting on a claim", () => {
         decidedAt: "2026-10-23T09:00:00.000Z",
         claimed: { task: "12", member: "alice" },
       },
+    ]);
+  });
+});
+
+describe("acting on a release", () => {
+  const log: EventLog = { read: async () => [], append: async () => {} };
+  const clock = () => new Date("2026-10-23T09:00:00Z");
+  /** A board holding one task, held by `heldBy`, that keeps the claims Divlab gives up. */
+  const holding = (heldBy: string) => {
+    const released: string[] = [];
+    const watched: TaskBoard = {
+      ...board,
+      task: async () => ({ claimedBy: heldBy }),
+      releaseClaim: async (_project, task) => {
+        released.push(task);
+      },
+    };
+    return { released, watched };
+  };
+
+  it("makes the task ready again when the member holding it gives it back", async () => {
+    const { released, watched } = holding("alice");
+    await onRelease("ledger", { task: "12", member: "alice" }, watched, log, clock);
+    expect(released).toEqual(["12"]);
+  });
+
+  it("leaves the task with its holder when someone else asks to give it back", async () => {
+    const { released, watched } = holding("alice");
+    await onRelease("ledger", { task: "12", member: "bob" }, watched, log, clock);
+    expect(released).toEqual([]);
+  });
+
+  it("records that the member gave the task back, and when, before the board shows it", async () => {
+    const seen: string[] = [];
+    const appended: unknown[] = [];
+    const { watched } = holding("alice");
+    watched.releaseClaim = async () => {
+      seen.push("released");
+    };
+    const recording: EventLog = {
+      read: async () => [],
+      append: async (event) => {
+        seen.push("recorded");
+        appended.push(event);
+      },
+    };
+    await onRelease("ledger", { task: "12", member: "alice" }, watched, recording, clock);
+    expect([seen, appended]).toEqual([
+      ["recorded", "released"],
+      [
+        {
+          project: "ledger",
+          decidedAt: "2026-10-23T09:00:00.000Z",
+          released: { task: "12", member: "alice" },
+        },
+      ],
     ]);
   });
 });

@@ -10,6 +10,7 @@ import type {
   LogEvent,
   NotAccepted,
   PostedTask,
+  Released,
   RoutingEvent,
 } from "@anarres/divlab";
 
@@ -91,7 +92,7 @@ export function eventFile(event: LogEvent, sequence: number): { path: string; co
   };
 }
 
-/** A claim, a lease that ran out, or activity: each names a task and the member it concerns. */
+/** A claim, a lease that ran out, activity or a release: each names a task and its member. */
 const namesTaskAndMember = (value: unknown): boolean =>
   isObject(value) && typeof value.task === "string" && typeof value.member === "string";
 
@@ -101,6 +102,7 @@ export function eventFromFile(content: string): LogEvent {
   if (isObject(event) && namesTaskAndMember(event.claimed)) return event as Claimed;
   if (isObject(event) && namesTaskAndMember(event.leaseRanOut)) return event as LeaseRanOut;
   if (isObject(event) && namesTaskAndMember(event.activity)) return event as Activity;
+  if (isObject(event) && namesTaskAndMember(event.released)) return event as Released;
   if (
     isObject(event) &&
     isObject(event.actedOn) &&

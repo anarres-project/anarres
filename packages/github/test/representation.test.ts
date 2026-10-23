@@ -4,6 +4,7 @@ import type {
   Claimed,
   LeaseRanOut,
   NotAccepted,
+  Released,
   RoutingEvent,
 } from "@anarres/divlab";
 import { describe, expect, it } from "vitest";
@@ -186,6 +187,15 @@ describe("a routing event as a file", () => {
       activity: { task: "12", member: "alice" },
     };
     expect(eventFromFile(eventFile(activity, 6).content)).toEqual(activity);
+  });
+
+  it("reads back a record that a member gave a task back", () => {
+    const released: Released = {
+      project: "ledger",
+      decidedAt: "2026-10-24T08:30:00.000Z",
+      released: { task: "12", member: "alice" },
+    };
+    expect(eventFromFile(eventFile(released, 7).content)).toEqual(released);
   });
 
   it("is refused, saying why, when the work it was about to merge could not be routed", () => {

@@ -49,3 +49,10 @@ Then(
     return this.anarres.divlabRecordedClaim(member, { role, module });
   },
 );
+
+When(
+  "{word} releases the {role} task for {string}",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.memberReleases(member, { role, module });
+  },
+);

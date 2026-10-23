@@ -253,6 +253,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] the sandbox re-forks a project whose fork GitHub reports empty (seen 2026-10-23: one
         worker's fork broke mid-run while GitHub was answering 504s, failing its 8 scenarios).
 - [ ] A member can release a task early.
+  - [x] the member holding a task comments to give it back; Divlab records it and makes the
+        task ready again; a release from anyone else changes nothing (in-process);
+  - [ ] the sandbox shows a release (tagged until it has passed there);
+  - [ ] someone who does not hold the task is told so;
+  - [ ] the plugin hands over partial work when a member gives a task back (concept §8, partial
+        work: the task is re-queued as a continuation; section 5).
 
 ## 3. Eligibility and conflict of interest
 

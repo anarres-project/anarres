@@ -96,6 +96,8 @@ export interface Driver {
     heardFirst: string,
   ): Promise<void>;
   claimedTasks(project: string): Promise<ClaimedTask[]>;
+  /** The member asks to give the task back, before its lease runs out. */
+  release(task: { project: string; role: string; module: string }, member: string): Promise<void>;
   /** Divlab's clock moves on, as time passes for a project. */
   timePasses(hours: number): Promise<void>;
   /** Divlab's scheduled run checks the project's leases, as it does every hour. */

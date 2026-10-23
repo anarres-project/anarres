@@ -109,6 +109,13 @@ export type Activity = {
   activity: { task: string; member: string };
 };
 
+/** The member holding a task gave it back before its lease ran out: it is ready again. */
+export type Released = {
+  project: string;
+  decidedAt: string;
+  released: { task: string; member: string };
+};
+
 /** A claim Divlab refused, and why, in words the member would recognise. */
 export type ClaimRefused = ClaimedTask & { reason: string };
 
@@ -145,6 +152,20 @@ export async function onClaim(
   if (holder !== claim.member) {
     await board.refuseClaim({ project, ...claim, reason: "it has already been claimed" });
   }
+}
+
+/** A member asks to give a task back before its lease runs out. */
+export async function onRelease(
+  project: string,
+  release: { task: string; member: string },
+  board: TaskBoard,
+  log: EventLog,
+  clock: Clock,
+): Promise<void> {
+  if ((await board.task(project, release.task))?.claimedBy !== release.member) return;
+  const released: Released = { project, decidedAt: clock().toISOString(), released: release };
+  await log.append(released);
+  await board.releaseClaim(project, release.task);
 }
 
 /** Divlab's scheduled run: every claim whose lease has run out is given up. */
@@ -225,7 +246,8 @@ export type LogEvent =
   | NotAccepted
   | Claimed
   | LeaseRanOut
-  | Activity;
+  | Activity
+  | Released;
 
 /** The routing decisions in a log, which are all its history routing depends on. */
 export const routingDecisions = (log: readonly LogEvent[]): RoutingEvent[] =>

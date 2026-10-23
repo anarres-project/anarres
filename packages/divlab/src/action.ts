@@ -1,12 +1,19 @@
 import { readFileSync } from "node:fs";
 import { GitHubAdapter } from "@anarres/github";
 import { whatToActOn } from "./event.ts";
-import { checkProtection, onClaim, onLeaseCheck, onMerge, onPullRequest } from "./index.ts";
+import {
+  checkProtection,
+  onClaim,
+  onLeaseCheck,
+  onMerge,
+  onPullRequest,
+  onRelease,
+} from "./index.ts";
 
 /**
  * The GitHub Action: a member's pull request, a push to a project's main branch, a comment, or the
  * hourly lease check. It wires Divlab to GitHub and nothing more; what Divlab does is decided in
- * `onPullRequest`, `onMerge`, `onClaim` and `onLeaseCheck`.
+ * `onPullRequest`, `onMerge`, `onClaim`, `onRelease` and `onLeaseCheck`.
  */
 const [owner, project] = (process.env.GITHUB_REPOSITORY ?? "").split("/");
 const token = process.env.INPUT_TOKEN;
@@ -25,6 +32,8 @@ try {
     await onPullRequest(project, run.pullRequest, github, github, github, clock);
   } else if ("claim" in run) {
     await onClaim(project, run.claim, github, github, clock);
+  } else if ("release" in run) {
+    await onRelease(project, run.release, github, github, clock);
   } else if ("leases" in run) {
     await onLeaseCheck(project, github, github, clock);
   } else {

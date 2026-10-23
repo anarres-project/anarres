@@ -48,7 +48,39 @@ been claimed; of claims made together the first made wins, whichever Divlab hear
 (both in-process: the sandbox needs a second account to play another member); a claim on
 anything but an open task is refused; each claim granted is recorded in the log. A lease runs out
 24 hours after the last activity on its task, the claim or draft work by its holder, and Divlab's
-hourly check makes the task ready again (in-process). Divlab never merges a draft.
+hourly check makes the task ready again (in-process). Divlab never merges a draft. A member can
+give a task back early.
+
+---
+
+## 2026-10-23: A member gives a task back
+
+- A member holding a task comments `/release` on it; Divlab records the release and makes the
+  task ready again. A release from anyone but the holder changes nothing. The comment is read as
+  a claim is, exactly the command, on a task, from a named commenter.
+- The sandbox sweep: all four workers sweep as a run starts, and once a failed run had left
+  repositories, they deleted the same ones at once; GitHub answered 409 to all but one, failing
+  every worker's setup (e71e805). A 409 or 404 now counts as swept (e237b29, committed on its
+  own ahead of this).
+- Slip: the sweep's 204 and 404 rows were one table, so two rows failed at once.
+
+RED:      acts on a release when a member comments to give a task back
+          -> expected { nothing: true } to deeply equal { release: … }
+GREEN:    (103 passed)
+RED:      makes the task ready again when the member holding it gives it back -> expected [] to deeply equal [ '12' ]
+GREEN:    (104 passed)
+RED:      leaves the task with its holder when someone else asks to give it back
+          -> expected [ '12' ] to deeply equal []
+GREEN:    (105 passed)
+RED:      records that the member gave the task back, and when, before the board shows it
+          -> expected [ [ 'released' ], [] ] to deeply equal [ [ 'recorded', 'released' ], …(1) ]
+GREEN:    (106 passed)
+RED:      reads back a record that a member gave a task back -> Error: The event file cannot be read
+GREEN:    (303 passed)
+RED:      the sweep is done when GitHub says another operation is deleting it -> expected false to be true
+GREEN:    (hard-coded on 409)
+RED:      is done when GitHub answers 204 / 404 -> expected false to be true (two rows)
+GREEN:    (6 passed); refusing (403) is not done: passed first time, kept
 
 ---
 

@@ -530,6 +530,38 @@ export class SandboxDriver implements Driver {
     }
   }
 
+  /** The member comments to give the task back, and Divlab's run makes it ready again. */
+  async release(task: { project: string; role: string; module: string }, member: string) {
+    if (this.claimants.size > 0 && ![...this.claimants.values()].includes(member)) {
+      throw new HarnessNotYetBuilt("a second account, so a second member can give a task back");
+    }
+    const repository = `repos/${this.org}/${task.project}`;
+    const fromRole = roleId(task.role);
+    const issue = (await this.settled(task.project, "claimed")).find(
+      (i) => labelValue(i, "role:") === fromRole && labelValue(i, "module:") === task.module,
+    );
+    if (!issue) throw new Error(`No ${task.role} task for ${task.module} is claimed`);
+    const started = Date.now();
+    await this.github.call("POST", `${repository}/issues/${issue.number}/comments`, {
+      body: "/release",
+    });
+    for (let check = 1; ; check++) {
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+      const now = await this.github.call<Issue>("GET", `${repository}/issues/${issue.number}`);
+      if (now.labels.some((l) => l.name === "state:ready") && !now.assignees?.length) break;
+      if (check % 3 === 0) await this.failIfRunFailed(repository, "issue_comment", started);
+      if (Date.now() - started > RUN_FINISH_LIMIT) {
+        throw new Error(
+          `Divlab did not act on the release of task ${issue.number} in ${task.project}`,
+        );
+      }
+    }
+    const expected = this.expectedFor(task.project);
+    expected.claimed -= 1;
+    expected.ready += 1;
+    run.closed.delete(issueKey(task.project, issue.number));
+  }
+
   async claimedTasks(project: string): Promise<ClaimedTask[]> {
     const issues = await this.settled(project, "claimed");
     return issues.flatMap((issue) => {
