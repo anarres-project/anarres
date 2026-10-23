@@ -54,6 +54,24 @@ life (decision 0007), and Divlab refuses a claim that breaks it.
 
 ---
 
+## 2026-10-23: The earliest allowed claim wins
+
+- If the earliest claim on a free task came from a member the rules bar, a later member's run
+  refused the later member with the earlier one's reason, and nobody got the task. Divlab now
+  judges the member asking first (barred: told why), then gives a free task to the earliest claim
+  that is allowed.
+- Slip: a local sandbox run started before the commit it tests was pushed, so GitHub could not
+  find that version of Divlab (73 requests, no result). Pushed first from now on, as
+  `docs/SANDBOX.md` says; and a run of chosen scenarios is named with `--name`, since a file path
+  is added to the configured paths, not put in their place (one such run started every scenario).
+
+RED:      gives the task to the earliest claim that is allowed, passing over one that is not
+          -> Error: Divlab should not have acted
+GREEN:    (115 passed)
+REFACTOR: onClaim judges the asker, then the claimants in order
+
+---
+
 ## 2026-10-23: A task a member holds counts towards their role
 
 - A claim now records the role and module of its task, so the log alone says which tasks a

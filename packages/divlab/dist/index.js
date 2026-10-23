@@ -8229,23 +8229,21 @@ async function onClaim(project2, claim, board, log, clock) {
     });
     return;
   }
+  const history = parts(await log.read(project2));
+  const allowed = (member) => mayTake({ member, role: task.role, module: task.module }, history);
+  const asker = allowed(claim.member);
+  if (asker !== "allowed") {
+    await board.refuseMember({
+      project: project2,
+      ...claim,
+      reason: `Divlab did not give you this task: ${asker.refused}`
+    });
+    return;
+  }
   let holder = task.claimedBy;
   if (holder === void 0) {
-    const events = await log.read(project2);
     const comments = await board.comments(project2, claim.task);
-    holder = comments.find((comment) => isClaim(comment.text))?.member ?? claim.member;
-    const eligible = mayTake(
-      { member: holder, role: task.role, module: task.module },
-      parts(events)
-    );
-    if (eligible !== "allowed") {
-      await board.refuseMember({
-        project: project2,
-        ...claim,
-        reason: `Divlab did not give you this task: ${eligible.refused}`
-      });
-      return;
-    }
+    holder = comments.find((comment) => isClaim(comment.text) && allowed(comment.member) === "allowed")?.member ?? claim.member;
     const claimed = {
       project: project2,
       decidedAt: clock().toISOString(),

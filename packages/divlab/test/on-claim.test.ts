@@ -257,6 +257,42 @@ describe("who may claim a task (decision 0007)", () => {
     await onClaim("ledger", { task: "12", member: "alice" }, codingTask, heldOnceThenEnded, clock);
     expect(claimed.map((claim) => claim.member)).toEqual(["alice"]);
   });
+
+  it("gives the task to the earliest claim that is allowed, passing over one that is not", async () => {
+    const claimed: ClaimedTask[] = [];
+    const reviewTask: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "reviewer", module: "parser" }),
+      comments: async () => [
+        { member: "alice", text: "/claim" },
+        { member: "bob", text: "/claim" },
+      ],
+      markClaimed: async (claim) => {
+        claimed.push(claim);
+      },
+    };
+    const aliceCoded: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          member: "alice",
+          work: {
+            fromRole: "coding",
+            module: "parser",
+            verdict: "pass",
+            impediments: [],
+            feedbackSignal: "feedback/FB-3.md",
+          },
+          decision: { tasks: [{ role: "reviewer", module: "parser" }] },
+          reason: { rule: "passed" },
+        } as LogEvent,
+      ],
+      append: async () => {},
+    };
+    const clock = () => new Date("2026-10-23T09:00:00Z");
+    await onClaim("ledger", { task: "12", member: "bob" }, reviewTask, aliceCoded, clock);
+    expect(claimed.map((claim) => claim.member)).toEqual(["bob"]);
+  });
 });
 
 describe("acting on a release", () => {

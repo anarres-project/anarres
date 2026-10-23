@@ -225,8 +225,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         (in-process);
   - [x] a task's comments are read from every page;
   - [ ] the sandbox shows it (needs the second account);
-  - [ ] when the earliest claim is not valid (once eligibility exists, section 3), the earliest
-        valid one wins;
+  - [x] when the earliest claim is not valid (section 3), the earliest valid one wins;
   - [x] a comment by a deleted account (GitHub gives no user) is left out, not a failure;
   - [ ] if GitHub's comment list lags and shows no claim yet, the member who asked gets the task:
         decided, kept as a test; revisit if the sandbox ever shows a list lagging that far.
@@ -276,7 +275,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] a task a member holds now counts too: a claim records the task's role and module, and
         one given back or run out no longer counts; a claim record naming a role Anarres does
         not have makes the log unreadable, as other bad records do;
-  - [ ] when the earliest claim on a task is not allowed, the earliest that is wins;
+  - [x] when the earliest claim on a task is not allowed, the earliest that is wins; a member
+        barred from the task is told why, whoever holds it;
   - [ ] the sandbox shows the refusal (tagged until it has passed there).
 - [ ] Linked accounts are treated as one member.
 

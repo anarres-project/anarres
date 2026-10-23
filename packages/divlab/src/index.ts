@@ -186,24 +186,26 @@ export async function onClaim(
     });
     return;
   }
+  // A member the conflict-of-interest rules bar from the task is told why (decision 0007).
+  const history = parts(await log.read(project));
+  const allowed = (member: string) =>
+    mayTake({ member, role: task.role, module: task.module }, history);
+  const asker = allowed(claim.member);
+  if (asker !== "allowed") {
+    await board.refuseMember({
+      project,
+      ...claim,
+      reason: `Divlab did not give you this task: ${asker.refused}`,
+    });
+    return;
+  }
   let holder = task.claimedBy;
   if (holder === undefined) {
-    const events = await log.read(project);
-    // The first claim made wins, whichever claim's run Divlab hears of first.
+    // The first claim made that is allowed wins, whichever claim's run Divlab hears of first.
     const comments = await board.comments(project, claim.task);
-    holder = comments.find((comment) => isClaim(comment.text))?.member ?? claim.member;
-    const eligible = mayTake(
-      { member: holder, role: task.role, module: task.module },
-      parts(events),
-    );
-    if (eligible !== "allowed") {
-      await board.refuseMember({
-        project,
-        ...claim,
-        reason: `Divlab did not give you this task: ${eligible.refused}`,
-      });
-      return;
-    }
+    holder =
+      comments.find((comment) => isClaim(comment.text) && allowed(comment.member) === "allowed")
+        ?.member ?? claim.member;
     const claimed: Claimed = {
       project,
       decidedAt: clock().toISOString(),
