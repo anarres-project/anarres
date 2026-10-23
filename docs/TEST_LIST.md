@@ -198,6 +198,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] Divlab's own comments (its refusals) never start a claim run that matters;
   - [ ] a member submitting work for a task they claimed: the driver finds claimed tasks too.
 - [ ] A claimed task cannot be claimed by anyone else.
+  - [x] Divlab leaves a claimed task with its holder and tells the other member it has already
+        been claimed (in-process);
+  - [x] only Divlab's claimed label makes a task held: someone assigned a ready task does not
+        hold it;
+  - [ ] the sandbox shows it: needs a second account playing another member (Bernard to decide);
+  - [ ] a member claiming a task they already hold is told so, not that someone else has it;
+  - [ ] a task labelled claimed with nobody assigned is not taken as ready.
 - [ ] When several members claim the same task at once, the first valid claim wins and the others
       are told the task is taken, whatever order GitHub delivers the claims in.
 - [ ] A lease expires after 24 hours without activity, and the task becomes ready again.

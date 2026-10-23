@@ -69,13 +69,21 @@ export interface TaskBoard {
   unprotectedMainAlertOpen(project: string): Promise<boolean>;
   markModuleDone(module: FinishedModule): Promise<void>;
   /** What Divlab recorded on a task it posted; undefined if there is no such task. */
-  task(project: string, task: string): Promise<Pick<PostedTask, "researchFor"> | undefined>;
+  task(
+    project: string,
+    task: string,
+  ): Promise<(Pick<PostedTask, "researchFor"> & { claimedBy?: string }) | undefined>;
   /** The task is done: nobody can claim it any more. */
   close(project: string, task: string): Promise<void>;
   /** The feedback signals whose routing decisions the board shows Divlab acted on. */
   actedOn(project: string): Promise<string[]>;
   markClaimed(claim: ClaimedTask): Promise<void>;
+  /** Divlab will not let the member claim the task: they are told why. */
+  refuseClaim(refusal: ClaimRefused): Promise<void>;
 }
+
+/** A claim Divlab refused, and why, in words the member would recognise. */
+export type ClaimRefused = ClaimedTask & { reason: string };
 
 /** A member holds a task. */
 export type ClaimedTask = { project: string; task: string; member: string };
@@ -86,6 +94,11 @@ export async function onClaim(
   claim: { task: string; member: string },
   board: TaskBoard,
 ): Promise<void> {
+  const task = await board.task(project, claim.task);
+  if (task?.claimedBy !== undefined) {
+    await board.refuseClaim({ project, ...claim, reason: "it has already been claimed" });
+    return;
+  }
   await board.markClaimed({ project, ...claim });
 }
 

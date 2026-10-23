@@ -256,6 +256,17 @@ export class Anarres {
     await this.driver.claim({ ...this.aliased(task), project: this.project }, this.member(member));
   }
 
+  async memberIsToldTaskIsTaken(member: string) {
+    const told = await this.driver.claimRefusals(this.project);
+    assert.ok(
+      told.some(
+        (refusal) =>
+          refusal.member === this.member(member) && refusal.reason.includes("already been claimed"),
+      ),
+      `expected ${member} to be told the task has already been claimed; Divlab said: ${JSON.stringify(told)}`,
+    );
+  }
+
   async taskIsClaimedBy(task: Work, member: string) {
     const expected = this.aliased(task);
     const claims = await this.driver.claimedTasks(this.project);

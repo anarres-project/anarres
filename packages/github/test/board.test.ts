@@ -96,3 +96,29 @@ describe("marking a task claimed", () => {
     ]);
   });
 });
+
+describe("refusing a claim", () => {
+  it("replies on the task's issue to the member, saying why", async () => {
+    const comments: unknown[] = [];
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string, body?: unknown) => {
+        if (method === "POST" && path === "repos/commons/ledger/issues/12/comments") {
+          comments.push(body);
+          return { status: 201, data: {} as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    await adapter.refuseClaim({
+      project: "ledger",
+      task: "12",
+      member: "bob",
+      reason: "it has already been claimed",
+    });
+    expect(comments).toEqual([
+      { body: "@bob, Divlab did not give you this task: it has already been claimed." },
+    ]);
+  });
+});

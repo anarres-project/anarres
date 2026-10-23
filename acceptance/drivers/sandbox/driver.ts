@@ -66,6 +66,8 @@ export class SandboxDriver implements Driver {
   /** The second sandbox organisation, playing the members: their forks live there. */
   private readonly members: GitHubApi;
   private readonly membersOrg: string;
+  /** The scenario member each of this scenario's claims was made for, by the account that made it. */
+  private readonly claimants = new Map<string, string>();
 
   constructor() {
     const { org, token, membersOrg, membersToken } = sandboxSettings();
@@ -418,6 +420,9 @@ export class SandboxDriver implements Driver {
       (i) => labelValue(i, "role:") === fromRole && labelValue(i, "module:") === task.module,
     );
     if (!issue) throw new Error(`No ${task.role} task for ${task.module} is ready to claim`);
+    if ([...this.claimants.values()].some((other) => other !== member)) {
+      throw new HarnessNotYetBuilt("a second account, so a second member can claim");
+    }
     const started = Date.now();
     await this.github.call("POST", `${repository}/issues/${issue.number}/comments`, {
       body: "/claim",
@@ -427,7 +432,7 @@ export class SandboxDriver implements Driver {
       const now = await this.github.call<Issue>("GET", `${repository}/issues/${issue.number}`);
       const claimant = now.assignees?.[0]?.login;
       if (now.labels.some((l) => l.name === "state:claimed") && claimant) {
-        run.members.set(claimant, member);
+        this.claimants.set(claimant, member);
         break;
       }
       if (check % 3 === 0) await this.failIfRunFailed(repository, "issue_comment", started);
@@ -443,6 +448,10 @@ export class SandboxDriver implements Driver {
     run.closed.add(issueKey(task.project, issue.number));
   }
 
+  async claimRefusals(_project: string): Promise<{ member: string; reason: string }[]> {
+    throw new HarnessNotYetBuilt("a second account, so the sandbox can tell members' claims apart");
+  }
+
   async claimedTasks(project: string): Promise<ClaimedTask[]> {
     const issues = await this.settled(project, "claimed");
     return issues.flatMap((issue) => {
@@ -450,7 +459,7 @@ export class SandboxDriver implements Driver {
       const module = labelValue(issue, "module:");
       const login = issue.assignees?.[0]?.login;
       if (role === undefined || module === undefined || login === undefined) return [];
-      return [{ role: roleNameOf(role), module, member: run.members.get(login) ?? login }];
+      return [{ role: roleNameOf(role), module, member: this.claimants.get(login) ?? login }];
     });
   }
 
@@ -728,8 +737,6 @@ const run = {
   expected: new Map<string, Record<Listing, number>>(),
   /** The tasks merged work has closed or members have claimed, which a lagging list may still show as ready. */
   closed: new Set<string>(),
-  /** The scenario member each claim was made for, by the account that made it. */
-  members: new Map<string, string>(),
   /** The pull requests members' work was submitted in. */
   submitted: [] as { project: string; number: number; feedbackSignal: string; merged: boolean }[],
 };

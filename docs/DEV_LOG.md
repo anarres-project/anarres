@@ -43,7 +43,39 @@ and merge records are read back through core. Section 0 is done but for the log'
 its task closed, even if a run stops between; a feedback signal's file must be plainly named; a
 pull request's run reads the log once. Section 2 under way: a member claims a ready task by
 commenting on it, and Divlab marks it claimed and assigns it to them, in-process and in the
-sandbox.
+sandbox; a claimed task stays with its holder, and anyone else claiming it is told it has already
+been claimed (in-process: the sandbox needs a second account to play another member).
+
+---
+
+## 2026-10-23: A claimed task stays with its holder
+
+- Assigning an issue replaces its assignees, so a second claim would have taken the task. Divlab
+  now reads who holds the task first; if someone does, it leaves the task with them and replies
+  on the task's issue to the other member that it has already been claimed.
+- Who holds a task is read from the issue: its assignee, but only while Divlab's claimed label is
+  on it, since anyone who triages can assign a ready task.
+- The harness: the in-process driver finds a task to claim among claimed tasks too, as a member
+  can still comment on a claimed task's issue. The sandbox has one account playing every member,
+  so it cannot show two members; its driver says so (`HarnessNotYetBuilt`) and the scenario is
+  tagged `@sandbox-wip` until there is a second account.
+- Slips: the first test of the taken-task check passed only once the claimed-label check was
+  taken back out; it had been written before a test asked for it, and its test then failed for
+  the right reason. The refusal adapter test and its empty stub went in one step again.
+
+RED:      leaves a task another member holds with them -> expected [ { … } ] to deeply equal []
+GREEN:    (70 passed)
+RED:      tells a member who claims a task another member holds that it has already been claimed
+          -> expected [] to deeply equal [ { project: 'ledger', …(3) } ]
+GREEN:    (71 passed)
+RED:      reads back who holds a claimed task -> expected {} to deeply equal { claimedBy: 'alice' }
+GREEN:    (64 passed)
+RED:      reads a ready task as held by nobody, even if someone has been assigned it
+          -> expected { claimedBy: 'carol' } to deeply equal {}
+GREEN:    (65 passed)
+RED:      replies on the task's issue to the member, saying why -> expected [] to deeply equal [ Array(1) ]
+GREEN:    (66 passed)
+REFACTOR: the claim refusal's wording lives with the pull request refusal's, in the representation
 
 ---
 

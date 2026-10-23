@@ -158,11 +158,16 @@ export class InProcessDriver implements Driver {
   /** The member's claim reaches Divlab as it would from their comment on the task. */
   async claim(task: { project: string; role: string; module: string }, member: string) {
     const fromRole = roleId(task.role);
-    const ready = this.github
-      .readyTasks(task.project)
+    // A claimed task's issue is still there to comment on.
+    const open = this.github
+      .openTasksOf(task.project)
       .find((t) => t.role === fromRole && t.module === task.module);
-    if (!ready) throw new Error(`No ${task.role} task for ${task.module} is ready to claim`);
-    await onClaim(task.project, { task: ready.id, member }, this.github);
+    if (!open) throw new Error(`No ${task.role} task for ${task.module} is open`);
+    await onClaim(task.project, { task: open.id, member }, this.github);
+  }
+
+  async claimRefusals(project: string): Promise<{ member: string; reason: string }[]> {
+    return this.github.claimRefusals(project).map(({ member, reason }) => ({ member, reason }));
   }
 
   async claimedTasks(project: string): Promise<ClaimedTask[]> {

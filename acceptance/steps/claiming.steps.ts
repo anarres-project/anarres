@@ -1,4 +1,4 @@
-import { Then, When } from "@cucumber/cucumber";
+import { Given, Then, When } from "@cucumber/cucumber";
 import type { AnarresWorld } from "../support/world.ts";
 
 When(
@@ -12,5 +12,19 @@ Then(
   "the {role} task for {string} is claimed by {word}",
   function (this: AnarresWorld, role: string, module: string, member: string) {
     return this.anarres.taskIsClaimedBy({ role, module }, member);
+  },
+);
+
+Given(
+  "{word} has claimed the {role} task for {string}",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.memberClaims(member, { role, module });
+  },
+);
+
+Then(
+  "{word} is told the task has already been claimed",
+  function (this: AnarresWorld, member: string) {
+    return this.anarres.memberIsToldTaskIsTaken(member);
   },
 );

@@ -1,5 +1,6 @@
 import type {
   ClaimedTask,
+  ClaimRefused,
   EventLog,
   FinishedModule,
   LogEvent,
@@ -12,6 +13,7 @@ import type {
   TaskBoard,
 } from "@anarres/divlab";
 import {
+  commentForClaimRefusal,
   commentForRefusal,
   decisionOf,
   eventFile,
@@ -128,6 +130,12 @@ export class GitHubAdapter
     await this.call("PATCH", issue, {
       labels: labelsWhenClaimed(listed),
       assignees: [claim.member],
+    });
+  }
+
+  async refuseClaim(refusal: ClaimRefused): Promise<void> {
+    await this.call("POST", `${this.repo(refusal.project)}/issues/${refusal.task}/comments`, {
+      body: commentForClaimRefusal(refusal),
     });
   }
 

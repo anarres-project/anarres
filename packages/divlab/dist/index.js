@@ -7603,7 +7603,12 @@ var postedByDivlab = (issue) => issue.labels.some(({ name }) => [READY, CLAIMED,
 var labelsWhenClaimed = (issue) => issue.labels.map(({ name }) => name === READY ? CLAIMED : name);
 function taskFromIssue(issue) {
   const label = issue.labels.find(({ name }) => name.startsWith(RESEARCH_FOR));
-  return label === void 0 ? {} : { researchFor: label.name.slice(RESEARCH_FOR.length) };
+  const claimant = issue.assignees?.[0]?.login;
+  return {
+    ...label === void 0 ? {} : { researchFor: label.name.slice(RESEARCH_FOR.length) },
+    // Assigning is open to anyone who triages: only Divlab's claimed label makes a task held.
+    ...claimant !== void 0 && issue.labels.some(({ name }) => name === CLAIMED) ? { claimedBy: claimant } : {}
+  };
 }
 var RESEARCH_FOR = "research-for:";
 function issueNumber(task) {
@@ -7677,6 +7682,9 @@ function commentForRefusal(reason) {
   return `Divlab has not merged this pull request:
 
 ${quoted(reason)}`;
+}
+function commentForClaimRefusal(refusal) {
+  return `@${refusal.member}, Divlab did not give you this task: ${refusal.reason}.`;
 }
 function quoted(text) {
   const longest = Math.max(0, ...(text.match(/`+/g) ?? []).map((run) => run.length));
@@ -7877,6 +7885,11 @@ var GitHubAdapter = class {
     await this.call("PATCH", issue, {
       labels: labelsWhenClaimed(listed),
       assignees: [claim.member]
+    });
+  }
+  async refuseClaim(refusal) {
+    await this.call("POST", `${this.repo(refusal.project)}/issues/${refusal.task}/comments`, {
+      body: commentForClaimRefusal(refusal)
     });
   }
   async actedOn(project2) {
@@ -8109,6 +8122,11 @@ function whatToActOn(name, event) {
 
 // src/index.ts
 async function onClaim(project2, claim, board) {
+  const task = await board.task(project2, claim.task);
+  if (task?.claimedBy !== void 0) {
+    await board.refuseClaim({ project: project2, ...claim, reason: "it has already been claimed" });
+    return;
+  }
   await board.markClaimed({ project: project2, ...claim });
 }
 var routingDecisions = (log) => log.filter((event) => "work" in event);

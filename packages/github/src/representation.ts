@@ -2,6 +2,7 @@ import { ROLE_NAMES, type Role, readMergedWork, readRoutingRecord } from "@anarr
 import type {
   AboutToMerge,
   ActedOn,
+  ClaimRefused,
   FinishedModule,
   LogEvent,
   NotAccepted,
@@ -34,7 +35,7 @@ export function issueForTask(task: PostedTask): NewIssue {
 }
 
 /** An issue as GitHub lists it: only what Divlab reads back. */
-export type ListedIssue = { labels: { name: string }[] };
+export type ListedIssue = { labels: { name: string }[]; assignees?: { login: string }[] };
 
 /** Whether an issue carries a label Divlab gives the tasks, alerts and finished modules it posts. */
 export const postedByDivlab = (issue: ListedIssue) =>
@@ -45,9 +46,16 @@ export const labelsWhenClaimed = (issue: ListedIssue): string[] =>
   issue.labels.map(({ name }) => (name === READY ? CLAIMED : name));
 
 /** What Divlab recorded on a task when it posted it. */
-export function taskFromIssue(issue: ListedIssue): { researchFor?: string } {
+export function taskFromIssue(issue: ListedIssue): { researchFor?: string; claimedBy?: string } {
   const label = issue.labels.find(({ name }) => name.startsWith(RESEARCH_FOR));
-  return label === undefined ? {} : { researchFor: label.name.slice(RESEARCH_FOR.length) };
+  const claimant = issue.assignees?.[0]?.login;
+  return {
+    ...(label === undefined ? {} : { researchFor: label.name.slice(RESEARCH_FOR.length) }),
+    // Assigning is open to anyone who triages: only Divlab's claimed label makes a task held.
+    ...(claimant !== undefined && issue.labels.some(({ name }) => name === CLAIMED)
+      ? { claimedBy: claimant }
+      : {}),
+  };
 }
 
 const RESEARCH_FOR = "research-for:";
@@ -161,6 +169,11 @@ export function logFrom(listed: string[], texts: Map<string, string>): LogEvent[
 /** The reason is quoted in a code block, so text a member wrote can never act as Markdown. */
 export function commentForRefusal(reason: string): string {
   return `Divlab has not merged this pull request:\n\n${quoted(reason)}`;
+}
+
+/** Divlab's reply to a member whose claim it refused: its reasons are its own words. */
+export function commentForClaimRefusal(refusal: ClaimRefused): string {
+  return `@${refusal.member}, Divlab did not give you this task: ${refusal.reason}.`;
 }
 
 /** Text in a code block, fenced longer than any run of backticks in it, so nothing can close it. */

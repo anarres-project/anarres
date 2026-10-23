@@ -85,6 +85,8 @@ export interface Driver {
   /** The member asks to claim the project's ready task for that role and module. */
   claim(task: { project: string; role: string; module: string }, member: string): Promise<void>;
   claimedTasks(project: string): Promise<ClaimedTask[]>;
+  /** What Divlab told members whose claims it refused. */
+  claimRefusals(project: string): Promise<{ member: string; reason: string }[]>;
   coordinatorAlerts(project: string): Promise<CoordinatorAlert[]>;
   doneModules(project: string): Promise<string[]>;
   routingRecords(project: string): Promise<RoutingRecord[]>;

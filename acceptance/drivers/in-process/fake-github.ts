@@ -1,5 +1,6 @@
 import type {
   ClaimedTask,
+  ClaimRefused,
   CoordinatorAlert,
   EventLog,
   FinishedModule,
@@ -204,6 +205,21 @@ export class FakeGitHub
   async markClaimed(claim: ClaimedTask): Promise<void> {
     const task = this.openTasks.find((t) => t.project === claim.project && t.id === claim.task);
     if (task) task.claimedBy = claim.member;
+  }
+
+  private readonly refusedClaims: ClaimRefused[] = [];
+
+  async refuseClaim(refusal: ClaimRefused): Promise<void> {
+    this.refusedClaims.push(refusal);
+  }
+
+  claimRefusals(project: string): ClaimRefused[] {
+    return this.refusedClaims.filter((refusal) => refusal.project === project);
+  }
+
+  /** Every open task, whether ready or claimed. */
+  openTasksOf(project: string): OpenTask[] {
+    return this.openTasks.filter((task) => task.project === project);
   }
 
   readyTasks(project: string): OpenTask[] {

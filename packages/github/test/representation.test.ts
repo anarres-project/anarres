@@ -94,6 +94,18 @@ describe("a task as a GitHub issue", () => {
     });
     expect(taskFromIssue({ labels: issue.labels.map((name) => ({ name })) })).toEqual({});
   });
+
+  it("reads a ready task as held by nobody, even if someone has been assigned it", () => {
+    const labels = ["role:test", "module:parser", "state:ready"].map((name) => ({ name }));
+    expect(taskFromIssue({ labels, assignees: [{ login: "carol" }] })).toEqual({});
+  });
+
+  it("reads back who holds a claimed task", () => {
+    const labels = ["role:test", "module:parser", "state:claimed"].map((name) => ({ name }));
+    expect(taskFromIssue({ labels, assignees: [{ login: "alice" }] })).toEqual({
+      claimedBy: "alice",
+    });
+  });
 });
 
 describe("the task a feedback signal names", () => {
