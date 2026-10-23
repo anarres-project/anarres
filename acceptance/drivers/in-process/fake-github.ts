@@ -163,7 +163,7 @@ export class FakeGitHub
   /** The next merge succeeds, and then Divlab's run stops dead, as if its runner were lost. */
   interruptAfterNextMerge = false;
 
-  async merge(project: string, pullRequest: string): Promise<void> {
+  async merge(project: string, pullRequest: string): Promise<string> {
     for (const { path, text } of this.opened(pullRequest).files)
       this.mergeFile(project, path, text);
     this.mergedPullRequests.push(pullRequest);
@@ -171,6 +171,7 @@ export class FakeGitHub
       this.interruptAfterNextMerge = false;
       throw new Interrupted();
     }
+    return `merge-of-${pullRequest}`;
   }
 
   private readonly refused: { project: string; reason: string }[] = [];

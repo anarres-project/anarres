@@ -375,7 +375,17 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       coordinators are alerted (decision 0005). The tripwire never reads it: with no record of a
       Divlab merge, whatever it says, it did not come through Divlab.
 - [ ] Anything else that reaches main without Divlab (a change with no feedback signal at all):
-      the tripwire today looks only at feedback signals.
+      the tripwire today looks only at feedback signals. Bernard, 2026-10-23: each Divlab run
+      checks main's commits since its last check. A commit is Divlab's if GitHub signed it as
+      made by Divlab's App (its log writes) or it is a merge Divlab recorded: a merge's commit
+      carries the member as author, so only Divlab's record tells it apart (seen in the sandbox).
+  - [x] Divlab records the commit each merge made;
+  - [ ] a merge finished by a later run, after an interrupted one, has its commit recorded too
+        (GitHub says who merged the pull request, and as what);
+  - [ ] each run checks the commits since the last check, alerting once for any not Divlab's,
+        and records how far it checked;
+  - [ ] a project's setup records where checking starts;
+  - [ ] Divlab knows its App's account name (the template passes it).
 - [x] Divlab records each merge as it makes it, and routes from those records, so work is routed
       in the order Divlab merged it.
 - [x] A run interrupted between merging and recording is finished by the next run: Divlab records

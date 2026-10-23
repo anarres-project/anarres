@@ -21,3 +21,19 @@ describe("a member's pull request", () => {
     });
   });
 });
+
+describe("merging a member's pull request", () => {
+  it("gives the commit GitHub's merge made", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (method === "PUT" && path === "repos/commons/ledger/pulls/7/merge") {
+          return { status: 200, data: { sha: "m3rg3d", merged: true } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.merge("ledger", "7", "c0ffee")).toBe("m3rg3d");
+  });
+});

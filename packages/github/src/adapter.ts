@@ -368,11 +368,13 @@ export class GitHubAdapter
   }
 
   /** GitHub refuses the merge if the pull request has moved on from `head`. */
-  async merge(project: string, pullRequest: string, head: string): Promise<void> {
-    await this.call("PUT", `${this.repo(project)}/pulls/${pullRequest}/merge`, {
-      sha: head,
-      merge_method: "squash",
-    });
+  async merge(project: string, pullRequest: string, head: string): Promise<string> {
+    const { sha } = await this.call<{ sha: string }>(
+      "PUT",
+      `${this.repo(project)}/pulls/${pullRequest}/merge`,
+      { sha: head, merge_method: "squash" },
+    );
+    return sha;
   }
 
   async refuse(project: string, pullRequest: string, reason: string): Promise<void> {

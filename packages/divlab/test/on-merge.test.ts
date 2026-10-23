@@ -464,6 +464,7 @@ describe("acting on a pull request", () => {
     changedFiles: async () => files,
     merge: async (_project, pullRequest) => {
       merged.push(pullRequest);
+      return "m3rg3d";
     },
     refuse: async (_project, pullRequest, reason) => {
       refusals.push(`${pullRequest}: ${reason}`);
@@ -674,6 +675,7 @@ describe("acting on a pull request", () => {
       ...submitting(),
       merge: async (_project, pullRequest, head) => {
         merged.push(`${pullRequest} at ${head}`);
+        return "m3rg3d";
       },
     };
     await onPullRequest(
@@ -768,6 +770,28 @@ describe("acting on a pull request", () => {
       (event) => typeof event === "object" && event !== null && "work" in event,
     );
     expect(decision).toMatchObject({ member: "alice" });
+  });
+
+  it("records the commit its merge made, so it can tell its merges on main from anyone's", async () => {
+    const appended: unknown[] = [];
+    const recording: EventLog = {
+      read: async () => [],
+      append: async (event) => {
+        appended.push(event);
+      },
+    };
+    await onPullRequest(
+      "ledger",
+      "9",
+      submitting(),
+      { ...board, post: async () => {} },
+      recording,
+      clock,
+    );
+    const decision = appended.find(
+      (event) => typeof event === "object" && event !== null && "work" in event,
+    );
+    expect(decision).toMatchObject({ mergedAs: "m3rg3d" });
   });
 
   it("sends passed Research back to the role its task was for, as Divlab recorded on the task", async () => {
@@ -938,6 +962,7 @@ describe("acting on a pull request", () => {
       ...submitting(),
       merge: async (_project, pullRequest) => {
         happened.push(`merged ${pullRequest}`);
+        return "m3rg3d";
       },
     };
     const recording: EventLog = {

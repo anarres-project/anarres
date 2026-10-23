@@ -30,6 +30,8 @@ export type WorkAccepted = {
   task?: string;
   /** Who did the work: the member whose pull request Divlab merged. */
   member?: string;
+  /** The commit Divlab's merge made on main. */
+  mergedAs?: string;
 };
 
 export type PostedTask = {
@@ -54,6 +56,8 @@ export type RoutingEvent = {
   task?: string;
   /** Who did the work, for the conflict-of-interest rules (decision 0007). */
   member?: string;
+  /** The commit Divlab's merge made on main, so it knows its merges from anyone else's. */
+  mergedAs?: string;
 } & RoutingRecord;
 
 /** Divlab's clock: the time is always given to it, never read from the wall. */
@@ -359,8 +363,8 @@ export interface PullRequests {
     pullRequest: string,
   ): Promise<{ head: string; draft: boolean; author: string }>;
   changedFiles(project: string, pullRequest: string): Promise<{ path: string; text: string }[]>;
-  /** Merges the pull request only if it is still at `head`. */
-  merge(project: string, pullRequest: string, head: string): Promise<void>;
+  /** Merges the pull request only if it is still at `head`, giving the commit the merge made. */
+  merge(project: string, pullRequest: string, head: string): Promise<string>;
   /** Divlab will not merge it: the member is told why. */
   refuse(project: string, pullRequest: string, reason: string): Promise<void>;
 }
@@ -429,13 +433,14 @@ async function onWorkAccepted(
   clock: Clock,
   events: LogEvent[],
 ): Promise<void> {
-  const { project, task, member, ...work } = event;
+  const { project, task, member, mergedAs, ...work } = event;
   const record = routingRecord(work, routingDecisions(events));
   const decided: RoutingEvent = {
     project,
     decidedAt: clock().toISOString(),
     ...(task === undefined ? {} : { task }),
     ...(member === undefined ? {} : { member }),
+    ...(mergedAs === undefined ? {} : { mergedAs }),
     ...record,
   };
   await log.append(decided);
@@ -470,8 +475,9 @@ async function acceptSignal(
   log: EventLog,
   clock: Clock,
   events: LogEvent[],
-  member?: string,
+  merged: { member?: string; mergedAs?: string },
 ): Promise<void> {
+  const { member, mergedAs } = merged;
   const { task, ...work } = signal;
   // Only an issue Divlab posted as a task, still open, is the work's task: nothing else is closed.
   const posted = task === undefined ? undefined : await board.task(project, task);
@@ -485,6 +491,7 @@ async function acceptSignal(
       ...(researchFor === undefined ? {} : { researchFor }),
       ...(task === undefined || posted === undefined ? {} : { task }),
       ...(member === undefined ? {} : { member }),
+      ...(mergedAs === undefined ? {} : { mergedAs }),
     },
     board,
     log,
@@ -531,7 +538,9 @@ export async function onMerge(
   for (const [path, merge] of begun) {
     if (finished.has(path) || !onMain.includes(path)) continue;
     const { work, member } = merge.aboutToMerge;
-    await acceptSignal(project, path, work, board, log, clock, events, member);
+    await acceptSignal(project, path, work, board, log, clock, events, {
+      ...(member === undefined ? {} : { member }),
+    });
   }
   for (const path of onMain) {
     if (finished.has(path) || begun.has(path)) continue;
@@ -625,8 +634,11 @@ export async function onPullRequest(
       work: signal,
     },
   });
-  await pullRequests.merge(project, pullRequest, head);
-  await acceptSignal(project, feedback.path, signal, board, log, clock, events, author);
+  const mergedAs = await pullRequests.merge(project, pullRequest, head);
+  await acceptSignal(project, feedback.path, signal, board, log, clock, events, {
+    member: author,
+    mergedAs,
+  });
 }
 
 /** Project repositories as Divlab sets them up. */
