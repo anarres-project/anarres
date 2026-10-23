@@ -23,3 +23,13 @@ describe("asking for work", () => {
     expect(offered).toEqual([{ project: "ledger", task: "4", role: "test", module: "lexer" }]);
   });
 });
+
+describe("asking for work, with a task that is not one Anarres knows", () => {
+  it("leaves out a task naming a role Anarres does not have", async () => {
+    const offered = await askForWork(
+      "alice",
+      projects({ ledger: [{ id: "4", role: "bystander", module: "lexer" }] }),
+    );
+    expect(offered).toEqual([]);
+  });
+});
