@@ -50,3 +50,13 @@ Feature: Members claim tasks
     When Bob releases the Test task for "parser"
     Then the Test task for "parser" is claimed by Alice
     And Bob is told only the member holding the task can give it back
+
+  # Not in the sandbox: it has three members, and the sandbox has accounts for two.
+  @sandbox-wip
+  Scenario: A task given back goes to whoever claims it next
+    Given a project with a module "parser"
+    And a member's Specification work on "parser" was accepted with a pass verdict
+    And Alice has claimed the Test task for "parser"
+    And Alice releases the Test task for "parser"
+    When Bob claims the Test task for "parser"
+    Then the Test task for "parser" is claimed by Bob

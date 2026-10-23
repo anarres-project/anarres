@@ -57,6 +57,37 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-23: Old claims do not win a freed task
+
+- GitHub stops a public repository's scheduled runs after 60 days without activity, so a quiet
+  project's hourly lease check could stop and a task whose lease ran out stay held. A claim on
+  such a task now ends the lease there and then (recorded, freed, its member told) and goes on
+  to give the task out. The lease arithmetic is shared with the hourly check.
+- Building that found a bug: a free task goes to the earliest claim among its issue's comments,
+  and those include old ones, so a task Alice gave back went straight back to Alice when anyone
+  next claimed it, and claims refused while it was held could win it later. Only claims made
+  since the task was last free now count: after its latest release or recorded lease end, or,
+  for a lease ended by the claim itself, after the moment it ran out. Comments carry GitHub's
+  time for this.
+- Slip: the two scenarios (a task given back goes to whoever claims next; a run-out lease goes to
+  a new claim without the hourly check) were written after the unit tests; with the fake's
+  comments untimed they failed, as the bug did, and pass with times.
+
+RED:      gives a task whose lease has run out to a new claim, without waiting for the hourly check
+          -> Error: Divlab should not have acted (it refused Bob: the task still looked held)
+GREEN:    (123 passed)
+REFACTOR: leasesFrom and endLease, shared with the hourly check
+RED:      gives a task a member gave back to a claim made since, not to its old claims
+          -> Error: Divlab should not have acted (Alice regained it, Carol was refused)
+GREEN:    (124 passed)
+RED:      gives a task freed by the hourly lease check to a claim made since (the line taken back out
+          to show it) -> Error: Divlab should not have acted
+GREEN:    (125 passed)
+RED:      a task's comments are read with when each was made -> expected [ { member, text } ] to equal [ { …at } ]
+GREEN:    (89 passed; 89 scenarios)
+
+---
+
 ## 2026-10-23: Two members and trust levels in the sandbox
 
 - Bernard approved the second account's token in the sandbox organisation: the 403s were the

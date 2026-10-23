@@ -94,7 +94,7 @@ export interface TaskBoard {
   actedOn(project: string): Promise<string[]>;
   markClaimed(claim: ClaimedTask): Promise<void>;
   /** The comments on a task's issue, earliest first, and who made each. */
-  comments(project: string, task: string): Promise<{ member: string; text: string }[]>;
+  comments(project: string, task: string): Promise<{ member: string; text: string; at?: string }[]>;
   /** The member is told, on the task, that their lease on it ran out. */
   tellLeaseRanOut(ranOut: ClaimedTask): Promise<void>;
   /** The task's claim is over: it is ready again, held by nobody. */
@@ -202,7 +202,8 @@ export async function onClaim(
   const governance = await members.governanceFile();
   // Accounts a PDC coordinator linked are one member, for every rule (concept §6).
   const memberOf = (account: string) => memberFor(governance, account);
-  const history = parts(await log.read(project)).map((part) => ({
+  const events = await log.read(project);
+  const history = parts(events).map((part) => ({
     ...part,
     member: memberOf(part.member),
   }));
@@ -222,12 +223,28 @@ export async function onClaim(
     return;
   }
   let holder = task.claimedBy;
+  // Claims count only if made since the task was last free: earlier ones were for another time.
+  const freed = lastFreed(events, claim.task);
+  let madeSinceFree = (at: string | undefined) =>
+    freed === undefined || at === undefined || Date.parse(at) > Date.parse(freed);
+  const lease = leasesFrom(events).get(claim.task);
+  if (holder !== undefined && lease?.member === holder && leaseHasRunOut(lease.since, clock())) {
+    // A lease that ran out is ended here too, so no task waits on the hourly check: a quiet
+    // project's schedule can stop.
+    await endLease({ project, task: claim.task, member: holder }, board, log, clock);
+    holder = undefined;
+    madeSinceFree = (at) => at === undefined || leaseHasRunOut(lease.since, new Date(at));
+  }
   if (holder === undefined) {
     // The first claim made that is allowed wins, whichever claim's run Divlab hears of first.
     const comments = await board.comments(project, claim.task);
     holder =
-      comments.find((comment) => isClaim(comment.text) && allowed(comment.member) === "allowed")
-        ?.member ?? claim.member;
+      comments.find(
+        (comment) =>
+          isClaim(comment.text) &&
+          madeSinceFree(comment.at) &&
+          allowed(comment.member) === "allowed",
+      )?.member ?? claim.member;
     const claimed: Claimed = {
       project,
       decidedAt: clock().toISOString(),
@@ -275,10 +292,22 @@ export async function onLeaseCheck(
   log: EventLog,
   clock: Clock,
 ): Promise<void> {
-  // Each task's latest claim is the one that holds it now, if any does, and its lease runs from
-  // the last activity on the task by that claim's member: the claim, or work since.
+  for (const { task, member, since } of leasesFrom(await log.read(project)).values()) {
+    if (!leaseHasRunOut(since, clock())) continue;
+    if ((await board.task(project, task))?.claimedBy !== member) continue;
+    await endLease({ project, task, member }, board, log, clock);
+  }
+}
+
+/**
+ * Each task's latest claim is the one that holds it now, if any does, and its lease runs from
+ * the last activity on the task by that claim's member: the claim, or work since.
+ */
+function leasesFrom(
+  events: readonly LogEvent[],
+): Map<string, { task: string; member: string; since: string }> {
   const leases = new Map<string, { task: string; member: string; since: string }>();
-  for (const event of await log.read(project)) {
+  for (const event of events) {
     if ("claimed" in event) {
       leases.set(event.claimed.task, { ...event.claimed, since: event.decidedAt });
     }
@@ -287,18 +316,30 @@ export async function onLeaseCheck(
       if (lease?.member === event.activity.member) lease.since = event.decidedAt;
     }
   }
-  for (const { task, member, since } of leases.values()) {
-    if (!leaseHasRunOut(since, clock())) continue;
-    if ((await board.task(project, task))?.claimedBy !== member) continue;
-    const ranOut: LeaseRanOut = {
-      project,
-      decidedAt: clock().toISOString(),
-      leaseRanOut: { task, member },
-    };
-    await log.append(ranOut);
-    await board.releaseClaim(project, task);
-    await board.tellLeaseRanOut({ project, task, member });
+  return leases;
+}
+
+/** When a task last became free again, given back or its lease run out, as the log records. */
+function lastFreed(events: readonly LogEvent[], task: string): string | undefined {
+  let freed: string | undefined;
+  for (const event of events) {
+    if ("released" in event && event.released.task === task) freed = event.decidedAt;
+    if ("leaseRanOut" in event && event.leaseRanOut.task === task) freed = event.decidedAt;
   }
+  return freed;
+}
+
+/** A lease that ran out: recorded, the task ready again, and its member told. */
+async function endLease(ranOut: ClaimedTask, board: TaskBoard, log: EventLog, clock: Clock) {
+  const { project, task, member } = ranOut;
+  const record: LeaseRanOut = {
+    project,
+    decidedAt: clock().toISOString(),
+    leaseRanOut: { task, member },
+  };
+  await log.append(record);
+  await board.releaseClaim(project, task);
+  await board.tellLeaseRanOut(ranOut);
 }
 
 /** The files merged to a project's main branch. */

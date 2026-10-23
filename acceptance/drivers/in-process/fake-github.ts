@@ -222,17 +222,21 @@ export class FakeGitHub
     task: string;
     member: string;
     text: string;
+    at: string;
   }[] = [];
 
-  /** Someone comments on a task's issue. */
-  comment(project: string, task: string, member: string, text: string): void {
-    this.issueComments.push({ project, task, member, text });
+  /** Someone comments on a task's issue, at a time GitHub records. */
+  comment(project: string, task: string, member: string, text: string, at: string): void {
+    this.issueComments.push({ project, task, member, text, at });
   }
 
-  async comments(project: string, task: string): Promise<{ member: string; text: string }[]> {
+  async comments(
+    project: string,
+    task: string,
+  ): Promise<{ member: string; text: string; at: string }[]> {
     return this.issueComments
       .filter((comment) => comment.project === project && comment.task === task)
-      .map(({ member, text }) => ({ member, text }));
+      .map(({ member, text, at }) => ({ member, text, at }));
   }
 
   private readonly refusedMembers: Refused[] = [];

@@ -175,16 +175,20 @@ export class GitHubAdapter
     }
   }
 
-  async comments(project: string, task: string): Promise<{ member: string; text: string }[]> {
-    const comments: { member: string; text: string }[] = [];
+  async comments(
+    project: string,
+    task: string,
+  ): Promise<{ member: string; text: string; at: string }[]> {
+    const comments: { member: string; text: string; at: string }[] = [];
     for (let page = 1; ; page++) {
-      const listed = await this.call<{ user: { login: string } | null; body: string }[]>(
-        "GET",
-        `${this.repo(project)}/issues/${task}/comments?per_page=100&page=${page}`,
-      );
+      const listed = await this.call<
+        { user: { login: string } | null; body: string; created_at: string }[]
+      >("GET", `${this.repo(project)}/issues/${task}/comments?per_page=100&page=${page}`);
       // A deleted account's comments remain, but GitHub names nobody for them.
       comments.push(
-        ...listed.flatMap(({ user, body }) => (user ? [{ member: user.login, text: body }] : [])),
+        ...listed.flatMap(({ user, body, created_at }) =>
+          user ? [{ member: user.login, text: body, at: created_at }] : [],
+        ),
       );
       if (listed.length < 100) return comments;
     }

@@ -42,3 +42,17 @@ Feature: Leases
     And 20 hours pass without activity on the task
     And Divlab checks the project's leases
     Then the Test task for "parser" is claimed by Alice
+
+  # Not in the sandbox: its clock is GitHub's, and nothing can move it on 24 hours.
+  @sandbox-wip
+  Scenario: A task whose lease ran out goes to a new claim without waiting for Divlab's check
+    Divlab's check runs every hour, but GitHub stops a quiet project's scheduled runs, so a claim
+    on a task whose lease has run out frees it there and then.
+
+    Given a project with a module "parser"
+    And a member's Specification work on "parser" was accepted with a pass verdict
+    And Alice has claimed the Test task for "parser"
+    And 25 hours pass without activity on the task
+    When Bob claims the Test task for "parser"
+    Then the Test task for "parser" is claimed by Bob
+    And Alice is told the lease on the task ran out

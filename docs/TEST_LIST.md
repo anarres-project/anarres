@@ -240,8 +240,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] a claim whose recorded time cannot be read is not taken to hold forever: it has run out;
   - [ ] the sandbox shows the hourly check runs and frees nothing early (it cannot move GitHub's
         clock on 24 hours, so the scenarios that need that stay in-process);
-  - [ ] GitHub turns off scheduled workflows in a public repository after 60 days without
-        activity: a quiet project's leases would stop being checked;
+  - [x] GitHub turns off scheduled workflows in a public repository after 60 days without
+        activity: a claim on a task whose lease has run out now ends the lease there and then,
+        so no task waits on the hourly check;
+  - [x] when a task is free again (given back, or its lease run out), only claims made since
+        count: before, a task given back went straight back to its old claimant;
   - [ ] work submitted for a task whose lease ran out (section 4: the task it was claimed for).
 - [ ] Submitting draft work extends the lease.
   - [x] Divlab never merges a draft, and says nothing about one with no feedback signal yet;

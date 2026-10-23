@@ -394,6 +394,129 @@ describe("who may claim a task (decision 0007)", () => {
       "Divlab did not give you this task: a member takes only one role in a module, and you have worked on it as Coding",
     ]);
   });
+
+  it("gives a task whose lease has run out to a new claim, without waiting for the hourly check", async () => {
+    const claimed: ClaimedTask[] = [];
+    const heldByAlice: TaskBoard = {
+      ...board,
+      task: async () => ({ ...TEST_TASK, claimedBy: "alice" }),
+      comments: async () => [
+        { member: "alice", text: "/claim", at: "2026-10-20T08:59:00.000Z" },
+        { member: "bob", text: "/claim", at: "2026-10-23T08:59:00.000Z" },
+      ],
+      releaseClaim: async () => {},
+      tellLeaseRanOut: async () => {},
+      markClaimed: async (claim) => {
+        claimed.push(claim);
+      },
+    };
+    const aliceClaimedLongAgo: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          decidedAt: "2026-10-20T09:00:00.000Z",
+          claimed: { task: "12", member: "alice", role: "test", module: "parser" },
+        },
+      ],
+      append: async () => {},
+    };
+    const clock = () => new Date("2026-10-23T09:00:00Z");
+    await onClaim(
+      "ledger",
+      { task: "12", member: "bob" },
+      heldByAlice,
+      aliceClaimedLongAgo,
+      clock,
+      everyoneTrusted,
+    );
+    expect(claimed.map((claim) => claim.member)).toEqual(["bob"]);
+  });
+
+  it("gives a task a member gave back to a claim made since, not to its old claims", async () => {
+    const claimed: ClaimedTask[] = [];
+    const givenBack: TaskBoard = {
+      ...board,
+      task: async () => TEST_TASK,
+      comments: async () => [
+        { member: "alice", text: "/claim", at: "2026-10-23T07:00:00.000Z" },
+        { member: "carol", text: "/claim", at: "2026-10-23T08:30:00.000Z" },
+      ],
+      markClaimed: async (claim) => {
+        claimed.push(claim);
+      },
+    };
+    const aliceGaveItBack: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          decidedAt: "2026-10-23T07:01:00.000Z",
+          claimed: { task: "12", member: "alice", role: "test", module: "parser" },
+        },
+        {
+          project: "ledger",
+          decidedAt: "2026-10-23T08:00:00.000Z",
+          released: { task: "12", member: "alice" },
+        },
+      ],
+      append: async () => {},
+    };
+    const clock = () => new Date("2026-10-23T09:00:00Z");
+    const trusted: Members = {
+      governanceFile: async () => ({ members: { carol: { level: "pdc-coordinator" } } }),
+    };
+    await onClaim(
+      "ledger",
+      { task: "12", member: "carol" },
+      givenBack,
+      aliceGaveItBack,
+      clock,
+      trusted,
+    );
+    expect(claimed.map((claim) => claim.member)).toEqual(["carol"]);
+  });
+
+  it("gives a task freed by the hourly lease check to a claim made since, not to its old claims", async () => {
+    const claimed: ClaimedTask[] = [];
+    const freedTask: TaskBoard = {
+      ...board,
+      task: async () => TEST_TASK,
+      comments: async () => [
+        { member: "alice", text: "/claim", at: "2026-10-21T07:00:00.000Z" },
+        { member: "carol", text: "/claim", at: "2026-10-23T08:30:00.000Z" },
+      ],
+      markClaimed: async (claim) => {
+        claimed.push(claim);
+      },
+    };
+    const aliceRanOut: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          decidedAt: "2026-10-21T07:01:00.000Z",
+          claimed: { task: "12", member: "alice", role: "test", module: "parser" },
+        },
+        {
+          project: "ledger",
+          decidedAt: "2026-10-22T07:17:00.000Z",
+          leaseRanOut: { task: "12", member: "alice" },
+        },
+      ],
+      append: async () => {},
+    };
+    const clock = () => new Date("2026-10-23T09:00:00Z");
+    const trusted: Members = {
+      governanceFile: async () => ({ members: { carol: { level: "pdc-coordinator" } } }),
+    };
+    await onClaim(
+      "ledger",
+      { task: "12", member: "carol" },
+      freedTask,
+      aliceRanOut,
+      clock,
+      trusted,
+    );
+    expect(claimed.map((claim) => claim.member)).toEqual(["carol"]);
+  });
 });
 
 describe("acting on a release", () => {

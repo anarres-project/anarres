@@ -173,7 +173,7 @@ export class InProcessDriver implements Driver {
   /** The member comments to claim the task, and the comment's run wakes Divlab, as on GitHub. */
   async claim(task: { project: string; role: string; module: string }, member: string) {
     const id = this.openTaskId(task);
-    this.github.comment(task.project, id, member, "/claim");
+    this.github.comment(task.project, id, member, "/claim", this.clock().toISOString());
     await onClaim(
       task.project,
       { task: id, member },
@@ -191,7 +191,8 @@ export class InProcessDriver implements Driver {
     heardFirst: string,
   ): Promise<void> {
     const id = this.openTaskId(task);
-    for (const member of members) this.github.comment(task.project, id, member, "/claim");
+    for (const member of members)
+      this.github.comment(task.project, id, member, "/claim", this.clock().toISOString());
     for (const member of [heardFirst, ...members.filter((m) => m !== heardFirst)]) {
       await onClaim(
         task.project,
@@ -277,7 +278,7 @@ export class InProcessDriver implements Driver {
   /** The member comments to give the task back, and the comment's run wakes Divlab. */
   async release(task: { project: string; role: string; module: string }, member: string) {
     const id = this.openTaskId(task);
-    this.github.comment(task.project, id, member, "/release");
+    this.github.comment(task.project, id, member, "/release", this.clock().toISOString());
     await onRelease(task.project, { task: id, member }, this.github, this.github, this.clock);
   }
 

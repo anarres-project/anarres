@@ -148,6 +148,28 @@ describe("a task's comments", () => {
     ]);
   });
 
+  it("are read with when each was made", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/issues/12/comments?per_page=100&page=1"
+        ) {
+          const comments = [
+            { user: { login: "alice" }, body: "/claim", created_at: "2026-10-23T08:30:00Z" },
+          ];
+          return { status: 200, data: comments as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.comments("ledger", "12")).toEqual([
+      { member: "alice", text: "/claim", at: "2026-10-23T08:30:00Z" },
+    ]);
+  });
+
   it("leave out a comment whose account has been deleted: GitHub names nobody for it", async () => {
     const adapter = new GitHubAdapter({
       owner: "commons",

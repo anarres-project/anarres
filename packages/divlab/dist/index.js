@@ -8017,12 +8017,11 @@ var GitHubAdapter = class {
   async comments(project2, task) {
     const comments = [];
     for (let page = 1; ; page++) {
-      const listed = await this.call(
-        "GET",
-        `${this.repo(project2)}/issues/${task}/comments?per_page=100&page=${page}`
-      );
+      const listed = await this.call("GET", `${this.repo(project2)}/issues/${task}/comments?per_page=100&page=${page}`);
       comments.push(
-        ...listed.flatMap(({ user, body }) => user ? [{ member: user.login, text: body }] : [])
+        ...listed.flatMap(
+          ({ user, body, created_at }) => user ? [{ member: user.login, text: body, at: created_at }] : []
+        )
       );
       if (listed.length < 100) return comments;
     }
@@ -8301,7 +8300,8 @@ async function onClaim(project2, claim, board, log, clock, members) {
   }
   const governance = await members.governanceFile();
   const memberOf = (account) => memberFor(governance, account);
-  const history = parts(await log.read(project2)).map((part) => ({
+  const events = await log.read(project2);
+  const history = parts(events).map((part) => ({
     ...part,
     member: memberOf(part.member)
   }));
@@ -8320,9 +8320,19 @@ async function onClaim(project2, claim, board, log, clock, members) {
     return;
   }
   let holder = task.claimedBy;
+  const freed = lastFreed(events, claim.task);
+  let madeSinceFree = (at) => freed === void 0 || at === void 0 || Date.parse(at) > Date.parse(freed);
+  const lease = leasesFrom(events).get(claim.task);
+  if (holder !== void 0 && lease?.member === holder && leaseHasRunOut(lease.since, clock())) {
+    await endLease({ project: project2, task: claim.task, member: holder }, board, log, clock);
+    holder = void 0;
+    madeSinceFree = (at) => at === void 0 || leaseHasRunOut(lease.since, new Date(at));
+  }
   if (holder === void 0) {
     const comments = await board.comments(project2, claim.task);
-    holder = comments.find((comment) => isClaim(comment.text) && allowed(comment.member) === "allowed")?.member ?? claim.member;
+    holder = comments.find(
+      (comment) => isClaim(comment.text) && madeSinceFree(comment.at) && allowed(comment.member) === "allowed"
+    )?.member ?? claim.member;
     const claimed = {
       project: project2,
       decidedAt: clock().toISOString(),
@@ -8353,8 +8363,15 @@ async function onRelease(project2, release, board, log, clock) {
   await board.releaseClaim(project2, release.task);
 }
 async function onLeaseCheck(project2, board, log, clock) {
+  for (const { task, member, since } of leasesFrom(await log.read(project2)).values()) {
+    if (!leaseHasRunOut(since, clock())) continue;
+    if ((await board.task(project2, task))?.claimedBy !== member) continue;
+    await endLease({ project: project2, task, member }, board, log, clock);
+  }
+}
+function leasesFrom(events) {
   const leases = /* @__PURE__ */ new Map();
-  for (const event of await log.read(project2)) {
+  for (const event of events) {
     if ("claimed" in event) {
       leases.set(event.claimed.task, { ...event.claimed, since: event.decidedAt });
     }
@@ -8363,18 +8380,26 @@ async function onLeaseCheck(project2, board, log, clock) {
       if (lease?.member === event.activity.member) lease.since = event.decidedAt;
     }
   }
-  for (const { task, member, since } of leases.values()) {
-    if (!leaseHasRunOut(since, clock())) continue;
-    if ((await board.task(project2, task))?.claimedBy !== member) continue;
-    const ranOut = {
-      project: project2,
-      decidedAt: clock().toISOString(),
-      leaseRanOut: { task, member }
-    };
-    await log.append(ranOut);
-    await board.releaseClaim(project2, task);
-    await board.tellLeaseRanOut({ project: project2, task, member });
+  return leases;
+}
+function lastFreed(events, task) {
+  let freed;
+  for (const event of events) {
+    if ("released" in event && event.released.task === task) freed = event.decidedAt;
+    if ("leaseRanOut" in event && event.leaseRanOut.task === task) freed = event.decidedAt;
   }
+  return freed;
+}
+async function endLease(ranOut, board, log, clock) {
+  const { project: project2, task, member } = ranOut;
+  const record = {
+    project: project2,
+    decidedAt: clock().toISOString(),
+    leaseRanOut: { task, member }
+  };
+  await log.append(record);
+  await board.releaseClaim(project2, task);
+  await board.tellLeaseRanOut(ranOut);
 }
 var routingDecisions = (log) => log.filter((event) => "work" in event);
 var signalOf = (event) => {
