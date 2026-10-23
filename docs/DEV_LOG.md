@@ -65,6 +65,12 @@ Divlab refuses work that changes files outside its role's place, naming them.
   one search of their issues, and lists the tasks the member may take, one to a line. It is
   bundled like Divlab, and CI checks both bundles match their source. Run against the sandbox as
   the second account, it listed the tasks of the full run then going.
+- The finding-work scenario passed in the sandbox (63 requests), Alice's own account asking. Its
+  first try failed on timing: the driver waited only for GitHub's search to see the project,
+  which it did once an earlier task was indexed, before the newest was listed. It now also waits
+  for the project's ready list to show every task the log says Divlab posted.
+- The full sandbox run for 826cbed passed all 79 with the main check after every run, so the
+  scenario catching a change runs there too.
 - A first bundle failed at start-up: its banner's newline went in literally, hiding the `require`
   setup in the `#!` line. The `#!` line now starts `main.ts`, which esbuild keeps.
 

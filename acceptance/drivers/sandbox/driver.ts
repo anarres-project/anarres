@@ -673,6 +673,12 @@ export class SandboxDriver implements Driver {
     ) {
       await new Promise((resolve) => setTimeout(resolve, 5_000));
     }
+    // And until the project's ready list shows every task the log says Divlab posted.
+    const project = this.projectOfScenario ?? "";
+    const expected = this.expectedFor(project).ready;
+    while ((await asMember.readyTasks(project)).length < expected && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+    }
     const offers = await askForWork(await loginOf(account), {
       names: async () => (this.projectOfScenario ? [this.projectOfScenario] : []),
       readyTasks: (project) => asMember.readyTasks(project),

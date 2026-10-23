@@ -434,7 +434,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the CLI reads Anarres's projects from GitHub with the member's own login: which projects
         have ready tasks (one search of the organisation's issues), each one's ready tasks, its
         log, the governance file (the adapter's);
-  - [ ] the sandbox shows it (tagged until it has passed there);
+  - [x] the sandbox shows it, the member's own account asking through the CLI;
   - [ ] GitHub's search lags behind new issues: a task posted moments ago may not be offered yet
         (the sandbox driver waits for it; a member would ask again);
   - [x] the `anarres next` command: the member's own GitHub CLI login, one task to a line, and
