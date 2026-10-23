@@ -7624,6 +7624,9 @@ function eventFile(event, sequence) {
 }
 function eventFromFile(content) {
   const event = JSON.parse(content);
+  if (isObject2(event) && isObject2(event.claimed) && typeof event.claimed.task === "string" && typeof event.claimed.member === "string") {
+    return event;
+  }
   if (isObject2(event) && isObject2(event.actedOn) && typeof event.actedOn.feedbackSignal === "string") {
     return event;
   }
@@ -8137,7 +8140,7 @@ function whatToActOn(name, event) {
 }
 
 // src/index.ts
-async function onClaim(project2, claim, board) {
+async function onClaim(project2, claim, board, log, clock) {
   const task = await board.task(project2, claim.task);
   if (task === void 0) {
     await board.refuseClaim({ project: project2, ...claim, reason: "it is not a task anyone can claim" });
@@ -8147,6 +8150,12 @@ async function onClaim(project2, claim, board) {
   if (holder === void 0) {
     const comments = await board.comments(project2, claim.task);
     holder = comments.find((comment) => isClaim(comment.text))?.member ?? claim.member;
+    const claimed = {
+      project: project2,
+      decidedAt: clock().toISOString(),
+      claimed: { task: claim.task, member: holder }
+    };
+    await log.append(claimed);
     await board.markClaimed({ project: project2, task: claim.task, member: holder });
   }
   if (holder !== claim.member) {
@@ -8155,6 +8164,7 @@ async function onClaim(project2, claim, board) {
 }
 var routingDecisions = (log) => log.filter((event) => "work" in event);
 var signalOf = (event) => {
+  if ("claimed" in event) return void 0;
   if ("work" in event) return event.work.feedbackSignal;
   if ("aboutToMerge" in event) return event.aboutToMerge.feedbackSignal;
   if ("actedOn" in event) return event.actedOn.feedbackSignal;
@@ -8294,7 +8304,7 @@ try {
   if ("pullRequest" in run) {
     await onPullRequest(project, run.pullRequest, github, github, github, clock);
   } else if ("claim" in run) {
-    await onClaim(project, run.claim, github);
+    await onClaim(project, run.claim, github, github, clock);
   } else {
     await onMerge(project, github, github, github, clock);
   }

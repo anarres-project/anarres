@@ -265,6 +265,23 @@ export class Anarres {
     );
   }
 
+  async divlabRecordedClaim(member: string, task: Work) {
+    const expected = this.aliased(task);
+    const records = (await this.driver.claimRecords(this.project)).filter(
+      (record) => record.role === expected.role && record.module === expected.module,
+    );
+    assert.deepEqual(
+      records.map(({ role, module, member }) => ({ role, module, member })),
+      [{ ...expected, member: this.member(member) }],
+      `expected one record of ${member}'s claim on the ${task.role} task for ${task.module}`,
+    );
+    assert.match(
+      records[0]?.claimedAt ?? "no time recorded",
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/,
+      "expected the record to say when Divlab granted the claim, as a UTC time",
+    );
+  }
+
   async memberIsToldTaskIsTaken(member: string) {
     const told = await this.driver.claimRefusals(this.project);
     assert.ok(

@@ -1,4 +1,4 @@
-import type { AboutToMerge, NotAccepted, RoutingEvent } from "@anarres/divlab";
+import type { AboutToMerge, Claimed, NotAccepted, RoutingEvent } from "@anarres/divlab";
 import { describe, expect, it } from "vitest";
 import {
   commentForRefusal,
@@ -152,6 +152,15 @@ describe("a routing event as a file", () => {
       },
     };
     expect(eventFromFile(eventFile(begun, 3).content)).toEqual(begun);
+  });
+
+  it("reads back a record of a claim Divlab granted", () => {
+    const claimed: Claimed = {
+      project: "ledger",
+      decidedAt: "2026-10-23T09:00:00.000Z",
+      claimed: { task: "12", member: "alice" },
+    };
+    expect(eventFromFile(eventFile(claimed, 4).content)).toEqual(claimed);
   });
 
   it("is refused, saying why, when the work it was about to merge could not be routed", () => {

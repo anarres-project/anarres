@@ -49,6 +49,26 @@ been claimed; of claims made together the first made wins, whichever Divlab hear
 
 ---
 
+## 2026-10-23: Claims are recorded
+
+- Divlab records each claim it grants in the project's log, with when by its clock, before the
+  board shows it, as it records a routing decision before acting on it.
+- A claim is about no feedback signal, and the log's readers took every event to be about one: a
+  claim in the log would have crashed the next run on a push (in Divlab) and been refused as
+  unreadable (in the adapter). Both now read past it, each driven by a failing test first.
+- In-process now; `@sandbox-wip` until it has passed in the sandbox.
+
+RED:      records the claim it grants, saying when by its clock -> expected [] to deeply equal [ {…} ]
+GREEN:    (78 passed)
+RED:      reads past the claims in the log, which are about no feedback signal
+          -> TypeError: Cannot read properties of undefined (reading 'feedbackSignal')
+GREEN:    (79 passed)
+RED:      reads back a record of a claim Divlab granted
+          -> Error: The event file cannot be read: it is not a routing record
+GREEN:    (268 passed)
+
+---
+
 ## 2026-10-23: Only a task is a task
 
 - Divlab asked the board for "the task" an issue number names, and the adapter answered for any

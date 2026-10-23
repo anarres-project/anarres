@@ -94,6 +94,8 @@ export interface Driver {
     heardFirst: string,
   ): Promise<void>;
   claimedTasks(project: string): Promise<ClaimedTask[]>;
+  /** The claims Divlab's log records it granted, each with when. */
+  claimRecords(project: string): Promise<(ClaimedTask & { claimedAt: string })[]>;
   /** What Divlab told members whose claims it refused. */
   claimRefusals(project: string): Promise<{ member: string; reason: string }[]>;
   coordinatorAlerts(project: string): Promise<CoordinatorAlert[]>;

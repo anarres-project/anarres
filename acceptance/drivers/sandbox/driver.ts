@@ -456,6 +456,28 @@ export class SandboxDriver implements Driver {
     throw new HarnessNotYetBuilt("a second account, so members can claim together");
   }
 
+  /** The log's claims, each with the role and module of the task issue it names. */
+  async claimRecords(project: string): Promise<(ClaimedTask & { claimedAt: string })[]> {
+    const records = [];
+    for (const event of await this.divlab.read(project)) {
+      if (!("claimed" in event)) continue;
+      const issue = await this.github.call<Issue>(
+        "GET",
+        `repos/${this.org}/${project}/issues/${event.claimed.task}`,
+      );
+      const role = labelValue(issue, "role:");
+      const module = labelValue(issue, "module:");
+      if (role === undefined || module === undefined) continue;
+      records.push({
+        role: roleNameOf(role),
+        module,
+        member: this.claimants.get(event.claimed.member) ?? event.claimed.member,
+        claimedAt: event.decidedAt,
+      });
+    }
+    return records;
+  }
+
   async claimedTasks(project: string): Promise<ClaimedTask[]> {
     const issues = await this.settled(project, "claimed");
     return issues.flatMap((issue) => {

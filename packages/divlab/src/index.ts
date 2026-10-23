@@ -85,6 +85,13 @@ export interface TaskBoard {
   refuseClaim(refusal: ClaimRefused): Promise<void>;
 }
 
+/** Divlab gave a member a task: recorded before the board shows it. */
+export type Claimed = {
+  project: string;
+  decidedAt: string;
+  claimed: { task: string; member: string };
+};
+
 /** A claim Divlab refused, and why, in words the member would recognise. */
 export type ClaimRefused = ClaimedTask & { reason: string };
 
@@ -96,6 +103,8 @@ export async function onClaim(
   project: string,
   claim: { task: string; member: string },
   board: TaskBoard,
+  log: EventLog,
+  clock: Clock,
 ): Promise<void> {
   const task = await board.task(project, claim.task);
   if (task === undefined) {
@@ -107,6 +116,12 @@ export async function onClaim(
     // The first claim made wins, whichever claim's run Divlab hears of first.
     const comments = await board.comments(project, claim.task);
     holder = comments.find((comment) => isClaim(comment.text))?.member ?? claim.member;
+    const claimed: Claimed = {
+      project,
+      decidedAt: clock().toISOString(),
+      claimed: { task: claim.task, member: holder },
+    };
+    await log.append(claimed);
     await board.markClaimed({ project, task: claim.task, member: holder });
   }
   // Each member whose claim lost is told by their own claim's run, however the runs were ordered.
@@ -148,14 +163,15 @@ export type ActedOn = { project: string; actedOn: { feedbackSignal: string } };
 
 /** What the event log holds: routing decisions and acting on them, merges begun, and what Divlab
  * did not accept. */
-export type LogEvent = RoutingEvent | ActedOn | AboutToMerge | NotAccepted;
+export type LogEvent = RoutingEvent | ActedOn | AboutToMerge | NotAccepted | Claimed;
 
 /** The routing decisions in a log, which are all its history routing depends on. */
 export const routingDecisions = (log: readonly LogEvent[]): RoutingEvent[] =>
   log.filter((event): event is RoutingEvent => "work" in event);
 
-/** The feedback signal an event is about, whichever kind of event it is. */
-export const signalOf = (event: LogEvent): string => {
+/** The feedback signal an event is about, whichever kind of event it is; a claim is about none. */
+export const signalOf = (event: LogEvent): string | undefined => {
+  if ("claimed" in event) return undefined;
   if ("work" in event) return event.work.feedbackSignal;
   if ("aboutToMerge" in event) return event.aboutToMerge.feedbackSignal;
   if ("actedOn" in event) return event.actedOn.feedbackSignal;

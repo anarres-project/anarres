@@ -159,7 +159,7 @@ export class InProcessDriver implements Driver {
   async claim(task: { project: string; role: string; module: string }, member: string) {
     const id = this.openTaskId(task);
     this.github.comment(task.project, id, member, "/claim");
-    await onClaim(task.project, { task: id, member }, this.github);
+    await onClaim(task.project, { task: id, member }, this.github, this.github, CLOCK);
   }
 
   /** Every member comments first; then Divlab takes `heardFirst`'s run, then the others in turn. */
@@ -171,7 +171,7 @@ export class InProcessDriver implements Driver {
     const id = this.openTaskId(task);
     for (const member of members) this.github.comment(task.project, id, member, "/claim");
     for (const member of [heardFirst, ...members.filter((m) => m !== heardFirst)]) {
-      await onClaim(task.project, { task: id, member }, this.github);
+      await onClaim(task.project, { task: id, member }, this.github, this.github, CLOCK);
     }
   }
 
@@ -187,6 +187,24 @@ export class InProcessDriver implements Driver {
 
   async claimRefusals(project: string): Promise<{ member: string; reason: string }[]> {
     return this.github.claimRefusals(project).map(({ member, reason }) => ({ member, reason }));
+  }
+
+  /** The log's claims, each with the role and module of the task it names. */
+  async claimRecords(project: string): Promise<(ClaimedTask & { claimedAt: string })[]> {
+    const tasks = this.github.openTasksOf(project);
+    return (await this.github.read(project)).flatMap((event) => {
+      if (!("claimed" in event)) return [];
+      const task = tasks.find((t) => t.id === event.claimed.task);
+      if (!task) return [];
+      return [
+        {
+          role: roleName(task.role),
+          module: task.module,
+          member: event.claimed.member,
+          claimedAt: event.decidedAt,
+        },
+      ];
+    });
   }
 
   async claimedTasks(project: string): Promise<ClaimedTask[]> {

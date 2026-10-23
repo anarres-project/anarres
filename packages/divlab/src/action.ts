@@ -24,7 +24,7 @@ try {
   if ("pullRequest" in run) {
     await onPullRequest(project, run.pullRequest, github, github, github, clock);
   } else if ("claim" in run) {
-    await onClaim(project, run.claim, github);
+    await onClaim(project, run.claim, github, github, clock);
   } else {
     await onMerge(project, github, github, github, clock);
   }

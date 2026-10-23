@@ -187,7 +187,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         request, from a named commenter, about a task GitHub could have numbered, is a claim;
   - [x] a claimed task still shows the decision it came from was acted on;
   - [x] the sandbox runs the claiming scenario;
-  - [ ] the claim is recorded in the project's log, with when Divlab took it (auditability);
+  - [x] the claim is recorded in the project's log, with when Divlab granted it, before the
+        board shows it (auditability); the log's other readers skip claims, which are about no
+        feedback signal;
+  - [ ] a run that stops between recording a claim and the board showing it is finished by the
+        next run;
+  - [ ] refused claims are recorded too, with why;
   - [x] a claim on an issue that is not a task (an alert, a finished module, a member's own
         issue, a closed task) is refused, and the member told why;
   - [x] work whose feedback signal names an issue that is not an open task never closes it

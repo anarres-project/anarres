@@ -366,6 +366,24 @@ describe("acting on a merge", () => {
     expect(seen.posted).toEqual([]);
   });
 
+  it("reads past the claims in the log, which are about no feedback signal", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    const withClaim: EventLog = {
+      ...watchedLog,
+      read: async () => [
+        {
+          project: "ledger",
+          decidedAt: "2026-10-22T08:00:00.000Z",
+          claimed: { task: "12", member: "alice" },
+        },
+      ],
+    };
+    await onMerge("ledger", onMain(passedSpecification), watchedBoard, withClaim, clock);
+    expect(seen.alerts.map((alert) => alert.notAccepted.feedbackSignal)).toEqual([
+      "feedback/FB-9.md",
+    ]);
+  });
+
   it("alerts PDC coordinators of work that reached main without Divlab merging it", async () => {
     const { seen, watchedBoard, watchedLog } = watching();
     await onMerge("ledger", onMain(passedSpecification), watchedBoard, watchedLog, clock);

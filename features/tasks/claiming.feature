@@ -9,6 +9,14 @@ Feature: Members claim tasks
     Then the Test task for "parser" is claimed by Alice
     And the Test task for "parser" is no longer ready to claim
 
+  # Not yet in the sandbox: it has not passed there yet.
+  @sandbox-wip
+  Scenario: Divlab records each claim it grants, and when
+    Given a project with a module "parser"
+    And a member's Specification work on "parser" was accepted with a pass verdict
+    When Alice claims the Test task for "parser"
+    Then Divlab's record shows Alice claimed the Test task for "parser", saying when, in UTC
+
   # Not in the sandbox: one account plays every member there, so it cannot show two members.
   @sandbox-wip
   Scenario: A claimed task cannot be claimed by anyone else

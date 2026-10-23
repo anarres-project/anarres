@@ -42,3 +42,10 @@ When(
     return this.anarres.membersClaimTogether([first, second], { role, module }, heardFirst);
   },
 );
+
+Then(
+  "Divlab's record shows {word} claimed the {role} task for {string}, saying when, in UTC",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.divlabRecordedClaim(member, { role, module });
+  },
+);

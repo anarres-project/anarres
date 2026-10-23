@@ -2,6 +2,7 @@ import { ROLE_NAMES, type Role, readMergedWork, readRoutingRecord } from "@anarr
 import type {
   AboutToMerge,
   ActedOn,
+  Claimed,
   ClaimRefused,
   FinishedModule,
   LogEvent,
@@ -87,6 +88,14 @@ export function eventFile(event: LogEvent, sequence: number): { path: string; co
 /** Event files can be edited by people, so what is read back is checked, never assumed. */
 export function eventFromFile(content: string): LogEvent {
   const event: unknown = JSON.parse(content);
+  if (
+    isObject(event) &&
+    isObject(event.claimed) &&
+    typeof event.claimed.task === "string" &&
+    typeof event.claimed.member === "string"
+  ) {
+    return event as Claimed;
+  }
   if (
     isObject(event) &&
     isObject(event.actedOn) &&
