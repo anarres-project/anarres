@@ -256,6 +256,15 @@ export class Anarres {
     await this.driver.claim({ ...this.aliased(task), project: this.project }, this.member(member));
   }
 
+  /** The members claim in the order given; Divlab hears of `heardFirst`'s claim before the rest. */
+  async membersClaimTogether(members: string[], task: Work, heardFirst: string) {
+    await this.driver.claimTogether(
+      { ...this.aliased(task), project: this.project },
+      members.map((member) => this.member(member)),
+      this.member(heardFirst),
+    );
+  }
+
   async memberIsToldTaskIsTaken(member: string) {
     const told = await this.driver.claimRefusals(this.project);
     assert.ok(

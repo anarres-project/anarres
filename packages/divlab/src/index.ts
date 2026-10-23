@@ -7,6 +7,7 @@ import {
   routingRecord,
   type Unreadable,
 } from "@anarres/core";
+import { isClaim } from "./event.ts";
 
 export type WorkAccepted = {
   project: string;
@@ -78,6 +79,8 @@ export interface TaskBoard {
   /** The feedback signals whose routing decisions the board shows Divlab acted on. */
   actedOn(project: string): Promise<string[]>;
   markClaimed(claim: ClaimedTask): Promise<void>;
+  /** The comments on a task's issue, earliest first, and who made each. */
+  comments(project: string, task: string): Promise<{ member: string; text: string }[]>;
   /** Divlab will not let the member claim the task: they are told why. */
   refuseClaim(refusal: ClaimRefused): Promise<void>;
 }
@@ -95,11 +98,17 @@ export async function onClaim(
   board: TaskBoard,
 ): Promise<void> {
   const task = await board.task(project, claim.task);
-  if (task?.claimedBy !== undefined) {
-    await board.refuseClaim({ project, ...claim, reason: "it has already been claimed" });
-    return;
+  let holder = task?.claimedBy;
+  if (holder === undefined) {
+    // The first claim made wins, whichever claim's run Divlab hears of first.
+    const comments = await board.comments(project, claim.task);
+    holder = comments.find((comment) => isClaim(comment.text))?.member ?? claim.member;
+    await board.markClaimed({ project, task: claim.task, member: holder });
   }
-  await board.markClaimed({ project, ...claim });
+  // Each member whose claim lost is told by their own claim's run, however the runs were ordered.
+  if (holder !== claim.member) {
+    await board.refuseClaim({ project, ...claim, reason: "it has already been claimed" });
+  }
 }
 
 /** The files merged to a project's main branch. */

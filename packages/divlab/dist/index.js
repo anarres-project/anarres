@@ -7887,6 +7887,19 @@ var GitHubAdapter = class {
       assignees: [claim.member]
     });
   }
+  async comments(project2, task) {
+    const comments = [];
+    for (let page = 1; ; page++) {
+      const listed = await this.call(
+        "GET",
+        `${this.repo(project2)}/issues/${task}/comments?per_page=100&page=${page}`
+      );
+      comments.push(
+        ...listed.map((comment) => ({ member: comment.user.login, text: comment.body }))
+      );
+      if (listed.length < 100) return comments;
+    }
+  }
   async refuseClaim(refusal) {
     await this.call("POST", `${this.repo(refusal.project)}/issues/${refusal.task}/comments`, {
       body: commentForClaimRefusal(refusal)
@@ -8097,6 +8110,7 @@ var GitHubError = class extends Error {
 };
 
 // src/event.ts
+var isClaim = (text) => text === "/claim";
 var numberedByGitHub = (number) => Number.isSafeInteger(number) && number >= 1;
 function whatToActOn(name, event) {
   if (name === "pull_request_target") {
@@ -8109,7 +8123,7 @@ function whatToActOn(name, event) {
   if (name === "push") return { merge: true };
   if (name === "issue_comment") {
     const { issue, comment } = event;
-    if (comment.body !== "/claim" || issue.pull_request !== void 0) return { nothing: true };
+    if (!isClaim(comment.body) || issue.pull_request !== void 0) return { nothing: true };
     if (!numberedByGitHub(issue.number)) {
       throw new Error("The comment event does not say which task it is about");
     }
@@ -8123,11 +8137,15 @@ function whatToActOn(name, event) {
 // src/index.ts
 async function onClaim(project2, claim, board) {
   const task = await board.task(project2, claim.task);
-  if (task?.claimedBy !== void 0) {
-    await board.refuseClaim({ project: project2, ...claim, reason: "it has already been claimed" });
-    return;
+  let holder = task?.claimedBy;
+  if (holder === void 0) {
+    const comments = await board.comments(project2, claim.task);
+    holder = comments.find((comment) => isClaim(comment.text))?.member ?? claim.member;
+    await board.markClaimed({ project: project2, task: claim.task, member: holder });
   }
-  await board.markClaimed({ project: project2, ...claim });
+  if (holder !== claim.member) {
+    await board.refuseClaim({ project: project2, ...claim, reason: "it has already been claimed" });
+  }
 }
 var routingDecisions = (log) => log.filter((event) => "work" in event);
 var signalOf = (event) => {

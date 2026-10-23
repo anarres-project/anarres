@@ -203,10 +203,22 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] only Divlab's claimed label makes a task held: someone assigned a ready task does not
         hold it;
   - [ ] the sandbox shows it: needs a second account playing another member (Bernard to decide);
-  - [ ] a member claiming a task they already hold is told so, not that someone else has it;
+  - [x] a member whose claim was granted by an earlier run (which heard of another claim first)
+        is left alone, not told the task is taken;
+  - [ ] a member claiming again a task they already hold is told they hold it (today: silence);
   - [ ] a task labelled claimed with nobody assigned is not taken as ready.
 - [ ] When several members claim the same task at once, the first valid claim wins and the others
       are told the task is taken, whatever order GitHub delivers the claims in.
+  - [x] Divlab gives a ready task to the earliest claim among its issue's comments, whichever
+        claim's run comes first, and each member whose claim lost is told by their own run
+        (in-process);
+  - [x] a task's comments are read from every page;
+  - [ ] the sandbox shows it (needs the second account);
+  - [ ] when the earliest claim is not valid (once eligibility exists, section 3), the earliest
+        valid one wins;
+  - [ ] a comment by a deleted account (GitHub gives no user) is read without failing;
+  - [ ] if GitHub's comment list lags and shows no claim yet, the member who asked gets the task:
+        decided, kept as a test; revisit if the sandbox ever shows a list lagging that far.
 - [ ] A lease expires after 24 hours without activity, and the task becomes ready again.
 - [ ] Submitting draft work extends the lease.
 - [ ] A member can release a task early.

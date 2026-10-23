@@ -44,7 +44,43 @@ its task closed, even if a run stops between; a feedback signal's file must be p
 pull request's run reads the log once. Section 2 under way: a member claims a ready task by
 commenting on it, and Divlab marks it claimed and assigns it to them, in-process and in the
 sandbox; a claimed task stays with its holder, and anyone else claiming it is told it has already
-been claimed (in-process: the sandbox needs a second account to play another member).
+been claimed; of claims made together the first made wins, whichever Divlab hears of first
+(both in-process: the sandbox needs a second account to play another member).
+
+---
+
+## 2026-10-23: The first claim made wins
+
+- Divlab's runs for a project go one at a time, but GitHub need not start them in the order the
+  comments were made. So Divlab does not trust the order it hears of claims in: a claim's run
+  reads the task's comments, and if nobody holds the task, gives it to the earliest claim there.
+  Any earlier claim already exists when a later claim's run starts, so the outcome does not hang
+  on which run comes first. Each member whose claim lost is told by their own claim's run; a
+  member given the task by an earlier run is left alone when their own run comes.
+- What counts as a claim is defined once (`isClaim`), for the event and for the comments.
+- If GitHub's comment list does not show a claim yet, the member who asked gets the task. The
+  fallback was written for the types before a test asked for it; its test passed first time.
+- The sandbox driver cannot play two members, so this scenario is `@sandbox-wip` too.
+
+RED:      gives the task to the member who claimed it first, even when it hears a later claim first
+          -> expected [ { …member: 'bob' } ] to deeply equal [ { …member: 'alice' } ]
+GREEN:    (72 passed)
+          (the test's board was first given only the earlier claim's comment; it now lists every
+          claim on the issue, as GitHub would, before any code was written)
+RED:      tells a member whose claim came second, though heard first, that it has already been
+          claimed -> expected [] to deeply equal [ { project: 'ledger', …(3) } ]
+GREEN:    (74 passed)
+RED:      leaves alone a member's claim on a task already given to them, as a later run finds it
+          -> expected [ [], [ {…} ] ] to deeply equal [ [], [] ]
+GREEN:    (75 passed)
+REFACTOR: onClaim finds the holder, giving the task to the first claim if nobody holds it, then
+          tells anyone else
+RED:      a task's comments are read earliest first, each with who made it
+          -> expected [] to deeply equal [ { member: 'alice', …(1) }, …(1) ]
+GREEN:    (67 passed)
+RED:      are read from every page, so no claim is missed on a busy task
+          -> expected a length of 150 but got 100
+GREEN:    (68 passed)
 
 ---
 

@@ -5,6 +5,9 @@ export type Run =
   | { claim: { task: string; member: string } }
   | { nothing: true };
 
+/** Whether a comment is a claim: exactly the claim command, nothing more. */
+export const isClaim = (text: unknown): boolean => text === "/claim";
+
 /** A number GitHub could have given an issue or pull request. */
 const numberedByGitHub = (number: unknown): number is number =>
   Number.isSafeInteger(number) && (number as number) >= 1;
@@ -25,7 +28,7 @@ export function whatToActOn(name: string, event: unknown): Run {
       comment: { body: string; user?: { login?: unknown } };
     };
     // GitHub sends comments on pull requests as issue comments too: those are not tasks.
-    if (comment.body !== "/claim" || issue.pull_request !== undefined) return { nothing: true };
+    if (!isClaim(comment.body) || issue.pull_request !== undefined) return { nothing: true };
     if (!numberedByGitHub(issue.number)) {
       throw new Error("The comment event does not say which task it is about");
     }

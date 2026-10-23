@@ -28,6 +28,7 @@ const board: TaskBoard = {
   actedOn: async () => [],
   markClaimed: untouched,
   refuseClaim: untouched,
+  comments: untouched,
 };
 
 describe("acting on a merge", () => {

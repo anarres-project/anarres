@@ -207,6 +207,24 @@ export class FakeGitHub
     if (task) task.claimedBy = claim.member;
   }
 
+  private readonly issueComments: {
+    project: string;
+    task: string;
+    member: string;
+    text: string;
+  }[] = [];
+
+  /** Someone comments on a task's issue. */
+  comment(project: string, task: string, member: string, text: string): void {
+    this.issueComments.push({ project, task, member, text });
+  }
+
+  async comments(project: string, task: string): Promise<{ member: string; text: string }[]> {
+    return this.issueComments
+      .filter((comment) => comment.project === project && comment.task === task)
+      .map(({ member, text }) => ({ member, text }));
+  }
+
   private readonly refusedClaims: ClaimRefused[] = [];
 
   async refuseClaim(refusal: ClaimRefused): Promise<void> {

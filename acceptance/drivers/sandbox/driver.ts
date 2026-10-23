@@ -452,6 +452,10 @@ export class SandboxDriver implements Driver {
     throw new HarnessNotYetBuilt("a second account, so the sandbox can tell members' claims apart");
   }
 
+  async claimTogether(): Promise<void> {
+    throw new HarnessNotYetBuilt("a second account, so members can claim together");
+  }
+
   async claimedTasks(project: string): Promise<ClaimedTask[]> {
     const issues = await this.settled(project, "claimed");
     return issues.flatMap((issue) => {

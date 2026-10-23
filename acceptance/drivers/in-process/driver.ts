@@ -155,15 +155,34 @@ export class InProcessDriver implements Driver {
       .map(signalName);
   }
 
-  /** The member's claim reaches Divlab as it would from their comment on the task. */
+  /** The member comments to claim the task, and the comment's run wakes Divlab, as on GitHub. */
   async claim(task: { project: string; role: string; module: string }, member: string) {
+    const id = this.openTaskId(task);
+    this.github.comment(task.project, id, member, "/claim");
+    await onClaim(task.project, { task: id, member }, this.github);
+  }
+
+  /** Every member comments first; then Divlab takes `heardFirst`'s run, then the others in turn. */
+  async claimTogether(
+    task: { project: string; role: string; module: string },
+    members: string[],
+    heardFirst: string,
+  ): Promise<void> {
+    const id = this.openTaskId(task);
+    for (const member of members) this.github.comment(task.project, id, member, "/claim");
+    for (const member of [heardFirst, ...members.filter((m) => m !== heardFirst)]) {
+      await onClaim(task.project, { task: id, member }, this.github);
+    }
+  }
+
+  /** A claimed task's issue is still there to comment on. */
+  private openTaskId(task: { project: string; role: string; module: string }): string {
     const fromRole = roleId(task.role);
-    // A claimed task's issue is still there to comment on.
     const open = this.github
       .openTasksOf(task.project)
       .find((t) => t.role === fromRole && t.module === task.module);
     if (!open) throw new Error(`No ${task.role} task for ${task.module} is open`);
-    await onClaim(task.project, { task: open.id, member }, this.github);
+    return open.id;
   }
 
   async claimRefusals(project: string): Promise<{ member: string; reason: string }[]> {

@@ -23,6 +23,7 @@ function project(protectedMain: boolean, alertOpen = false) {
     actedOn: untouched,
     markClaimed: untouched,
     refuseClaim: untouched,
+    comments: untouched,
     alertUnprotectedMain: async (name) => {
       alerts.push(name);
     },

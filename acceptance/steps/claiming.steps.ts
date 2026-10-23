@@ -28,3 +28,17 @@ Then(
     return this.anarres.memberIsToldTaskIsTaken(member);
   },
 );
+
+When(
+  "{word} and then {word} claim the {role} task for {string}, and Divlab hears of {word}'s claim first",
+  function (
+    this: AnarresWorld,
+    first: string,
+    second: string,
+    role: string,
+    module: string,
+    heardFirst: string,
+  ) {
+    return this.anarres.membersClaimTogether([first, second], { role, module }, heardFirst);
+  },
+);

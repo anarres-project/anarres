@@ -133,6 +133,20 @@ export class GitHubAdapter
     });
   }
 
+  async comments(project: string, task: string): Promise<{ member: string; text: string }[]> {
+    const comments: { member: string; text: string }[] = [];
+    for (let page = 1; ; page++) {
+      const listed = await this.call<{ user: { login: string }; body: string }[]>(
+        "GET",
+        `${this.repo(project)}/issues/${task}/comments?per_page=100&page=${page}`,
+      );
+      comments.push(
+        ...listed.map((comment) => ({ member: comment.user.login, text: comment.body })),
+      );
+      if (listed.length < 100) return comments;
+    }
+  }
+
   async refuseClaim(refusal: ClaimRefused): Promise<void> {
     await this.call("POST", `${this.repo(refusal.project)}/issues/${refusal.task}/comments`, {
       body: commentForClaimRefusal(refusal),

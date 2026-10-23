@@ -84,6 +84,15 @@ export interface Driver {
   readyTasks(project: string): Promise<ReadyTask[]>;
   /** The member asks to claim the project's ready task for that role and module. */
   claim(task: { project: string; role: string; module: string }, member: string): Promise<void>;
+  /**
+   * The members comment to claim the task one after another, in the order given, before Divlab
+   * acts on any; Divlab then hears of `heardFirst`'s claim before the others.
+   */
+  claimTogether(
+    task: { project: string; role: string; module: string },
+    members: string[],
+    heardFirst: string,
+  ): Promise<void>;
   claimedTasks(project: string): Promise<ClaimedTask[]>;
   /** What Divlab told members whose claims it refused. */
   claimRefusals(project: string): Promise<{ member: string; reason: string }[]>;
