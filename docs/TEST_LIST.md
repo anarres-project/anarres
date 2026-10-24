@@ -488,7 +488,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         posts the continuation, labelled so;
   - [x] a continuation reads its role's own place too: `prepare` fetches it and the hook allows
         it (core's rule, under the same path check: no climbing out);
-  - [ ] the sandbox shows it (tagged until it has passed there);
+  - [x] the sandbox shows it (84 requests);
   - [ ] the plugin's handover: writing the partial signal and handover note when allowance runs
         low, and opening the pull request.
 

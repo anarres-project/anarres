@@ -72,8 +72,6 @@ Feature: Divlab merges the work members submit
     Then Divlab has not merged the member's Coding work on "parser"
     And the member is told their work changes files outside what Coding may change
 
-  # Not yet in the sandbox: it has not passed there yet.
-  @sandbox-wip
   Scenario: Partial work is merged, and its task is posted again as a continuation
     A member who runs out of allowance hands over what they have. Nothing moves on to the next
     role: someone eligible continues the work (decision 0008).
