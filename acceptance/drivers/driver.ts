@@ -110,6 +110,15 @@ export interface Driver {
   release(task: { project: string; role: string; module: string }, member: string): Promise<void>;
   /** The tasks a member is offered when they ask for work, as their plugin shows them. */
   offeredTasks(member: string): Promise<{ role: string; module: string }[]>;
+  /** The member's plugin prepares a task they hold, on their machine; gives where its work is. */
+  prepare(task: { project: string; role: string; module: string }, member: string): Promise<string>;
+  /**
+   * The member's plugin resumes a task in a new session: where its work is, or why not.
+   */
+  resume(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<{ workIn: string } | { refused: string }>;
   /**
    * The tasks a member holds, when each lease runs out, and whether their open pull request for
    * it is a draft, as their plugin shows them.

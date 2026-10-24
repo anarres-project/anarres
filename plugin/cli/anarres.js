@@ -8640,6 +8640,20 @@ function describeStatus(held) {
     return `${project}#${task}  ${ROLE_NAMES[role]} task for ${module}, held: ${lease}${open}`;
   }).join("\n");
 }
+var taskFolder = (task) => `anarres-work/${task.project}-${task.task}`;
+function resumption(named2, task, member, folder) {
+  if (task?.claimedBy !== member) {
+    return {
+      refused: `Not resumed: you no longer hold ${named2.project}#${named2.task}, so its work is no longer yours to do: run next for another task.`
+    };
+  }
+  if (!folder.prepared) {
+    return {
+      refused: `Not resumed: ${named2.project}#${named2.task} has not been prepared here: prepare it, then carry on.`
+    };
+  }
+  return { folder: taskFolder(named2) };
+}
 
 // src/main.ts
 function taskFolderOf(cwd) {
@@ -8658,10 +8672,10 @@ if (command === "hook") {
   if (answer) console.log(JSON.stringify(answer));
   process.exit(0);
 }
-var TAKES_A_TASK = ["claim", "prepare", "submit"];
+var TAKES_A_TASK = ["claim", "prepare", "resume", "submit"];
 if (command !== "next" && command !== "status" && !(command && TAKES_A_TASK.includes(command) && named)) {
   console.error(
-    "Usage: anarres next | anarres status | anarres claim|prepare|submit project#number (submit: --draft too)"
+    "Usage: anarres next | anarres status | anarres claim|prepare|resume|submit project#number (submit: --draft too)"
   );
   process.exit(2);
 }
@@ -8705,7 +8719,7 @@ try {
       console.log(plan.refused);
       process.exit(1);
     }
-    const into = `anarres-work/${task.project}-${task.task}`;
+    const into = taskFolder(task);
     for (const step of gitSteps(plan, into)) execFileSync("git", step, { stdio: "inherit" });
     const held = await github.task(task.project, task.task);
     writeFileSync(
@@ -8729,9 +8743,29 @@ try {
     );
     process.exit(0);
   }
+  if (command === "resume" && named) {
+    const task = taskNamed(named);
+    if (task === void 0) {
+      console.log(`Name the task as the offers do, project#number: ${named} is not one.`);
+      process.exit(1);
+    }
+    const folder = taskFolder(task);
+    const resumed = resumption(
+      task,
+      await github.task(task.project, task.task),
+      await github.account(),
+      {
+        prepared: existsSync(join(folder, TASK_RECORD))
+      }
+    );
+    console.log(
+      "refused" in resumed ? resumed.refused : `Carry on with ${named} in ${resumed.folder}: its inputs and your work so far are there.`
+    );
+    process.exit("refused" in resumed ? 1 : 0);
+  }
   if (command === "submit" && named) {
     const task = taskNamed(named);
-    const folder = task && `anarres-work/${task.project}-${task.task}`;
+    const folder = task && taskFolder(task);
     const held = folder && existsSync(join(folder, TASK_RECORD));
     const record = held ? taskOfRecord(readFileSync(join(folder, TASK_RECORD), "utf8")) : void 0;
     if (task === void 0 || folder === void 0 || record === void 0) {

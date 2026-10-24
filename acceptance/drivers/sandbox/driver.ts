@@ -746,6 +746,14 @@ export class SandboxDriver implements Driver {
     }));
   }
 
+  async prepare(): Promise<string> {
+    throw new HarnessNotYetBuilt("a member's machine to prepare a task on");
+  }
+
+  async resume(): Promise<{ workIn: string } | { refused: string }> {
+    throw new HarnessNotYetBuilt("a member's machine to resume a task on");
+  }
+
   async timePasses(): Promise<void> {
     throw new HarnessNotYetBuilt("moving GitHub's clock on");
   }

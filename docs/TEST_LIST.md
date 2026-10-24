@@ -519,6 +519,17 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] more than 100 open pull requests in a project: the listing reads only the first page;
   - [ ] the member's contribution history (concept §10): what it shows is to be settled.
 - [ ] `/anarres:resume` (concept §10): continuing a held task in a new session.
+  - [x] on the same machine: `anarres resume project#number` says the task's folder while the
+        member holds it, refuses once they no longer hold it, and says to prepare it if it was
+        never prepared here; the `/anarres:resume` skill may run resume, prepare and submit; two
+        scenarios, in-process (the sandbox driver has no member's machine yet: `@sandbox-wip`);
+  - [ ] on another machine, or after the folder is lost: preparing brings back the member's own
+        work so far from their draft's branch, within the role's own place only;
+  - [ ] the sandbox driver plays a member's machine (a temporary folder), so prepare and resume
+        run there too;
+  - [ ] the next and resume skills both carry the instructions for doing and submitting the
+        work: say them once (a file both skills read, mindful that the read-scope hook guards
+        Claude's reads inside a task's folder).
 
 ## Unsorted
 

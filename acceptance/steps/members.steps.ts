@@ -1,4 +1,4 @@
-import { Then, When } from "@cucumber/cucumber";
+import { Given, Then, When } from "@cucumber/cucumber";
 import type { AnarresWorld } from "../support/world.ts";
 
 When("{word} asks for work", function (this: AnarresWorld, member: string) {
@@ -41,5 +41,33 @@ Then(
   "{word} is shown that their {role} work on {string} is a draft",
   function (this: AnarresWorld, member: string, role: string, module: string) {
     return this.anarres.memberIsShownDraft(member, { role, module });
+  },
+);
+
+Given(
+  "{word} has prepared the {role} task for {string}",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.memberPrepares(member, { role, module });
+  },
+);
+
+When(
+  "{word} resumes the {role} task for {string} in a new session",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.memberResumes(member, { role, module });
+  },
+);
+
+Then(
+  "{word} is told where their work on the {role} task for {string} is",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.memberIsToldWhereWorkIs(member, { role, module });
+  },
+);
+
+Then(
+  "{word} is told they no longer hold the {role} task for {string}",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.memberIsToldNoLongerHeld(member, { role, module });
   },
 );

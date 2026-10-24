@@ -13,9 +13,11 @@ import {
   hookAnswer,
   memberStatus,
   preparation,
+  resumption,
   submit,
   TASK_RECORD,
   type ToolCall,
+  taskFolder,
   taskNamed,
   taskOfRecord,
 } from "./index.ts";
@@ -45,14 +47,14 @@ if (command === "hook") {
   if (answer) console.log(JSON.stringify(answer));
   process.exit(0);
 }
-const TAKES_A_TASK = ["claim", "prepare", "submit"];
+const TAKES_A_TASK = ["claim", "prepare", "resume", "submit"];
 if (
   command !== "next" &&
   command !== "status" &&
   !(command && TAKES_A_TASK.includes(command) && named)
 ) {
   console.error(
-    "Usage: anarres next | anarres status | anarres claim|prepare|submit project#number (submit: --draft too)",
+    "Usage: anarres next | anarres status | anarres claim|prepare|resume|submit project#number (submit: --draft too)",
   );
   process.exit(2);
 }
@@ -100,7 +102,7 @@ try {
       process.exit(1);
     }
     // Each step runs git with its arguments as given: no shell reads them.
-    const into = `anarres-work/${task.project}-${task.task}`;
+    const into = taskFolder(task);
     for (const step of gitSteps(plan, into)) execFileSync("git", step, { stdio: "inherit" });
     // The record the read-scope hook keeps the task's session to.
     const held = await github.task(task.project, task.task);
@@ -125,9 +127,31 @@ try {
     );
     process.exit(0);
   }
+  if (command === "resume" && named) {
+    const task = taskNamed(named);
+    if (task === undefined) {
+      console.log(`Name the task as the offers do, project#number: ${named} is not one.`);
+      process.exit(1);
+    }
+    const folder = taskFolder(task);
+    const resumed = resumption(
+      task,
+      await github.task(task.project, task.task),
+      await github.account(),
+      {
+        prepared: existsSync(join(folder, TASK_RECORD)),
+      },
+    );
+    console.log(
+      "refused" in resumed
+        ? resumed.refused
+        : `Carry on with ${named} in ${resumed.folder}: its inputs and your work so far are there.`,
+    );
+    process.exit("refused" in resumed ? 1 : 0);
+  }
   if (command === "submit" && named) {
     const task = taskNamed(named);
-    const folder = task && `anarres-work/${task.project}-${task.task}`;
+    const folder = task && taskFolder(task);
     const held = folder && existsSync(join(folder, TASK_RECORD));
     const record = held ? taskOfRecord(readFileSync(join(folder, TASK_RECORD), "utf8")) : undefined;
     if (task === undefined || folder === undefined || record === undefined) {

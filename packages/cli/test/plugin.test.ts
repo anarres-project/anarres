@@ -65,4 +65,16 @@ describe("the Anarres plugin, as members install it (concept §10)", () => {
       );
     });
   });
+
+  describe("its resume skill, /anarres:resume", () => {
+    it("may run three things without asking: the bundled CLI's resume, prepare and submit", () => {
+      const skill = repositoryFile("plugin/skills/resume/SKILL.md");
+      const frontmatter = parse(skill.split("---")[1] ?? "");
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: Claude Code's placeholder, literally.
+      const cli = "node ${CLAUDE_PLUGIN_ROOT}/cli/anarres.js";
+      expect(frontmatter["allowed-tools"]).toBe(
+        `Bash(${cli} resume *) Bash(${cli} prepare *) Bash(${cli} submit *)`,
+      );
+    });
+  });
 });

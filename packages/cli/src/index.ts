@@ -384,3 +384,27 @@ export function describeStatus(held: readonly Held[]): string {
     })
     .join("\n");
 }
+
+/** The folder a task is prepared in, on the member's machine. */
+export const taskFolder = (task: { project: string; task: string }): string =>
+  `anarres-work/${task.project}-${task.task}`;
+
+/** Where a member resumes a task in a new session, or why they cannot. */
+export function resumption(
+  named: { project: string; task: string },
+  task: { role: Role; module: string; claimedBy?: string } | undefined,
+  member: string,
+  folder: { prepared: boolean },
+): { folder: string } | { refused: string } {
+  if (task?.claimedBy !== member) {
+    return {
+      refused: `Not resumed: you no longer hold ${named.project}#${named.task}, so its work is no longer yours to do: run next for another task.`,
+    };
+  }
+  if (!folder.prepared) {
+    return {
+      refused: `Not resumed: ${named.project}#${named.task} has not been prepared here: prepare it, then carry on.`,
+    };
+  }
+  return { folder: taskFolder(named) };
+}

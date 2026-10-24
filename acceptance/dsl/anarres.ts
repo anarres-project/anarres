@@ -465,6 +465,44 @@ export class Anarres {
     );
   }
 
+  /** Where each member's prepared work is, by member and task. */
+  private readonly prepared = new Map<string, string>();
+  /** What each member was told when they last resumed a task, by member and task. */
+  private readonly resumed = new Map<string, { workIn: string } | { refused: string }>();
+
+  async memberPrepares(member: string, task: Work) {
+    const work = { ...this.aliased(task), project: this.project };
+    this.prepared.set(
+      `${member} ${workOn(this.aliased(task))}`,
+      await this.driver.prepare(work, this.member(member)),
+    );
+  }
+
+  async memberResumes(member: string, task: Work) {
+    const work = { ...this.aliased(task), project: this.project };
+    this.resumed.set(
+      `${member} ${workOn(this.aliased(task))}`,
+      await this.driver.resume(work, this.member(member)),
+    );
+  }
+
+  async memberIsToldWhereWorkIs(member: string, task: Work) {
+    const key = `${member} ${workOn(this.aliased(task))}`;
+    const told = this.resumed.get(key);
+    assert.ok(
+      told !== undefined && "workIn" in told && told.workIn === this.prepared.get(key),
+      `expected ${member} to be told their work on the ${task.role} task for ${task.module} is where it was prepared, ${this.prepared.get(key)}; told ${JSON.stringify(told)}`,
+    );
+  }
+
+  async memberIsToldNoLongerHeld(member: string, task: Work) {
+    const told = this.resumed.get(`${member} ${workOn(this.aliased(task))}`);
+    assert.ok(
+      told !== undefined && "refused" in told && told.refused.includes("you no longer hold"),
+      `expected ${member} to be told they no longer hold the ${task.role} task for ${task.module}; told ${JSON.stringify(told)}`,
+    );
+  }
+
   async memberIsToldTaskIsTaken(member: string) {
     const told = await this.driver.claimRefusals(this.project);
     assert.ok(

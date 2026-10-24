@@ -121,6 +121,28 @@ GREEN:    (120 passed)
 RED:      leaves out one someone else opened, or not from a task's branch -> expected [ {...} ] to deeply equal []
 GREEN:    (122 passed)
 
+Resuming a task: `anarres resume project#number`, and the `/anarres:resume` skill. While the
+member holds the task it says the task's folder; once they no longer hold it, it refuses and
+says the work is no longer theirs; if the task was never prepared on this machine, it says to
+prepare it. `resumption` takes the task already parsed from its name, as the command parses it,
+so it needs no branch for a name that is not one. The folder's name is now said once,
+`taskFolder`. Two scenarios run in-process, where the driver keeps a record of what the member
+prepared on their machine; the sandbox driver has no member's machine yet, so they are
+`@sandbox-wip` and raise HarnessNotYetBuilt there. The skills for next and resume now repeat the
+instructions for doing the work: listed to say them once.
+
+RED:      resuming is in the task's folder while the member holds it -> expected { refused: '' } to deeply equal { folder: … }
+GREEN:    (1 passed, hard-coded)
+RED:      is the folder of the task named, for any project and task -> expected 'anarres-work/ledger-4' … 'atlas-12'
+GREEN:    (2 passed)
+REFACTOR: the commands use `taskFolder`
+RED:      is refused for a task the member no longer holds (three rows) -> expected { folder } to deeply equal { refused }
+GREEN:    (74 passed)
+RED:      is refused for a task not prepared here -> expected { folder } to deeply equal { refused }
+GREEN:    (75 passed)
+RED:      the resume skill may run resume, prepare and submit -> expected undefined to be 'Bash(…resume *)…'
+GREEN:    (76 passed)
+
 ---
 
 ## 2026-10-24: A draft made ready, and the plugin's handover

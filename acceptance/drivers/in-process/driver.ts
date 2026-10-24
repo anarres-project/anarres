@@ -1,4 +1,12 @@
-import { askForWork, claim, memberStatus, submit } from "@anarres/cli";
+import {
+  askForWork,
+  claim,
+  memberStatus,
+  preparation,
+  resumption,
+  submit,
+  taskFolder,
+} from "@anarres/cli";
 import {
   CLAIM,
   checkMain,
@@ -302,6 +310,38 @@ export class InProcessDriver implements Driver {
       ...(leaseRunsOut === undefined ? {} : { leaseRunsOut }),
       ...(pullRequest === undefined ? {} : { draft: pullRequest.draft }),
     }));
+  }
+
+  /** The tasks each member has prepared on their machine, as `member project#task`. */
+  private readonly preparedHere = new Set<string>();
+
+  /**
+   * The member's plugin prepares a task through the CLI. Fetching the files is git's part, on
+   * the member's machine; the driver keeps a record that it was done there.
+   */
+  async prepare(task: { project: string; role: string; module: string }, member: string) {
+    const id = this.openTaskId(task);
+    const plan = preparation(
+      "anarres-project",
+      task.project,
+      await this.github.task(task.project, id),
+      member,
+    );
+    if ("refused" in plan) throw new Error(plan.refused);
+    this.preparedHere.add(`${member} ${task.project}#${id}`);
+    return taskFolder({ project: task.project, task: id });
+  }
+
+  /** The member's plugin resumes a task through the CLI, in a new session on the same machine. */
+  async resume(task: { project: string; role: string; module: string }, member: string) {
+    const id = this.openTaskId(task);
+    const resumed = resumption(
+      { project: task.project, task: id },
+      await this.github.task(task.project, id),
+      member,
+      { prepared: this.preparedHere.has(`${member} ${task.project}#${id}`) },
+    );
+    return "folder" in resumed ? { workIn: resumed.folder } : resumed;
   }
 
   async timePasses(hours: number): Promise<void> {
