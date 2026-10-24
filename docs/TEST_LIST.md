@@ -491,6 +491,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the sandbox shows it (84 requests);
   - [ ] the plugin's handover: writing the partial signal and handover note when allowance runs
         low, and opening the pull request.
+- [ ] The plugin submits a member's work (concept §8, step 6): writes the feedback signal naming
+      the task, commits only the role's write place and the signal to a branch of the member's
+      fork, and opens the pull request; a draft early on counts as activity on the lease.
+- [ ] `/anarres:status` and `/anarres:resume` (concept §10): the member's tasks and leases, and
+      continuing a held task in a new session.
 
 ## Unsorted
 
