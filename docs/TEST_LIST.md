@@ -205,8 +205,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         other runs (today each one starts a short run that does nothing; filtering earlier needs
         a check on the event in the workflow, which the template tests forbid, so raise it with
         Bernard first);
-  - [ ] Divlab's own comments (its refusals) never start a claim run that matters;
-  - [ ] a member submitting work for a task they claimed: the driver finds claimed tasks too.
+  - [x] Divlab's own comments (its refusals) never start a claim run that matters: a claim is
+        exactly `/claim`, which they never are ("does nothing for a comment that is not a claim");
+  - [x] a member submitting work for a task they claimed: the driver finds claimed tasks too
+        (both drivers look among claimed tasks as well as ready ones).
 - [ ] A claimed task cannot be claimed by anyone else.
   - [x] Divlab leaves a claimed task with its holder and tells the other member it has already
         been claimed (in-process);
