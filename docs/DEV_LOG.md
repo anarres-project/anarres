@@ -58,6 +58,18 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-24: The sandbox polls less
+
+- The full run for 2331549 was refused scenario by scenario: GitHub's hourly allowance had gone.
+  A full run had grown to about 3,100 requests (waiting for each Divlab run to finish added
+  log reads), so two in an hour no longer fit. Most of a run is the driver asking again while it
+  waits: whether a pull request has merged (702, every 2 seconds), Divlab's log (about 1,100,
+  every 1 to 3 seconds). Divlab's runs take 20 to 40 seconds, so the driver now asks every 5
+  seconds for merges and finished runs, and every 3 for a decision. The run is re-run after the
+  allowance resets; pushes stay at one full run an hour.
+
+---
+
 ## 2026-10-24: Submitting work from the plugin
 
 - `anarres submit project#number [--draft]` checks the member's work as Divlab will, then, with

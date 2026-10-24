@@ -417,7 +417,7 @@ export class SandboxDriver implements Driver {
       if (Date.now() > deadline) {
         throw new Error(`Divlab's run on ${path} in ${project} did not finish`);
       }
-      await new Promise((resolve) => setTimeout(resolve, 3_000));
+      await new Promise((resolve) => setTimeout(resolve, 5_000));
     }
   }
 
@@ -436,7 +436,7 @@ export class SandboxDriver implements Driver {
       if (event) return event;
       if (Date.now() > deadline)
         throw new Error(`Divlab recorded nothing for ${path} in ${project}`);
-      await new Promise((resolve) => setTimeout(resolve, 1_000));
+      await new Promise((resolve) => setTimeout(resolve, 3_000));
     }
   }
 
@@ -455,7 +455,7 @@ export class SandboxDriver implements Driver {
       if (pullRequest.merged) return true;
       // A refusal or a failed run is rare: look for them less often, to spare the request budget.
       if (check % 3 !== 0) {
-        await new Promise((resolve) => setTimeout(resolve, 2_000));
+        await new Promise((resolve) => setTimeout(resolve, 5_000));
         continue;
       }
       const comments = await this.github.call<unknown[]>(
@@ -491,7 +491,7 @@ export class SandboxDriver implements Driver {
           `Divlab neither merged nor refused pull request ${number} in ${project}; its runs: ${states || "none"}`,
         );
       }
-      await new Promise((resolve) => setTimeout(resolve, 2_000));
+      await new Promise((resolve) => setTimeout(resolve, 5_000));
     }
   }
 

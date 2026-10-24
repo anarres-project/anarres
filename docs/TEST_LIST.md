@@ -351,8 +351,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [ ] An intermittent sandbox failure confined to one worker's repository (d5b1284: pull
       requests never decided; 04d85ac: "too many files changed", then no tasks): not reproduced
       on demand. A failed worker now keeps its repositories: inspect them when it recurs.
-- [ ] The sandbox run polls less (pull requests every 2 seconds, issue lists every half second):
-      about 2,100 requests a run, mostly waiting.
+- [ ] The sandbox run polls less: merges and finished runs every 5 seconds, decisions every 3
+      (2026-10-24, from about 3,100 requests a run); measure the next full run.
 - [x] The allowance check asked every sandbox run for a full run's 2,500 requests, so a run of one
       scenario was stopped too: each scenario now checks for room for itself (200) first.
 - [x] A project's main branch admits changes only from Divlab's App; no person is exempt
