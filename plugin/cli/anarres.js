@@ -8075,7 +8075,15 @@ var GitHubAdapter = class {
     });
   }
   async pullRequestsOpenBy(project, member) {
-    const pulls = await this.call("GET", `${this.repo(project)}/pulls?state=open&per_page=100`);
+    const pulls = [];
+    for (let page = 1; ; page++) {
+      const listed = await this.call(
+        "GET",
+        `${this.repo(project)}/pulls?state=open&per_page=100&page=${page}`
+      );
+      pulls.push(...listed);
+      if (listed.length < 100) break;
+    }
     return pulls.flatMap((pull) => {
       const task = pull.head.ref.match(/^anarres\/task-([1-9][0-9]{0,9})$/)?.[1];
       return task && pull.user.login === member ? [{ number: String(pull.number), task, draft: pull.draft }] : [];

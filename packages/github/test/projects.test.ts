@@ -135,7 +135,10 @@ describe("a member's open pull requests in a project", () => {
       owner: "commons",
       token: "test",
       request: async <T>(_token: string, method: string, path: string) => {
-        if (method === "GET" && path === "repos/commons/ledger/pulls?state=open&per_page=100") {
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/pulls?state=open&per_page=100&page=1"
+        ) {
           const pulls = [
             { number: 17, draft: true, user: { login: "alice" }, head: { ref: "anarres/task-4" } },
           ];
@@ -146,6 +149,34 @@ describe("a member's open pull requests in a project", () => {
     });
     expect(await adapter.pullRequestsOpenBy("ledger", "alice")).toEqual([
       { number: "17", task: "4", draft: true },
+    ]);
+  });
+
+  it("are found on every page GitHub gives, not only the first hundred", async () => {
+    const others = Array.from({ length: 100 }, (_, n) => ({
+      number: n + 1,
+      draft: false,
+      user: { login: "bob" },
+      head: { ref: `anarres/task-${n + 1}` },
+    }));
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        const pages: Record<string, unknown[]> = {
+          "repos/commons/ledger/pulls?state=open&per_page=100&page=1": others,
+          "repos/commons/ledger/pulls?state=open&per_page=100&page=2": [
+            { number: 117, draft: true, user: { login: "alice" }, head: { ref: "anarres/task-4" } },
+          ],
+        };
+        const page = method === "GET" ? pages[path] : undefined;
+        return page
+          ? { status: 200, data: page as T }
+          : { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.pullRequestsOpenBy("ledger", "alice")).toEqual([
+      { number: "117", task: "4", draft: true },
     ]);
   });
 

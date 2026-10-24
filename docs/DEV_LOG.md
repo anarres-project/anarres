@@ -151,6 +151,13 @@ place, `taskRecord`, which `anarres prepare` and the driver both use.
 RED:      the record is written as prepare writes it, and read back -> expected undefined to deeply equal { role: 'coding', … }
 GREEN:    (77 passed)
 
+A member's open pull requests are read from every page GitHub gives, not only the first hundred.
+Asking for pages changed the path the first test expected, so I updated it in the same step:
+two tests were red at once, both for the missing paging.
+
+RED:      open pull requests are found on every page -> GitHub GET …pulls?state=open&per_page=100 answered 404 (no page asked for)
+GREEN:    (123 passed)
+
 ---
 
 ## 2026-10-24: A draft made ready, and the plugin's handover

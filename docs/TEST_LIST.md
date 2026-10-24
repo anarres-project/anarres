@@ -516,7 +516,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         past (it threw before); the lease-end rule is now in core once, `leaseRunsOutAt`;
   - [x] the member's open pull request for each task they hold, from the task's branch: a draft,
         or finished work Divlab has not merged (it answers on it); a new scenario, in both drivers;
-  - [ ] more than 100 open pull requests in a project: the listing reads only the first page;
+  - [x] more than 100 open pull requests in a project: every page is read;
   - [ ] the member's contribution history (concept §10): what it shows is to be settled.
 - [ ] `/anarres:resume` (concept §10): continuing a held task in a new session.
   - [x] on the same machine: `anarres resume project#number` says the task's folder while the

@@ -223,9 +223,16 @@ export class GitHubAdapter
     project: string,
     member: string,
   ): Promise<{ number: string; task: string; draft: boolean }[]> {
-    const pulls = await this.call<
-      { number: number; draft: boolean; user: { login: string }; head: { ref: string } }[]
-    >("GET", `${this.repo(project)}/pulls?state=open&per_page=100`);
+    type Pull = { number: number; draft: boolean; user: { login: string }; head: { ref: string } };
+    const pulls: Pull[] = [];
+    for (let page = 1; ; page++) {
+      const listed = await this.call<Pull[]>(
+        "GET",
+        `${this.repo(project)}/pulls?state=open&per_page=100&page=${page}`,
+      );
+      pulls.push(...listed);
+      if (listed.length < 100) break;
+    }
     return pulls.flatMap((pull) => {
       // The branch a member's CLI names for a task; any other branch is not one of its tasks.
       const task = pull.head.ref.match(/^anarres\/task-([1-9][0-9]{0,9})$/)?.[1];
