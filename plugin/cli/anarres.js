@@ -7384,12 +7384,12 @@ var WRITE_SCOPES = {
 };
 function outsideScope(role, module, paths) {
   const signal = paths.find((path) => path.startsWith("feedback/"));
-  const scope = WRITE_SCOPES[role](module);
+  const scope = writeScope(role, module);
   return paths.filter((path) => !isPlainPath(path) || path !== signal && !path.startsWith(scope));
 }
 var isPlainPath = (path) => !path.includes("\\") && path.split("/").every((part) => part !== "" && part !== "." && part !== "..");
-function mayRead(role, module, path) {
-  return isPlainPath(path) && readScope(role, module).some((scope) => path.startsWith(scope));
+function mayRead(role, module, path, task = {}) {
+  return isPlainPath(path) && readScope(role, module, task).some((scope) => path.startsWith(scope));
 }
 var READ_SCOPES = {
   "programme-architect": () => ["requirements/"],
@@ -7413,8 +7413,11 @@ var READ_SCOPES = {
   ],
   research: () => []
 };
-function readScope(role, module) {
-  return READ_SCOPES[role](module);
+function readScope(role, module, task = {}) {
+  return [...READ_SCOPES[role](module), ...task.continuation ? [writeScope(role, module)] : []];
+}
+function writeScope(role, module) {
+  return WRITE_SCOPES[role](module);
 }
 
 // ../core/src/roles.ts
@@ -7599,6 +7602,7 @@ var routingDecisions = (log) => log.filter((event) => "work" in event);
 
 // ../github/src/representation.ts
 var READY = "state:ready";
+var CONTINUATION = "continuation";
 var CLAIMED = "state:claimed";
 function issueForTask(task) {
   return {
@@ -7607,7 +7611,8 @@ function issueForTask(task) {
       `role:${task.role}`,
       `module:${task.module}`,
       READY,
-      ...task.researchFor === void 0 ? [] : [`${RESEARCH_FOR}${task.researchFor}`]
+      ...task.researchFor === void 0 ? [] : [`${RESEARCH_FOR}${task.researchFor}`],
+      ...task.continuation ? [CONTINUATION] : []
     ],
     body: [
       ...task.feedbackSignal === void 0 ? [] : [`Feedback signal: ${task.feedbackSignal}`, ""],
@@ -7631,6 +7636,7 @@ function taskFromIssue(issue) {
   return {
     role,
     module,
+    ...issue.labels.some(({ name }) => name === CONTINUATION) ? { continuation: true } : {},
     ...inputsAt === void 0 ? {} : { inputsAt },
     ...researchFor === void 0 ? {} : { researchFor },
     // Assigning is open to anyone who triages: only Divlab's claimed label makes a task held.
@@ -8314,7 +8320,7 @@ function preparation(owner, project, task, member) {
   return {
     repository: `${owner}/${project}`,
     commit: task.inputsAt,
-    paths: readScope(task.role, task.module)
+    paths: readScope(task.role, task.module, task)
   };
 }
 function gitSteps(fetch2, into) {
@@ -8349,7 +8355,7 @@ function scopeDecision(task, root, path, access) {
       refused: `${inFolder} is outside what ${role} may write for this task: Anarres keeps each role to its own place`
     };
   }
-  if (mayRead(task.role, task.module, inFolder)) return "allowed";
+  if (mayRead(task.role, task.module, inFolder, task)) return "allowed";
   return {
     refused: `${inFolder} is outside what ${role} may read for this task: Anarres keeps each role to its own inputs`
   };
@@ -8384,7 +8390,8 @@ function taskOfRecord(text) {
     return void 0;
   }
   const { role, module } = record;
-  return isRole(role) && typeof module === "string" && isPlainName(module) ? { role, module } : void 0;
+  if (!isRole(role) || typeof module !== "string" || !isPlainName(module)) return void 0;
+  return { role, module, ...record.continuation === true ? { continuation: true } : {} };
 }
 function claimOutcome(named2, task, member) {
   if (task === void 0) return `${named2} is not a task anyone can claim now: run next again.`;
@@ -8463,7 +8470,7 @@ try {
     const held = await github.task(task.project, task.task);
     writeFileSync(
       join(into, TASK_RECORD),
-      JSON.stringify({ role: held?.role, module: held?.module })
+      JSON.stringify({ role: held?.role, module: held?.module, continuation: held?.continuation })
     );
     console.log(`Fetched into ${into}, as at ${plan.commit}: ${plan.paths.join(", ")}`);
     process.exit(0);

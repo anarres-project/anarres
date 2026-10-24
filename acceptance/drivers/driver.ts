@@ -14,12 +14,16 @@ export type AcceptedWork = {
   fileNameNotPlain?: boolean;
   /** The member's work also changes the module's tests. */
   changesTests?: boolean;
+  /** The member hands over partial work, having run out of allowance. */
+  partial?: boolean;
 };
 
 export type ReadyTask = {
   role: string;
   module: string;
   feedbackSignal?: string;
+  /** A continuation of partial work (decision 0008). */
+  continuation?: boolean;
 };
 
 /** A task a member holds. */

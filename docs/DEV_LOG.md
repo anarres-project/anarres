@@ -58,6 +58,41 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-23: Partial work and continuations
+
+- Bernard settled partial work (decision 0008, concept §8 updated): it is merged; Divlab posts a
+  continuation for the same role and module, carrying the handover signal, never routing to the
+  next role; a continuation also reads its role's own place; anyone eligible may take it.
+- Core reads `status: partial` and routes such work to a continuation (`rule: "partial"`).
+  Divlab needed no change of its own: the ruling flows through (its test passed first time, kept
+  as a guard). The continuation is labelled on GitHub and read back. `prepare` fetches the
+  role's own place for a continuation, and the hook lets its session read it.
+- A hole I made and closed: the CLI first let a continuation read its own place by a bare prefix
+  check, so a path climbing out of it passed. Its test was written and seen failing; the rule
+  moved into core's `mayRead` and `readScope`, under the same path check as every read.
+- The sandbox driver now waits out a new fork's "Git Repository is empty" answer (it failed one
+  scenario of 81 in the run for 0ae84fa; the race fix itself held).
+- Slip: the two continuation hook tests went in together.
+
+RED:      gives work handed over part done as partial -> expected { … } to match { partial: true }
+GREEN:    (192 passed)
+RED:      routes partial work to a continuation for the same role -> rule is not a function (exported),
+          then expected { … } to equal { tasks: [ continuation ], reason: partial }
+GREEN:    (193 passed)
+RED:      marks a continuation, and reads it back -> expected labels to include 'continuation'
+GREEN:    (107 passed)
+RED:      writeScope is the role's write place -> expected ''
+GREEN:    (194 passed)
+RED:      prepare also fetches a continuation's own place -> paths without src/
+GREEN:    (45 passed)
+RED:      a continuation's session may read its own place / its record says so (two at once)
+GREEN:    (47 passed)
+RED:      a continuation does not climb out of its own place -> expected 'allowed' not to be
+RED:      (core) a continuation reads its own place, and no path that climbs out
+GREEN:    (195 core; 48 CLI)
+
+---
+
 ## 2026-10-23: The CLI says how a claim went
 
 - `anarres claim` now waits, up to a minute and a half, for Divlab's run, and says how the claim

@@ -24,6 +24,7 @@ export function feedbackSignalFile(work: AcceptedWork, task?: string) {
     `  from_role: ${roleId(work.role)}`,
     // Markdown in place of a name: text Divlab must never carry into what it posts.
     `  module: ${work.moduleNotPlain ? `"${work.module} [see](https://example.test)"` : work.module}`,
+    ...(work.partial ? ["  status: partial"] : []),
     `  verdict: ${ids(work.verdict)}`,
     ...(work.impediments.length === 0
       ? []

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { route } from "../src/index.ts";
+import { route, rule } from "../src/index.ts";
 
 const FEEDBACK = "feedback/T-0142";
 
@@ -553,5 +553,25 @@ describe("routing accepted work", () => {
         feedbackSignal: FEEDBACK,
       }),
     ).toEqual({ tasks: [{ role: "test", module: "ledger" }] });
+  });
+});
+
+describe("routing partial work (decision 0008)", () => {
+  it("posts its task again as a continuation for the same role, carrying its feedback signal", () => {
+    expect(
+      rule({
+        fromRole: "test",
+        module: "parser",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        partial: true,
+      }),
+    ).toEqual({
+      decision: {
+        tasks: [{ role: "test", module: "parser", feedbackSignal: FEEDBACK, continuation: true }],
+      },
+      reason: { rule: "partial" },
+    });
   });
 });

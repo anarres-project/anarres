@@ -46,6 +46,8 @@ export type PostedTask = {
   decidedOn: string;
   /** The commit the task's inputs are read at: the merge that decided it. */
   inputsAt?: string;
+  /** A continuation of partial work, which also reads its role's own place (decision 0008). */
+  continuation?: true;
 };
 
 /** A module Divlab marks done, and the feedback signal whose routing decision finished it. */

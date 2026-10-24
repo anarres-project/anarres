@@ -400,3 +400,17 @@ Then(
     return this.anarres.noCoordinatorAlertedOfChangeNotByDivlab();
   },
 );
+
+When(
+  "a member hands over partial {role} work on {string}",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.memberSubmitsWork({ role, module, verdict: "pass", partial: true });
+  },
+);
+
+Then(
+  "the only task ready for {string} is a(n) {role} task continuing the partial work",
+  function (this: AnarresWorld, module: string, role: string) {
+    return this.anarres.divlabHasPostedOnlyContinuation({ role, module });
+  },
+);

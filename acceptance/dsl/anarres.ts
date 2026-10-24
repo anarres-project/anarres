@@ -156,6 +156,7 @@ export class Anarres {
       moduleNotPlain?: boolean;
       fileNameNotPlain?: boolean;
       changesTests?: boolean;
+      partial?: boolean;
     },
   ) {
     this.signalsWritten += 1;
@@ -261,6 +262,17 @@ export class Anarres {
       ready.map(roleAndModule),
       [expected],
       `expected the only ready task for ${task.module} to be a ${task.role} task`,
+    );
+  }
+
+  /** The task is posted again for its role, carrying the partial work's feedback signal. */
+  async divlabHasPostedOnlyContinuation(task: Work) {
+    const expected = this.aliased(task);
+    const feedbackSignal = this.feedbackSignals.get(workOn(expected));
+    assert.deepEqual(
+      await this.readyTasks((t) => t.module === expected.module),
+      [{ ...expected, feedbackSignal, continuation: true }],
+      `expected the only ready task for ${task.module} to continue the ${task.role} work`,
     );
   }
 

@@ -186,10 +186,20 @@ export class SandboxDriver implements Driver {
     const task = ready ?? claimed;
     const listing: Listing = ready ? "ready" : "claimed";
     const fork = await this.forkOf(work.project);
-    const { object: main } = await this.members.call<{ object: { sha: string } }>(
+    // A new fork can answer "Git Repository is empty" for a while after GitHub says it exists.
+    const deadline = Date.now() + LISTS_CATCH_UP_LIMIT;
+    let reference = await this.members.request<{ object: { sha: string } }>(
       "GET",
       `repos/${fork}/git/ref/heads/main`,
     );
+    while (reference.status === 409 && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 3_000));
+      reference = await this.members.request("GET", `repos/${fork}/git/ref/heads/main`);
+    }
+    if (reference.status !== 200) {
+      throw new Error(`GitHub GET repos/${fork}/git/ref/heads/main answered ${reference.status}`);
+    }
+    const main = reference.data.object;
     const branch = `work/${work.feedbackSignal}`;
     await this.members.call("POST", `repos/${fork}/git/refs`, {
       ref: `refs/heads/${branch}`,
@@ -824,11 +834,13 @@ export class SandboxDriver implements Driver {
       const module = labelValue(issue, "module:");
       if (role === undefined || module === undefined) return [];
       const feedbackSignal = issue.body?.match(/^Feedback signal: (.+)$/m)?.[1];
+      const continuation = issue.labels.some((label) => label.name === "continuation");
       return [
         {
           role: roleNameOf(role),
           module,
           ...(feedbackSignal ? { feedbackSignal: signalName(feedbackSignal) } : {}),
+          ...(continuation ? { continuation } : {}),
         },
       ];
     });

@@ -26,6 +26,8 @@ import type {
 
 /** The label of a task anyone eligible may claim. */
 export const READY = "state:ready";
+/** The label of a task that continues partial work (decision 0008). */
+const CONTINUATION = "continuation";
 /** The label of a task a member holds. */
 const CLAIMED = "state:claimed";
 
@@ -40,6 +42,7 @@ export function issueForTask(task: PostedTask): NewIssue {
       `module:${task.module}`,
       READY,
       ...(task.researchFor === undefined ? [] : [`${RESEARCH_FOR}${task.researchFor}`]),
+      ...(task.continuation ? [CONTINUATION] : []),
     ],
     body: [
       ...(task.feedbackSignal === undefined ? [] : [`Feedback signal: ${task.feedbackSignal}`, ""]),
@@ -79,10 +82,15 @@ export const labelsWhenClaimed = (issue: ListedIssue): string[] =>
   issue.labels.map(({ name }) => (name === READY ? CLAIMED : name));
 
 /** What Divlab recorded on a task when it posted it. */
-export function taskFromIssue(
-  issue: ListedIssue,
-):
-  | { role: Role; module: string; researchFor?: string; claimedBy?: string; inputsAt?: string }
+export function taskFromIssue(issue: ListedIssue):
+  | {
+      role: Role;
+      module: string;
+      researchFor?: string;
+      claimedBy?: string;
+      inputsAt?: string;
+      continuation?: true;
+    }
   | undefined {
   const labelled = (prefix: string) =>
     issue.labels.find(({ name }) => name.startsWith(prefix))?.name.slice(prefix.length);
@@ -96,6 +104,9 @@ export function taskFromIssue(
   return {
     role,
     module,
+    ...(issue.labels.some(({ name }) => name === CONTINUATION)
+      ? { continuation: true as const }
+      : {}),
     ...(inputsAt === undefined ? {} : { inputsAt }),
     ...(researchFor === undefined ? {} : { researchFor }),
     // Assigning is open to anyone who triages: only Divlab's claimed label makes a task held.

@@ -482,7 +482,15 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         `@`; hard enforcement is the sandbox's (concept §10) and permission rules';
   - [ ] the other file tools (NotebookEdit and any Claude Code adds) are refused in a task
         folder until judged.
-- [ ] A member who runs out of allowance can hand over partial work.
+- [ ] A member who runs out of allowance can hand over partial work (decision 0008).
+  - [x] a feedback signal's `status: partial` is read; core routes partial work to a continuation
+        for the same role, carrying its signal, never on to the next role; Divlab merges it and
+        posts the continuation, labelled so;
+  - [x] a continuation reads its role's own place too: `prepare` fetches it and the hook allows
+        it (core's rule, under the same path check: no climbing out);
+  - [ ] the sandbox shows it (tagged until it has passed there);
+  - [ ] the plugin's handover: writing the partial signal and handover note when allowance runs
+        low, and opening the pull request.
 
 ## Unsorted
 

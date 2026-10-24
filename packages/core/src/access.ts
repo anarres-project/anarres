@@ -21,7 +21,7 @@ const WRITE_SCOPES: Record<Role, (module: string) => string> = {
  */
 export function outsideScope(role: Role, module: string, paths: readonly string[]): string[] {
   const signal = paths.find((path) => path.startsWith("feedback/"));
-  const scope = WRITE_SCOPES[role](module);
+  const scope = writeScope(role, module);
   return paths.filter((path) => !isPlainPath(path) || (path !== signal && !path.startsWith(scope)));
 }
 
@@ -34,8 +34,13 @@ const isPlainPath = (path: string) =>
   path.split("/").every((part) => part !== "" && part !== "." && part !== "..");
 
 /** Whether a role's work may read a path in the project, for the module named in its task. */
-export function mayRead(role: Role, module: string, path: string): boolean {
-  return isPlainPath(path) && readScope(role, module).some((scope) => path.startsWith(scope));
+export function mayRead(
+  role: Role,
+  module: string,
+  path: string,
+  task: { continuation?: boolean } = {},
+): boolean {
+  return isPlainPath(path) && readScope(role, module, task).some((scope) => path.startsWith(scope));
 }
 
 /**
@@ -67,7 +72,17 @@ const READ_SCOPES: Record<Role, (module: string) => string[]> = {
   research: () => [],
 };
 
-/** The places a role's work may read, for the module named in its task. */
-export function readScope(role: Role, module: string): string[] {
-  return READ_SCOPES[role](module);
+/** The places a role's work may read, for the module named in its task, a continuation or not. */
+export function readScope(
+  role: Role,
+  module: string,
+  task: { continuation?: boolean } = {},
+): string[] {
+  // A continuation of partial work reads its role's own place too (decision 0008).
+  return [...READ_SCOPES[role](module), ...(task.continuation ? [writeScope(role, module)] : [])];
+}
+
+/** The place a role's work writes, for the module named in its task. */
+export function writeScope(role: Role, module: string): string {
+  return WRITE_SCOPES[role](module);
 }

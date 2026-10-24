@@ -71,3 +71,15 @@ Feature: Divlab merges the work members submit
     When a member submits Coding work on "parser" that also changes the module's tests
     Then Divlab has not merged the member's Coding work on "parser"
     And the member is told their work changes files outside what Coding may change
+
+  # Not yet in the sandbox: it has not passed there yet.
+  @sandbox-wip
+  Scenario: Partial work is merged, and its task is posted again as a continuation
+    A member who runs out of allowance hands over what they have. Nothing moves on to the next
+    role: someone eligible continues the work (decision 0008).
+
+    Given a project with a module "parser"
+    And a member's Specification work on "parser" was accepted with a pass verdict
+    When a member hands over partial Test work on "parser"
+    Then Divlab has merged the member's Test work on "parser"
+    And the only task ready for "parser" is a Test task continuing the partial work

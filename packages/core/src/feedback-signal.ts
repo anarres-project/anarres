@@ -8,6 +8,8 @@ export type FeedbackSignal = {
   impediments: { type: string }[];
   /** The task the work was done for. */
   task?: string;
+  /** Handed over part done, its member out of allowance (decision 0008). */
+  partial?: true;
 };
 
 /**
@@ -78,6 +80,7 @@ export function readFeedbackSignal(text: string): FeedbackSignal | Unreadable {
       type: impediment.type,
     })),
     ...(task === undefined ? {} : { task: String(task) }),
+    ...(header.status === "partial" ? { partial: true } : {}),
   };
 }
 

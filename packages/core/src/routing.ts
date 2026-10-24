@@ -9,6 +9,8 @@ export type AcceptedWork = {
   feedbackSignal: string;
   /** For Research work: the role that reported the knowledge gap. */
   researchFor?: string;
+  /** Handed over part done (decision 0008). */
+  partial?: true;
 };
 
 export type Task = {
@@ -18,6 +20,8 @@ export type Task = {
   feedbackSignal?: string;
   /** For a Research task: the role that reported the knowledge gap. */
   researchFor?: string;
+  /** A continuation of partial work, which also reads its role's own place (decision 0008). */
+  continuation?: true;
 };
 
 const MODULE_PIPELINE: readonly Role[] = [
@@ -37,6 +41,7 @@ export type RoutingDecision =
 /** The rule that decided a routing decision. */
 export type Reason =
   | { rule: "passed" }
+  | { rule: "partial" }
   | { rule: "pipeline_complete" }
   | { rule: "reported"; impediment: string }
   | { rule: "failed" }
@@ -60,9 +65,24 @@ export function route(work: AcceptedWork): RoutingDecision {
 export const failed = (work: AcceptedWork) => work.verdict === "fail" || work.verdict === "blocked";
 
 export function rule(work: AcceptedWork): Ruling {
+  if (work.partial) return continuation(work);
   if (failed(work)) return revise(work);
   if (work.fromRole === "research") return returnResearch(work);
   return advance(work);
+}
+
+/**
+ * Partial work moves nothing on: its task is posted again for the same role, to continue it
+ * from its handover (decision 0008).
+ */
+function continuation(work: AcceptedWork): Ruling {
+  const task: Task = {
+    role: work.fromRole as Role,
+    module: work.module,
+    feedbackSignal: work.feedbackSignal,
+    continuation: true,
+  };
+  return { decision: { tasks: [task] }, reason: { rule: "partial" } };
 }
 
 /** A revision task for the role that can fix what failed work reports. */

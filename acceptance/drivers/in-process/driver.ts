@@ -326,10 +326,13 @@ export class InProcessDriver implements Driver {
   }
 
   async readyTasks(project: string): Promise<ReadyTask[]> {
-    return this.github.readyTasks(project).map(({ role, module, feedbackSignal }) => ({
-      role: roleName(role),
-      module,
-      ...(feedbackSignal === undefined ? {} : { feedbackSignal: signalName(feedbackSignal) }),
-    }));
+    return this.github
+      .readyTasks(project)
+      .map(({ role, module, feedbackSignal, continuation }) => ({
+        role: roleName(role),
+        module,
+        ...(feedbackSignal === undefined ? {} : { feedbackSignal: signalName(feedbackSignal) }),
+        ...(continuation ? { continuation } : {}),
+      }));
   }
 }

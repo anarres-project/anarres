@@ -693,6 +693,33 @@ describe("acting on a pull request", () => {
     expect(posted.map((task) => task.inputsAt)).toEqual(["m3rg3d"]);
   });
 
+  it("posts partial work's task again as a continuation, carrying its feedback signal", async () => {
+    const posted: PostedTask[] = [];
+    const partialTest = {
+      path: "feedback/FB-8.md",
+      text: "---\nfeedback_signal:\n  from_role: test\n  module: parser\n  status: partial\n  verdict: pass\n---\n",
+    };
+    await onPullRequest(
+      "ledger",
+      "7",
+      submitting([], [partialTest]),
+      { ...board, post: async (task) => void posted.push(task) },
+      log,
+      clock,
+    );
+    expect(posted).toEqual([
+      {
+        project: "ledger",
+        role: "test",
+        module: "parser",
+        feedbackSignal: "feedback/FB-8.md",
+        continuation: true,
+        decidedOn: "feedback/FB-8.md",
+        inputsAt: "m3rg3d",
+      },
+    ]);
+  });
+
   it("tells the board which decision each task comes from, so it is posted once", async () => {
     const posted: PostedTask[] = [];
     const posting: TaskBoard = {

@@ -7381,10 +7381,13 @@ var WRITE_SCOPES = {
 };
 function outsideScope(role, module, paths) {
   const signal = paths.find((path) => path.startsWith("feedback/"));
-  const scope = WRITE_SCOPES[role](module);
+  const scope = writeScope(role, module);
   return paths.filter((path) => !isPlainPath(path) || path !== signal && !path.startsWith(scope));
 }
 var isPlainPath = (path) => !path.includes("\\") && path.split("/").every((part) => part !== "" && part !== "." && part !== "..");
+function writeScope(role, module) {
+  return WRITE_SCOPES[role](module);
+}
 
 // ../core/src/roles.ts
 var ROLE_NAMES = {
@@ -7499,7 +7502,8 @@ function readFeedbackSignal(text) {
     impediments: impediments.map((impediment) => ({
       type: impediment.type
     })),
-    ...task === void 0 ? {} : { task: String(task) }
+    ...task === void 0 ? {} : { task: String(task) },
+    ...header.status === "partial" ? { partial: true } : {}
   };
 }
 function readSignalFile(path) {
@@ -7531,9 +7535,19 @@ var NO_RULE_COVERS_IT = {
 };
 var failed = (work) => work.verdict === "fail" || work.verdict === "blocked";
 function rule(work) {
+  if (work.partial) return continuation(work);
   if (failed(work)) return revise(work);
   if (work.fromRole === "research") return returnResearch(work);
   return advance(work);
+}
+function continuation(work) {
+  const task = {
+    role: work.fromRole,
+    module: work.module,
+    feedbackSignal: work.feedbackSignal,
+    continuation: true
+  };
+  return { decision: { tasks: [task] }, reason: { rule: "partial" } };
 }
 function revise(work) {
   const matched = failureRoute(work);
@@ -8051,6 +8065,7 @@ async function checkProtection(project2, repositories, board) {
 
 // ../github/src/representation.ts
 var READY = "state:ready";
+var CONTINUATION = "continuation";
 var CLAIMED = "state:claimed";
 function issueForTask(task) {
   return {
@@ -8059,7 +8074,8 @@ function issueForTask(task) {
       `role:${task.role}`,
       `module:${task.module}`,
       READY,
-      ...task.researchFor === void 0 ? [] : [`${RESEARCH_FOR}${task.researchFor}`]
+      ...task.researchFor === void 0 ? [] : [`${RESEARCH_FOR}${task.researchFor}`],
+      ...task.continuation ? [CONTINUATION] : []
     ],
     body: [
       ...task.feedbackSignal === void 0 ? [] : [`Feedback signal: ${task.feedbackSignal}`, ""],
@@ -8083,6 +8099,7 @@ function taskFromIssue(issue) {
   return {
     role,
     module,
+    ...issue.labels.some(({ name }) => name === CONTINUATION) ? { continuation: true } : {},
     ...inputsAt === void 0 ? {} : { inputsAt },
     ...researchFor === void 0 ? {} : { researchFor },
     // Assigning is open to anyone who triages: only Divlab's claimed label makes a task held.

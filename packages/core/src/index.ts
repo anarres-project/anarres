@@ -1,4 +1,4 @@
-export { mayRead, outsideScope, readScope } from "./access.ts";
+export { mayRead, outsideScope, readScope, writeScope } from "./access.ts";
 export { mayTake, type Part } from "./eligibility.ts";
 export {
   type FeedbackSignal,
@@ -9,7 +9,7 @@ export {
 } from "./feedback-signal.ts";
 export { LEASE_HOURS, leaseHasRunOut } from "./leases.ts";
 export { isRole, ROLE_NAMES, type Role } from "./roles.ts";
-export { type AcceptedWork, type RoutingDecision, route, type Task } from "./routing.ts";
+export { type AcceptedWork, type RoutingDecision, route, rule, type Task } from "./routing.ts";
 export {
   type RoutingRecord,
   readMergedWork,

@@ -23,6 +23,20 @@ describe("reading a feedback signal", () => {
     });
   });
 
+  it("gives work handed over part done as partial (decision 0008)", () => {
+    const signal = [
+      "---",
+      "feedback_signal:",
+      "  from_role: test",
+      "  module: parser",
+      "  status: partial",
+      "  verdict: pass",
+      "---",
+      "",
+    ].join("\n");
+    expect(readFeedbackSignal(signal)).toMatchObject({ partial: true });
+  });
+
   it("reads a signal written with Windows line endings the same", () => {
     const signal = [
       "---",

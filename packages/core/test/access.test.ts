@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mayRead, outsideScope, type Role, readScope } from "../src/index.ts";
+import { mayRead, outsideScope, type Role, readScope, writeScope } from "../src/index.ts";
 
 describe("what a role's work may change (concept §6)", () => {
   it("does not let Coding change its module's tests", () => {
@@ -115,5 +115,23 @@ describe("the places a role's work reads, as a member's CLI fetches them", () =>
       "modules/parser/specifications/",
       "modules/parser/tests/",
     ]);
+  });
+});
+
+describe("the place a role's work writes, as a continuation reads it too (decision 0008)", () => {
+  it("is the role's write scope for the module", () => {
+    expect(writeScope("coding", "parser")).toBe("modules/parser/src/");
+  });
+});
+
+describe("what a continuation of partial work may read (decision 0008)", () => {
+  it("is its role's inputs and its role's own place, and no path that climbs out", () => {
+    expect(
+      [
+        "modules/parser/specifications/lexing.md",
+        "modules/parser/src/lexer.ts",
+        "modules/parser/src/../../../secrets.env",
+      ].map((path) => mayRead("coding", "parser", path, { continuation: true })),
+    ).toEqual([true, true, false]);
   });
 });

@@ -89,6 +89,29 @@ describe("the hook's answer to Claude Code, for a tool call in a task's session"
   });
 });
 
+describe("the hook in a continuation's folder (decision 0008)", () => {
+  it("lets the session read its role's own place: the work it continues", () => {
+    const continuing = { ...TASK, continuation: true as const };
+    expect(scopeDecision(continuing, ROOT, `${ROOT}/modules/parser/src/lexer.ts`, "read")).toBe(
+      "allowed",
+    );
+  });
+
+  it("does not let it climb out of its own place", () => {
+    const continuing = { ...TASK, continuation: true as const };
+    expect(
+      scopeDecision(continuing, ROOT, `${ROOT}/modules/parser/src/../../../secrets.env`, "read"),
+    ).not.toBe("allowed");
+  });
+
+  it("reads a continuation from the folder's record", () => {
+    expect(taskOfRecord('{"role":"coding","module":"parser","continuation":true}')).toEqual({
+      ...TASK,
+      continuation: true,
+    });
+  });
+});
+
 describe("the hook in a task's folder whose record cannot be read", () => {
   it("denies every file call: it fails closed, never open", () => {
     const call = {

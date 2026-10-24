@@ -13,6 +13,19 @@ describe("preparing a task the member holds (concept §8)", () => {
     });
   });
 
+  it("also fetches its role's own place for a continuation, to see the work it continues", () => {
+    const task = {
+      role: "coding" as const,
+      module: "parser",
+      claimedBy: "alice",
+      inputsAt: SHA,
+      continuation: true as const,
+    };
+    expect(preparation("anarres-project", "ledger", task, "alice")).toMatchObject({
+      paths: ["modules/parser/specifications/", "modules/parser/tests/", "modules/parser/src/"],
+    });
+  });
+
   it.each([
     ["is not a task", undefined, "it is not a task"],
     [

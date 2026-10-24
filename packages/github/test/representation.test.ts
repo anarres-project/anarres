@@ -131,6 +131,20 @@ describe("a task as a GitHub issue", () => {
     expect(taskFromIssue({ labels, body })?.inputsAt).toBeUndefined();
   });
 
+  it("marks a continuation of partial work, and reads it back (decision 0008)", () => {
+    const issue = issueForTask({
+      project: "ledger",
+      role: "coding",
+      module: "parser",
+      decidedOn: "feedback/T-0141.md",
+      continuation: true,
+    });
+    expect(issue.labels).toContain("continuation");
+    expect(taskFromIssue({ labels: issue.labels.map((name) => ({ name })) })?.continuation).toBe(
+      true,
+    );
+  });
+
   it("reads back from a Research task which role it is for", () => {
     const issue = issueForTask({
       project: "ledger",

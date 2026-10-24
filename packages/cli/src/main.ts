@@ -98,7 +98,7 @@ try {
     const held = await github.task(task.project, task.task);
     writeFileSync(
       join(into, TASK_RECORD),
-      JSON.stringify({ role: held?.role, module: held?.module }),
+      JSON.stringify({ role: held?.role, module: held?.module, continuation: held?.continuation }),
     );
     console.log(`Fetched into ${into}, as at ${plan.commit}: ${plan.paths.join(", ")}`);
     process.exit(0);

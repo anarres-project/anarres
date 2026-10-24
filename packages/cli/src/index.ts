@@ -88,7 +88,9 @@ export type Preparation =
 export function preparation(
   owner: string,
   project: string,
-  task: { role: Role; module: string; claimedBy?: string; inputsAt?: string } | undefined,
+  task:
+    | { role: Role; module: string; claimedBy?: string; inputsAt?: string; continuation?: true }
+    | undefined,
   member: string,
 ): Preparation {
   const refused = (why: string) => ({ refused: `Nothing fetched for ${project}: ${why}.` });
@@ -100,7 +102,7 @@ export function preparation(
   return {
     repository: `${owner}/${project}`,
     commit: task.inputsAt,
-    paths: readScope(task.role, task.module),
+    paths: readScope(task.role, task.module, task),
   };
 }
 
@@ -130,7 +132,7 @@ export function gitSteps(
 
 /** Whether the member's session may read or write a file while doing a task, and if not why. */
 export function scopeDecision(
-  task: { role: Role; module: string },
+  task: { role: Role; module: string; continuation?: true },
   root: string,
   path: string,
   access: "read" | "write",
@@ -150,7 +152,8 @@ export function scopeDecision(
       refused: `${inFolder} is outside what ${role} may write for this task: Anarres keeps each role to its own place`,
     };
   }
-  if (mayRead(task.role, task.module, inFolder)) return "allowed";
+  // What prepare fetched for the task, and nothing else, may be read.
+  if (mayRead(task.role, task.module, inFolder, task)) return "allowed";
   return {
     refused: `${inFolder} is outside what ${role} may read for this task: Anarres keeps each role to its own inputs`,
   };
@@ -175,7 +178,7 @@ const searchDecision = (root: string, folder: string): "allowed" | { refused: st
 /** What the read-scope hook tells Claude Code about a tool call: nothing when it may go ahead. */
 export function hookAnswer(
   call: ToolCall,
-  task: { role: Role; module: string } | undefined,
+  task: { role: Role; module: string; continuation?: true } | undefined,
   root: string,
 ): unknown {
   const decision = !task
@@ -205,17 +208,18 @@ export function hookAnswer(
 export const TASK_RECORD = ".anarres-task.json";
 
 /** The task a folder's record names, read as data: its role and module, if they are plain. */
-export function taskOfRecord(text: string): { role: Role; module: string } | undefined {
-  let record: { role?: unknown; module?: unknown };
+export function taskOfRecord(
+  text: string,
+): { role: Role; module: string; continuation?: true } | undefined {
+  let record: { role?: unknown; module?: unknown; continuation?: unknown };
   try {
-    record = JSON.parse(text) as { role?: unknown; module?: unknown };
+    record = JSON.parse(text) as { role?: unknown; module?: unknown; continuation?: unknown };
   } catch {
     return undefined;
   }
   const { role, module } = record;
-  return isRole(role) && typeof module === "string" && isPlainName(module)
-    ? { role, module }
-    : undefined;
+  if (!isRole(role) || typeof module !== "string" || !isPlainName(module)) return undefined;
+  return { role, module, ...(record.continuation === true ? { continuation: true as const } : {}) };
 }
 
 /**
