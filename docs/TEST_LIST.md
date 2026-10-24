@@ -190,9 +190,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the claim is recorded in the project's log, with when Divlab granted it, before the
         board shows it (auditability); the log's other readers skip claims, which are about no
         feedback signal;
-  - [ ] a run that stops between recording a claim and the board showing it is finished by the
-        next run;
-  - [ ] refused claims are recorded too, with why;
+  - [x] a run that stops between recording a claim and the board showing it is finished by the
+        next lease check: a claim the log holds, not given back or run out since, whose task the
+        board shows unclaimed, is marked claimed;
+  - [ ] refused claims are recorded too, with why (raise with Bernard: each record is a commit
+        to main, and anyone who can comment can cause a refusal);
   - [x] a claim on an issue that is not a task (an alert, a finished module, a member's own
         issue, a closed task) is refused, and the member told why;
   - [x] work whose feedback signal names an issue that is not an open task never closes it

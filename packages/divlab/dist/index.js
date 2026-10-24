@@ -7815,9 +7815,18 @@ async function onRelease(project2, release, board, log, clock) {
   await board.releaseClaim(project2, release.task);
 }
 async function onLeaseCheck(project2, board, log, clock) {
-  for (const { task, member, since } of leasesFrom(await log.read(project2)).values()) {
-    if (!leaseHasRunOut(since, clock())) continue;
-    if ((await board.task(project2, task))?.claimedBy !== member) continue;
+  const events = await log.read(project2);
+  for (const { task, member, since } of leasesFrom(events).values()) {
+    const shown = await board.task(project2, task);
+    if (!leaseHasRunOut(since, clock())) {
+      const freed = lastFreed(events, task);
+      const stillHeld = freed === void 0 || Date.parse(freed) < Date.parse(since);
+      if (stillHeld && shown !== void 0 && shown.claimedBy === void 0 && !shown.claimed) {
+        await board.markClaimed({ project: project2, task, member });
+      }
+      continue;
+    }
+    if (shown?.claimedBy !== member) continue;
     await endLease({ project: project2, task, member }, board, log, clock);
   }
 }

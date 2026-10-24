@@ -206,4 +206,51 @@ describe("checking a project's leases", () => {
     await onLeaseCheck("ledger", watched, claimedLongAgo, clock);
     expect(told).toEqual([{ project: "ledger", task: "12", member: "alice" }]);
   });
+
+  it("finishes a claim a run recorded but stopped before the board showed it", async () => {
+    const marked: unknown[] = [];
+    const watched: TaskBoard = {
+      ...board,
+      task: async () => TEST_TASK,
+      markClaimed: async (claim) => void marked.push(claim),
+    };
+    const log: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          decidedAt: "2026-10-23T09:00:00.000Z",
+          claimed: { task: "12", member: "alice" },
+        },
+      ],
+      append: async () => {},
+    };
+    await onLeaseCheck("ledger", watched, log, clock);
+    expect(marked).toEqual([{ project: "ledger", task: "12", member: "alice" }]);
+  });
+
+  it("leaves ready a task whose claim was given back since, though its lease has not run out", async () => {
+    const marked: unknown[] = [];
+    const watched: TaskBoard = {
+      ...board,
+      task: async () => TEST_TASK,
+      markClaimed: async (claim) => void marked.push(claim),
+    };
+    const log: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          decidedAt: "2026-10-23T09:00:00.000Z",
+          claimed: { task: "12", member: "alice" },
+        },
+        {
+          project: "ledger",
+          decidedAt: "2026-10-23T09:30:00.000Z",
+          released: { task: "12", member: "alice" },
+        },
+      ],
+      append: async () => {},
+    };
+    await onLeaseCheck("ledger", watched, log, clock);
+    expect(marked).toEqual([]);
+  });
 });

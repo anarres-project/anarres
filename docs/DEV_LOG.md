@@ -265,6 +265,18 @@ GREEN:    (126 passed)
 RED:      stops at an empty page, though GitHub's count says more (guard taken out) -> 404 for page 3
 GREEN:    (127 passed)
 
+A claim Divlab recorded, but whose run stopped before the board showed it, is finished by the
+next hourly lease check: the task is marked claimed for the member the log names, unless it was
+given back, or its lease ran out, since. Two items weighed and left: setup recording where
+main's checking starts (an event written at setup starts an extra Divlab run in every sandbox
+scenario, for a narrow gap), and recording refused claims (each record is a commit, and anyone
+who can comment can cause a refusal: for Bernard).
+
+RED:      finishes a claim a run recorded but stopped before the board showed it -> expected [] to deeply equal [ {…} ]
+GREEN:    (147 passed)
+RED:      leaves ready a task whose claim was given back since -> expected [ {…} ] to deeply equal []
+GREEN:    (148 passed)
+
 ---
 
 ## 2026-10-24: A draft made ready, and the plugin's handover

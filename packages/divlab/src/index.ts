@@ -317,9 +317,20 @@ export async function onLeaseCheck(
   log: EventLog,
   clock: Clock,
 ): Promise<void> {
-  for (const { task, member, since } of leasesFrom(await log.read(project)).values()) {
-    if (!leaseHasRunOut(since, clock())) continue;
-    if ((await board.task(project, task))?.claimedBy !== member) continue;
+  const events = await log.read(project);
+  for (const { task, member, since } of leasesFrom(events).values()) {
+    const shown = await board.task(project, task);
+    if (!leaseHasRunOut(since, clock())) {
+      // Recorded but not shown: a run stopped between the two, and this one finishes it. Not a
+      // claim given back, or whose lease ran out, since.
+      const freed = lastFreed(events, task);
+      const stillHeld = freed === undefined || Date.parse(freed) < Date.parse(since);
+      if (stillHeld && shown !== undefined && shown.claimedBy === undefined && !shown.claimed) {
+        await board.markClaimed({ project, task, member });
+      }
+      continue;
+    }
+    if (shown?.claimedBy !== member) continue;
     await endLease({ project, task, member }, board, log, clock);
   }
 }
