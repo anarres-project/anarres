@@ -494,6 +494,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [ ] The plugin submits a member's work (concept §8, step 6): writes the feedback signal naming
       the task, commits only the role's write place and the signal to a branch of the member's
       fork, and opens the pull request; a draft early on counts as activity on the lease.
+  - [x] before anything is sent, the CLI checks the work as Divlab will: one readable feedback
+        signal naming the task, from the task's role and module, and nothing changed outside the
+        role's place, saying what is wrong;
+  - [ ] the fork, the branch and the pull request, through GitHub's API with the member's login
+        (no git credentials needed), so the sandbox driver can submit through the CLI too.
 - [ ] `/anarres:status` and `/anarres:resume` (concept §10): the member's tasks and leases, and
       continuing a held task in a new session.
 

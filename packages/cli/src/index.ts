@@ -5,6 +5,7 @@ import {
   outsideScope,
   ROLE_NAMES,
   type Role,
+  readFeedbackSignal,
   readScope,
 } from "@anarres/core";
 import { eligibility, type LogEvent } from "@anarres/divlab";
@@ -237,4 +238,40 @@ export function claimOutcome(
     return `Someone else holds ${named}: see the task's issue, and run next again.`;
   }
   return `Divlab has not given ${named} to you yet: see the task's issue, and run next again.`;
+}
+
+/** Whether a member's work is ready to submit for their task, checked as Divlab will check it. */
+export function submission(
+  task: { role: Role; module: string; task: string },
+  changed: readonly { path: string; text: string }[],
+): "ready" | { refused: string } {
+  const refused = (why: string) => ({ refused: `Not submitted: ${why}.` });
+  const feedback = changed.find((file) => file.path.startsWith("feedback/"));
+  if (feedback === undefined) {
+    return refused(
+      "it has no feedback signal: write one in feedback/, saying what it was for and how it went",
+    );
+  }
+  const signal = readFeedbackSignal(feedback.text);
+  if ("unreadable" in signal)
+    return refused(`its feedback signal cannot be read: ${signal.unreadable}`);
+  if (signal.task !== task.task) {
+    return refused(`its feedback signal names task ${signal.task}, not task ${task.task}`);
+  }
+  if (signal.fromRole !== task.role || signal.module !== task.module) {
+    return refused(
+      `its feedback signal is from ${signal.fromRole} and module ${signal.module}, not ${task.role} and ${task.module}`,
+    );
+  }
+  const outside = outsideScope(
+    task.role,
+    task.module,
+    changed.map((file) => file.path),
+  );
+  if (outside.length > 0) {
+    return refused(
+      `it changes files outside what ${ROLE_NAMES[task.role]} may change: ${outside.join(", ")}`,
+    );
+  }
+  return "ready";
 }
