@@ -578,11 +578,18 @@ export class GitHubAdapter
   }
 
   async commitsSince(project: string, since: string): Promise<MainCommit[]> {
-    const { commits } = await this.call<{ commits: ListedCommit[] }>(
-      "GET",
-      `${this.repo(project)}/compare/${since}...main`,
-    );
-    return commits.map(mainCommit);
+    // GitHub compares at most 250 commits at once: every page is read, so none goes unchecked.
+    const commits: ListedCommit[] = [];
+    for (let page = 1; ; page++) {
+      const compared = await this.call<{ commits: ListedCommit[]; total_commits: number }>(
+        "GET",
+        `${this.repo(project)}/compare/${since}...main?per_page=100&page=${page}`,
+      );
+      commits.push(...compared.commits);
+      if (compared.commits.length === 0 || commits.length >= compared.total_commits) {
+        return commits.map(mainCommit);
+      }
+    }
   }
 
   async mergeCommitOf(project: string, pullRequest: string): Promise<string> {

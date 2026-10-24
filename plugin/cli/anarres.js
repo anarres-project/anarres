@@ -8374,11 +8374,17 @@ var GitHubAdapter = class {
     return object.sha;
   }
   async commitsSince(project, since) {
-    const { commits } = await this.call(
-      "GET",
-      `${this.repo(project)}/compare/${since}...main`
-    );
-    return commits.map(mainCommit);
+    const commits = [];
+    for (let page = 1; ; page++) {
+      const compared = await this.call(
+        "GET",
+        `${this.repo(project)}/compare/${since}...main?per_page=100&page=${page}`
+      );
+      commits.push(...compared.commits);
+      if (compared.commits.length === 0 || commits.length >= compared.total_commits) {
+        return commits.map(mainCommit);
+      }
+    }
   }
   async mergeCommitOf(project, pullRequest) {
     const { merge_commit_sha } = await this.call(

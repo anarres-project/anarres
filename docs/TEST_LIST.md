@@ -399,7 +399,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the sandbox shows a change caught, and no false alarm from Divlab's own merges and log
         writes (826cbed: all 79 sandbox scenarios passed with the check after every run);
   - [ ] a project's setup records where checking starts, closing the gap before Divlab first runs;
-  - [ ] more than 250 commits between checks (GitHub's compare lists no more): page, or alert;
+  - [x] more than 250 commits between checks (GitHub compares no more at once): every page of
+        the comparison is read, stopping at an empty page whatever GitHub's count says;
   - [ ] a feedback signal put straight onto main raises two alerts (not routed; a change not by
         Divlab): one would do;
 - [x] Divlab records each merge as it makes it, and routes from those records, so work is routed

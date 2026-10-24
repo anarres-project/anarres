@@ -254,6 +254,17 @@ Divlab already refuses it, naming what is missing (core's reading of the signal,
 before). Kept as a regression test of what the member is told; `@sandbox-wip` until it has run
 there.
 
+Main's commits since Divlab last checked are read from every page of GitHub's comparison, which
+gives at most 250 at once, so a long gap between checks leaves none unchecked. Asking for pages
+changed the first test's path, updated in the same step (two red at once). The stop at an empty
+page I wrote before its test: I took it out, watched the test ask for a page too many, and put
+it back.
+
+RED:      main's commits on every page -> 404 for compare/…main?per_page=100&page=1 (no page asked for)
+GREEN:    (126 passed)
+RED:      stops at an empty page, though GitHub's count says more (guard taken out) -> 404 for page 3
+GREEN:    (127 passed)
+
 ---
 
 ## 2026-10-24: A draft made ready, and the plugin's handover

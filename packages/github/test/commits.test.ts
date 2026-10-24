@@ -15,12 +15,15 @@ describe("main's commits since Divlab last checked", () => {
       owner: "commons",
       token: "test",
       request: async <T>(_token: string, method: string, path: string) => {
-        if (method === "GET" && path === "repos/commons/ledger/compare/b2...main") {
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/compare/b2...main?per_page=100&page=1"
+        ) {
           const commits = [
             commit("c3", "divlab-sandbox[bot]", "web-flow", true),
             commit("c4", "mallory", "mallory", true),
           ];
-          return { status: 200, data: { commits } as T };
+          return { status: 200, data: { commits, total_commits: 2 } as T };
         }
         return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
       },
@@ -45,5 +48,60 @@ describe("the commit main is at", () => {
       },
     });
     expect(await adapter.head("ledger")).toBe("h3ad");
+  });
+
+  it("are every one of them, on every page GitHub gives, though more than it compares at once", async () => {
+    const many = Array.from({ length: 100 }, (_, n) =>
+      commit(`a${n}`, "divlab-sandbox[bot]", "web-flow", true),
+    );
+    const pages: Record<string, unknown> = {
+      "repos/commons/ledger/compare/b2...main?per_page=100&page=1": {
+        commits: many,
+        total_commits: 101,
+      },
+      "repos/commons/ledger/compare/b2...main?per_page=100&page=2": {
+        commits: [commit("c4", "mallory", "mallory", true)],
+        total_commits: 101,
+      },
+    };
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        const page = method === "GET" ? pages[path] : undefined;
+        return page
+          ? { status: 200, data: page as T }
+          : { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    const commits = await adapter.commitsSince("ledger", "b2");
+    expect([commits.length, commits.at(-1)]).toEqual([
+      101,
+      { sha: "c4", author: "mallory", signedByGitHub: false },
+    ]);
+  });
+
+  it("stops at an empty page, though GitHub's count says more", async () => {
+    const pages: Record<string, unknown> = {
+      "repos/commons/ledger/compare/b2...main?per_page=100&page=1": {
+        commits: [commit("c3", "mallory", "mallory", true)],
+        total_commits: 5,
+      },
+      "repos/commons/ledger/compare/b2...main?per_page=100&page=2": {
+        commits: [],
+        total_commits: 5,
+      },
+    };
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        const page = method === "GET" ? pages[path] : undefined;
+        return page
+          ? { status: 200, data: page as T }
+          : { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect((await adapter.commitsSince("ledger", "b2")).map((c) => c.sha)).toEqual(["c3"]);
   });
 });
