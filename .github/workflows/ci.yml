@@ -20,6 +20,12 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run test:wip
+      # Claude Code itself checks the plugin and its marketplace as members' Claude Code reads them
+      # (it needs no login to; pinned, like every tool).
+      - name: Claude Code validates the plugin and its marketplace
+        run: |
+          npx --yes @anthropic-ai/claude-code@2.1.306 plugin validate plugin
+          npx --yes @anthropic-ai/claude-code@2.1.306 plugin validate .
       # The Action and the plugin run the committed bundles, so each must be built from exactly
       # this source.
       - name: The Divlab and CLI bundles, and the plugin's skills, match their source

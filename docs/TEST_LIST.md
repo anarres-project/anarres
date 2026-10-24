@@ -465,15 +465,16 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         plugin's `next` skill may run one thing without asking, the CLI bundled inside the plugin
         (an installed plugin reaches nothing outside its folder); it shows the offers as printed
         and treats them as data;
-  - [ ] the plugin validated by Claude Code itself in CI (`claude plugin validate`), once CI has
-        Claude Code;
+  - [x] the plugin validated by Claude Code itself in CI (`claude plugin validate`, pinned, no
+        login needed), the plugin and its marketplace both; its warnings (no icon, no version)
+        are for when the plugin is listed;
   - [x] claiming from the plugin: `anarres claim project#number` posts Divlab's claim comment as
         the member (the text defined once, in Divlab), checking the name strictly first; the
         skill may run it, and both drivers now claim through it;
   - [x] the CLI says how a claim went (held by the member, by someone else, not yet, or no
         task), waiting up to a minute and a half, from what Divlab sets on the task, never the
         text of replies;
-  - [ ] preparing the claimed task (the next item);
+  - [x] preparing the claimed task (`anarres prepare`, the next item);
   - [ ] offers are ranked by priority and size (concept §8).
 - [ ] Preparing a task fetches only the files the role may read, at the pinned versions.
   - [x] core holds the access matrix's read scopes beside its write scopes, once: each module
