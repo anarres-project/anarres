@@ -34,7 +34,7 @@ export const CLAIMED = "state:claimed";
 /** What GitHub needs to open an issue. */
 export type NewIssue = { title: string; labels: string[]; body: string };
 
-export function issueForTask(task: PostedTask): NewIssue {
+export function issueForTask(task: PostedTask, repository?: string): NewIssue {
   return {
     title: `${ROLE_NAMES[task.role]} task for ${task.module}`,
     labels: [
@@ -49,6 +49,12 @@ export function issueForTask(task: PostedTask): NewIssue {
       ...(task.inputsAt === undefined
         ? []
         : [`Read this task's inputs as they were at commit ${task.inputsAt}.`, ""]),
+      ...(task.inputsAt === undefined || repository === undefined
+        ? []
+        : [
+            `Decided by [${task.decidedOn}](https://github.com/${repository}/blob/${task.inputsAt}/${task.decidedOn}).`,
+            "",
+          ]),
       decisionBlock(task.decidedOn, task.inputsAt),
     ].join("\n"),
   };

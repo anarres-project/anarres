@@ -107,7 +107,7 @@ export class GitHubAdapter
   }
 
   async post(task: PostedTask): Promise<void> {
-    await this.openIssue(task.project, issueForTask(task));
+    await this.openIssue(task.project, issueForTask(task, `${this.options.owner}/${task.project}`));
   }
 
   async alertCoordinators(alert: RoutingEvent): Promise<void> {

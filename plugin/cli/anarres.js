@@ -7672,7 +7672,7 @@ var routingDecisions = (log) => log.filter((event) => "work" in event);
 var READY = "state:ready";
 var CONTINUATION = "continuation";
 var CLAIMED = "state:claimed";
-function issueForTask(task) {
+function issueForTask(task, repository) {
   return {
     title: `${ROLE_NAMES[task.role]} task for ${task.module}`,
     labels: [
@@ -7685,6 +7685,10 @@ function issueForTask(task) {
     body: [
       ...task.feedbackSignal === void 0 ? [] : [`Feedback signal: ${task.feedbackSignal}`, ""],
       ...task.inputsAt === void 0 ? [] : [`Read this task's inputs as they were at commit ${task.inputsAt}.`, ""],
+      ...task.inputsAt === void 0 || repository === void 0 ? [] : [
+        `Decided by [${task.decidedOn}](https://github.com/${repository}/blob/${task.inputsAt}/${task.decidedOn}).`,
+        ""
+      ],
       decisionBlock(task.decidedOn, task.inputsAt)
     ].join("\n")
   };
@@ -7985,7 +7989,7 @@ var GitHubAdapter = class {
     await this.call("POST", `${this.repo(project)}/actions/policies`, policyAllowingDivlabChecks());
   }
   async post(task) {
-    await this.openIssue(task.project, issueForTask(task));
+    await this.openIssue(task.project, issueForTask(task, `${this.options.owner}/${task.project}`));
   }
   async alertCoordinators(alert) {
     await this.openIssue(alert.project, issueForAlert(alert));

@@ -81,6 +81,23 @@ describe("a task as a GitHub issue", () => {
     ).toEqual(["role:research", "module:parser", "state:ready", "research-for:coding"]);
   });
 
+  it("links to the feedback signal it was decided from, as it was at the merged commit", () => {
+    const sha = "0123456789abcdef0123456789abcdef01234567";
+    const issue = issueForTask(
+      {
+        project: "ledger",
+        role: "coding",
+        module: "parser",
+        decidedOn: "feedback/T-0141.md",
+        inputsAt: sha,
+      },
+      "commons/ledger",
+    );
+    expect(issue.body).toContain(
+      `Decided by [feedback/T-0141.md](https://github.com/commons/ledger/blob/${sha}/feedback/T-0141.md).`,
+    );
+  });
+
   it("says which commit the task's inputs are read at, in words and in its decision", () => {
     const sha = "0123456789abcdef0123456789abcdef01234567";
     const issue = issueForTask({

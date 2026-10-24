@@ -573,13 +573,14 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] a signal written with Windows line endings is read the same;
   - [x] Divlab finds the signals merged since it last ran, and routes each once;
   - [ ] work naming a task that does not exist, or is not the member's (section 4);
-  - [ ] a signal that reaches `main` unreadable is recorded once as not accepted, with the
+  - [x] a signal that reaches `main` unreadable is recorded once as not accepted, with the
         reason, and PDC coordinators are alerted once; the other signals are still routed
-        (decision 0005);
+        (decision 0005): Divlab refuses an unreadable signal's pull request, so one can reach
+        main only without Divlab, which is recorded and alerted once as reaching main without
+        Divlab merging it;
 - [x] Work from a role Divlab does not recognise is rejected, not routed: the member is told the
   role is not one Anarres has.
-- The task posted on GitHub links to its feedback signal at the merged commit (needs Divlab as an
-  Action and `packages/github`).
+- [x] The task posted on GitHub links to its feedback signal at the merged commit.
 - Later: a PDC coordinator reopens a done module, for example after a bug report or a Governance
   finding, and Divlab makes the right task ready. Reopening is a coordinator's deliberate step,
   never a side effect of a member's contribution (Bernard, 2026-10-21: revisit if real projects

@@ -277,6 +277,12 @@ GREEN:    (147 passed)
 RED:      leaves ready a task whose claim was given back since -> expected [ {…} ] to deeply equal []
 GREEN:    (148 passed)
 
+A task's issue now links to the feedback signal it was decided from, as it was at the merged
+commit, so a member can read exactly what decided it.
+
+RED:      links to the feedback signal it was decided from, at the merged commit -> expected body to contain 'Decided by […](…)'
+GREEN:    (128 passed)
+
 ---
 
 ## 2026-10-24: A draft made ready, and the plugin's handover
