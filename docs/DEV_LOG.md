@@ -58,6 +58,21 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-24: Work so far, back on another machine
+
+- A scenario drives restoring a draft end to end: Alice holds the Test task with a draft open,
+  prepares it on another machine, and finds her work so far in its folder. Both drivers now
+  play the member's machine closely enough to look in a task's folder (`workInFolder`); the
+  in-process driver's prepare now brings the draft back through the CLI's `restoreDraft`, as
+  `anarres prepare` does, and the sandbox driver's does it into its temporary folder.
+- RED: the scenario, `@wip` -> not yet right: the folder held no feedback signal. GREEN once the
+  in-process prepare called `restoreDraft`, which unit tests had already driven; no new
+  production code. `@sandbox-wip` until it passes in the sandbox.
+- The sandbox driver's writer repeats the CLI's rule of never overwriting a file already in the
+  folder, as the member's machine would apply it; the in-process driver keeps no files to clash.
+
+---
+
 ## 2026-10-24: A member's status
 
 - In the sandbox (2026-10-24, at 8a14ec6, whose full run passed 87/87): the merged-work status

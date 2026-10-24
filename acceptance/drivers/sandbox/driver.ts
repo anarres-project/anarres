@@ -1,7 +1,15 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import {
   askForWork,
   claim,
@@ -9,6 +17,7 @@ import {
   gitSteps,
   memberStatus,
   preparation,
+  restoreDraft,
   resumption,
   submit,
   TASK_RECORD,
@@ -784,6 +793,20 @@ export class SandboxDriver implements Driver {
     const into = join(this.machine, folder);
     for (const step of gitSteps(plan, into)) execFileSync("git", step, { stdio: "pipe" });
     writeFileSync(join(into, TASK_RECORD), taskRecord(held ?? {}));
+    if (held !== undefined) {
+      await restoreDraft(
+        { project: task.project, task: id },
+        held,
+        await loginOf(account),
+        this.asMember(account),
+        (path, text) => {
+          const file = join(into, path);
+          if (existsSync(file)) return;
+          mkdirSync(dirname(file), { recursive: true });
+          writeFileSync(file, text);
+        },
+      );
+    }
     this.preparedIssues.set(`${member} ${task.role} ${task.module}`, id);
     return folder;
   }
@@ -803,6 +826,14 @@ export class SandboxDriver implements Driver {
       { prepared: existsSync(join(this.machine, folder, TASK_RECORD)) },
     );
     return "folder" in resumed ? { workIn: resumed.folder } : resumed;
+  }
+
+  async workInFolder(task: { project: string; role: string; module: string }, member: string) {
+    const id = this.preparedIssues.get(`${member} ${task.role} ${task.module}`);
+    if (id === undefined || this.machine === undefined) return [];
+    const signals = join(this.machine, taskFolder({ project: task.project, task: id }), "feedback");
+    if (!existsSync(signals)) return [];
+    return readdirSync(signals).map((name) => signalName(`feedback/${name}`));
   }
 
   /** The member's machine is cleared away after each scenario. */

@@ -508,6 +508,16 @@ export class Anarres {
     );
   }
 
+  async memberHasWorkSoFarBack(member: string, task: Work) {
+    const work = { ...this.aliased(task), project: this.project };
+    const back = await this.driver.workInFolder(work, this.member(member));
+    const draft = this.feedbackSignals.get(workOn(this.aliased(task)));
+    assert.ok(
+      draft !== undefined && back.includes(draft),
+      `expected ${member}'s draft ${task.role} work on ${task.module}, ${draft}, back in its folder; found ${JSON.stringify(back)}`,
+    );
+  }
+
   async memberIsToldNoLongerHeld(member: string, task: Work) {
     const told = this.resumed.get(`${member} ${workOn(this.aliased(task))}`);
     assert.ok(

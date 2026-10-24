@@ -78,3 +78,17 @@ Then(
     return this.anarres.memberIsShownMerged(member, { role, module });
   },
 );
+
+When(
+  "{word} prepares the {role} task for {string} on another machine",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.memberPrepares(member, { role, module });
+  },
+);
+
+Then(
+  "{word}'s work so far on the {role} task for {string} is back in its folder",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.memberHasWorkSoFarBack(member, { role, module });
+  },
+);

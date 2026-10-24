@@ -123,6 +123,11 @@ export interface Driver {
     task: { project: string; role: string; module: string },
     member: string,
   ): Promise<{ workIn: string } | { refused: string }>;
+  /** The feedback signals in the task's folder on the member's machine: their work there. */
+  workInFolder(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<string[]>;
   /**
    * The tasks a member holds, when each lease runs out, and whether their open pull request for
    * it is a draft, as their plugin shows them.

@@ -4,6 +4,7 @@ import {
   contributions,
   memberStatus,
   preparation,
+  restoreDraft,
   resumption,
   submit,
   taskFolder,
@@ -315,22 +316,42 @@ export class InProcessDriver implements Driver {
 
   /** The tasks each member has prepared on their machine, as `member project#task`. */
   private readonly preparedHere = new Set<string>();
+  /** What each task's folder holds on its member's machine, by `member project#task`. */
+  private readonly folders = new Map<string, { path: string; text: string }[]>();
 
   /**
    * The member's plugin prepares a task through the CLI. Fetching the files is git's part, on
-   * the member's machine; the driver keeps a record that it was done there.
+   * the member's machine; the driver keeps a record that it was done there, and of the work so
+   * far the CLI brings back from the member's open pull request.
    */
   async prepare(task: { project: string; role: string; module: string }, member: string) {
     const id = this.openTaskId(task);
-    const plan = preparation(
-      "anarres-project",
-      task.project,
-      await this.github.task(task.project, id),
-      member,
-    );
+    const held = await this.github.task(task.project, id);
+    const plan = preparation("anarres-project", task.project, held, member);
     if ("refused" in plan) throw new Error(plan.refused);
+    if (held === undefined) throw new Error(`No task ${id} in ${task.project}`);
+    const folder: { path: string; text: string }[] = [];
+    await restoreDraft(
+      { project: task.project, task: id },
+      held,
+      member,
+      {
+        pullRequestsOpenBy: async (project, author) =>
+          this.github.pullRequestsOpenBy(project, author),
+        changedFiles: (project, pullRequest) => this.github.changedFiles(project, pullRequest),
+      },
+      (path, text) => folder.push({ path, text }),
+    );
     this.preparedHere.add(`${member} ${task.project}#${id}`);
+    this.folders.set(`${member} ${task.project}#${id}`, folder);
     return taskFolder({ project: task.project, task: id });
+  }
+
+  async workInFolder(task: { project: string; role: string; module: string }, member: string) {
+    const files = this.folders.get(`${member} ${task.project}#${this.openTaskId(task)}`) ?? [];
+    return files
+      .filter(({ path }) => path.startsWith("feedback/"))
+      .map(({ path }) => signalName(path));
   }
 
   /** The member's plugin resumes a task through the CLI, in a new session on the same machine. */
