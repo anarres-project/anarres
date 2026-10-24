@@ -29,7 +29,7 @@ describe("the Anarres plugin, as members install it (concept §10)", () => {
     const { hooks } = JSON.parse(repositoryFile("plugin/hooks/hooks.json"));
     expect(hooks.PreToolUse).toEqual([
       {
-        matcher: "Read|Edit|Write|Glob|Grep",
+        matcher: "Read|Edit|Write|NotebookEdit|Glob|Grep",
         hooks: [
           {
             type: "command",

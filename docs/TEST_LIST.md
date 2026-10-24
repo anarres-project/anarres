@@ -480,8 +480,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         bundle);
   - [ ] its limits, stated: it cannot see files read through Bash, or files the member names with
         `@`; hard enforcement is the sandbox's (concept §10) and permission rules';
-  - [ ] the other file tools (NotebookEdit and any Claude Code adds) are refused in a task
-        folder until judged.
+  - [x] NotebookEdit is judged as a write of its notebook, and the hook's matcher sends it to
+        the hook; a tool the hook does not know is refused in a task's folder, saying so;
+  - [ ] a file tool Claude Code adds later reaches the hook only once the matcher names it (the
+        matcher cannot be "every tool": Bash must run the CLI): check Claude Code's tools when
+        updating it.
 - [ ] A member who runs out of allowance can hand over partial work (decision 0008).
   - [x] a feedback signal's `status: partial` is read; core routes partial work to a continuation
         for the same role, carrying its signal, never on to the next role; Divlab merges it and

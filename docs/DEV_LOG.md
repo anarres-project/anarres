@@ -158,6 +158,20 @@ two tests were red at once, both for the missing paging.
 RED:      open pull requests are found on every page -> GitHub GET …pulls?state=open&per_page=100 answered 404 (no page asked for)
 GREEN:    (123 passed)
 
+The read-scope hook and NotebookEdit: it was denied in a task's folder only by accident (its
+file is `notebook_path`, so the hook saw "undefined", outside the folder). It is now judged as a
+write of its notebook, and the plugin's matcher sends it to the hook. A tool the hook does not
+know is refused in a task's folder, saying why, not by accident. The hook's decision is now a
+function of plain `if`s.
+
+RED:      judges a NotebookEdit as a write of its notebook -> expected { hookSpecificOutput } to be undefined
+GREEN:    (78 passed)
+RED:      denies a tool it does not know, saying why -> reason was "undefined is outside this task's folder"
+GREEN:    (79 passed)
+REFACTOR: the hook's decision, `toolDecision`, as plain ifs
+RED:      the hook's matcher sends NotebookEdit -> expected [ {…} ] to deeply equal [ {…} ]
+GREEN:    (79 passed)
+
 ---
 
 ## 2026-10-24: A draft made ready, and the plugin's handover

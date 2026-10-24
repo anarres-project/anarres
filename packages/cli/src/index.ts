@@ -164,8 +164,9 @@ export function scopeDecision(
 /** A tool call as Claude Code gives it to a PreToolUse hook: only what the hook reads. */
 export type ToolCall = { tool_name: string; tool_input: Record<string, unknown>; cwd: string };
 
-/** Claude Code's tools that change a file, and those that search a folder. */
-const WRITING_TOOLS = ["Write", "Edit"];
+/** Claude Code's tools that read a file, those that change one, and those that search a folder. */
+const READING_TOOLS = ["Read"];
+const WRITING_TOOLS = ["Write", "Edit", "NotebookEdit"];
 const SEARCHING_TOOLS = ["Glob", "Grep"];
 
 /**
@@ -183,19 +184,7 @@ export function hookAnswer(
   task: { role: Role; module: string; continuation?: true } | undefined,
   root: string,
 ): unknown {
-  const decision = !task
-    ? {
-        refused:
-          "This task's record cannot be read, so its scope is unknown: prepare the task again",
-      }
-    : SEARCHING_TOOLS.includes(call.tool_name)
-      ? searchDecision(root, String(call.tool_input.path ?? call.cwd))
-      : scopeDecision(
-          task,
-          root,
-          String(call.tool_input.file_path),
-          WRITING_TOOLS.includes(call.tool_name) ? "write" : "read",
-        );
+  const decision = toolDecision(call, task, root);
   if (decision === "allowed") return undefined;
   return {
     hookSpecificOutput: {
@@ -203,6 +192,29 @@ export function hookAnswer(
       permissionDecision: "deny",
       permissionDecisionReason: decision.refused,
     },
+  };
+}
+
+/** Whether a tool call may go ahead in a task's folder, judged by what the tool touches. */
+function toolDecision(
+  call: ToolCall,
+  task: { role: Role; module: string; continuation?: true } | undefined,
+  root: string,
+): "allowed" | { refused: string } {
+  if (!task) {
+    return {
+      refused: "This task's record cannot be read, so its scope is unknown: prepare the task again",
+    };
+  }
+  if (SEARCHING_TOOLS.includes(call.tool_name)) {
+    return searchDecision(root, String(call.tool_input.path ?? call.cwd));
+  }
+  // A notebook's tool names its file differently.
+  const path = String(call.tool_input.file_path ?? call.tool_input.notebook_path);
+  if (READING_TOOLS.includes(call.tool_name)) return scopeDecision(task, root, path, "read");
+  if (WRITING_TOOLS.includes(call.tool_name)) return scopeDecision(task, root, path, "write");
+  return {
+    refused: `Anarres does not yet know what ${call.tool_name} touches, so it is not used in a task's folder`,
   };
 }
 

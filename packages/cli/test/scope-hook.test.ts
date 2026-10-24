@@ -75,12 +75,36 @@ describe("the hook's answer to Claude Code, for a tool call in a task's session"
     expect(answer).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
   });
 
+  it("judges a NotebookEdit as a write of its notebook: Coding may change one in its own place", () => {
+    const call = {
+      tool_name: "NotebookEdit",
+      tool_input: { notebook_path: `${ROOT}/modules/parser/src/explore.ipynb`, new_source: "" },
+      cwd: ROOT,
+    };
+    expect(hookAnswer(call, TASK, ROOT)).toBeUndefined();
+  });
+
   it.each([
     ["Glob", { pattern: "**/*.md", path: "/home/alice" }],
     ["Grep", { pattern: "secret", path: "/home/alice/.config" }],
   ])("denies a %s searching outside the task's folder", (tool, input) => {
     const answer = hookAnswer({ tool_name: tool, tool_input: input, cwd: ROOT }, TASK, ROOT);
     expect(answer).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
+  });
+
+  it("denies a tool it does not know, in a task's folder, until Anarres judges what it touches", () => {
+    const call = {
+      tool_name: "Rewrite",
+      tool_input: { target: `${ROOT}/modules/parser/src/lexer.ts` },
+      cwd: ROOT,
+    };
+    expect(hookAnswer(call, TASK, ROOT)).toMatchObject({
+      hookSpecificOutput: {
+        permissionDecision: "deny",
+        permissionDecisionReason:
+          "Anarres does not yet know what Rewrite touches, so it is not used in a task's folder",
+      },
+    });
   });
 
   it("lets a search of the task's folder go ahead: it holds only what the role may read", () => {

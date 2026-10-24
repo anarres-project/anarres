@@ -8531,18 +8531,12 @@ function scopeDecision(task, root, path, access) {
     refused: `${inFolder} is outside what ${role} may read for this task: Anarres keeps each role to its own inputs`
   };
 }
-var WRITING_TOOLS = ["Write", "Edit"];
+var READING_TOOLS = ["Read"];
+var WRITING_TOOLS = ["Write", "Edit", "NotebookEdit"];
 var SEARCHING_TOOLS = ["Glob", "Grep"];
 var searchDecision = (root, folder) => folder === root || folder.startsWith(`${root}/`) ? "allowed" : { refused: `${folder} is outside this task's folder: Anarres keeps a task's session to it` };
 function hookAnswer(call, task, root) {
-  const decision = !task ? {
-    refused: "This task's record cannot be read, so its scope is unknown: prepare the task again"
-  } : SEARCHING_TOOLS.includes(call.tool_name) ? searchDecision(root, String(call.tool_input.path ?? call.cwd)) : scopeDecision(
-    task,
-    root,
-    String(call.tool_input.file_path),
-    WRITING_TOOLS.includes(call.tool_name) ? "write" : "read"
-  );
+  const decision = toolDecision(call, task, root);
   if (decision === "allowed") return void 0;
   return {
     hookSpecificOutput: {
@@ -8550,6 +8544,22 @@ function hookAnswer(call, task, root) {
       permissionDecision: "deny",
       permissionDecisionReason: decision.refused
     }
+  };
+}
+function toolDecision(call, task, root) {
+  if (!task) {
+    return {
+      refused: "This task's record cannot be read, so its scope is unknown: prepare the task again"
+    };
+  }
+  if (SEARCHING_TOOLS.includes(call.tool_name)) {
+    return searchDecision(root, String(call.tool_input.path ?? call.cwd));
+  }
+  const path = String(call.tool_input.file_path ?? call.tool_input.notebook_path);
+  if (READING_TOOLS.includes(call.tool_name)) return scopeDecision(task, root, path, "read");
+  if (WRITING_TOOLS.includes(call.tool_name)) return scopeDecision(task, root, path, "write");
+  return {
+    refused: `Anarres does not yet know what ${call.tool_name} touches, so it is not used in a task's folder`
   };
 }
 var TASK_RECORD = ".anarres-task.json";
