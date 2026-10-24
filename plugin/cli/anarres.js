@@ -7907,8 +7907,9 @@ function retryAfter(answer, now, { waitForAllowance = true } = {}) {
   const retry = answer.headers.get("retry-after");
   if (retry !== null) return Number(retry) * 1e3;
   if (answer.message.includes("secondary rate limit")) return 6e4;
-  if (answer.headers.get("x-ratelimit-remaining") === "0" && waitForAllowance) {
-    return Number(answer.headers.get("x-ratelimit-reset")) * 1e3 - now;
+  if (answer.headers.get("x-ratelimit-remaining") === "0") {
+    const wait = Number(answer.headers.get("x-ratelimit-reset")) * 1e3 - now;
+    return waitForAllowance || wait <= 6e4 ? wait : void 0;
   }
   return void 0;
 }

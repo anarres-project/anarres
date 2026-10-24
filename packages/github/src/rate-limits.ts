@@ -5,7 +5,7 @@
 export function retryAfter(
   answer: { status: number; headers: Headers; message: string },
   now: number,
-  /** Whether to wait out a spent hourly allowance, up to an hour, or stop at once. */
+  /** Whether to wait out a spent allowance that resets more than a minute away, or stop at once. */
   { waitForAllowance = true }: { waitForAllowance?: boolean } = {},
 ): number | undefined {
   // An error of GitHub's own, or a failing gateway, is usually a passing blip.
@@ -16,8 +16,10 @@ export function retryAfter(
   if (retry !== null) return Number(retry) * 1000;
   // GitHub's guidance for a secondary limit that gives no time: wait at least a minute.
   if (answer.message.includes("secondary rate limit")) return 60_000;
-  if (answer.headers.get("x-ratelimit-remaining") === "0" && waitForAllowance) {
-    return Number(answer.headers.get("x-ratelimit-reset")) * 1000 - now;
+  if (answer.headers.get("x-ratelimit-remaining") === "0") {
+    const wait = Number(answer.headers.get("x-ratelimit-reset")) * 1000 - now;
+    // A limit that resets within a minute, such as search's, is always waited out.
+    return waitForAllowance || wait <= 60_000 ? wait : undefined;
   }
   return undefined;
 }

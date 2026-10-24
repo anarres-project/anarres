@@ -63,6 +63,16 @@ describe("waiting out GitHub's rate limits", () => {
     expect(retryAfter(answer, NOW, { waitForAllowance: false })).toBeUndefined();
   });
 
+  it("still waits out a limit that resets within a minute, such as search's, when told not to wait", () => {
+    const reset = (NOW + 40_000) / 1000;
+    const answer = {
+      status: 403,
+      headers: new Headers({ "x-ratelimit-remaining": "0", "x-ratelimit-reset": String(reset) }),
+      message: "API rate limit exceeded",
+    };
+    expect(retryAfter(answer, NOW, { waitForAllowance: false })).toBe(40_000);
+  });
+
   it("never retries a request that succeeded, even the last one the limit allowed", () => {
     expect(
       retryAfter(

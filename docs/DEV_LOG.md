@@ -294,10 +294,14 @@ GREEN:    (149 passed)
 Claude Code itself now validates the plugin and its marketplace in CI (pinned 2.1.306; it needs
 no login, tried with an empty home folder, and the exact `npx` commands run locally). The
 sandbox driver's requests no longer wait out a spent hourly allowance within a scenario: it
-stops at once with GitHub's refusal. Divlab's own requests still wait.
+stops at once with GitHub's refusal. Divlab's own requests still wait, and a limit that resets
+within a minute, such as search's, is waited out either way: I first stopped on any spent
+limit, which would have failed runs over search's per-minute one.
 
 RED:      does not wait for the hourly limit to reset when told not to -> expected 90000 to be undefined
 GREEN:    (129 passed)
+RED:      still waits out a limit that resets within a minute, such as search's -> expected undefined to be 40000
+GREEN:    (130 passed)
 
 ---
 
