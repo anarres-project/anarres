@@ -472,3 +472,46 @@ export function describeContributions(done: readonly Contribution[]): string {
     ),
   ].join("\n");
 }
+
+/** The files of a member's draft to bring back into the task's folder when preparing it again. */
+export function draftToRestore(
+  task: { role: Role; module: string },
+  draft: readonly { path: string; text: string }[],
+): { path: string; text: string }[] {
+  // Only the member's own work: where the role writes, its feedback signal included (0009).
+  const outside = outsideScope(
+    task.role,
+    task.module,
+    draft.map((file) => file.path),
+  );
+  return draft.filter((file) => !outside.includes(file.path));
+}
+
+/** GitHub as the member's CLI reads their open pull request for a task, with their own login. */
+export interface Drafts {
+  pullRequestsOpenBy(
+    project: string,
+    member: string,
+  ): Promise<{ number: string; task: string; draft: boolean }[]>;
+  changedFiles(project: string, pullRequest: string): Promise<{ path: string; text: string }[]>;
+}
+
+/**
+ * Brings back the member's work so far into a task's folder they prepare again, from their open
+ * pull request for the task: only its files in the role's own place. Gives how many.
+ */
+export async function restoreDraft(
+  named: { project: string; task: string },
+  task: { role: Role; module: string },
+  member: string,
+  github: Drafts,
+  write: (path: string, text: string) => void,
+): Promise<number> {
+  const open = (await github.pullRequestsOpenBy(named.project, member)).find(
+    (pullRequest) => pullRequest.task === named.task,
+  );
+  if (open === undefined) return 0;
+  const files = draftToRestore(task, await github.changedFiles(named.project, open.number));
+  for (const { path, text } of files) write(path, text);
+  return files.length;
+}

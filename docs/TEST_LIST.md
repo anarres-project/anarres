@@ -534,8 +534,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         scenarios, in-process (the sandbox driver has no member's machine yet: `@sandbox-wip`);
   - [x] in a new session, the hook lets Claude read back its own work, where its role writes, in
         the task's folder (decision 0009);
-  - [ ] on another machine, or after the folder is lost: preparing brings back the member's own
-        work so far from their draft's branch, within the role's own place only;
+  - [x] on another machine, or after the folder is lost: preparing brings back the member's own
+        work so far from their open pull request for the task, through GitHub's API: only its
+        files in the role's own place (one feedback signal), never overwriting a file already in
+        the folder (`restoreDraft`, `draftToRestore`);
+  - [ ] an acceptance scenario for it: the harness needs to look at what the folder holds;
   - [x] the sandbox driver plays a member's machine (a temporary folder, cleared after each
         scenario), so prepare fetches a real task's inputs with git, and resume runs, there too;
         the record prepare writes is made in one place, `taskRecord`;

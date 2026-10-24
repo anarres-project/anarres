@@ -207,6 +207,22 @@ RED:      the projects where a member's work has been merged -> expected [] to d
 GREEN:    (124 passed)
 REFACTOR: one search helper for issues and pull requests, `projectsFound`
 
+Bringing back a member's draft when they prepare a task again (another machine, or the folder
+lost): from their open pull request for the task, through GitHub's API, only its files in the
+role's own place and one feedback signal. Not from the draft's branch with git: the branch
+holds whatever its fork's main had in the role's place, which may be others' work, and 0009
+rests on the folder holding only the member's own. `anarres prepare` writes a restored file only
+where none is there already, so newer work on the same machine is never overwritten.
+
+RED:      the draft's files in the role's own place and its signal, nothing else -> expected [] to deeply equal [ … ]
+GREEN:    (88 passed)
+RED:      brings back one feedback signal only -> expected [ 'feedback/FB-4.md', … ] to deeply equal [ 'feedback/FB-4.md' ]
+GREEN:    (89 passed)
+RED:      writes back the open pull request's own-place files, and says how many -> expected [ 0, [] ] to deeply equal [ 1, [ … ] ]
+GREEN:    (90 passed)
+RED:      asks for no files when there is no open pull request for the task -> expected [ 0, [ '' ] ] to deeply equal [ 0, [] ]
+GREEN:    (91 passed)
+
 ---
 
 ## 2026-10-24: A draft made ready, and the plugin's handover

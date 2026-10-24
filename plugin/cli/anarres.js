@@ -7368,7 +7368,7 @@ var require_dist = __commonJS({
 
 // src/main.ts
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
 // ../core/src/access.ts
@@ -8706,6 +8706,23 @@ function describeContributions(done) {
     )
   ].join("\n");
 }
+function draftToRestore(task, draft) {
+  const outside = outsideScope(
+    task.role,
+    task.module,
+    draft.map((file) => file.path)
+  );
+  return draft.filter((file) => !outside.includes(file.path));
+}
+async function restoreDraft(named2, task, member, github, write) {
+  const open = (await github.pullRequestsOpenBy(named2.project, member)).find(
+    (pullRequest) => pullRequest.task === named2.task
+  );
+  if (open === void 0) return 0;
+  const files = draftToRestore(task, await github.changedFiles(named2.project, open.number));
+  for (const { path, text } of files) write(path, text);
+  return files.length;
+}
 
 // src/main.ts
 function taskFolderOf(cwd) {
@@ -8775,7 +8792,15 @@ try {
     for (const step of gitSteps(plan, into)) execFileSync("git", step, { stdio: "inherit" });
     const held = await github.task(task.project, task.task);
     writeFileSync(join(into, TASK_RECORD), taskRecord(held ?? {}));
+    const member = await github.account();
+    const restored = held === void 0 ? 0 : await restoreDraft(task, held, member, github, (path, text) => {
+      const file = join(into, path);
+      if (existsSync(file)) return;
+      mkdirSync(dirname(file), { recursive: true });
+      writeFileSync(file, text);
+    });
     console.log(`Fetched into ${into}, as at ${plan.commit}: ${plan.paths.join(", ")}`);
+    if (restored > 0) console.log(`Brought back ${restored} files of your work so far.`);
     process.exit(0);
   }
   if (command === "status") {
