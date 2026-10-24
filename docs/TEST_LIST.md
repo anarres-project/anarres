@@ -310,9 +310,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       member; Divlab judges every claim by member, for trust and for one role per module; CI
       checks no account is linked twice (in-process; the sandbox needs its governance file and a
       second account).
-  - [ ] a member's merged work recorded under one account and claims under another, before the
-        link was made, are still one member (they are: the rules read the file at claim time;
-        to be shown);
+  - [x] a member's merged work recorded under one account and claims under another, before the
+        link was made, are still one member: shown both ways round (the rules read the file at
+        claim time; the second test passed first time, kept as a regression test);
 
 ## 4. Validating contributions
 

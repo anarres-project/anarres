@@ -305,6 +305,9 @@ GREEN:    (130 passed)
 
 A test that an empty governance setting means Anarres's own file passed the first time it ran:
 the behaviour was written with the setting. Kept as a regression test.
+Likewise a test that work merged under a linked account, before the link was made, counts as
+the member's own when they claim under their main account: it passed first time, as the rules
+read the governance file at claim time. Kept.
 
 ---
 

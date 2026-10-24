@@ -412,6 +412,52 @@ describe("who may claim a task (decision 0007)", () => {
     ]);
   });
 
+  it("counts work merged under a linked account, before the link was made, as the member's own", async () => {
+    const refused: Refused[] = [];
+    const reviewTask: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "reviewer", module: "parser" }),
+      comments: async () => [{ member: "alice", text: "/claim" }],
+      refuseMember: async (refusal) => void refused.push(refusal),
+    };
+    // Merged as alice-2, recorded under that account: the log knows nothing of the link.
+    const codedAsAlice2: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          member: "alice-2",
+          work: {
+            fromRole: "coding",
+            module: "parser",
+            verdict: "pass",
+            impediments: [],
+            feedbackSignal: "feedback/FB-3.md",
+          },
+          decision: { tasks: [{ role: "reviewer", module: "parser" }] },
+          reason: { rule: "passed" },
+        } as LogEvent,
+      ],
+      append: async () => {},
+    };
+    const linkedSince: Members = {
+      governanceFile: async () => ({
+        members: { alice: { level: "established", linked: ["alice-2"] } },
+      }),
+    };
+    const clock = () => new Date("2026-10-23T09:00:00Z");
+    await onClaim(
+      "ledger",
+      { task: "12", member: "alice" },
+      reviewTask,
+      codedAsAlice2,
+      clock,
+      linkedSince,
+    );
+    expect(refused.map((refusal) => refusal.reason)).toEqual([
+      "Divlab did not give you this task: a member takes only one role in a module, and you have worked on it as Coding",
+    ]);
+  });
+
   it("gives a task whose lease has run out to a new claim, without waiting for the hourly check", async () => {
     const claimed: ClaimedTask[] = [];
     const heldByAlice: TaskBoard = {
