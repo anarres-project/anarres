@@ -7701,6 +7701,7 @@ function taskFromIssue(issue) {
   const researchFor = labelled(RESEARCH_FOR);
   const claimant = issue.assignees?.[0]?.login;
   const inputsAt = pinnedCommit(issue.body ?? "");
+  const claimed = issue.labels.some(({ name }) => name === CLAIMED);
   return {
     role,
     module,
@@ -7708,7 +7709,8 @@ function taskFromIssue(issue) {
     ...inputsAt === void 0 ? {} : { inputsAt },
     ...researchFor === void 0 ? {} : { researchFor },
     // Assigning is open to anyone who triages: only Divlab's claimed label makes a task held.
-    ...claimant !== void 0 && issue.labels.some(({ name }) => name === CLAIMED) ? { claimedBy: claimant } : {}
+    ...claimed ? { claimed: true } : {},
+    ...claimant !== void 0 && claimed ? { claimedBy: claimant } : {}
   };
 }
 var RESEARCH_FOR = "research-for:";

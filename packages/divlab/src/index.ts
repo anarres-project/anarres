@@ -96,7 +96,12 @@ export interface TaskBoard {
     project: string,
     task: string,
   ): Promise<
-    (Pick<PostedTask, "role" | "module" | "researchFor"> & { claimedBy?: string }) | undefined
+    | (Pick<PostedTask, "role" | "module" | "researchFor"> & {
+        claimedBy?: string;
+        /** Marked claimed by Divlab, whoever is assigned now. */
+        claimed?: true;
+      })
+    | undefined
   >;
   /** The task is done: nobody can claim it any more. */
   close(project: string, task: string): Promise<void>;
@@ -240,7 +245,9 @@ export async function onClaim(
     });
     return;
   }
-  let holder = task.claimedBy;
+  // Marked claimed with nobody assigned now: still the member Divlab gave it to, as its log says.
+  let holder =
+    task.claimedBy ?? (task.claimed ? leasesFrom(events).get(claim.task)?.member : undefined);
   // Claims count only if made since the task was last free: earlier ones were for another time.
   const freed = lastFreed(events, claim.task);
   let madeSinceFree = (at: string | undefined) =>

@@ -234,6 +234,15 @@ GREEN:    (1 passed)
 RED:      fails, naming it, when the source names a shared part there is not -> expected [Function] to throw
 GREEN:    (2 passed)
 
+A task Divlab marked claimed, with nobody assigned to it now, is no longer taken as free: it
+stays with the member Divlab's log says it gave it to, and a new claim is told it is taken. The
+board now says whether a task is marked claimed, apart from who is assigned.
+
+RED:      leaves a task marked claimed with the member Divlab gave it to, though nobody is assigned -> expected [ [ {alice} ], [] ] …
+GREEN:    (143 passed)
+RED:      reads a task marked claimed as claimed, though nobody is assigned -> expected { role, module } to deeply equal { …, claimed: true }
+GREEN:    (125 passed)
+
 ---
 
 ## 2026-10-24: A draft made ready, and the plugin's handover

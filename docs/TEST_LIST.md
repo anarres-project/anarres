@@ -219,7 +219,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         is left alone, not told the task is taken;
   - [x] a member claiming again a task they already hold is told they hold it: by their CLI,
         which reads Divlab's label and assignee (`claimOutcome`), so Divlab need not reply;
-  - [ ] a task labelled claimed with nobody assigned is not taken as ready.
+  - [x] a task labelled claimed with nobody assigned is not taken as ready: it stays with the
+        member Divlab's log says it gave it to, and a new claim is told it is taken;
+  - [ ] such a task's holder can still prepare and resume it (their CLI reads the assignee);
+        and a task labelled claimed that the log has no claim for.
 - [ ] When several members claim the same task at once, the first valid claim wins and the others
       are told the task is taken, whatever order GitHub delivers the claims in.
   - [x] Divlab gives a ready task to the earliest claim among its issue's comments, whichever

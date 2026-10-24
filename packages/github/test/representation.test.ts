@@ -176,6 +176,15 @@ describe("a task as a GitHub issue", () => {
     expect(taskFromIssue({ labels, assignees: [{ login: "carol" }] })?.claimedBy).toBeUndefined();
   });
 
+  it("reads a task Divlab marked claimed as claimed, though nobody is assigned it now", () => {
+    const labels = ["role:test", "module:parser", "state:claimed"].map((name) => ({ name }));
+    expect(taskFromIssue({ labels, assignees: [] })).toEqual({
+      role: "test",
+      module: "parser",
+      claimed: true,
+    });
+  });
+
   it("reads back the role and module a task is for", () => {
     const labels = ["role:reviewer", "module:parser", "state:ready"].map((name) => ({ name }));
     expect(taskFromIssue({ labels })).toMatchObject({ role: "reviewer", module: "parser" });

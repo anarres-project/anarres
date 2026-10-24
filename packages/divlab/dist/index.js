@@ -7765,7 +7765,7 @@ async function onClaim(project2, claim, board, log, clock, members) {
     });
     return;
   }
-  let holder = task.claimedBy;
+  let holder = task.claimedBy ?? (task.claimed ? leasesFrom(events).get(claim.task)?.member : void 0);
   const freed = lastFreed(events, claim.task);
   let madeSinceFree = (at) => freed === void 0 || at === void 0 || Date.parse(at) > Date.parse(freed);
   const lease = leasesFrom(events).get(claim.task);
@@ -8100,6 +8100,7 @@ function taskFromIssue(issue) {
   const researchFor = labelled(RESEARCH_FOR);
   const claimant = issue.assignees?.[0]?.login;
   const inputsAt = pinnedCommit(issue.body ?? "");
+  const claimed = issue.labels.some(({ name }) => name === CLAIMED);
   return {
     role,
     module,
@@ -8107,7 +8108,8 @@ function taskFromIssue(issue) {
     ...inputsAt === void 0 ? {} : { inputsAt },
     ...researchFor === void 0 ? {} : { researchFor },
     // Assigning is open to anyone who triages: only Divlab's claimed label makes a task held.
-    ...claimant !== void 0 && issue.labels.some(({ name }) => name === CLAIMED) ? { claimedBy: claimant } : {}
+    ...claimed ? { claimed: true } : {},
+    ...claimant !== void 0 && claimed ? { claimedBy: claimant } : {}
   };
 }
 var RESEARCH_FOR = "research-for:";

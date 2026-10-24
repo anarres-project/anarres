@@ -93,6 +93,22 @@ describe("acting on a claim", () => {
     ]);
   });
 
+  it("leaves a task marked claimed with the member Divlab gave it to, though nobody is assigned now", async () => {
+    const { claimed, refused, watched } = watching({ claimsBy: ["alice", "bob"] });
+    watched.task = async () => ({ ...TEST_TASK, claimed: true });
+    const given: LogEvent = {
+      project: "ledger",
+      decidedAt: "2026-10-23T08:00:00.000Z",
+      claimed: { task: "12", member: "alice", role: "test", module: "parser" },
+    };
+    const logged: EventLog = { read: async () => [given], append: async () => {} };
+    await onClaim("ledger", { task: "12", member: "bob" }, watched, logged, clock, everyoneTrusted);
+    expect([claimed, refused.map((r) => r.reason)]).toEqual([
+      [],
+      ["Divlab did not give you this task: it has already been claimed"],
+    ]);
+  });
+
   it("gives the task to the member who claimed it first, even when it hears a later claim first", async () => {
     const { claimed, watched } = watching({ claimsBy: ["alice", "bob"] });
     await claiming({ task: "12", member: "bob" }, watched);
