@@ -264,12 +264,26 @@ export class GitHubAdapter
     });
     if (status < 300) return String(data.number);
     if (status !== 422) throw new GitHubError("POST", where, status, data);
-    const open = await this.call<{ number: number }[]>(
+    const open = await this.call<{ number: number; draft?: boolean; node_id?: string }[]>(
       "GET",
       `${where}?head=${encodeURIComponent(head)}&state=open`,
     );
     const existing = open[0];
     if (existing === undefined) throw new GitHubError("POST", where, status, data);
+    // Finished work on what was a draft: marked ready, which only GitHub's GraphQL API can do.
+    if (!draft && existing.draft) {
+      // GraphQL answers 200 even when it refuses: its errors say so.
+      const { errors } = await this.call<{ errors?: { message: string }[] }>("POST", "graphql", {
+        query:
+          "mutation($id: ID!) { markPullRequestReadyForReview(input: { pullRequestId: $id }) { clientMutationId } }",
+        variables: { id: existing.node_id },
+      });
+      if (errors?.length) {
+        throw new Error(
+          `GitHub did not mark the draft ready: ${errors.map((e) => e.message).join("; ")}`,
+        );
+      }
+    }
     return String(existing.number);
   }
 

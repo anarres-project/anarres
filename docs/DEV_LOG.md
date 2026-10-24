@@ -58,6 +58,22 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-24: A draft made ready, and the plugin's handover
+
+- A member who submitted a draft and then the finished work got the same pull request back,
+  still a draft, which Divlab never merges. Submitting finished work to it now marks it ready,
+  through GitHub's GraphQL API, the only way; GraphQL answers 200 even when it refuses, so its
+  errors are checked and fail the submission out loud.
+- The skill now tells Claude how to hand over partial work when allowance runs low: the signal
+  with `status: partial` and a handover note, submitted, not as a draft (decision 0008).
+
+RED:      marks the member's draft ready on a final submit -> the last request was not the mutation
+GREEN:    (115 passed)
+RED:      fails, saying why, if GitHub will not mark the draft ready -> resolved '12'
+GREEN:    (116 passed)
+
+---
+
 ## 2026-10-24: The sandbox polls less
 
 - The full run for 2331549 was refused scenario by scenario: GitHub's hourly allowance had gone.

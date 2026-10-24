@@ -8106,6 +8106,17 @@ var GitHubAdapter = class {
     );
     const existing = open[0];
     if (existing === void 0) throw new GitHubError("POST", where, status, data);
+    if (!draft && existing.draft) {
+      const { errors } = await this.call("POST", "graphql", {
+        query: "mutation($id: ID!) { markPullRequestReadyForReview(input: { pullRequestId: $id }) { clientMutationId } }",
+        variables: { id: existing.node_id }
+      });
+      if (errors?.length) {
+        throw new Error(
+          `GitHub did not mark the draft ready: ${errors.map((e) => e.message).join("; ")}`
+        );
+      }
+    }
     return String(existing.number);
   }
   /** The member's claim: Divlab's claim comment on the task's issue, made as the member. */

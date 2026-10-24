@@ -122,4 +122,52 @@ describe("submitting through GitHub's API, with the member's own login", () => {
       await adapter.openPullRequest("ledger", "alice:anarres/task-4", "Coding work", false),
     ).toBe("12");
   });
+
+  it("marks the member's draft ready when they submit the finished work to it", async () => {
+    const seen: unknown[] = [];
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string, body?: unknown) => {
+        seen.push([method, path, body]);
+        if (method === "POST" && path === "repos/commons/ledger/pulls") {
+          return { status: 422, data: { message: "A pull request already exists" } as T };
+        }
+        if (path === "repos/commons/ledger/pulls?head=alice%3Aanarres%2Ftask-4&state=open") {
+          return { status: 200, data: [{ number: 12, draft: true, node_id: "PR_kw12" }] as T };
+        }
+        if (method === "POST" && path === "graphql")
+          return { status: 200, data: { data: {} } as T };
+        return { status: 404, data: {} as T };
+      },
+    });
+    await adapter.openPullRequest("ledger", "alice:anarres/task-4", "Coding work", false);
+    expect(seen.at(-1)).toEqual([
+      "POST",
+      "graphql",
+      {
+        query:
+          "mutation($id: ID!) { markPullRequestReadyForReview(input: { pullRequestId: $id }) { clientMutationId } }",
+        variables: { id: "PR_kw12" },
+      },
+    ]);
+  });
+
+  it("fails, saying why, if GitHub will not mark the draft ready", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) =>
+        method === "POST" && path === "repos/commons/ledger/pulls"
+          ? { status: 422, data: { message: "A pull request already exists" } as T }
+          : path.includes("pulls?head=")
+            ? { status: 200, data: [{ number: 12, draft: true, node_id: "PR_kw12" }] as T }
+            : path === "graphql"
+              ? { status: 200, data: { errors: [{ message: "Resource not accessible" }] } as T }
+              : { status: 404, data: {} as T },
+    });
+    await expect(
+      adapter.openPullRequest("ledger", "alice:anarres/task-4", "Coding work", false),
+    ).rejects.toThrow("Resource not accessible");
+  });
 });

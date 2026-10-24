@@ -489,8 +489,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] a continuation reads its role's own place too: `prepare` fetches it and the hook allows
         it (core's rule, under the same path check: no climbing out);
   - [x] the sandbox shows it (84 requests);
-  - [ ] the plugin's handover: writing the partial signal and handover note when allowance runs
-        low, and opening the pull request.
+  - [x] the plugin's handover: the skill tells Claude to write the signal with `status: partial`
+        and a handover note when allowance runs low, and to submit it, not as a draft;
 - [ ] The plugin submits a member's work (concept §8, step 6): writes the feedback signal naming
       the task, commits only the role's write place and the signal to a branch of the member's
       fork, and opens the pull request; a draft early on counts as activity on the lease.
@@ -502,8 +502,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         a draft; `anarres submit project#number [--draft]` takes what changed in the task's
         folder; the skill may run it; both drivers submit through it in a new scenario;
   - [x] the sandbox shows it (75 requests);
-  - [ ] a draft submitted, then the work finished: the same pull request marked ready (GitHub's
-        API does that only through GraphQL).
+  - [x] a draft submitted, then the work finished: the same pull request is marked ready (through
+        GitHub's GraphQL API, the only way), failing out loud if GitHub refuses; Divlab's workflow
+        runs when a draft is marked ready.
 - [ ] `/anarres:status` and `/anarres:resume` (concept §10): the member's tasks and leases, and
       continuing a held task in a new session.
 
