@@ -321,7 +321,7 @@ export async function onLeaseCheck(
  * Each task's latest claim is the one that holds it now, if any does, and its lease runs from
  * the last activity on the task by that claim's member: the claim, or work since.
  */
-function leasesFrom(
+export function leasesFrom(
   events: readonly LogEvent[],
 ): Map<string, { task: string; member: string; since: string }> {
   const leases = new Map<string, { task: string; member: string; since: string }>();

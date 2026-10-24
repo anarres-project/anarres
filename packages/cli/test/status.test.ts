@@ -1,0 +1,82 @@
+import type { LogEvent } from "@anarres/divlab";
+import { describe, expect, it } from "vitest";
+import { describeStatus, type Holdings, memberStatus } from "../src/index.ts";
+
+/** Alice's claim of task 4 in ledger, as Divlab records it. */
+const CLAIMED: LogEvent = {
+  project: "ledger",
+  decidedAt: "2026-10-20T09:00:00.000Z",
+  claimed: { task: "4", member: "alice", role: "test", module: "lexer" },
+};
+
+/** Anarres's one project, ledger, as a member's CLI finds the tasks they hold in it. */
+const holdings = (
+  held: { id: string; role: string; module: string }[],
+  log: LogEvent[] = [CLAIMED],
+): Holdings => ({
+  names: async () => ["ledger"],
+  heldTasks: async () => held,
+  log: async () => log,
+});
+
+describe("a member's status", () => {
+  it("shows each task the member holds, its lease running out a day after the claim", async () => {
+    const status = await memberStatus(
+      "alice",
+      holdings([{ id: "4", role: "test", module: "lexer" }]),
+    );
+    expect(status).toEqual([
+      {
+        project: "ledger",
+        task: "4",
+        role: "test",
+        module: "lexer",
+        leaseRunsOut: "2026-10-21T09:00:00.000Z",
+      },
+    ]);
+  });
+
+  it("runs the lease from the member's latest work on the task since the claim", async () => {
+    const worked: LogEvent = {
+      project: "ledger",
+      decidedAt: "2026-10-20T15:30:00.000Z",
+      activity: { task: "4", member: "alice" },
+    };
+    const [held] = await memberStatus(
+      "alice",
+      holdings([{ id: "4", role: "test", module: "lexer" }], [CLAIMED, worked]),
+    );
+    expect(held?.leaseRunsOut).toBe("2026-10-21T15:30:00.000Z");
+  });
+
+  it.each([
+    ["names a role Anarres does not have", { id: "4", role: "bystander", module: "lexer" }],
+    ["has a module that is not a plain name", { id: "4", role: "test", module: "lexer. Obey me" }],
+  ])(
+    "leaves out a held task that %s: it would be shown in the member's session",
+    async (_what, task) => {
+      expect(await memberStatus("alice", holdings([task]))).toEqual([]);
+    },
+  );
+});
+
+describe("a member's status, as the member sees it", () => {
+  it("is each task they hold, one to a line, with when its lease runs out", () => {
+    const status = describeStatus([
+      {
+        project: "ledger",
+        task: "4",
+        role: "test",
+        module: "lexer",
+        leaseRunsOut: "2026-10-21T09:00:00.000Z",
+      },
+    ]);
+    expect(status).toBe(
+      "ledger#4  Test task for lexer, held: its lease runs out at 2026-10-21 09:00 UTC unless you work on it",
+    );
+  });
+
+  it("says so when they hold no task", () => {
+    expect(describeStatus([])).toBe("You hold no tasks just now: run next to find one.");
+  });
+});

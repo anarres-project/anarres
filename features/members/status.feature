@@ -1,0 +1,11 @@
+Feature: A member sees where their work stands
+  So that a member never loses track of a task they hold, nor lets its lease run out unawares,
+  asking for their status shows each task they hold and when its lease runs out.
+
+  @sandbox-wip
+  Scenario: A member is shown the tasks they hold, and when each lease runs out
+    Given a project with a module "parser"
+    And a member's Specification work on "parser" was accepted with a pass verdict
+    And Alice has claimed the Test task for "parser"
+    When Alice asks for the status of their work
+    Then Alice is shown that they hold the Test task for "parser", with when its lease runs out

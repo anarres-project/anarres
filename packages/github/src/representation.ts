@@ -29,7 +29,7 @@ export const READY = "state:ready";
 /** The label of a task that continues partial work (decision 0008). */
 const CONTINUATION = "continuation";
 /** The label of a task a member holds. */
-const CLAIMED = "state:claimed";
+export const CLAIMED = "state:claimed";
 
 /** What GitHub needs to open an issue. */
 export type NewIssue = { title: string; labels: string[]; body: string };

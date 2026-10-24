@@ -433,6 +433,24 @@ export class Anarres {
     );
   }
 
+  /** What each member was shown when they last asked for their status, by member. */
+  private readonly statuses = new Map<string, (Work & { leaseRunsOut: string })[]>();
+
+  async memberAsksForStatus(member: string) {
+    this.statuses.set(member, await this.driver.heldTasks(this.member(member)));
+  }
+
+  async memberIsShownHeld(member: string, task: Work) {
+    const held = this.statuses.get(member) ?? [];
+    const shown = held.find(
+      (t) => t.role === task.role && t.module === this.aliases.of(task.module),
+    );
+    assert.ok(
+      shown && !Number.isNaN(Date.parse(shown.leaseRunsOut)),
+      `expected ${member} to be shown the ${task.role} task for ${task.module} as held, with when its lease runs out; shown ${JSON.stringify(held)}`,
+    );
+  }
+
   async memberIsToldTaskIsTaken(member: string) {
     const told = await this.driver.claimRefusals(this.project);
     assert.ok(

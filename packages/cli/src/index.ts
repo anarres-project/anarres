@@ -1,6 +1,7 @@
 import {
   isPlainName,
   isRole,
+  LEASE_HOURS,
   mayRead,
   outsideScope,
   ROLE_NAMES,
@@ -8,7 +9,7 @@ import {
   readFeedbackSignal,
   readScope,
 } from "@anarres/core";
-import { eligibility, type LogEvent } from "@anarres/divlab";
+import { eligibility, type LogEvent, leasesFrom } from "@anarres/divlab";
 
 /** Anarres's projects, as a member's CLI reads them from GitHub with the member's own login. */
 export interface Projects {
@@ -309,4 +310,53 @@ export async function submit(
     options.draft,
   );
   return `Submitted ${task.project}#${task.task} as pull request ${number}: Divlab checks it and answers there.`;
+}
+
+/** Anarres's projects, as a member's CLI reads the tasks a member holds. */
+export interface Holdings {
+  names(): Promise<string[]>;
+  /** The project's tasks the member holds, as Divlab has marked them. */
+  heldTasks(
+    project: string,
+    member: string,
+  ): Promise<{ id: string; role: string; module: string }[]>;
+  /** The project's event log: when each claim was made, and the work since. */
+  log(project: string): Promise<LogEvent[]>;
+}
+
+/** The tasks a member holds, across Anarres's projects, and when each lease runs out. */
+export async function memberStatus(
+  member: string,
+  holdings: Holdings,
+): Promise<(Offer & { leaseRunsOut: string })[]> {
+  const held: (Offer & { leaseRunsOut: string })[] = [];
+  for (const project of await holdings.names()) {
+    const events = await holdings.log(project);
+    for (const task of await holdings.heldTasks(project, member)) {
+      // Shown in the member's session: only plain names, as Divlab writes them.
+      if (!isRole(task.role) || !isPlainName(task.module)) continue;
+      const lease = leasesFrom(events).get(task.id);
+      held.push({
+        project,
+        task: task.id,
+        role: task.role,
+        module: task.module,
+        leaseRunsOut: new Date(
+          Date.parse(lease?.since as string) + LEASE_HOURS * 60 * 60 * 1000,
+        ).toISOString(),
+      });
+    }
+  }
+  return held;
+}
+
+/** A member's status as they see it. */
+export function describeStatus(held: readonly (Offer & { leaseRunsOut: string })[]): string {
+  if (held.length === 0) return "You hold no tasks just now: run next to find one.";
+  return held
+    .map(
+      (task) =>
+        `${task.project}#${task.task}  ${ROLE_NAMES[task.role]} task for ${task.module}, held: its lease runs out at ${task.leaseRunsOut.slice(0, 10)} ${task.leaseRunsOut.slice(11, 16)} UTC unless you work on it`,
+    )
+    .join("\n");
 }

@@ -505,8 +505,16 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] a draft submitted, then the work finished: the same pull request is marked ready (through
         GitHub's GraphQL API, the only way), failing out loud if GitHub refuses; Divlab's workflow
         runs when a draft is marked ready.
-- [ ] `/anarres:status` and `/anarres:resume` (concept §10): the member's tasks and leases, and
-      continuing a held task in a new session.
+- [ ] `/anarres:status` (concept §10): where the member's work stands.
+  - [x] each task the member holds, across Anarres's projects, and when its lease runs out (a day
+        from the claim or the member's latest work since, by Divlab's own lease rule); only plain
+        names shown; `anarres status`, and the `/anarres:status` skill that may run only it; both
+        drivers ask through the CLI;
+  - [ ] the sandbox shows it (the scenario is `@sandbox-wip`);
+  - [ ] a held task whose claim the log does not record: say its lease has run out and Divlab
+        frees it at its next check, as Divlab reads a time it cannot read (today it throws);
+  - [ ] the member's open pull requests, and their contribution history (concept §10).
+- [ ] `/anarres:resume` (concept §10): continuing a held task in a new session.
 
 ## Unsorted
 

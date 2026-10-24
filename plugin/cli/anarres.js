@@ -7648,6 +7648,19 @@ function eligibility(governance, events) {
     trustLevelOf(governance, memberOf(account))
   );
 }
+function leasesFrom(events) {
+  const leases = /* @__PURE__ */ new Map();
+  for (const event of events) {
+    if ("claimed" in event) {
+      leases.set(event.claimed.task, { ...event.claimed, since: event.decidedAt });
+    }
+    if ("activity" in event) {
+      const lease = leases.get(event.activity.task);
+      if (lease?.member === event.activity.member) lease.since = event.decidedAt;
+    }
+  }
+  return leases;
+}
 var routingDecisions = (log) => log.filter((event) => "work" in event);
 
 // ../github/src/representation.ts
@@ -8046,6 +8059,16 @@ var GitHubAdapter = class {
       return task ? [{ id: String(issue.number), role: task.role, module: task.module }] : [];
     });
   }
+  async heldTasks(project, member) {
+    const issues = await this.call(
+      "GET",
+      `${this.repo(project)}/issues?labels=${encodeURIComponent(CLAIMED)}&assignee=${encodeURIComponent(member)}&state=open&per_page=100`
+    );
+    return issues.flatMap((issue) => {
+      const task = isTask(issue) ? taskFromIssue(issue) : void 0;
+      return task?.claimedBy === member ? [{ id: String(issue.number), role: task.role, module: task.module }] : [];
+    });
+  }
   /**
    * The member's fork of the project: GitHub makes one, or gives the one they have. Forks are
    * made in the background, so this waits, a minute at most, until the fork has its main.
@@ -8130,9 +8153,14 @@ var GitHubAdapter = class {
   }
   /** The organisation's projects with a task ready to claim, from one search of its issues. */
   async names() {
-    const query = encodeURIComponent(
-      `org:${this.options.owner} label:state:ready is:open is:issue`
-    );
+    return this.projectsWithIssues(`label:${READY}`);
+  }
+  async namesHeldBy(member) {
+    return this.projectsWithIssues(`label:${CLAIMED} assignee:${member}`);
+  }
+  /** The organisation's repositories with an open issue matching `matching`, in one search. */
+  async projectsWithIssues(matching) {
+    const query = encodeURIComponent(`org:${this.options.owner} ${matching} is:open is:issue`);
     const { items } = await this.call(
       "GET",
       `search/issues?q=${query}&per_page=100`
@@ -8571,6 +8599,32 @@ async function submit(task, changed, options, github) {
   );
   return `Submitted ${task.project}#${task.task} as pull request ${number}: Divlab checks it and answers there.`;
 }
+async function memberStatus(member, holdings) {
+  const held = [];
+  for (const project of await holdings.names()) {
+    const events = await holdings.log(project);
+    for (const task of await holdings.heldTasks(project, member)) {
+      if (!isRole(task.role) || !isPlainName(task.module)) continue;
+      const lease = leasesFrom(events).get(task.id);
+      held.push({
+        project,
+        task: task.id,
+        role: task.role,
+        module: task.module,
+        leaseRunsOut: new Date(
+          Date.parse(lease?.since) + LEASE_HOURS * 60 * 60 * 1e3
+        ).toISOString()
+      });
+    }
+  }
+  return held;
+}
+function describeStatus(held) {
+  if (held.length === 0) return "You hold no tasks just now: run next to find one.";
+  return held.map(
+    (task) => `${task.project}#${task.task}  ${ROLE_NAMES[task.role]} task for ${task.module}, held: its lease runs out at ${task.leaseRunsOut.slice(0, 10)} ${task.leaseRunsOut.slice(11, 16)} UTC unless you work on it`
+  ).join("\n");
+}
 
 // src/main.ts
 function taskFolderOf(cwd) {
@@ -8590,9 +8644,9 @@ if (command === "hook") {
   process.exit(0);
 }
 var TAKES_A_TASK = ["claim", "prepare", "submit"];
-if (command !== "next" && !(command && TAKES_A_TASK.includes(command) && named)) {
+if (command !== "next" && command !== "status" && !(command && TAKES_A_TASK.includes(command) && named)) {
   console.error(
-    "Usage: anarres next | anarres claim|prepare|submit project#number (submit: --draft too)"
+    "Usage: anarres next | anarres status | anarres claim|prepare|submit project#number (submit: --draft too)"
   );
   process.exit(2);
 }
@@ -8644,6 +8698,19 @@ try {
       JSON.stringify({ role: held?.role, module: held?.module, continuation: held?.continuation })
     );
     console.log(`Fetched into ${into}, as at ${plan.commit}: ${plan.paths.join(", ")}`);
+    process.exit(0);
+  }
+  if (command === "status") {
+    const member = await github.account();
+    console.log(
+      describeStatus(
+        await memberStatus(member, {
+          names: () => github.namesHeldBy(member),
+          heldTasks: (project, member2) => github.heldTasks(project, member2),
+          log: (project) => github.read(project)
+        })
+      )
+    );
     process.exit(0);
   }
   if (command === "submit" && named) {

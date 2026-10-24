@@ -8,8 +8,10 @@ import {
   claim,
   claimOutcome,
   describeOffers,
+  describeStatus,
   gitSteps,
   hookAnswer,
+  memberStatus,
   preparation,
   submit,
   TASK_RECORD,
@@ -44,9 +46,13 @@ if (command === "hook") {
   process.exit(0);
 }
 const TAKES_A_TASK = ["claim", "prepare", "submit"];
-if (command !== "next" && !(command && TAKES_A_TASK.includes(command) && named)) {
+if (
+  command !== "next" &&
+  command !== "status" &&
+  !(command && TAKES_A_TASK.includes(command) && named)
+) {
   console.error(
-    "Usage: anarres next | anarres claim|prepare|submit project#number (submit: --draft too)",
+    "Usage: anarres next | anarres status | anarres claim|prepare|submit project#number (submit: --draft too)",
   );
   process.exit(2);
 }
@@ -103,6 +109,19 @@ try {
       JSON.stringify({ role: held?.role, module: held?.module, continuation: held?.continuation }),
     );
     console.log(`Fetched into ${into}, as at ${plan.commit}: ${plan.paths.join(", ")}`);
+    process.exit(0);
+  }
+  if (command === "status") {
+    const member = await github.account();
+    console.log(
+      describeStatus(
+        await memberStatus(member, {
+          names: () => github.namesHeldBy(member),
+          heldTasks: (project, member) => github.heldTasks(project, member),
+          log: (project) => github.read(project),
+        }),
+      ),
+    );
     process.exit(0);
   }
   if (command === "submit" && named) {

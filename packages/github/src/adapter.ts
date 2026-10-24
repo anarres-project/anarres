@@ -16,6 +16,7 @@ import type {
 } from "@anarres/divlab";
 import { CLAIM } from "@anarres/divlab";
 import {
+  CLAIMED,
   commentForLeaseRanOut,
   commentForRefusal,
   commentForRefused,
@@ -201,6 +202,23 @@ export class GitHubAdapter
     });
   }
 
+  async heldTasks(
+    project: string,
+    member: string,
+  ): Promise<{ id: string; role: string; module: string }[]> {
+    const issues = await this.call<(ListedIssue & { number: number })[]>(
+      "GET",
+      `${this.repo(project)}/issues?labels=${encodeURIComponent(CLAIMED)}&assignee=${encodeURIComponent(member)}&state=open&per_page=100`,
+    );
+    return issues.flatMap((issue) => {
+      const task = isTask(issue) ? taskFromIssue(issue) : undefined;
+      // Held as Divlab reads it: the member its claimed task names, not any assignee.
+      return task?.claimedBy === member
+        ? [{ id: String(issue.number), role: task.role, module: task.module }]
+        : [];
+    });
+  }
+
   /**
    * The member's fork of the project: GitHub makes one, or gives the one they have. Forks are
    * made in the background, so this waits, a minute at most, until the fork has its main.
@@ -300,9 +318,16 @@ export class GitHubAdapter
 
   /** The organisation's projects with a task ready to claim, from one search of its issues. */
   async names(): Promise<string[]> {
-    const query = encodeURIComponent(
-      `org:${this.options.owner} label:state:ready is:open is:issue`,
-    );
+    return this.projectsWithIssues(`label:${READY}`);
+  }
+
+  async namesHeldBy(member: string): Promise<string[]> {
+    return this.projectsWithIssues(`label:${CLAIMED} assignee:${member}`);
+  }
+
+  /** The organisation's repositories with an open issue matching `matching`, in one search. */
+  private async projectsWithIssues(matching: string): Promise<string[]> {
+    const query = encodeURIComponent(`org:${this.options.owner} ${matching} is:open is:issue`);
     const { items } = await this.call<{ items: { repository_url: string }[] }>(
       "GET",
       `search/issues?q=${query}&per_page=100`,

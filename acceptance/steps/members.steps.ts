@@ -25,3 +25,14 @@ When(
     return this.anarres.memberSubmitsThroughPlugin(member, { role, module, verdict });
   },
 );
+
+When("{word} asks for the status of their work", function (this: AnarresWorld, member: string) {
+  return this.anarres.memberAsksForStatus(member);
+});
+
+Then(
+  "{word} is shown that they hold the {role} task for {string}, with when its lease runs out",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.memberIsShownHeld(member, { role, module });
+  },
+);

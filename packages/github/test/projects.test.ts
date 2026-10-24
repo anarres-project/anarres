@@ -26,6 +26,27 @@ describe("the projects with work ready", () => {
   });
 });
 
+describe("the projects where a member holds a task", () => {
+  it("are the organisation's repositories with an open task claimed for them, found in one search", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path ===
+            "search/issues?q=org%3Acommons%20label%3Astate%3Aclaimed%20assignee%3Aalice%20is%3Aopen%20is%3Aissue&per_page=100"
+        ) {
+          const items = [{ repository_url: "https://api.github.com/repos/commons/ledger" }];
+          return { status: 200, data: { items } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.namesHeldBy("alice")).toEqual(["ledger"]);
+  });
+});
+
 describe("a project's ready tasks", () => {
   it("are its open issues labelled ready, each with the role and module it is for", async () => {
     const adapter = new GitHubAdapter({
@@ -56,6 +77,55 @@ describe("a project's ready tasks", () => {
     expect(await adapter.readyTasks("ledger")).toEqual([
       { id: "4", role: "test", module: "lexer" },
     ]);
+  });
+});
+
+describe("the tasks a member holds in a project", () => {
+  it("are its open issues Divlab has marked claimed for the member, each with its role and module", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path ===
+            "repos/commons/ledger/issues?labels=state%3Aclaimed&assignee=alice&state=open&per_page=100"
+        ) {
+          const issues = [
+            {
+              number: 4,
+              state: "open",
+              labels: ["role:test", "module:lexer", "state:claimed"].map((name) => ({ name })),
+              assignees: [{ login: "alice" }],
+            },
+          ];
+          return { status: 200, data: issues as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.heldTasks("ledger", "alice")).toEqual([
+      { id: "4", role: "test", module: "lexer" },
+    ]);
+  });
+
+  it("leaves out a task someone else holds, though the member is assigned to it too", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>() => {
+        const issues = [
+          {
+            number: 4,
+            state: "open",
+            labels: ["role:test", "module:lexer", "state:claimed"].map((name) => ({ name })),
+            assignees: [{ login: "bob" }, { login: "alice" }],
+          },
+        ];
+        return { status: 200, data: issues as T };
+      },
+    });
+    expect(await adapter.heldTasks("ledger", "alice")).toEqual([]);
   });
 });
 

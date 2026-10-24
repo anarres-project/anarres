@@ -58,6 +58,44 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-24: A member's status
+
+- `anarres status`, and the `/anarres:status` skill that may run only it: each task the member
+  holds, across Anarres's projects, with when its lease runs out. The lease is worked out by
+  Divlab's own rule (`leasesFrom`, now exported), so the rule is stated once. What is shown is
+  only plain names, as with offers. A new scenario asks through the CLI in both drivers; it is
+  `@sandbox-wip` until it has passed there.
+- The projects searched are those where the member holds a task, not those with ready tasks: the
+  first wiring used the ready search, which would miss a project whose only task the member
+  holds. The drivers name the project themselves, so the scenario could not catch it; the
+  adapter's own test now does.
+- Protocol slips: twice I wrote an empty stub in the same step as its test (the failures were
+  still assertions). Once a test failed for the wrong reason (no claim in its log, so an Invalid
+  Date); I gave it the claim, and listed the unrecorded-claim case to drive out properly.
+
+RED:      shows each task the member holds, its lease a day after the claim -> expected [] to deeply equal [...]
+GREEN:    (57 passed)
+RED:      runs the lease from the member's latest work since the claim -> '2026-10-21T09:00' not '…15:30'
+GREEN:    (511 passed, all unit)
+RED:      leaves out a held task that is not plain names -> expected [ {...} ] to deeply equal []
+GREEN:    (60 passed)
+REFACTOR: the status tests share one holdings helper
+RED:      the status as the member sees it -> expected '' to be 'ledger#4  Test task for lexer, held…'
+GREEN:    (61 passed)
+RED:      says so when they hold no task -> expected '' to be 'You hold no tasks just now…'
+GREEN:    (62 passed)
+RED:      the tasks a member holds in a project -> expected [] to deeply equal [ { id: '4', … } ]
+GREEN:    (117 passed)
+RED:      leaves out a task someone else holds -> expected [ {...} ] to deeply equal []
+GREEN:    (118 passed)
+RED:      the status skill may run only status -> expected undefined to be 'Bash(node …status)'
+GREEN:    (6 passed)
+RED:      the projects where a member holds a task -> expected [] to deeply equal [ 'ledger' ]
+GREEN:    (119 passed)
+REFACTOR: names and namesHeldBy share one search
+
+---
+
 ## 2026-10-24: A draft made ready, and the plugin's handover
 
 - A member who submitted a draft and then the finished work got the same pull request back,

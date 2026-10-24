@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { askForWork, claim, submit } from "@anarres/cli";
+import { askForWork, claim, memberStatus, submit } from "@anarres/cli";
 import {
   type LogEvent,
   type RoutingEvent,
@@ -724,6 +724,24 @@ export class SandboxDriver implements Driver {
       governanceFile: () => asMember.governanceFile(),
     });
     return offers.map(({ role, module }) => ({ role: roleNameOf(role), module }));
+  }
+
+  /** The member asks for their status through the CLI, reading GitHub with their own login. */
+  async heldTasks(
+    member: string,
+  ): Promise<{ role: string; module: string; leaseRunsOut: string }[]> {
+    const account = await this.playAs(member);
+    const asMember = this.asMember(account);
+    const held = await memberStatus(await loginOf(account), {
+      names: async () => (this.projectOfScenario ? [this.projectOfScenario] : []),
+      heldTasks: (project, holder) => asMember.heldTasks(project, holder),
+      log: (project) => asMember.read(project),
+    });
+    return held.map(({ role, module, leaseRunsOut }) => ({
+      role: roleNameOf(role),
+      module,
+      leaseRunsOut,
+    }));
   }
 
   async timePasses(): Promise<void> {

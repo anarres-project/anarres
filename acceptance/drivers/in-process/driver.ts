@@ -1,4 +1,4 @@
-import { askForWork, claim, submit } from "@anarres/cli";
+import { askForWork, claim, memberStatus, submit } from "@anarres/cli";
 import {
   CLAIM,
   checkMain,
@@ -279,6 +279,26 @@ export class InProcessDriver implements Driver {
       governanceFile: () => this.github.governanceFile(),
     });
     return offers.map(({ role, module }) => ({ role: roleName(role), module }));
+  }
+
+  /** The member asks for their status through the CLI their plugin calls, reading the fake GitHub. */
+  async heldTasks(
+    member: string,
+  ): Promise<{ role: string; module: string; leaseRunsOut: string }[]> {
+    const held = await memberStatus(member, {
+      names: async () => [...this.github.repositories.keys()],
+      heldTasks: async (project, holder) =>
+        this.github
+          .claimedTasks(project)
+          .filter((task) => task.claimedBy === holder)
+          .map(({ id, role, module }) => ({ id, role, module })),
+      log: (project) => this.github.read(project),
+    });
+    return held.map(({ role, module, leaseRunsOut }) => ({
+      role: roleName(role),
+      module,
+      leaseRunsOut,
+    }));
   }
 
   async timePasses(hours: number): Promise<void> {
