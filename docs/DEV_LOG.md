@@ -243,6 +243,12 @@ GREEN:    (143 passed)
 RED:      reads a task marked claimed as claimed, though nobody is assigned -> expected { role, module } to deeply equal { …, claimed: true }
 GREEN:    (125 passed)
 
+A claim's or release's commenter must be named as GitHub names a member's account before Divlab
+uses the name: letters, digits and single hyphens, at most 39. A bot's is refused too.
+
+RED:      refuses a claim whose commenter's name is not an account's (three rows) -> expected [Function] to throw
+GREEN:    (146 passed)
+
 ---
 
 ## 2026-10-24: A draft made ready, and the plugin's handover

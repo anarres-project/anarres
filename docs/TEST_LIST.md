@@ -199,7 +199,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         (found while building the claim check: before, any issue named was closed);
   - [ ] an acceptance scenario for each of these, once the harness can name a coordinator's alert
         or a finished task as the thing claimed;
-  - [ ] the claimant's name is checked as a GitHub account name before Divlab uses it;
+  - [x] the claimant's name is checked as a GitHub account name before Divlab uses it (claims
+        and releases): anything else, a bot's included, is refused;
   - [ ] comments that are not claims cost Divlab as little as possible and do not hold up its
         other runs (today each one starts a short run that does nothing; filtering earlier needs
         a check on the event in the workflow, which the template tests forbid, so raise it with

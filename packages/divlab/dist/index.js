@@ -7679,6 +7679,7 @@ var isObject = (value) => typeof value === "object" && value !== null;
 
 // src/event.ts
 var isClaim = (text) => text === CLAIM;
+var ACCOUNT_NAME = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/;
 var CLAIM = "/claim";
 var isRelease = (text) => text === "/release";
 var numberedByGitHub = (number) => Number.isSafeInteger(number) && number >= 1;
@@ -7701,6 +7702,11 @@ function whatToActOn(name, event) {
     }
     const member = comment.user?.login;
     if (typeof member !== "string") throw new Error("The comment event does not say who commented");
+    if (!ACCOUNT_NAME.test(member)) {
+      throw new Error(
+        "The comment event's commenter is not named as GitHub names a member's account"
+      );
+    }
     const asked = { task: String(issue.number), member };
     return command === "claim" ? { claim: asked } : { release: asked };
   }

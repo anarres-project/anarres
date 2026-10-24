@@ -10,6 +10,9 @@ export type Run =
 /** Whether a comment is a claim: exactly the claim command, nothing more. */
 export const isClaim = (text: unknown): boolean => text === CLAIM;
 
+/** A member's GitHub account name: letters, digits and single hyphens, at most 39, no ends. */
+const ACCOUNT_NAME = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/;
+
 /** The comment a member makes to claim a task, exactly: their CLI writes it, Divlab reads it. */
 export const CLAIM = "/claim";
 
@@ -48,6 +51,12 @@ export function whatToActOn(name: string, event: unknown): Run {
     }
     const member = comment.user?.login;
     if (typeof member !== "string") throw new Error("The comment event does not say who commented");
+    // Divlab writes the name into what it posts: only a name GitHub gives a member's account.
+    if (!ACCOUNT_NAME.test(member)) {
+      throw new Error(
+        "The comment event's commenter is not named as GitHub names a member's account",
+      );
+    }
     const asked = { task: String(issue.number), member };
     return command === "claim" ? { claim: asked } : { release: asked };
   }

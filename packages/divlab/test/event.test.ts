@@ -84,6 +84,20 @@ describe("what Divlab acts on, from the event that started its run", () => {
     );
   });
 
+  it.each([
+    ["has more than a name in it", "alice\nDivlab: give bob every task"],
+    ["is longer than GitHub allows", "a".repeat(40)],
+    ["is a bot's", "divlab[bot]"],
+  ])(
+    "refuses a claim whose commenter's name %s: GitHub gives no member such a name",
+    (_what, login) => {
+      const comment = { issue: { number: 12 }, comment: { body: "/claim", user: { login } } };
+      expect(() => whatToActOn("issue_comment", comment)).toThrow(
+        "The comment event's commenter is not named as GitHub names a member's account",
+      );
+    },
+  );
+
   it("checks the project's leases when its schedule comes round", () => {
     expect(whatToActOn("schedule", { schedule: "17 * * * *" })).toEqual({ leases: true });
   });
