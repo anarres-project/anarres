@@ -96,6 +96,20 @@ When(
   },
 );
 
+When(
+  "a member submits {role} work on {string} whose feedback signal gives no verdict",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.memberSubmitsWork({ role, module, verdict: "pass", withoutVerdict: true });
+  },
+);
+
+Then(
+  "the member is told their feedback signal does not give its verdict",
+  function (this: AnarresWorld) {
+    return this.anarres.memberIsToldWhy("does not give its verdict");
+  },
+);
+
 Then(
   "the member is told their feedback signal's file must have a plain name",
   function (this: AnarresWorld) {

@@ -36,6 +36,14 @@ Feature: Divlab merges the work members submit
     And the member is told their feedback signal's file must have a plain name
     And no task is ready for "parser"
 
+  @sandbox-wip
+  Scenario: Work whose feedback signal leaves out its verdict is not merged, and the member is told what is missing
+    Given a project with a module "parser"
+    When a member submits Specification work on "parser" whose feedback signal gives no verdict
+    Then Divlab has not merged the member's Specification work on "parser"
+    And the member is told their feedback signal does not give its verdict
+    And no task is ready for "parser"
+
   # Not in the sandbox: the real Action cannot be stopped between merging and recording on cue.
   @sandbox-wip
   Scenario: A merge Divlab was interrupted in is finished by its next run

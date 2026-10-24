@@ -12,6 +12,8 @@ export type AcceptedWork = {
   moduleNotPlain?: boolean;
   /** The member's feedback signal file is named in more than a plain name. */
   fileNameNotPlain?: boolean;
+  /** The member's feedback signal leaves out its verdict. */
+  withoutVerdict?: boolean;
   /** The member's work also changes the module's tests. */
   changesTests?: boolean;
   /** The member hands over partial work, having run out of allowance. */

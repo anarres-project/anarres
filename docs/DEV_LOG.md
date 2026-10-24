@@ -249,6 +249,11 @@ uses the name: letters, digits and single hyphens, at most 39. A bot's is refuse
 RED:      refuses a claim whose commenter's name is not an account's (three rows) -> expected [Function] to throw
 GREEN:    (146 passed)
 
+A scenario for work whose feedback signal leaves out its verdict passed the first time it ran:
+Divlab already refuses it, naming what is missing (core's reading of the signal, unit-tested
+before). Kept as a regression test of what the member is told; `@sandbox-wip` until it has run
+there.
+
 ---
 
 ## 2026-10-24: A draft made ready, and the plugin's handover

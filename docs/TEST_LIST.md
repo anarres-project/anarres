@@ -413,7 +413,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       a path with an empty, `.` or `..` part, or a backslash, is outside every scope (in-process);
   - [x] the sandbox shows it;
   - [ ] the read scopes, for the plugin's sparse checkout and hooks (section 5).
-- [ ] Work without a valid feedback signal is rejected, saying what is missing.
+- [x] Work without a valid feedback signal is rejected, saying what is missing: no signal, names
+      that are not plain, and (a scenario passing first time, kept as a regression test) a
+      signal that leaves out its verdict;
+  - [ ] the sandbox shows the missing-verdict scenario (`@sandbox-wip`).
 - [ ] Work for a task the member has not claimed is rejected.
 - [x] A feedback signal whose role, module, verdict or impediment types are not plain names
       (lower-case letters and digits joined by single hyphens or underscores, at most 40 long) is

@@ -155,6 +155,7 @@ export class Anarres {
       withoutFeedbackSignal?: boolean;
       moduleNotPlain?: boolean;
       fileNameNotPlain?: boolean;
+      withoutVerdict?: boolean;
       changesTests?: boolean;
       partial?: boolean;
     },
