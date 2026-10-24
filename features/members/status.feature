@@ -17,7 +17,6 @@ Feature: A member sees where their work stands
     When Alice asks for the status of their work
     Then Alice is shown that their Test work on "parser" is a draft
 
-  @sandbox-wip
   Scenario: A member is shown the work of theirs Divlab has merged
     Given a project with a module "parser"
     And Alice's Specification work on "parser" was accepted with a pass verdict

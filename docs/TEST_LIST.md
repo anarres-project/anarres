@@ -427,7 +427,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [x] Work without a valid feedback signal is rejected, saying what is missing: no signal, names
       that are not plain, and (a scenario passing first time, kept as a regression test) a
       signal that leaves out its verdict;
-  - [ ] the sandbox shows the missing-verdict scenario (`@sandbox-wip`).
+  - [x] the sandbox shows the missing-verdict scenario (2026-10-24).
 - [ ] Work for a task the member has not claimed is rejected.
 - [x] A feedback signal whose role, module, verdict or impediment types are not plain names
       (lower-case letters and digits joined by single hyphens or underscores, at most 40 long) is
@@ -547,7 +547,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the member's contribution history (concept §10; Bernard, 2026-10-24): each piece of
         their work Divlab merged, per project, from the event logs: project, role, module and
         day, plain names only; a scenario in both drivers;
-  - [ ] the sandbox shows the history (the scenario is `@sandbox-wip`).
+  - [x] the sandbox shows the history (2026-10-24).
 - [ ] `/anarres:resume` (concept §10): continuing a held task in a new session.
   - [x] on the same machine: `anarres resume project#number` says the task's folder while the
         member holds it, refuses once they no longer hold it, and says to prepare it if it was

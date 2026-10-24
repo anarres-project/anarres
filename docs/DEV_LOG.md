@@ -60,6 +60,8 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ## 2026-10-24: A member's status
 
+- In the sandbox (2026-10-24, at 8a14ec6, whose full run passed 87/87): the merged-work status
+  scenario and the missing-verdict scenario both passed, so neither is `@sandbox-wip` now.
 - `anarres status`, and the `/anarres:status` skill that may run only it: each task the member
   holds, across Anarres's projects, with when its lease runs out. The lease is worked out by
   Divlab's own rule (`leasesFrom`, now exported), so the rule is stated once. What is shown is

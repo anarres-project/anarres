@@ -36,7 +36,6 @@ Feature: Divlab merges the work members submit
     And the member is told their feedback signal's file must have a plain name
     And no task is ready for "parser"
 
-  @sandbox-wip
   Scenario: Work whose feedback signal leaves out its verdict is not merged, and the member is told what is missing
     Given a project with a module "parser"
     When a member submits Specification work on "parser" whose feedback signal gives no verdict
