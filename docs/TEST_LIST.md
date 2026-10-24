@@ -82,9 +82,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         fails at once, saying so, rather than waiting out the reset until a step times out:
         between scenarios each checks first, and within one the driver's requests no longer
         wait out a spent allowance (Divlab's own still do);
-  - [ ] the sandbox driver's waiting costs most of a run's requests (checking pull requests
-        while Divlab decides, issue lists while GitHub catches up): poll less often, or ask
-        GitHub only once Divlab's run has finished;
+  - [x] the sandbox driver's waiting costs most of a run's requests (checking pull requests
+        while Divlab decides, issue lists while GitHub catches up): it polls less often since
+        c5666a4 (about 3,100 requests a full run before; 2,466 for 83 scenarios after, 2,739 for
+        87); asking only once Divlab's run has finished is the next step if it is needed;
   - [ ] GitHub's reading of the allowance used jumps between readings (2,141 then 726 a minute
         later, same window, 2026-10-22): find out why before relying on it more;
   - [x] appending an event costs one request once the log has been read, not a listing plus a
