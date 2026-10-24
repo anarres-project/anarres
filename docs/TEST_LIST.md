@@ -78,9 +78,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         run does not start when GitHub reports too little left, saying when it resets. The
         allowance is counted per person, not per token, which most likely explains the refusal
         of 2026-10-13 (another loop was using the same account);
-  - [ ] a run that GitHub refuses partway (the allowance spent by something else meanwhile)
+  - [x] a run that GitHub refuses partway (the allowance spent by something else meanwhile)
         fails at once, saying so, rather than waiting out the reset until a step times out:
-        between scenarios it now does (each checks first); within a scenario it still waits;
+        between scenarios each checks first, and within one the driver's requests no longer
+        wait out a spent allowance (Divlab's own still do);
   - [ ] the sandbox driver's waiting costs most of a run's requests (checking pull requests
         while Divlab decides, issue lists while GitHub catches up): poll less often, or ask
         GitHub only once Divlab's run has finished;

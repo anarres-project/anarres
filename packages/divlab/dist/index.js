@@ -8315,13 +8315,13 @@ var decisionBlock = (feedbackSignal, inputsAt) => [
 ].join("\n");
 
 // ../github/src/rate-limits.ts
-function retryAfter(answer, now) {
+function retryAfter(answer, now, { waitForAllowance = true } = {}) {
   if ([500, 502, 503, 504].includes(answer.status)) return 2e3;
   if (answer.status !== 403 && answer.status !== 429) return void 0;
   const retry = answer.headers.get("retry-after");
   if (retry !== null) return Number(retry) * 1e3;
   if (answer.message.includes("secondary rate limit")) return 6e4;
-  if (answer.headers.get("x-ratelimit-remaining") === "0") {
+  if (answer.headers.get("x-ratelimit-remaining") === "0" && waitForAllowance) {
     return Number(answer.headers.get("x-ratelimit-reset")) * 1e3 - now;
   }
   return void 0;
@@ -8354,7 +8354,8 @@ async function requestGitHub(token2, method, path, body, options = {}) {
     const message = data?.message;
     const wait = retryAfter(
       { status: response.status, headers: response.headers, message: String(message ?? "") },
-      Date.now()
+      Date.now(),
+      options
     );
     const rateLimited = response.status === 403 || response.status === 429;
     if (wait === void 0 || !rateLimited && !repeatable || attempt === ATTEMPTS) {

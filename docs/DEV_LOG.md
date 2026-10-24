@@ -291,6 +291,14 @@ stay for now.
 RED:      gives a task marked claimed back to its holder when nobody is assigned -> expected [] to deeply equal [ {…} ]
 GREEN:    (149 passed)
 
+Claude Code itself now validates the plugin and its marketplace in CI (pinned 2.1.306; it needs
+no login, tried with an empty home folder, and the exact `npx` commands run locally). The
+sandbox driver's requests no longer wait out a spent hourly allowance within a scenario: it
+stops at once with GitHub's refusal. Divlab's own requests still wait.
+
+RED:      does not wait for the hourly limit to reset when told not to -> expected 90000 to be undefined
+GREEN:    (129 passed)
+
 ---
 
 ## 2026-10-24: A draft made ready, and the plugin's handover

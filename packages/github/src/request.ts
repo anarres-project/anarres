@@ -14,8 +14,11 @@ export async function requestGitHub<T>(
   method: string,
   path: string,
   body?: unknown,
-  /** A read sent as a POST, such as a GraphQL query, is safe to repeat too. */
-  options: { repeatable?: boolean } = {},
+  /**
+   * A read sent as a POST, such as a GraphQL query, is safe to repeat too. A caller that would
+   * rather stop than wait out a spent hourly allowance says so.
+   */
+  options: { repeatable?: boolean; waitForAllowance?: boolean } = {},
 ): Promise<{ status: number; data: T }> {
   const repeatable = options.repeatable ?? (method === "GET" || method === "DELETE");
   for (let attempt = 1; ; attempt++) {
@@ -41,6 +44,7 @@ export async function requestGitHub<T>(
     const wait = retryAfter(
       { status: response.status, headers: response.headers, message: String(message ?? "") },
       Date.now(),
+      options,
     );
     const rateLimited = response.status === 403 || response.status === 429;
     if (wait === undefined || (!rateLimited && !repeatable) || attempt === ATTEMPTS) {

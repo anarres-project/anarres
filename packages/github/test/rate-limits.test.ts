@@ -53,6 +53,16 @@ describe("waiting out GitHub's rate limits", () => {
     ).toBe(90_000);
   });
 
+  it("does not wait for the hourly limit to reset when told not to, so the caller can stop at once", () => {
+    const reset = (NOW + 90_000) / 1000;
+    const answer = {
+      status: 403,
+      headers: new Headers({ "x-ratelimit-remaining": "0", "x-ratelimit-reset": String(reset) }),
+      message: "API rate limit exceeded",
+    };
+    expect(retryAfter(answer, NOW, { waitForAllowance: false })).toBeUndefined();
+  });
+
   it("never retries a request that succeeded, even the last one the limit allowed", () => {
     expect(
       retryAfter(
