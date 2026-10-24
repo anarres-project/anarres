@@ -56,4 +56,3 @@ leaving it: write the feedback signal with `status: partial`, and under its head
 note saying what is done, what is left, and anything the next member should know. Then submit
 as above, without `--draft`. Divlab merges what is there and posts the task again for someone
 to continue (decision 0008).
-

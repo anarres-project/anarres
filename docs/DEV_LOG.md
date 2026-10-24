@@ -223,6 +223,17 @@ GREEN:    (90 passed)
 RED:      asks for no files when there is no open pull request for the task -> expected [ 0, [ '' ] ] to deeply equal [ 0, [] ]
 GREEN:    (91 passed)
 
+The plugin's skills are now built from sources in `packages/cli/skills/` by `npm run bundle`,
+and CI checks them as it does the bundles. The instructions for doing and submitting the work
+are said once, in a shared part both next and resume take in. A file the skills read at run time
+would have said them once too, but the read-scope hook refuses reads outside a task's folder.
+Slip: the stub written in the same step as its test (the module had to exist to import).
+
+RED:      a skill has each shared part in place of the line naming it -> expected '' to be '---…'
+GREEN:    (1 passed)
+RED:      fails, naming it, when the source names a shared part there is not -> expected [Function] to throw
+GREEN:    (2 passed)
+
 ---
 
 ## 2026-10-24: A draft made ready, and the plugin's handover

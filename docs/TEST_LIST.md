@@ -543,9 +543,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         scenario), so prepare fetches a real task's inputs with git, and resume runs, there too;
         the record prepare writes is made in one place, `taskRecord`;
   - [x] the sandbox shows them (2026-10-24, run locally);
-  - [ ] the next and resume skills both carry the instructions for doing and submitting the
-        work: say them once (a file both skills read, mindful that the read-scope hook guards
-        Claude's reads inside a task's folder).
+  - [x] the next and resume skills both carry the instructions for doing and submitting the
+        work: now said once, in a shared part the bundle puts into both skills (not a file the
+        skills read: the read-scope hook would refuse it inside a task's folder).
 
 ## Unsorted
 

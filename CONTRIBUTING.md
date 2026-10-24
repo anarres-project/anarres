@@ -44,6 +44,15 @@ expected: npm 11 holds them back by default, and nothing here needs them.
 The other commands (`npm run test:wip`, `npm run mutate` and so on) are listed under "Commands" in
 [`CLAUDE.md`](CLAUDE.md) and defined in `package.json`.
 
+## Built files
+
+Some committed files are built from source by `npm run bundle`; CI checks they match it. Edit the
+source, then run the bundle:
+
+- `packages/divlab/dist/` and `plugin/cli/anarres.js`: from `packages/divlab` and `packages/cli`.
+- `plugin/skills/*/SKILL.md`: from `packages/cli/skills/`, where a file that starts with its
+  frontmatter is a skill and any other is a part skills share, put in with a line `{{name}}`.
+
 ## The GitHub sandbox
 
 `npm run test:acceptance:sandbox` runs the acceptance tests against real repositories in a

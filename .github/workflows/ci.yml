@@ -22,5 +22,5 @@ jobs:
       - run: npm run test:wip
       # The Action and the plugin run the committed bundles, so each must be built from exactly
       # this source.
-      - name: The Divlab and CLI bundles match their source
-        run: npm run bundle && git diff --exit-code -- packages/divlab/dist plugin/cli
+      - name: The Divlab and CLI bundles, and the plugin's skills, match their source
+        run: npm run bundle && git diff --exit-code -- packages/divlab/dist plugin/cli plugin/skills
