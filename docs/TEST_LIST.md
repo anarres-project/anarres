@@ -560,8 +560,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         files in the role's own place (one feedback signal), never overwriting a file already in
         the folder (`restoreDraft`, `draftToRestore`);
   - [x] an acceptance scenario for it: a member with a draft open prepares the task on another
-        machine and finds their work so far in its folder (in-process; the drivers now look in
-        the folder; `@sandbox-wip` until it has passed there);
+        machine and finds their work so far in its folder (in-process and in the sandbox, 2026-10-24;
+        the drivers now look in the folder);
   - [x] the sandbox driver plays a member's machine (a temporary folder, cleared after each
         scenario), so prepare fetches a real task's inputs with git, and resume runs, there too;
         the record prepare writes is made in one place, `taskRecord`;

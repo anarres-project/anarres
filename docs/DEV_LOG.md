@@ -67,7 +67,8 @@ Divlab refuses work that changes files outside its role's place, naming them.
   `anarres prepare` does, and the sandbox driver's does it into its temporary folder.
 - RED: the scenario, `@wip` -> not yet right: the folder held no feedback signal. GREEN once the
   in-process prepare called `restoreDraft`, which unit tests had already driven; no new
-  production code. `@sandbox-wip` until it passes in the sandbox.
+  production code. It passed in the sandbox at 4fa55da (whose full run passed), so it is no
+  longer `@sandbox-wip`.
 - The sandbox driver's writer repeats the CLI's rule of never overwriting a file already in the
   folder, as the member's machine would apply it; the in-process driver keeps no files to clash.
 
