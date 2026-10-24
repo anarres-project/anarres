@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hookAnswer, scopeDecision, taskOfRecord } from "../src/index.ts";
+import { hookAnswer, scopeDecision, taskOfRecord, taskRecord } from "../src/index.ts";
 
 const TASK = { role: "coding" as const, module: "parser" };
 const ROOT = "/home/alice/anarres-work/ledger-4";
@@ -133,6 +133,11 @@ describe("the hook in a task's folder whose record cannot be read", () => {
 describe("the record prepare leaves in a task's folder, as the hook reads it", () => {
   it("gives the task's role and module", () => {
     expect(taskOfRecord('{"role":"coding","module":"parser"}')).toEqual(TASK);
+  });
+
+  it("is written as prepare writes it, and read back as the task it names", () => {
+    const continuation = { role: "coding" as const, module: "parser", continuation: true as const };
+    expect(taskOfRecord(taskRecord(continuation))).toEqual(continuation);
   });
 
   it.each([

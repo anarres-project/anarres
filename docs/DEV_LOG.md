@@ -143,6 +143,14 @@ GREEN:    (75 passed)
 RED:      the resume skill may run resume, prepare and submit -> expected undefined to be 'Bash(…resume *)…'
 GREEN:    (76 passed)
 
+The sandbox driver now plays a member's machine: a temporary folder, cleared after each
+scenario, where prepare runs git as `anarres prepare` does, fetching a real task's inputs from
+the sandbox, and resume looks for the record prepare left. That record is now made in one
+place, `taskRecord`, which `anarres prepare` and the driver both use.
+
+RED:      the record is written as prepare writes it, and read back -> expected undefined to deeply equal { role: 'coding', … }
+GREEN:    (77 passed)
+
 ---
 
 ## 2026-10-24: A draft made ready, and the plugin's handover

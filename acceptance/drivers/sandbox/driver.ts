@@ -1,6 +1,19 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
-import { askForWork, claim, memberStatus, submit } from "@anarres/cli";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import {
+  askForWork,
+  claim,
+  gitSteps,
+  memberStatus,
+  preparation,
+  resumption,
+  submit,
+  TASK_RECORD,
+  taskFolder,
+  taskRecord,
+} from "@anarres/cli";
 import {
   type LogEvent,
   type RoutingEvent,
@@ -746,12 +759,56 @@ export class SandboxDriver implements Driver {
     }));
   }
 
-  async prepare(): Promise<string> {
-    throw new HarnessNotYetBuilt("a member's machine to prepare a task on");
+  /** The member's machine: a folder of its own, made when a scenario first needs one. */
+  private machine: string | undefined;
+  /** The issue of each task prepared on the member's machine, by `member role module`. */
+  private readonly preparedIssues = new Map<string, string>();
+
+  /**
+   * The member's plugin prepares a task they hold through the CLI, as `anarres prepare` does:
+   * git fetches the role's inputs from the project on GitHub into the task's folder.
+   */
+  async prepare(task: { project: string; role: string; module: string }, member: string) {
+    const account = await this.playAs(member);
+    const fromRole = roleId(task.role);
+    const issue = (await this.settled(task.project, "claimed")).find(
+      (i) => labelValue(i, "role:") === fromRole && labelValue(i, "module:") === task.module,
+    );
+    if (!issue) throw new Error(`No ${task.role} task for ${task.module} is claimed`);
+    const id = String(issue.number);
+    const held = await this.asMember(account).task(task.project, id);
+    const plan = preparation(this.org, task.project, held, await loginOf(account));
+    if ("refused" in plan) throw new Error(plan.refused);
+    this.machine ??= mkdtempSync(join(tmpdir(), "anarres-member-"));
+    const folder = taskFolder({ project: task.project, task: id });
+    const into = join(this.machine, folder);
+    for (const step of gitSteps(plan, into)) execFileSync("git", step, { stdio: "pipe" });
+    writeFileSync(join(into, TASK_RECORD), taskRecord(held ?? {}));
+    this.preparedIssues.set(`${member} ${task.role} ${task.module}`, id);
+    return folder;
   }
 
-  async resume(): Promise<{ workIn: string } | { refused: string }> {
-    throw new HarnessNotYetBuilt("a member's machine to resume a task on");
+  /** The member's plugin resumes a task through the CLI, in a new session on the same machine. */
+  async resume(task: { project: string; role: string; module: string }, member: string) {
+    const id = this.preparedIssues.get(`${member} ${task.role} ${task.module}`);
+    if (id === undefined || this.machine === undefined) {
+      throw new Error(`${member} has not prepared the ${task.role} task for ${task.module}`);
+    }
+    const account = await this.playAs(member);
+    const folder = taskFolder({ project: task.project, task: id });
+    const resumed = resumption(
+      { project: task.project, task: id },
+      await this.asMember(account).task(task.project, id),
+      await loginOf(account),
+      { prepared: existsSync(join(this.machine, folder, TASK_RECORD)) },
+    );
+    return "folder" in resumed ? { workIn: resumed.folder } : resumed;
+  }
+
+  /** The member's machine is cleared away after each scenario. */
+  clearMachine(): void {
+    if (this.machine) rmSync(this.machine, { recursive: true, force: true });
+    this.machine = undefined;
   }
 
   async timePasses(): Promise<void> {

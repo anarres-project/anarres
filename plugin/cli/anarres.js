@@ -8545,6 +8545,9 @@ function hookAnswer(call, task, root) {
   };
 }
 var TASK_RECORD = ".anarres-task.json";
+function taskRecord(task) {
+  return JSON.stringify({ role: task.role, module: task.module, continuation: task.continuation });
+}
 function taskOfRecord(text) {
   let record;
   try {
@@ -8722,10 +8725,7 @@ try {
     const into = taskFolder(task);
     for (const step of gitSteps(plan, into)) execFileSync("git", step, { stdio: "inherit" });
     const held = await github.task(task.project, task.task);
-    writeFileSync(
-      join(into, TASK_RECORD),
-      JSON.stringify({ role: held?.role, module: held?.module, continuation: held?.continuation })
-    );
+    writeFileSync(join(into, TASK_RECORD), taskRecord(held ?? {}));
     console.log(`Fetched into ${into}, as at ${plan.commit}: ${plan.paths.join(", ")}`);
     process.exit(0);
   }

@@ -525,8 +525,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         scenarios, in-process (the sandbox driver has no member's machine yet: `@sandbox-wip`);
   - [ ] on another machine, or after the folder is lost: preparing brings back the member's own
         work so far from their draft's branch, within the role's own place only;
-  - [ ] the sandbox driver plays a member's machine (a temporary folder), so prepare and resume
-        run there too;
+  - [x] the sandbox driver plays a member's machine (a temporary folder, cleared after each
+        scenario), so prepare fetches a real task's inputs with git, and resume runs, there too;
+        the record prepare writes is made in one place, `taskRecord`;
+  - [ ] the sandbox shows them (the scenarios are `@sandbox-wip`);
   - [ ] the next and resume skills both carry the instructions for doing and submitting the
         work: say them once (a file both skills read, mindful that the read-scope hook guards
         Claude's reads inside a task's folder).

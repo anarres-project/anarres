@@ -209,6 +209,11 @@ export function hookAnswer(
 /** The record prepare leaves in a task's folder, naming its role and module. */
 export const TASK_RECORD = ".anarres-task.json";
 
+/** The record prepare leaves in a task's folder. */
+export function taskRecord(task: { role?: Role; module?: string; continuation?: true }): string {
+  return JSON.stringify({ role: task.role, module: task.module, continuation: task.continuation });
+}
+
 /** The task a folder's record names, read as data: its role and module, if they are plain. */
 export function taskOfRecord(
   text: string,

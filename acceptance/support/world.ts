@@ -68,11 +68,15 @@ Before(async () => {
 });
 
 // A worker whose scenario failed keeps its repositories, so what Divlab did can be looked at.
-// A scenario that set trust levels in the sandbox puts its governance file back, pass or fail.
+// A scenario that set trust levels in the sandbox puts its governance file back, pass or fail,
+// and the member's machine is cleared.
 let failed = false;
 After(async function (this: AnarresWorld, { result }) {
   if (result?.status === Status.FAILED) failed = true;
-  if (this.driver instanceof SandboxDriver) await this.driver.restoreGovernance();
+  if (this.driver instanceof SandboxDriver) {
+    await this.driver.restoreGovernance();
+    this.driver.clearMachine();
+  }
 });
 
 // ANARRES_SANDBOX_KEEP=1, or a failed scenario, leaves the run's repositories in the sandbox to

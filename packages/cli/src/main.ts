@@ -20,6 +20,7 @@ import {
   taskFolder,
   taskNamed,
   taskOfRecord,
+  taskRecord,
 } from "./index.ts";
 
 /** The task folder the session works in, from its working folder upwards, and its task. */
@@ -106,10 +107,7 @@ try {
     for (const step of gitSteps(plan, into)) execFileSync("git", step, { stdio: "inherit" });
     // The record the read-scope hook keeps the task's session to.
     const held = await github.task(task.project, task.task);
-    writeFileSync(
-      join(into, TASK_RECORD),
-      JSON.stringify({ role: held?.role, module: held?.module, continuation: held?.continuation }),
-    );
+    writeFileSync(join(into, TASK_RECORD), taskRecord(held ?? {}));
     console.log(`Fetched into ${into}, as at ${plan.commit}: ${plan.paths.join(", ")}`);
     process.exit(0);
   }
