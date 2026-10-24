@@ -10,8 +10,6 @@ Feature: A member finds work
     Then Alice is offered the Test task for "lexer"
     And Alice is not offered the Reviewer task for "parser"
 
-  # Not yet in the sandbox: it has not passed there yet.
-  @sandbox-wip
   Scenario: A member's work submitted through the plugin is merged
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict

@@ -501,7 +501,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         (no git credentials needed): an existing branch or open pull request is reused, as after
         a draft; `anarres submit project#number [--draft]` takes what changed in the task's
         folder; the skill may run it; both drivers submit through it in a new scenario;
-  - [ ] the sandbox shows it (tagged until it has passed there);
+  - [x] the sandbox shows it (75 requests);
   - [ ] a draft submitted, then the work finished: the same pull request marked ready (GitHub's
         API does that only through GraphQL).
 - [ ] `/anarres:status` and `/anarres:resume` (concept §10): the member's tasks and leases, and
