@@ -193,8 +193,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] a run that stops between recording a claim and the board showing it is finished by the
         next lease check: a claim the log holds, not given back or run out since, whose task the
         board shows unclaimed, is marked claimed;
-  - [ ] refused claims are recorded too, with why (raise with Bernard: each record is a commit
-        to main, and anyone who can comment can cause a refusal);
+  - [x] refused claims are not recorded in the log (Bernard, 2026-10-24): Divlab's reply on the
+        task, saying why, is the record; the log holds the decisions that change a task's state;
   - [x] a claim on an issue that is not a task (an alert, a finished module, a member's own
         issue, a closed task) is refused, and the member told why;
   - [x] work whose feedback signal names an issue that is not an open task never closes it
@@ -406,8 +406,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         Divlab run in every scenario; revisit with a real setup command);
   - [x] more than 250 commits between checks (GitHub compares no more at once): every page of
         the comparison is read, stopping at an empty page whatever GitHub's count says;
-  - [ ] a feedback signal put straight onto main raises two alerts (not routed; a change not by
-        Divlab): one would do;
+  - [x] a feedback signal put straight onto main raises two alerts (not routed; a change not by
+        Divlab): both kept for now (Bernard, 2026-10-24), as they say different things; revisit
+        once coordinators have used them;
 - [x] Divlab records each merge as it makes it, and routes from those records, so work is routed
       in the order Divlab merged it.
 - [x] A run interrupted between merging and recording is finished by the next run: Divlab records
