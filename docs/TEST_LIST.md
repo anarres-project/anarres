@@ -478,8 +478,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         its write scope, and anything outside the task's folder; a folder whose record cannot be
         read is refused entirely; outside any task folder it says nothing (tried by hand with the
         bundle);
-  - [ ] its limits, stated: it cannot see files read through Bash, or files the member names with
-        `@`; hard enforcement is the sandbox's (concept §10) and permission rules';
+  - [x] its limits, stated (concept §10): it judges Claude Code's file tools only; the hard
+        boundary is the sandbox or dev container, and permission rules;
   - [x] NotebookEdit is judged as a write of its notebook, and the hook's matcher sends it to
         the hook; a tool the hook does not know is refused in a task's folder, saying so;
   - [ ] a file tool Claude Code adds later reaches the hook only once the matcher names it (the
