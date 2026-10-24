@@ -283,6 +283,14 @@ commit, so a member can read exactly what decided it.
 RED:      links to the feedback signal it was decided from, at the merged commit -> expected body to contain 'Decided by […](…)'
 GREEN:    (128 passed)
 
+The hourly lease check also gives a task marked claimed, with nobody assigned now, back to the
+member Divlab's log says holds it, so their CLI sees it as theirs again. Bernard decided
+refused claims are not logged (the reply is the record) and both alerts for work put onto main
+stay for now.
+
+RED:      gives a task marked claimed back to its holder when nobody is assigned -> expected [] to deeply equal [ {…} ]
+GREEN:    (149 passed)
+
 ---
 
 ## 2026-10-24: A draft made ready, and the plugin's handover

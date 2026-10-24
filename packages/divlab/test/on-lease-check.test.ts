@@ -253,4 +253,25 @@ describe("checking a project's leases", () => {
     await onLeaseCheck("ledger", watched, log, clock);
     expect(marked).toEqual([]);
   });
+
+  it("gives a task marked claimed back to its holder when nobody is assigned it now", async () => {
+    const marked: unknown[] = [];
+    const watched: TaskBoard = {
+      ...board,
+      task: async () => ({ ...TEST_TASK, claimed: true }),
+      markClaimed: async (claim) => void marked.push(claim),
+    };
+    const log: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          decidedAt: "2026-10-23T09:00:00.000Z",
+          claimed: { task: "12", member: "alice" },
+        },
+      ],
+      append: async () => {},
+    };
+    await onLeaseCheck("ledger", watched, log, clock);
+    expect(marked).toEqual([{ project: "ledger", task: "12", member: "alice" }]);
+  });
 });

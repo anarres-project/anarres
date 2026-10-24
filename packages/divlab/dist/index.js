@@ -7821,7 +7821,7 @@ async function onLeaseCheck(project2, board, log, clock) {
     if (!leaseHasRunOut(since, clock())) {
       const freed = lastFreed(events, task);
       const stillHeld = freed === void 0 || Date.parse(freed) < Date.parse(since);
-      if (stillHeld && shown !== void 0 && shown.claimedBy === void 0 && !shown.claimed) {
+      if (stillHeld && shown !== void 0 && shown.claimedBy === void 0) {
         await board.markClaimed({ project: project2, task, member });
       }
       continue;

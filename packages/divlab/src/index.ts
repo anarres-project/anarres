@@ -321,11 +321,12 @@ export async function onLeaseCheck(
   for (const { task, member, since } of leasesFrom(events).values()) {
     const shown = await board.task(project, task);
     if (!leaseHasRunOut(since, clock())) {
-      // Recorded but not shown: a run stopped between the two, and this one finishes it. Not a
-      // claim given back, or whose lease ran out, since.
+      // Recorded but not shown, or shown with nobody assigned: the board is put right from the
+      // log (a run stopped part way, or the assignee was taken off). Not for a claim given back,
+      // or whose lease ran out, since.
       const freed = lastFreed(events, task);
       const stillHeld = freed === undefined || Date.parse(freed) < Date.parse(since);
-      if (stillHeld && shown !== undefined && shown.claimedBy === undefined && !shown.claimed) {
+      if (stillHeld && shown !== undefined && shown.claimedBy === undefined) {
         await board.markClaimed({ project, task, member });
       }
       continue;
