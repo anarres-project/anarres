@@ -217,7 +217,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         it too: claiming, giving back, the claim record and the draft scenario wait for it;
   - [x] a member whose claim was granted by an earlier run (which heard of another claim first)
         is left alone, not told the task is taken;
-  - [ ] a member claiming again a task they already hold is told they hold it (today: silence);
+  - [x] a member claiming again a task they already hold is told they hold it: by their CLI,
+        which reads Divlab's label and assignee (`claimOutcome`), so Divlab need not reply;
   - [ ] a task labelled claimed with nobody assigned is not taken as ready.
 - [ ] When several members claim the same task at once, the first valid claim wins and the others
       are told the task is taken, whatever order GitHub delivers the claims in.
@@ -351,8 +352,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [ ] An intermittent sandbox failure confined to one worker's repository (d5b1284: pull
       requests never decided; 04d85ac: "too many files changed", then no tasks): not reproduced
       on demand. A failed worker now keeps its repositories: inspect them when it recurs.
-- [ ] The sandbox run polls less: merges and finished runs every 5 seconds, decisions every 3
-      (2026-10-24, from about 3,100 requests a run); measure the next full run.
+- [x] The sandbox run polls less: merges and finished runs every 5 seconds, decisions every 3
+      (2026-10-24, from about 3,100 requests a run): c5666a4's full run took 2,466 (640, 577,
+      599 and 650 across its four workers), and passed.
 - [x] The allowance check asked every sandbox run for a full run's 2,500 requests, so a run of one
       scenario was stopped too: each scenario now checks for room for itself (200) first.
 - [x] A project's main branch admits changes only from Divlab's App; no person is exempt
