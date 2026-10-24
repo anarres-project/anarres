@@ -1,7 +1,7 @@
 import {
   isPlainName,
   isRole,
-  LEASE_HOURS,
+  leaseRunsOutAt,
   mayRead,
   outsideScope,
   ROLE_NAMES,
@@ -324,26 +324,27 @@ export interface Holdings {
   log(project: string): Promise<LogEvent[]>;
 }
 
+/**
+ * A task a member holds, and when its lease runs out: no time when Divlab cannot tell when the
+ * lease began, as it then takes the lease to have run out.
+ */
+export type Held = Offer & { leaseRunsOut?: string };
+
 /** The tasks a member holds, across Anarres's projects, and when each lease runs out. */
-export async function memberStatus(
-  member: string,
-  holdings: Holdings,
-): Promise<(Offer & { leaseRunsOut: string })[]> {
-  const held: (Offer & { leaseRunsOut: string })[] = [];
+export async function memberStatus(member: string, holdings: Holdings): Promise<Held[]> {
+  const held: Held[] = [];
   for (const project of await holdings.names()) {
     const events = await holdings.log(project);
     for (const task of await holdings.heldTasks(project, member)) {
       // Shown in the member's session: only plain names, as Divlab writes them.
       if (!isRole(task.role) || !isPlainName(task.module)) continue;
-      const lease = leasesFrom(events).get(task.id);
+      const runsOut = leaseRunsOutAt(leasesFrom(events).get(task.id)?.since ?? "");
       held.push({
         project,
         task: task.id,
         role: task.role,
         module: task.module,
-        leaseRunsOut: new Date(
-          Date.parse(lease?.since as string) + LEASE_HOURS * 60 * 60 * 1000,
-        ).toISOString(),
+        ...(runsOut === undefined ? {} : { leaseRunsOut: runsOut.toISOString() }),
       });
     }
   }
@@ -351,12 +352,15 @@ export async function memberStatus(
 }
 
 /** A member's status as they see it. */
-export function describeStatus(held: readonly (Offer & { leaseRunsOut: string })[]): string {
+export function describeStatus(held: readonly Held[]): string {
   if (held.length === 0) return "You hold no tasks just now: run next to find one.";
   return held
-    .map(
-      (task) =>
-        `${task.project}#${task.task}  ${ROLE_NAMES[task.role]} task for ${task.module}, held: its lease runs out at ${task.leaseRunsOut.slice(0, 10)} ${task.leaseRunsOut.slice(11, 16)} UTC unless you work on it`,
-    )
+    .map(({ project, task, role, module, leaseRunsOut }) => {
+      const lease =
+        leaseRunsOut === undefined
+          ? "its lease has run out, and Divlab frees it at its next check"
+          : `its lease runs out at ${leaseRunsOut.slice(0, 10)} ${leaseRunsOut.slice(11, 16)} UTC unless you work on it`;
+      return `${project}#${task}  ${ROLE_NAMES[role]} task for ${module}, held: ${lease}`;
+    })
     .join("\n");
 }

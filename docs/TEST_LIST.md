@@ -511,8 +511,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         names shown; `anarres status`, and the `/anarres:status` skill that may run only it; both
         drivers ask through the CLI;
   - [ ] the sandbox shows it (the scenario is `@sandbox-wip`);
-  - [ ] a held task whose claim the log does not record: say its lease has run out and Divlab
-        frees it at its next check, as Divlab reads a time it cannot read (today it throws);
+  - [x] a held task whose claim the log does not record, or whose time cannot be read: its lease
+        has run out and Divlab frees it at its next check, as Divlab takes such a time to be long
+        past (it threw before); the lease-end rule is now in core once, `leaseRunsOutAt`;
   - [ ] the member's open pull requests, and their contribution history (concept §10).
 - [ ] `/anarres:resume` (concept §10): continuing a held task in a new session.
 

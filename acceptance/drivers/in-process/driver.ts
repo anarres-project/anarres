@@ -284,7 +284,7 @@ export class InProcessDriver implements Driver {
   /** The member asks for their status through the CLI their plugin calls, reading the fake GitHub. */
   async heldTasks(
     member: string,
-  ): Promise<{ role: string; module: string; leaseRunsOut: string }[]> {
+  ): Promise<{ role: string; module: string; leaseRunsOut?: string }[]> {
     const held = await memberStatus(member, {
       names: async () => [...this.github.repositories.keys()],
       heldTasks: async (project, holder) =>
@@ -294,11 +294,7 @@ export class InProcessDriver implements Driver {
           .map(({ id, role, module }) => ({ id, role, module })),
       log: (project) => this.github.read(project),
     });
-    return held.map(({ role, module, leaseRunsOut }) => ({
-      role: roleName(role),
-      module,
-      leaseRunsOut,
-    }));
+    return held.map(({ role, module, ...lease }) => ({ role: roleName(role), module, ...lease }));
   }
 
   async timePasses(hours: number): Promise<void> {

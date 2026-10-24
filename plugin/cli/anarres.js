@@ -7540,6 +7540,11 @@ function readFeedbackSignal(text) {
 
 // ../core/src/leases.ts
 var LEASE_HOURS = 24;
+function leaseRunsOutAt(lastActivity) {
+  const since = Date.parse(lastActivity);
+  if (Number.isNaN(since)) return void 0;
+  return new Date(since + LEASE_HOURS * 60 * 60 * 1e3);
+}
 
 // ../core/src/routing.ts
 var MODULE_PIPELINE = [
@@ -8605,15 +8610,13 @@ async function memberStatus(member, holdings) {
     const events = await holdings.log(project);
     for (const task of await holdings.heldTasks(project, member)) {
       if (!isRole(task.role) || !isPlainName(task.module)) continue;
-      const lease = leasesFrom(events).get(task.id);
+      const runsOut = leaseRunsOutAt(leasesFrom(events).get(task.id)?.since ?? "");
       held.push({
         project,
         task: task.id,
         role: task.role,
         module: task.module,
-        leaseRunsOut: new Date(
-          Date.parse(lease?.since) + LEASE_HOURS * 60 * 60 * 1e3
-        ).toISOString()
+        ...runsOut === void 0 ? {} : { leaseRunsOut: runsOut.toISOString() }
       });
     }
   }
@@ -8621,9 +8624,10 @@ async function memberStatus(member, holdings) {
 }
 function describeStatus(held) {
   if (held.length === 0) return "You hold no tasks just now: run next to find one.";
-  return held.map(
-    (task) => `${task.project}#${task.task}  ${ROLE_NAMES[task.role]} task for ${task.module}, held: its lease runs out at ${task.leaseRunsOut.slice(0, 10)} ${task.leaseRunsOut.slice(11, 16)} UTC unless you work on it`
-  ).join("\n");
+  return held.map(({ project, task, role, module, leaseRunsOut }) => {
+    const lease = leaseRunsOut === void 0 ? "its lease has run out, and Divlab frees it at its next check" : `its lease runs out at ${leaseRunsOut.slice(0, 10)} ${leaseRunsOut.slice(11, 16)} UTC unless you work on it`;
+    return `${project}#${task}  ${ROLE_NAMES[role]} task for ${module}, held: ${lease}`;
+  }).join("\n");
 }
 
 // src/main.ts

@@ -93,6 +93,14 @@ GREEN:    (6 passed)
 RED:      the projects where a member holds a task -> expected [] to deeply equal [ 'ledger' ]
 GREEN:    (119 passed)
 REFACTOR: names and namesHeldBy share one search
+RED:      no lease time when the log records no claim -> RangeError: Invalid time value (the bug)
+GREEN:    (64 passed)
+RED:      says the lease has run out when Divlab cannot tell when it began -> TypeError reading 'slice' (the bug)
+GREEN:    (65 passed)
+RED:      no lease time when the claim's time cannot be read -> RangeError: Invalid time value
+GREEN:    (66 passed)
+REFACTOR: when a lease runs out is stated once, in core (`leaseRunsOutAt`), and `leaseHasRunOut`
+          and the CLI both use it
 
 ---
 

@@ -729,7 +729,7 @@ export class SandboxDriver implements Driver {
   /** The member asks for their status through the CLI, reading GitHub with their own login. */
   async heldTasks(
     member: string,
-  ): Promise<{ role: string; module: string; leaseRunsOut: string }[]> {
+  ): Promise<{ role: string; module: string; leaseRunsOut?: string }[]> {
     const account = await this.playAs(member);
     const asMember = this.asMember(account);
     const held = await memberStatus(await loginOf(account), {
@@ -737,11 +737,7 @@ export class SandboxDriver implements Driver {
       heldTasks: (project, holder) => asMember.heldTasks(project, holder),
       log: (project) => asMember.read(project),
     });
-    return held.map(({ role, module, leaseRunsOut }) => ({
-      role: roleNameOf(role),
-      module,
-      leaseRunsOut,
-    }));
+    return held.map(({ role, module, ...lease }) => ({ role: roleNameOf(role), module, ...lease }));
   }
 
   async timePasses(): Promise<void> {

@@ -7514,10 +7514,14 @@ var SIGNAL_FILE = /^feedback\/[A-Za-z0-9-]+\.md$/;
 
 // ../core/src/leases.ts
 var LEASE_HOURS = 24;
-function leaseHasRunOut(lastActivity, now) {
+function leaseRunsOutAt(lastActivity) {
   const since = Date.parse(lastActivity);
-  if (Number.isNaN(since)) return true;
-  return now.getTime() - since >= LEASE_HOURS * 60 * 60 * 1e3;
+  if (Number.isNaN(since)) return void 0;
+  return new Date(since + LEASE_HOURS * 60 * 60 * 1e3);
+}
+function leaseHasRunOut(lastActivity, now) {
+  const runsOut = leaseRunsOutAt(lastActivity);
+  return runsOut === void 0 || now >= runsOut;
 }
 
 // ../core/src/routing.ts

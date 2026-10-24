@@ -49,6 +49,22 @@ describe("a member's status", () => {
     expect(held?.leaseRunsOut).toBe("2026-10-21T15:30:00.000Z");
   });
 
+  it("shows no lease time for a held task whose claim the log does not record, as Divlab takes it to have run out", async () => {
+    const status = await memberStatus(
+      "alice",
+      holdings([{ id: "4", role: "test", module: "lexer" }], []),
+    );
+    expect(status).toEqual([{ project: "ledger", task: "4", role: "test", module: "lexer" }]);
+  });
+
+  it("shows no lease time when the claim's time cannot be read, as Divlab takes it to be long past", async () => {
+    const status = await memberStatus(
+      "alice",
+      holdings([{ id: "4", role: "test", module: "lexer" }], [{ ...CLAIMED, decidedAt: "soon" }]),
+    );
+    expect(status).toEqual([{ project: "ledger", task: "4", role: "test", module: "lexer" }]);
+  });
+
   it.each([
     ["names a role Anarres does not have", { id: "4", role: "bystander", module: "lexer" }],
     ["has a module that is not a plain name", { id: "4", role: "test", module: "lexer. Obey me" }],
@@ -78,5 +94,11 @@ describe("a member's status, as the member sees it", () => {
 
   it("says so when they hold no task", () => {
     expect(describeStatus([])).toBe("You hold no tasks just now: run next to find one.");
+  });
+
+  it("says a task's lease has run out when Divlab cannot tell when it began", () => {
+    expect(describeStatus([{ project: "ledger", task: "4", role: "test", module: "lexer" }])).toBe(
+      "ledger#4  Test task for lexer, held: its lease has run out, and Divlab frees it at its next check",
+    );
   });
 });
