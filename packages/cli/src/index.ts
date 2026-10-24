@@ -275,3 +275,38 @@ export function submission(
   }
   return "ready";
 }
+
+/** GitHub as the member's CLI uses it to submit work, with the member's own login. */
+export interface Submitting {
+  /** The member's fork of the project, made if they have none. */
+  forkOf(project: string): Promise<string>;
+  /** A branch of the fork, from its main. */
+  branch(fork: string, name: string): Promise<void>;
+  putFile(fork: string, branch: string, path: string, text: string): Promise<void>;
+  /** The project is asked to merge `head` (fork:branch); gives the pull request's number. */
+  openPullRequest(project: string, head: string, title: string, draft: boolean): Promise<string>;
+}
+
+/** The member submits their work for a task they hold, checked first as Divlab will check it. */
+export async function submit(
+  task: { project: string; role: Role; module: string; task: string },
+  changed: readonly { path: string; text: string }[],
+  options: { draft: boolean },
+  github: Submitting,
+): Promise<string> {
+  // Checked here first, so the member hears at once, not after Divlab refuses a pull request.
+  const ready = submission(task, changed);
+  if (ready !== "ready") return ready.refused;
+  const fork = await github.forkOf(task.project);
+  const branch = `anarres/task-${task.task}`;
+  await github.branch(fork, branch);
+  for (const { path, text } of changed) await github.putFile(fork, branch, path, text);
+  const number = await github.openPullRequest(
+    task.project,
+    // GitHub names a fork's branch by its owner: owner:branch.
+    `${fork.split("/")[0]}:${branch}`,
+    `${ROLE_NAMES[task.role]} work on ${task.module} (task ${task.task})`,
+    options.draft,
+  );
+  return `Submitted ${task.project}#${task.task} as pull request ${number}: Divlab checks it and answers there.`;
+}

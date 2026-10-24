@@ -11,6 +11,7 @@ import {
   gitSteps,
   hookAnswer,
   preparation,
+  submit,
   TASK_RECORD,
   type ToolCall,
   taskNamed,
@@ -42,9 +43,10 @@ if (command === "hook") {
   if (answer) console.log(JSON.stringify(answer));
   process.exit(0);
 }
-if (command !== "next" && !((command === "claim" || command === "prepare") && named)) {
+const TAKES_A_TASK = ["claim", "prepare", "submit"];
+if (command !== "next" && !(command && TAKES_A_TASK.includes(command) && named)) {
   console.error(
-    "Usage: anarres next | anarres claim project#number | anarres prepare project#number",
+    "Usage: anarres next | anarres claim|prepare|submit project#number (submit: --draft too)",
   );
   process.exit(2);
 }
@@ -101,6 +103,36 @@ try {
       JSON.stringify({ role: held?.role, module: held?.module, continuation: held?.continuation }),
     );
     console.log(`Fetched into ${into}, as at ${plan.commit}: ${plan.paths.join(", ")}`);
+    process.exit(0);
+  }
+  if (command === "submit" && named) {
+    const task = taskNamed(named);
+    const folder = task && `anarres-work/${task.project}-${task.task}`;
+    const held = folder && existsSync(join(folder, TASK_RECORD));
+    const record = held ? taskOfRecord(readFileSync(join(folder, TASK_RECORD), "utf8")) : undefined;
+    if (task === undefined || folder === undefined || record === undefined) {
+      console.log(`Not submitted: ${named} has no prepared folder here; prepare it first.`);
+      process.exit(1);
+    }
+    // The work: what changed in the task's folder, as git sees it, but the folder's own record.
+    const changed = execFileSync(
+      "git",
+      ["-C", folder, "status", "--porcelain", "--untracked-files=all", "--no-renames"],
+      { encoding: "utf8" },
+    )
+      .split("\n")
+      .map((line) => line.slice(3))
+      .filter((path) => path !== "" && path !== TASK_RECORD)
+      .map((path) => ({ path, text: readFileSync(join(folder, path), "utf8") }));
+    const draft = process.argv.includes("--draft");
+    console.log(
+      await submit(
+        { project: task.project, ...record, task: task.task },
+        changed,
+        { draft },
+        github,
+      ),
+    );
     process.exit(0);
   }
   const offers = await askForWork(await github.account(), {

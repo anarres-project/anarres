@@ -58,6 +58,43 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-24: Submitting work from the plugin
+
+- `anarres submit project#number [--draft]` checks the member's work as Divlab will, then, with
+  the member's own login and GitHub's API only (no git credentials), makes or finds their fork,
+  a branch `anarres/task-<n>` from its main, puts each changed file on it, and opens the pull
+  request, reusing a branch or pull request the member already has, as after a draft. It takes
+  the changed files from git in the task's folder, leaving out the folder's own record. The skill
+  may run it, and tells Claude to write the feedback signal first.
+- A new scenario submits through the plugin; both drivers go through the CLI's `submit` for it
+  (the sandbox forking into the members' organisation, as its accounts cannot fork into a personal
+  account, and opening the pull request as the member's own account).
+- A mistake the fake could not show, found writing the sandbox side: the pull request's head was
+  `owner/repository:branch`; GitHub's is `owner:branch`. Its test was changed and seen failing first.
+- The full sandbox run for 9e23ed3 passed all 82.
+- Slips: the two pull request adapter tests failed together, as did the two put-file rows.
+
+RED:      submit puts the work on a branch of the fork and asks the project to merge it -> expected []
+GREEN:    (55 passed)
+RED:      sends nothing when the work is not ready -> GitHub was asked to fork and branch
+GREEN:    (56 passed)
+RED:      forks into the member's account, or finds their fork -> expected ''
+GREEN:    (108 passed)
+RED:      branches from the fork's main -> expected undefined
+GREEN:    (109 passed)
+RED:      keeps a branch submitted to before -> rejected 422
+GREEN:    (110 passed)
+RED:      puts a new file / one already there (two rows) -> expected undefined
+GREEN:    (112 passed)
+RED:      opens the pull request / gives the one already open (two at once) -> expected ''
+GREEN:    (114 passed)
+RED:      the skill may run submit -> expected three rules to be four
+GREEN:    (520 passed)
+RED:      the pull request's head is owner:branch -> got "alice/ledger:anarres/task-4"
+GREEN:    (56 passed; 94 scenarios)
+
+---
+
 ## 2026-10-23: Partial work and continuations
 
 - Bernard settled partial work (decision 0008, concept §8 updated): it is merged; Divlab posts a

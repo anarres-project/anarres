@@ -497,8 +497,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] before anything is sent, the CLI checks the work as Divlab will: one readable feedback
         signal naming the task, from the task's role and module, and nothing changed outside the
         role's place, saying what is wrong;
-  - [ ] the fork, the branch and the pull request, through GitHub's API with the member's login
-        (no git credentials needed), so the sandbox driver can submit through the CLI too.
+  - [x] the fork, the branch and the pull request, through GitHub's API with the member's login
+        (no git credentials needed): an existing branch or open pull request is reused, as after
+        a draft; `anarres submit project#number [--draft]` takes what changed in the task's
+        folder; the skill may run it; both drivers submit through it in a new scenario;
+  - [ ] the sandbox shows it (tagged until it has passed there);
+  - [ ] a draft submitted, then the work finished: the same pull request marked ready (GitHub's
+        API does that only through GraphQL).
 - [ ] `/anarres:status` and `/anarres:resume` (concept §10): the member's tasks and leases, and
       continuing a held task in a new session.
 

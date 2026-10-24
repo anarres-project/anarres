@@ -7487,6 +7487,56 @@ function mayTake(task, history, level) {
 var import_yaml = __toESM(require_dist(), 1);
 var PLAIN_NAME = /^(?=.{1,40}$)[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
 var isPlainName = (name) => PLAIN_NAME.test(name);
+function readFeedbackSignal(text) {
+  const lines = text.split(/\r?\n/);
+  if (lines[0] !== "---") return { unreadable: "it has no feedback signal header" };
+  const end = lines.indexOf("---", 1);
+  if (end === -1) return { unreadable: "its header never ends" };
+  const frontMatter = lines.slice(1, end).join("\n");
+  let parsed2;
+  try {
+    parsed2 = (0, import_yaml.parse)(frontMatter);
+  } catch {
+    return { unreadable: "its header is not valid YAML" };
+  }
+  const header = parsed2?.feedback_signal;
+  if (typeof header !== "object" || header === null) {
+    return { unreadable: "its header has no feedback signal" };
+  }
+  for (const field of ["from_role", "module", "verdict"]) {
+    if (typeof header[field] !== "string") {
+      return { unreadable: `its feedback signal does not give its ${field}` };
+    }
+  }
+  for (const field of ["from_role", "module", "verdict"]) {
+    if (!isPlainName(header[field])) {
+      return { unreadable: `its feedback signal's ${field} is not a plain name` };
+    }
+  }
+  const impediments = header.impediments ?? [];
+  if (!Array.isArray(impediments) || !impediments.every((impediment) => typeof impediment?.type === "string")) {
+    return { unreadable: "its feedback signal's impediments do not each give a type" };
+  }
+  if (!impediments.every((impediment) => isPlainName(impediment.type))) {
+    return { unreadable: "its feedback signal's impediments are not each a plain name" };
+  }
+  const task = header.task_id;
+  if (task !== void 0 && typeof task !== "string" && !Number.isInteger(task)) {
+    return {
+      unreadable: "its feedback signal does not give its task_id as text or a whole number"
+    };
+  }
+  return {
+    fromRole: header.from_role,
+    module: header.module,
+    verdict: header.verdict,
+    impediments: impediments.map((impediment) => ({
+      type: impediment.type
+    })),
+    ...task === void 0 ? {} : { task: String(task) },
+    ...header.status === "partial" ? { partial: true } : {}
+  };
+}
 
 // ../core/src/leases.ts
 var LEASE_HOURS = 24;
@@ -7996,6 +8046,68 @@ var GitHubAdapter = class {
       return task ? [{ id: String(issue.number), role: task.role, module: task.module }] : [];
     });
   }
+  /**
+   * The member's fork of the project: GitHub makes one, or gives the one they have. Forks are
+   * made in the background, so this waits, a minute at most, until the fork has its main.
+   */
+  async forkOf(project) {
+    const { full_name: fork } = await this.call(
+      "POST",
+      `${this.repo(project)}/forks`,
+      { default_branch_only: true }
+    );
+    for (let check = 0; check < 30; check++) {
+      const { status } = await this.request("GET", `repos/${fork}/branches/main`);
+      if (status === 200) return fork;
+      await new Promise((resolve2) => setTimeout(resolve2, 2e3));
+    }
+    throw new Error(`GitHub did not finish making the fork ${fork}`);
+  }
+  async branch(fork, name) {
+    const { object } = await this.call(
+      "GET",
+      `repos/${fork}/git/ref/heads/main`
+    );
+    const where = `repos/${fork}/git/refs`;
+    const { status, data } = await this.request("POST", where, {
+      ref: `refs/heads/${name}`,
+      sha: object.sha
+    });
+    if (status >= 300 && status !== 422) throw new GitHubError("POST", where, status, data);
+  }
+  /** A file of the member's work, on their branch: a new one, or replacing what is there. */
+  async putFile(fork, branch, path, text) {
+    const where = `repos/${fork}/contents/${path}`;
+    const { status, data } = await this.request(
+      "GET",
+      `${where}?ref=${encodeURIComponent(branch)}`
+    );
+    await this.call("PUT", where, {
+      message: path,
+      content: Buffer.from(text).toString("base64"),
+      branch,
+      ...status === 200 ? { sha: data.sha } : {}
+    });
+  }
+  /** The project is asked to merge the member's branch; one already open for it is the same ask. */
+  async openPullRequest(project, head, title, draft) {
+    const where = `${this.repo(project)}/pulls`;
+    const { status, data } = await this.request("POST", where, {
+      title,
+      head,
+      base: "main",
+      draft
+    });
+    if (status < 300) return String(data.number);
+    if (status !== 422) throw new GitHubError("POST", where, status, data);
+    const open = await this.call(
+      "GET",
+      `${where}?head=${encodeURIComponent(head)}&state=open`
+    );
+    const existing = open[0];
+    if (existing === void 0) throw new GitHubError("POST", where, status, data);
+    return String(existing.number);
+  }
   /** The member's claim: Divlab's claim comment on the task's issue, made as the member. */
   async askToClaim(project, task) {
     await this.call("POST", `${this.repo(project)}/issues/${task}/comments`, { body: CLAIM });
@@ -8401,6 +8513,53 @@ function claimOutcome(named2, task, member) {
   }
   return `Divlab has not given ${named2} to you yet: see the task's issue, and run next again.`;
 }
+function submission(task, changed) {
+  const refused = (why) => ({ refused: `Not submitted: ${why}.` });
+  const feedback = changed.find((file) => file.path.startsWith("feedback/"));
+  if (feedback === void 0) {
+    return refused(
+      "it has no feedback signal: write one in feedback/, saying what it was for and how it went"
+    );
+  }
+  const signal = readFeedbackSignal(feedback.text);
+  if ("unreadable" in signal)
+    return refused(`its feedback signal cannot be read: ${signal.unreadable}`);
+  if (signal.task !== task.task) {
+    return refused(`its feedback signal names task ${signal.task}, not task ${task.task}`);
+  }
+  if (signal.fromRole !== task.role || signal.module !== task.module) {
+    return refused(
+      `its feedback signal is from ${signal.fromRole} and module ${signal.module}, not ${task.role} and ${task.module}`
+    );
+  }
+  const outside = outsideScope(
+    task.role,
+    task.module,
+    changed.map((file) => file.path)
+  );
+  if (outside.length > 0) {
+    return refused(
+      `it changes files outside what ${ROLE_NAMES[task.role]} may change: ${outside.join(", ")}`
+    );
+  }
+  return "ready";
+}
+async function submit(task, changed, options, github) {
+  const ready = submission(task, changed);
+  if (ready !== "ready") return ready.refused;
+  const fork = await github.forkOf(task.project);
+  const branch = `anarres/task-${task.task}`;
+  await github.branch(fork, branch);
+  for (const { path, text } of changed) await github.putFile(fork, branch, path, text);
+  const number = await github.openPullRequest(
+    task.project,
+    // GitHub names a fork's branch by its owner: owner:branch.
+    `${fork.split("/")[0]}:${branch}`,
+    `${ROLE_NAMES[task.role]} work on ${task.module} (task ${task.task})`,
+    options.draft
+  );
+  return `Submitted ${task.project}#${task.task} as pull request ${number}: Divlab checks it and answers there.`;
+}
 
 // src/main.ts
 function taskFolderOf(cwd) {
@@ -8419,9 +8578,10 @@ if (command === "hook") {
   if (answer) console.log(JSON.stringify(answer));
   process.exit(0);
 }
-if (command !== "next" && !((command === "claim" || command === "prepare") && named)) {
+var TAKES_A_TASK = ["claim", "prepare", "submit"];
+if (command !== "next" && !(command && TAKES_A_TASK.includes(command) && named)) {
   console.error(
-    "Usage: anarres next | anarres claim project#number | anarres prepare project#number"
+    "Usage: anarres next | anarres claim|prepare|submit project#number (submit: --draft too)"
   );
   process.exit(2);
 }
@@ -8473,6 +8633,31 @@ try {
       JSON.stringify({ role: held?.role, module: held?.module, continuation: held?.continuation })
     );
     console.log(`Fetched into ${into}, as at ${plan.commit}: ${plan.paths.join(", ")}`);
+    process.exit(0);
+  }
+  if (command === "submit" && named) {
+    const task = taskNamed(named);
+    const folder = task && `anarres-work/${task.project}-${task.task}`;
+    const held = folder && existsSync(join(folder, TASK_RECORD));
+    const record = held ? taskOfRecord(readFileSync(join(folder, TASK_RECORD), "utf8")) : void 0;
+    if (task === void 0 || folder === void 0 || record === void 0) {
+      console.log(`Not submitted: ${named} has no prepared folder here; prepare it first.`);
+      process.exit(1);
+    }
+    const changed = execFileSync(
+      "git",
+      ["-C", folder, "status", "--porcelain", "--untracked-files=all", "--no-renames"],
+      { encoding: "utf8" }
+    ).split("\n").map((line) => line.slice(3)).filter((path) => path !== "" && path !== TASK_RECORD).map((path) => ({ path, text: readFileSync(join(folder, path), "utf8") }));
+    const draft = process.argv.includes("--draft");
+    console.log(
+      await submit(
+        { project: task.project, ...record, task: task.task },
+        changed,
+        { draft },
+        github
+      )
+    );
     process.exit(0);
   }
   const offers = await askForWork(await github.account(), {

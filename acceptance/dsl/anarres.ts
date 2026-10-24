@@ -399,6 +399,20 @@ export class Anarres {
   /** What each member was offered when they last asked for work, by member. */
   private readonly offers = new Map<string, Work[]>();
 
+  /** The member's plugin submits their work for the task they hold, through the CLI. */
+  async memberSubmitsThroughPlugin(member: string, work: Work & { verdict: string }) {
+    this.signalsWritten += 1;
+    const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
+    this.feedbackSignals.set(workOn(this.aliased(work)), feedbackSignal);
+    await this.driver.submitThroughPlugin({
+      impediments: [],
+      ...this.aliased(work),
+      project: this.project,
+      member: this.member(member),
+      feedbackSignal,
+    });
+  }
+
   async memberAsksForWork(member: string) {
     this.offers.set(member, await this.driver.offeredTasks(this.member(member)));
   }

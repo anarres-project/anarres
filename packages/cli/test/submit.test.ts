@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { submission } from "../src/index.ts";
+import { type Submitting, submission, submit } from "../src/index.ts";
 
 const TASK = { role: "coding" as const, module: "parser", task: "4" };
 const SIGNAL = [
@@ -53,5 +53,56 @@ describe("checking a member's work before it is submitted, as Divlab will check 
     ],
   ])("is not ready when %s", (_what, changed, why) => {
     expect(submission(TASK, changed)).toEqual({ refused: `Not submitted: ${why}.` });
+  });
+});
+
+describe("submitting a member's work", () => {
+  /** GitHub as the member's CLI uses it, keeping what was asked of it, in order. */
+  const watching = () => {
+    const asked: unknown[] = [];
+    const github: Submitting = {
+      forkOf: async (project) => {
+        asked.push(["fork", project]);
+        return "alice/ledger";
+      },
+      branch: async (fork, name) => {
+        asked.push(["branch", fork, name]);
+      },
+      putFile: async (fork, branch, path) => {
+        asked.push(["put", fork, branch, path]);
+      },
+      openPullRequest: async (project, head, title, draft) => {
+        asked.push(["pull request", project, head, title, draft]);
+        return "17";
+      },
+    };
+    return { asked, github };
+  };
+
+  it("puts the work on a branch of the member's fork, and asks the project to merge it", async () => {
+    const { asked, github } = watching();
+    const changed = [
+      { path: "modules/parser/src/lexer.ts", text: "export {};\n" },
+      { path: "feedback/FB-4.md", text: SIGNAL },
+    ];
+    const said = await submit({ project: "ledger", ...TASK }, changed, { draft: false }, github);
+    expect(asked).toEqual([
+      ["fork", "ledger"],
+      ["branch", "alice/ledger", "anarres/task-4"],
+      ["put", "alice/ledger", "anarres/task-4", "modules/parser/src/lexer.ts"],
+      ["put", "alice/ledger", "anarres/task-4", "feedback/FB-4.md"],
+      ["pull request", "ledger", "alice:anarres/task-4", "Coding work on parser (task 4)", false],
+    ]);
+    expect(said).toBe("Submitted ledger#4 as pull request 17: Divlab checks it and answers there.");
+  });
+
+  it("sends nothing when the work is not ready, and says why", async () => {
+    const { asked, github } = watching();
+    const changed = [{ path: "modules/parser/src/lexer.ts", text: "" }];
+    const said = await submit({ project: "ledger", ...TASK }, changed, { draft: false }, github);
+    expect([asked, said]).toEqual([
+      [],
+      "Not submitted: it has no feedback signal: write one in feedback/, saying what it was for and how it went.",
+    ]);
   });
 });

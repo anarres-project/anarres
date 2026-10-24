@@ -18,3 +18,10 @@ Then(
     return this.anarres.memberIsNotOffered(member, { role, module });
   },
 );
+
+When(
+  "{word} submits {role} work on {string} through the plugin, with a {verdict} verdict",
+  function (this: AnarresWorld, member: string, role: string, module: string, verdict: string) {
+    return this.anarres.memberSubmitsThroughPlugin(member, { role, module, verdict });
+  },
+);

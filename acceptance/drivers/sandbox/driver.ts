@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { askForWork, claim } from "@anarres/cli";
+import { askForWork, claim, submit } from "@anarres/cli";
 import {
   type LogEvent,
   type RoutingEvent,
@@ -25,6 +25,7 @@ import {
   roleId,
   roleNameOf,
   signalName,
+  workFiles,
 } from "../scenario-words.ts";
 import { shortfall } from "./allowance.ts";
 import { GitHubApi } from "./github-api.ts";
@@ -737,6 +738,48 @@ export class SandboxDriver implements Driver {
    * The member opens a draft for the task they hold, as their plugin will, early in the work.
    * Divlab never merges a draft; the driver waits for its record of the activity.
    */
+  /**
+   * The member's plugin submits through the CLI's submit, against real GitHub. The sandbox's
+   * accounts cannot fork into a personal account, so the fork is the members' organisation's, as
+   * for every scenario; the pull request is opened as the member's own account.
+   */
+  async submitThroughPlugin(work: AcceptedWork): Promise<void> {
+    const fromRole = roleId(work.role);
+    const task = (await this.settled(work.project, "claimed")).find(
+      (i) => labelValue(i, "role:") === fromRole && labelValue(i, "module:") === work.module,
+    );
+    if (!task) throw new Error(`No ${work.role} task for ${work.module} is claimed`);
+    const member = this.asMember(await this.playAs(work.member));
+    const asMembersOrg = new GitHubAdapter({
+      owner: this.membersOrg,
+      token: sandboxSettings().membersToken,
+      request: countedRequest,
+    });
+    let number = 0;
+    const said = await submit(
+      { project: work.project, role: fromRole, module: work.module, task: String(task.number) },
+      workFiles(work, String(task.number)),
+      { draft: false },
+      {
+        forkOf: (project) => this.forkOf(project),
+        branch: (fork, name) => asMembersOrg.branch(fork, name),
+        putFile: (fork, branch, path, text) => asMembersOrg.putFile(fork, branch, path, text),
+        openPullRequest: async (project, head, title, draft) => {
+          const opened = await member.openPullRequest(project, head, title, draft);
+          number = Number(opened);
+          return opened;
+        },
+      },
+    );
+    if (said.startsWith("Not submitted")) throw new Error(said);
+    const { path } = feedbackSignalFile(work, String(task.number));
+    await this.awaitDecision(
+      work,
+      { number, path, task, listing: "claimed" },
+      await this.divlabHasDecidedOn(work.project, number),
+    );
+  }
+
   async submitDraftWork(work: AcceptedWork): Promise<void> {
     const opened = await this.openPullRequest(work, { draft: true });
     run.submitted.push({

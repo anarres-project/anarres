@@ -201,6 +201,78 @@ export class GitHubAdapter
     });
   }
 
+  /**
+   * The member's fork of the project: GitHub makes one, or gives the one they have. Forks are
+   * made in the background, so this waits, a minute at most, until the fork has its main.
+   */
+  async forkOf(project: string): Promise<string> {
+    const { full_name: fork } = await this.call<{ full_name: string }>(
+      "POST",
+      `${this.repo(project)}/forks`,
+      { default_branch_only: true },
+    );
+    for (let check = 0; check < 30; check++) {
+      const { status } = await this.request("GET", `repos/${fork}/branches/main`);
+      if (status === 200) return fork;
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+    }
+    throw new Error(`GitHub did not finish making the fork ${fork}`);
+  }
+
+  async branch(fork: string, name: string): Promise<void> {
+    const { object } = await this.call<{ object: { sha: string } }>(
+      "GET",
+      `repos/${fork}/git/ref/heads/main`,
+    );
+    const where = `repos/${fork}/git/refs`;
+    const { status, data } = await this.request("POST", where, {
+      ref: `refs/heads/${name}`,
+      sha: object.sha,
+    });
+    // A branch the member submitted to before, a draft's say, is kept: the work goes on it.
+    if (status >= 300 && status !== 422) throw new GitHubError("POST", where, status, data);
+  }
+
+  /** A file of the member's work, on their branch: a new one, or replacing what is there. */
+  async putFile(fork: string, branch: string, path: string, text: string): Promise<void> {
+    const where = `repos/${fork}/contents/${path}`;
+    const { status, data } = await this.request<{ sha: string }>(
+      "GET",
+      `${where}?ref=${encodeURIComponent(branch)}`,
+    );
+    await this.call("PUT", where, {
+      message: path,
+      content: Buffer.from(text).toString("base64"),
+      branch,
+      ...(status === 200 ? { sha: data.sha } : {}),
+    });
+  }
+
+  /** The project is asked to merge the member's branch; one already open for it is the same ask. */
+  async openPullRequest(
+    project: string,
+    head: string,
+    title: string,
+    draft: boolean,
+  ): Promise<string> {
+    const where = `${this.repo(project)}/pulls`;
+    const { status, data } = await this.request<{ number: number }>("POST", where, {
+      title,
+      head,
+      base: "main",
+      draft,
+    });
+    if (status < 300) return String(data.number);
+    if (status !== 422) throw new GitHubError("POST", where, status, data);
+    const open = await this.call<{ number: number }[]>(
+      "GET",
+      `${where}?head=${encodeURIComponent(head)}&state=open`,
+    );
+    const existing = open[0];
+    if (existing === undefined) throw new GitHubError("POST", where, status, data);
+    return String(existing.number);
+  }
+
   /** The member's claim: Divlab's claim comment on the task's issue, made as the member. */
   async askToClaim(project: string, task: string): Promise<void> {
     await this.call("POST", `${this.repo(project)}/issues/${task}/comments`, { body: CLAIM });

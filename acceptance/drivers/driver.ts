@@ -75,6 +75,8 @@ export interface Driver {
   acceptWork(work: AcceptedWork): Promise<void>;
   /** The member opens a pull request with their work, for Divlab to validate and merge. */
   submitWork(work: AcceptedWork): Promise<void>;
+  /** The member's plugin submits their work for the task they hold, through the CLI's submit. */
+  submitThroughPlugin(work: AcceptedWork): Promise<void>;
   /** The member opens a draft pull request with their work so far. */
   submitDraftWork(work: AcceptedWork): Promise<void>;
   /** Members open pull requests together, before Divlab has decided on any of them. */

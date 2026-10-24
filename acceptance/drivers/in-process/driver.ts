@@ -1,4 +1,4 @@
-import { askForWork, claim } from "@anarres/cli";
+import { askForWork, claim, submit } from "@anarres/cli";
 import {
   CLAIM,
   checkMain,
@@ -291,6 +291,38 @@ export class InProcessDriver implements Driver {
   }
 
   /** The member opens a draft for the task they hold, as their plugin will, early in the work. */
+  /** The member's plugin submits through the CLI; the fake GitHub plays the member's fork. */
+  async submitThroughPlugin(work: AcceptedWork): Promise<void> {
+    const id = this.openTaskId(work);
+    const onBranch: { path: string; text: string }[] = [];
+    const said = await submit(
+      { project: work.project, role: roleId(work.role), module: work.module, task: id },
+      workFiles(work, id),
+      { draft: false },
+      {
+        forkOf: async (project) => `${work.member}/${project}`,
+        branch: async () => {},
+        putFile: async (_fork, _branch, path, text) => void onBranch.push({ path, text }),
+        openPullRequest: async (project) => {
+          const pullRequest = this.github.openPullRequest(project, onBranch, {
+            author: work.member,
+          });
+          await onPullRequest(
+            project,
+            pullRequest,
+            this.github,
+            this.github,
+            this.github,
+            this.clock,
+          );
+          await this.afterRun(project);
+          return pullRequest;
+        },
+      },
+    );
+    if (said.startsWith("Not submitted")) throw new Error(said);
+  }
+
   async submitDraftWork(work: AcceptedWork): Promise<void> {
     const id = this.openTaskId(work);
     const { path, text } = feedbackSignalFile(work, id);
