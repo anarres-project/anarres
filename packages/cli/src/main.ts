@@ -119,6 +119,7 @@ try {
           names: () => github.namesHeldBy(member),
           heldTasks: (project, member) => github.heldTasks(project, member),
           log: (project) => github.read(project),
+          pullRequestsOpenBy: (project, holder) => github.pullRequestsOpenBy(project, holder),
         }),
       ),
     );

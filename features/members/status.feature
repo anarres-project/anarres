@@ -9,3 +9,12 @@ Feature: A member sees where their work stands
     And Alice has claimed the Test task for "parser"
     When Alice asks for the status of their work
     Then Alice is shown that they hold the Test task for "parser", with when its lease runs out
+
+  @sandbox-wip
+  Scenario: A member is shown their draft of a task they hold
+    Given a project with a module "parser"
+    And a member's Specification work on "parser" was accepted with a pass verdict
+    And Alice has claimed the Test task for "parser"
+    And Alice submits draft Test work on "parser"
+    When Alice asks for the status of their work
+    Then Alice is shown that their Test work on "parser" is a draft

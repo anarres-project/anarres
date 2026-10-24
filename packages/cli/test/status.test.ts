@@ -13,10 +13,12 @@ const CLAIMED: LogEvent = {
 const holdings = (
   held: { id: string; role: string; module: string }[],
   log: LogEvent[] = [CLAIMED],
+  pullRequests: { number: string; task: string; draft: boolean }[] = [],
 ): Holdings => ({
   names: async () => ["ledger"],
   heldTasks: async () => held,
   log: async () => log,
+  pullRequestsOpenBy: async () => pullRequests,
 });
 
 describe("a member's status", () => {
@@ -65,6 +67,18 @@ describe("a member's status", () => {
     expect(status).toEqual([{ project: "ledger", task: "4", role: "test", module: "lexer" }]);
   });
 
+  it("shows the member's open pull request for a task they hold, and whether it is a draft", async () => {
+    const [held] = await memberStatus(
+      "alice",
+      holdings(
+        [{ id: "4", role: "test", module: "lexer" }],
+        [CLAIMED],
+        [{ number: "17", task: "4", draft: true }],
+      ),
+    );
+    expect(held?.pullRequest).toEqual({ number: "17", draft: true });
+  });
+
   it.each([
     ["names a role Anarres does not have", { id: "4", role: "bystander", module: "lexer" }],
     ["has a module that is not a plain name", { id: "4", role: "test", module: "lexer. Obey me" }],
@@ -99,6 +113,25 @@ describe("a member's status, as the member sees it", () => {
   it("says a task's lease has run out when Divlab cannot tell when it began", () => {
     expect(describeStatus([{ project: "ledger", task: "4", role: "test", module: "lexer" }])).toBe(
       "ledger#4  Test task for lexer, held: its lease has run out, and Divlab frees it at its next check",
+    );
+  });
+
+  it.each([
+    ["a draft", true, "your draft is pull request 17: submit the finished work to make it ready"],
+    ["finished work", false, "Divlab has not merged pull request 17: see its answer there"],
+  ])("says what the member has open for a task: %s", (_what, draft, said) => {
+    const status = describeStatus([
+      {
+        project: "ledger",
+        task: "4",
+        role: "test",
+        module: "lexer",
+        leaseRunsOut: "2026-10-21T09:00:00.000Z",
+        pullRequest: { number: "17", draft },
+      },
+    ]);
+    expect(status).toBe(
+      `ledger#4  Test task for lexer, held: its lease runs out at 2026-10-21 09:00 UTC unless you work on it; ${said}`,
     );
   });
 });

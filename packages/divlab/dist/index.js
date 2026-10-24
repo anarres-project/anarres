@@ -8473,6 +8473,13 @@ var GitHubAdapter = class {
       return task?.claimedBy === member ? [{ id: String(issue.number), role: task.role, module: task.module }] : [];
     });
   }
+  async pullRequestsOpenBy(project2, member) {
+    const pulls = await this.call("GET", `${this.repo(project2)}/pulls?state=open&per_page=100`);
+    return pulls.flatMap((pull) => {
+      const task = pull.head.ref.match(/^anarres\/task-([1-9][0-9]{0,9})$/)?.[1];
+      return task && pull.user.login === member ? [{ number: String(pull.number), task, draft: pull.draft }] : [];
+    });
+  }
   /**
    * The member's fork of the project: GitHub makes one, or gives the one they have. Forks are
    * made in the background, so this waits, a minute at most, until the fork has its main.

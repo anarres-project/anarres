@@ -36,3 +36,10 @@ Then(
     return this.anarres.memberIsShownHeld(member, { role, module });
   },
 );
+
+Then(
+  "{word} is shown that their {role} work on {string} is a draft",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.memberIsShownDraft(member, { role, module });
+  },
+);

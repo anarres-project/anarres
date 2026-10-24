@@ -102,6 +102,25 @@ GREEN:    (66 passed)
 REFACTOR: when a lease runs out is stated once, in core (`leaseRunsOutAt`), and `leaseHasRunOut`
           and the CLI both use it
 
+Open pull requests in the status: each held task shows the member's open pull request for it, if
+any, read from the task's branch name only (the title is the member's to edit): a draft, or
+finished work Divlab has not merged, which means it answered there. Status says so without
+showing any comment's text. A second scenario (`@sandbox-wip`), in both drivers. The lister is
+`pullRequestsOpenBy`, not `openPullRequests`, which would read as the adapter's opener. Slips: I
+renamed test rows in the same step as production code; and I wrote the branch-name guard before
+a test asked for it, so I replaced it with a crude stand-in, watched its test fail, then
+restored it.
+
+RED:      shows the member's open pull request for a task they hold -> expected undefined to deeply equal { number: '17', draft: true }
+GREEN:    (67 passed)
+REFACTOR: the pull request looked up with find
+RED:      says what the member has open for a task (draft, finished) -> expected '…' to be '…; your draft is…'
+GREEN:    (69 passed)
+RED:      a member's open pull requests in a project -> expected [] to deeply equal [ { number: '17', … } ]
+GREEN:    (120 passed)
+RED:      leaves out one someone else opened, or not from a task's branch -> expected [ {...} ] to deeply equal []
+GREEN:    (122 passed)
+
 ---
 
 ## 2026-10-24: A draft made ready, and the plugin's handover

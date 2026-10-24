@@ -736,8 +736,14 @@ export class SandboxDriver implements Driver {
       names: async () => (this.projectOfScenario ? [this.projectOfScenario] : []),
       heldTasks: (project, holder) => asMember.heldTasks(project, holder),
       log: (project) => asMember.read(project),
+      pullRequestsOpenBy: (project, holder) => asMember.pullRequestsOpenBy(project, holder),
     });
-    return held.map(({ role, module, ...lease }) => ({ role: roleNameOf(role), module, ...lease }));
+    return held.map(({ role, module, leaseRunsOut, pullRequest }) => ({
+      role: roleNameOf(role),
+      module,
+      ...(leaseRunsOut === undefined ? {} : { leaseRunsOut }),
+      ...(pullRequest === undefined ? {} : { draft: pullRequest.draft }),
+    }));
   }
 
   async timePasses(): Promise<void> {

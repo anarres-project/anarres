@@ -8074,6 +8074,13 @@ var GitHubAdapter = class {
       return task?.claimedBy === member ? [{ id: String(issue.number), role: task.role, module: task.module }] : [];
     });
   }
+  async pullRequestsOpenBy(project, member) {
+    const pulls = await this.call("GET", `${this.repo(project)}/pulls?state=open&per_page=100`);
+    return pulls.flatMap((pull) => {
+      const task = pull.head.ref.match(/^anarres\/task-([1-9][0-9]{0,9})$/)?.[1];
+      return task && pull.user.login === member ? [{ number: String(pull.number), task, draft: pull.draft }] : [];
+    });
+  }
   /**
    * The member's fork of the project: GitHub makes one, or gives the one they have. Forks are
    * made in the background, so this waits, a minute at most, until the fork has its main.
@@ -8608,15 +8615,18 @@ async function memberStatus(member, holdings) {
   const held = [];
   for (const project of await holdings.names()) {
     const events = await holdings.log(project);
+    const pullRequests = await holdings.pullRequestsOpenBy(project, member);
     for (const task of await holdings.heldTasks(project, member)) {
       if (!isRole(task.role) || !isPlainName(task.module)) continue;
+      const pullRequest = pullRequests.find((open) => open.task === task.id);
       const runsOut = leaseRunsOutAt(leasesFrom(events).get(task.id)?.since ?? "");
       held.push({
         project,
         task: task.id,
         role: task.role,
         module: task.module,
-        ...runsOut === void 0 ? {} : { leaseRunsOut: runsOut.toISOString() }
+        ...runsOut === void 0 ? {} : { leaseRunsOut: runsOut.toISOString() },
+        ...pullRequest === void 0 ? {} : { pullRequest: { number: pullRequest.number, draft: pullRequest.draft } }
       });
     }
   }
@@ -8624,9 +8634,10 @@ async function memberStatus(member, holdings) {
 }
 function describeStatus(held) {
   if (held.length === 0) return "You hold no tasks just now: run next to find one.";
-  return held.map(({ project, task, role, module, leaseRunsOut }) => {
+  return held.map(({ project, task, role, module, leaseRunsOut, pullRequest }) => {
     const lease = leaseRunsOut === void 0 ? "its lease has run out, and Divlab frees it at its next check" : `its lease runs out at ${leaseRunsOut.slice(0, 10)} ${leaseRunsOut.slice(11, 16)} UTC unless you work on it`;
-    return `${project}#${task}  ${ROLE_NAMES[role]} task for ${module}, held: ${lease}`;
+    const open = pullRequest === void 0 ? "" : pullRequest.draft ? `; your draft is pull request ${pullRequest.number}: submit the finished work to make it ready` : `; Divlab has not merged pull request ${pullRequest.number}: see its answer there`;
+    return `${project}#${task}  ${ROLE_NAMES[role]} task for ${module}, held: ${lease}${open}`;
   }).join("\n");
 }
 
@@ -8711,7 +8722,8 @@ try {
         await memberStatus(member, {
           names: () => github.namesHeldBy(member),
           heldTasks: (project, member2) => github.heldTasks(project, member2),
-          log: (project) => github.read(project)
+          log: (project) => github.read(project),
+          pullRequestsOpenBy: (project, holder) => github.pullRequestsOpenBy(project, holder)
         })
       )
     );

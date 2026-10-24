@@ -514,7 +514,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] a held task whose claim the log does not record, or whose time cannot be read: its lease
         has run out and Divlab frees it at its next check, as Divlab takes such a time to be long
         past (it threw before); the lease-end rule is now in core once, `leaseRunsOutAt`;
-  - [ ] the member's open pull requests, and their contribution history (concept §10).
+  - [x] the member's open pull request for each task they hold, from the task's branch: a draft,
+        or finished work Divlab has not merged (it answers on it); a new scenario, in both drivers;
+  - [ ] more than 100 open pull requests in a project: the listing reads only the first page;
+  - [ ] the member's contribution history (concept §10): what it shows is to be settled.
 - [ ] `/anarres:resume` (concept §10): continuing a held task in a new session.
 
 ## Unsorted

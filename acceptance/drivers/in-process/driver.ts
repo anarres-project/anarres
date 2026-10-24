@@ -293,8 +293,15 @@ export class InProcessDriver implements Driver {
           .filter((task) => task.claimedBy === holder)
           .map(({ id, role, module }) => ({ id, role, module })),
       log: (project) => this.github.read(project),
+      pullRequestsOpenBy: async (project, holder) =>
+        this.github.pullRequestsOpenBy(project, holder),
     });
-    return held.map(({ role, module, ...lease }) => ({ role: roleName(role), module, ...lease }));
+    return held.map(({ role, module, leaseRunsOut, pullRequest }) => ({
+      role: roleName(role),
+      module,
+      ...(leaseRunsOut === undefined ? {} : { leaseRunsOut }),
+      ...(pullRequest === undefined ? {} : { draft: pullRequest.draft }),
+    }));
   }
 
   async timePasses(hours: number): Promise<void> {
@@ -306,7 +313,6 @@ export class InProcessDriver implements Driver {
     await this.afterRun(project);
   }
 
-  /** The member opens a draft for the task they hold, as their plugin will, early in the work. */
   /** The member's plugin submits through the CLI; the fake GitHub plays the member's fork. */
   async submitThroughPlugin(work: AcceptedWork): Promise<void> {
     const id = this.openTaskId(work);
@@ -322,6 +328,7 @@ export class InProcessDriver implements Driver {
         openPullRequest: async (project) => {
           const pullRequest = this.github.openPullRequest(project, onBranch, {
             author: work.member,
+            task: id,
           });
           await onPullRequest(
             project,
@@ -339,12 +346,14 @@ export class InProcessDriver implements Driver {
     if (said.startsWith("Not submitted")) throw new Error(said);
   }
 
+  /** The member opens a draft for the task they hold, as their plugin will, early in the work. */
   async submitDraftWork(work: AcceptedWork): Promise<void> {
     const id = this.openTaskId(work);
     const { path, text } = feedbackSignalFile(work, id);
     const pullRequest = this.github.openPullRequest(work.project, [{ path, text }], {
       author: work.member,
       draft: true,
+      task: id,
     });
     await onPullRequest(
       work.project,

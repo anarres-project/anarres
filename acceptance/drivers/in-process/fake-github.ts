@@ -191,17 +191,33 @@ export class FakeGitHub
     files: { path: string; text: string }[];
     author: string;
     draft: boolean;
+    task?: string;
   }[] = [];
   private readonly mergedPullRequests: string[] = [];
 
-  /** A member opens a pull request; it is identified by its number, as on GitHub. */
+  /**
+   * A member opens a pull request; it is identified by its number, as on GitHub. One opened by a
+   * member's CLI is from its task's branch, so names the task.
+   */
   openPullRequest(
     project: string,
     files: { path: string; text: string }[],
-    { author, draft = false }: { author: string; draft?: boolean },
+    { author, draft = false, task }: { author: string; draft?: boolean; task?: string },
   ): string {
-    this.pullRequests.push({ project, files, author, draft });
+    this.pullRequests.push({ project, files, author, draft, ...(task ? { task } : {}) });
     return String(this.pullRequests.length);
+  }
+
+  /** The member's open pull requests from a task's branch: not yet merged, nor closed. */
+  pullRequestsOpenBy(project: string, member: string) {
+    return this.pullRequests.flatMap(({ project: of, author, draft, task }, index) =>
+      of === project &&
+      author === member &&
+      task !== undefined &&
+      !this.mergedPullRequests.includes(String(index + 1))
+        ? [{ number: String(index + 1), task, draft }]
+        : [],
+    );
   }
 
   async pullRequest(_project: string, number: string) {

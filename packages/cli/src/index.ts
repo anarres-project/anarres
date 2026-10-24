@@ -322,22 +322,33 @@ export interface Holdings {
   ): Promise<{ id: string; role: string; module: string }[]>;
   /** The project's event log: when each claim was made, and the work since. */
   log(project: string): Promise<LogEvent[]>;
+  /** The member's open pull requests in the project, each with the task it is for. */
+  pullRequestsOpenBy(
+    project: string,
+    member: string,
+  ): Promise<{ number: string; task: string; draft: boolean }[]>;
 }
 
 /**
  * A task a member holds, and when its lease runs out: no time when Divlab cannot tell when the
  * lease began, as it then takes the lease to have run out.
  */
-export type Held = Offer & { leaseRunsOut?: string };
+export type Held = Offer & {
+  leaseRunsOut?: string;
+  /** The member's open pull request for the task, if they have one. */
+  pullRequest?: { number: string; draft: boolean };
+};
 
 /** The tasks a member holds, across Anarres's projects, and when each lease runs out. */
 export async function memberStatus(member: string, holdings: Holdings): Promise<Held[]> {
   const held: Held[] = [];
   for (const project of await holdings.names()) {
     const events = await holdings.log(project);
+    const pullRequests = await holdings.pullRequestsOpenBy(project, member);
     for (const task of await holdings.heldTasks(project, member)) {
       // Shown in the member's session: only plain names, as Divlab writes them.
       if (!isRole(task.role) || !isPlainName(task.module)) continue;
+      const pullRequest = pullRequests.find((open) => open.task === task.id);
       const runsOut = leaseRunsOutAt(leasesFrom(events).get(task.id)?.since ?? "");
       held.push({
         project,
@@ -345,6 +356,9 @@ export async function memberStatus(member: string, holdings: Holdings): Promise<
         role: task.role,
         module: task.module,
         ...(runsOut === undefined ? {} : { leaseRunsOut: runsOut.toISOString() }),
+        ...(pullRequest === undefined
+          ? {}
+          : { pullRequest: { number: pullRequest.number, draft: pullRequest.draft } }),
       });
     }
   }
@@ -355,12 +369,18 @@ export async function memberStatus(member: string, holdings: Holdings): Promise<
 export function describeStatus(held: readonly Held[]): string {
   if (held.length === 0) return "You hold no tasks just now: run next to find one.";
   return held
-    .map(({ project, task, role, module, leaseRunsOut }) => {
+    .map(({ project, task, role, module, leaseRunsOut, pullRequest }) => {
       const lease =
         leaseRunsOut === undefined
           ? "its lease has run out, and Divlab frees it at its next check"
           : `its lease runs out at ${leaseRunsOut.slice(0, 10)} ${leaseRunsOut.slice(11, 16)} UTC unless you work on it`;
-      return `${project}#${task}  ${ROLE_NAMES[role]} task for ${module}, held: ${lease}`;
+      const open =
+        pullRequest === undefined
+          ? ""
+          : pullRequest.draft
+            ? `; your draft is pull request ${pullRequest.number}: submit the finished work to make it ready`
+            : `; Divlab has not merged pull request ${pullRequest.number}: see its answer there`;
+      return `${project}#${task}  ${ROLE_NAMES[role]} task for ${module}, held: ${lease}${open}`;
     })
     .join("\n");
 }

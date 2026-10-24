@@ -219,6 +219,22 @@ export class GitHubAdapter
     });
   }
 
+  async pullRequestsOpenBy(
+    project: string,
+    member: string,
+  ): Promise<{ number: string; task: string; draft: boolean }[]> {
+    const pulls = await this.call<
+      { number: number; draft: boolean; user: { login: string }; head: { ref: string } }[]
+    >("GET", `${this.repo(project)}/pulls?state=open&per_page=100`);
+    return pulls.flatMap((pull) => {
+      // The branch a member's CLI names for a task; any other branch is not one of its tasks.
+      const task = pull.head.ref.match(/^anarres\/task-([1-9][0-9]{0,9})$/)?.[1];
+      return task && pull.user.login === member
+        ? [{ number: String(pull.number), task, draft: pull.draft }]
+        : [];
+    });
+  }
+
   /**
    * The member's fork of the project: GitHub makes one, or gives the one they have. Forks are
    * made in the background, so this waits, a minute at most, until the fork has its main.

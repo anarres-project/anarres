@@ -129,6 +129,39 @@ describe("the tasks a member holds in a project", () => {
   });
 });
 
+describe("a member's open pull requests in a project", () => {
+  it("are those they opened from a task's branch, each with its task and whether it is a draft", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (method === "GET" && path === "repos/commons/ledger/pulls?state=open&per_page=100") {
+          const pulls = [
+            { number: 17, draft: true, user: { login: "alice" }, head: { ref: "anarres/task-4" } },
+          ];
+          return { status: 200, data: pulls as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.pullRequestsOpenBy("ledger", "alice")).toEqual([
+      { number: "17", task: "4", draft: true },
+    ]);
+  });
+
+  it.each([
+    ["someone else opened", { user: { login: "bob" }, head: { ref: "anarres/task-4" } }],
+    ["is from a branch that is not a task's", { user: { login: "alice" }, head: { ref: "fix-4" } }],
+  ])("leaves out a pull request that %s", async (_what, pull) => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>() => ({ status: 200, data: [{ number: 17, draft: false, ...pull }] as T }),
+    });
+    expect(await adapter.pullRequestsOpenBy("ledger", "alice")).toEqual([]);
+  });
+});
+
 describe("the member a CLI acts for", () => {
   it("is the account GitHub says the member's login is", async () => {
     const adapter = new GitHubAdapter({
