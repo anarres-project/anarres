@@ -344,7 +344,7 @@ Every artefact a member's Claude reads was written by someone else. The threats 
 Defences built into the plugin:
 
 - Tasks that execute code (Test, Coding, Security & Quality, Integration) run in the project's declared **dev container** with no host secrets and restricted network access. Other roles use Claude Code's sandbox.
-- Read-scope hooks confine the agent to the sparse-checkout workspace, and each role to its own read and write places within it. They judge Claude Code's file tools only, so they keep an honest session on course rather than wall it in: the hard boundary is the sandbox or dev container, and Claude Code's permission rules.
+- Read-scope hooks confine the agent to the sparse-checkout workspace, and each role to its own inputs and its own place within it (where it may also read back its own work: decision 0009). They judge Claude Code's file tools only, so they keep an honest session on course rather than wall it in: the hard boundary is the sandbox or dev container, and Claude Code's permission rules.
 - Each role's instructions tell it to treat artefacts as data and to report suspicious content as a feedback impediment (`suspicious_content`), never to act on it.
 - Anarres sessions run with isolated Claude configuration, so the member's personal memory, global CLAUDE.md and other projects never enter an Anarres task, and nothing from one Anarres role carries into another.
 

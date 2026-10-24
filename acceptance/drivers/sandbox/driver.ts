@@ -5,6 +5,7 @@ import { join } from "node:path";
 import {
   askForWork,
   claim,
+  contributions,
   gitSteps,
   memberStatus,
   preparation,
@@ -184,7 +185,7 @@ export class SandboxDriver implements Driver {
     }
   }
 
-  private async openPullRequest(work: AcceptedWork, { draft = false } = {}) {
+  private async openPullRequest(work: AcceptedWork) {
     const member = await this.playAs(work.member);
     const repository = `repos/${this.org}/${work.project}`;
     const fromRole = roleId(work.role);
@@ -232,7 +233,6 @@ export class SandboxDriver implements Driver {
       title: `The ${work.role} work on ${work.module}`,
       head: `${this.membersOrg}:${branch}`,
       base: "main",
-      draft,
     });
     return { number, path, task, listing };
   }
@@ -811,6 +811,17 @@ export class SandboxDriver implements Driver {
     this.machine = undefined;
   }
 
+  /** The member's merged work, as their CLI's status reads it, with their own login. */
+  async contributionHistory(member: string): Promise<{ role: string; module: string }[]> {
+    const account = await this.playAs(member);
+    const asMember = this.asMember(account);
+    const done = await contributions(await loginOf(account), {
+      names: async () => (this.projectOfScenario ? [this.projectOfScenario] : []),
+      log: (project) => asMember.read(project),
+    });
+    return done.map(({ role, module }) => ({ role: roleNameOf(role), module }));
+  }
+
   async timePasses(): Promise<void> {
     throw new HarnessNotYetBuilt("moving GitHub's clock on");
   }
@@ -820,15 +831,25 @@ export class SandboxDriver implements Driver {
   }
 
   /**
-   * The member opens a draft for the task they hold, as their plugin will, early in the work.
-   * Divlab never merges a draft; the driver waits for its record of the activity.
-   */
-  /**
    * The member's plugin submits through the CLI's submit, against real GitHub. The sandbox's
    * accounts cannot fork into a personal account, so the fork is the members' organisation's, as
    * for every scenario; the pull request is opened as the member's own account.
    */
   async submitThroughPlugin(work: AcceptedWork): Promise<void> {
+    const { number, task } = await this.submitThroughCli(work, { draft: false });
+    const { path } = feedbackSignalFile(work, String(task.number));
+    await this.awaitDecision(
+      work,
+      { number, path, task, listing: "claimed" },
+      await this.divlabHasDecidedOn(work.project, number),
+    );
+  }
+
+  /**
+   * The member's CLI submits their work for the task they hold, as `anarres submit` does, from
+   * the task's branch of their fork; the sandbox's members organisation holds the forks.
+   */
+  private async submitThroughCli(work: AcceptedWork, { draft }: { draft: boolean }) {
     const fromRole = roleId(work.role);
     const task = (await this.settled(work.project, "claimed")).find(
       (i) => labelValue(i, "role:") === fromRole && labelValue(i, "module:") === work.module,
@@ -844,44 +865,41 @@ export class SandboxDriver implements Driver {
     const said = await submit(
       { project: work.project, role: fromRole, module: work.module, task: String(task.number) },
       workFiles(work, String(task.number)),
-      { draft: false },
+      { draft },
       {
         forkOf: (project) => this.forkOf(project),
         branch: (fork, name) => asMembersOrg.branch(fork, name),
         putFile: (fork, branch, path, text) => asMembersOrg.putFile(fork, branch, path, text),
-        openPullRequest: async (project, head, title, draft) => {
-          const opened = await member.openPullRequest(project, head, title, draft);
+        openPullRequest: async (project, head, title, asDraft) => {
+          const opened = await member.openPullRequest(project, head, title, asDraft);
           number = Number(opened);
           return opened;
         },
       },
     );
     if (said.startsWith("Not submitted")) throw new Error(said);
-    const { path } = feedbackSignalFile(work, String(task.number));
-    await this.awaitDecision(
-      work,
-      { number, path, task, listing: "claimed" },
-      await this.divlabHasDecidedOn(work.project, number),
-    );
+    return { number, task };
   }
 
+  /**
+   * The member's CLI submits a draft, as `anarres submit --draft` does, early in the work.
+   * Divlab never merges a draft; the driver waits for its record of the activity.
+   */
   async submitDraftWork(work: AcceptedWork): Promise<void> {
-    const opened = await this.openPullRequest(work, { draft: true });
+    const { number, task: issue } = await this.submitThroughCli(work, { draft: true });
     run.submitted.push({
       project: work.project,
-      number: opened.number,
+      number,
       feedbackSignal: work.feedbackSignal,
       merged: false,
     });
-    const task = String(opened.task?.number);
+    const task = String(issue.number);
     const deadline = Date.now() + RUN_FINISH_LIMIT;
     for (;;) {
       const events = await this.divlab.read(work.project);
       if (events.some((e) => "activity" in e && e.activity.task === task)) return;
       if (Date.now() > deadline) {
-        throw new Error(
-          `Divlab recorded no activity for draft ${opened.number} in ${work.project}`,
-        );
+        throw new Error(`Divlab recorded no activity for draft ${number} in ${work.project}`);
       }
       await new Promise((resolve) => setTimeout(resolve, 3_000));
     }

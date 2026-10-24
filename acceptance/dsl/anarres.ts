@@ -439,8 +439,20 @@ export class Anarres {
     (Work & { leaseRunsOut?: string; draft?: boolean })[]
   >();
 
+  /** The merged work each member was shown when they last asked for their status, by member. */
+  private readonly merged = new Map<string, Work[]>();
+
   async memberAsksForStatus(member: string) {
     this.statuses.set(member, await this.driver.heldTasks(this.member(member)));
+    this.merged.set(member, await this.driver.contributionHistory(this.member(member)));
+  }
+
+  async memberIsShownMerged(member: string, work: Work) {
+    const shown = this.merged.get(member) ?? [];
+    assert.ok(
+      shown.some((w) => w.role === work.role && w.module === this.aliases.of(work.module)),
+      `expected ${member} to be shown their ${work.role} work on ${work.module} as merged; shown ${JSON.stringify(shown)}`,
+    );
   }
 
   async memberIsShownHeld(member: string, task: Work) {

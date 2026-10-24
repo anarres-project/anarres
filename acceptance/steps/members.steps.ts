@@ -71,3 +71,10 @@ Then(
     return this.anarres.memberIsToldNoLongerHeld(member, { role, module });
   },
 );
+
+Then(
+  "{word} is shown their {role} work on {string} among their merged work",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.memberIsShownMerged(member, { role, module });
+  },
+);

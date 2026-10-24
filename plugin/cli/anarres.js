@@ -8173,14 +8173,17 @@ var GitHubAdapter = class {
   }
   /** The organisation's projects with a task ready to claim, from one search of its issues. */
   async names() {
-    return this.projectsWithIssues(`label:${READY}`);
+    return this.projectsFound(`label:${READY} is:open is:issue`);
   }
   async namesHeldBy(member) {
-    return this.projectsWithIssues(`label:${CLAIMED} assignee:${member}`);
+    return this.projectsFound(`label:${CLAIMED} assignee:${member} is:open is:issue`);
   }
-  /** The organisation's repositories with an open issue matching `matching`, in one search. */
-  async projectsWithIssues(matching) {
-    const query = encodeURIComponent(`org:${this.options.owner} ${matching} is:open is:issue`);
+  async namesContributedToBy(member) {
+    return this.projectsFound(`author:${member} is:pr is:merged`);
+  }
+  /** The organisation's repositories with an issue or pull request matching, in one search. */
+  async projectsFound(matching) {
+    const query = encodeURIComponent(`org:${this.options.owner} ${matching}`);
     const { items } = await this.call(
       "GET",
       `search/issues?q=${query}&per_page=100`
@@ -8520,13 +8523,14 @@ function scopeDecision(task, root, path, access) {
   }
   const inFolder = path.slice(root.length + 1);
   const role = ROLE_NAMES[task.role];
+  const ownPlace = outsideScope(task.role, task.module, [inFolder]).length === 0;
   if (access === "write") {
-    if (outsideScope(task.role, task.module, [inFolder]).length === 0) return "allowed";
+    if (ownPlace) return "allowed";
     return {
       refused: `${inFolder} is outside what ${role} may write for this task: Anarres keeps each role to its own place`
     };
   }
-  if (mayRead(task.role, task.module, inFolder, task)) return "allowed";
+  if (ownPlace || mayRead(task.role, task.module, inFolder, task)) return "allowed";
   return {
     refused: `${inFolder} is outside what ${role} may read for this task: Anarres keeps each role to its own inputs`
   };
@@ -8675,6 +8679,33 @@ function resumption(named2, task, member, folder) {
   }
   return { folder: taskFolder(named2) };
 }
+async function contributions(member, sources) {
+  const done = [];
+  for (const project of await sources.names()) {
+    for (const event of routingDecisions(await sources.log(project))) {
+      const { fromRole, module } = event.work;
+      if (event.member !== member || !isRole(fromRole) || !isPlainName(module)) continue;
+      const at = Date.parse(event.decidedAt ?? "");
+      done.push({
+        project,
+        role: fromRole,
+        module,
+        // Read from a log people can edit: only a time that reads as one gives a day.
+        ...Number.isNaN(at) ? {} : { mergedOn: new Date(at).toISOString().slice(0, 10) }
+      });
+    }
+  }
+  return done;
+}
+function describeContributions(done) {
+  if (done.length === 0) return "None of your work has been merged yet.";
+  return [
+    "Your merged work:",
+    ...done.map(
+      ({ project, role, module, mergedOn }) => `${project}  ${ROLE_NAMES[role]} work on ${module}, merged${mergedOn ? ` ${mergedOn}` : ""}`
+    )
+  ].join("\n");
+}
 
 // src/main.ts
 function taskFolderOf(cwd) {
@@ -8756,6 +8787,14 @@ try {
           heldTasks: (project, member2) => github.heldTasks(project, member2),
           log: (project) => github.read(project),
           pullRequestsOpenBy: (project, holder) => github.pullRequestsOpenBy(project, holder)
+        })
+      )
+    );
+    console.log(
+      describeContributions(
+        await contributions(member, {
+          names: () => github.namesContributedToBy(member),
+          log: (project) => github.read(project)
         })
       )
     );

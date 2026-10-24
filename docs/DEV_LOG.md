@@ -172,6 +172,41 @@ REFACTOR: the hook's decision, `toolDecision`, as plain ifs
 RED:      the hook's matcher sends NotebookEdit -> expected [ {…} ] to deeply equal [ {…} ]
 GREEN:    (79 passed)
 
+Reading back one's own work (decision 0009, Bernard): the hook refused a session's reads of its
+role's own place, so a resumed session could not see the work done so far. In the task's folder
+a session may now read where its role writes; prepare still fetches only the role's inputs.
+Bernard also settled contribution history: the member's merged work, per project.
+
+RED:      lets the session read back its own work, where its role writes -> expected [ {refused}, {refused} ] to deeply equal [ 'allowed', 'allowed' ]
+GREEN:    (80 passed)
+
+The status and resume scenarios against the sandbox, run locally by name: the held-task status
+and both resume scenarios passed first time, prepare fetching a real task's inputs with git. The
+draft-in-status scenario failed: the sandbox driver opened its drafts its own way, from a
+`work/…` branch, which the status rightly ignores. The driver now submits drafts through the
+CLI's `submit --draft`, sharing one method with its plugin submission; that scenario and "Divlab
+does not merge draft work" then passed. All four lose `@sandbox-wip`. (I first started a run
+that would have taken in every `@sandbox-wip` scenario, the profile's paths added to mine, as
+once before; I stopped it and named the scenarios in a config of their own.)
+
+Contribution history (Bernard: merged work, per project): `contributions` gathers each piece of
+the member's work Divlab merged from the projects' logs, plain names only, with the day only
+when its time reads as one; `describeContributions` shows it; the adapter finds the projects by
+the member's merged pull requests; `anarres status` prints it after the held tasks. Slip: two
+text tests written in one step.
+
+RED:      each piece of their merged work, per project -> expected [] to deeply equal [ {...} ]
+GREEN:    (81 passed)
+RED:      leaves out work that is not plain names -> expected [ {...} ] to deeply equal []
+GREEN:    (83 passed)
+RED:      gives no day for an unrecorded or unreadable time -> TypeError reading 'slice' (the bug); the raw text shown
+GREEN:    (85 passed)
+RED:      the history as the member sees it, and none yet (two tests) -> expected '' to be '…'
+GREEN:    (87 passed)
+RED:      the projects where a member's work has been merged -> expected [] to deeply equal [ 'atlas' ]
+GREEN:    (124 passed)
+REFACTOR: one search helper for issues and pull requests, `projectsFound`
+
 ---
 
 ## 2026-10-24: A draft made ready, and the plugin's handover

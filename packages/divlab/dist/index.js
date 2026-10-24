@@ -8572,14 +8572,17 @@ var GitHubAdapter = class {
   }
   /** The organisation's projects with a task ready to claim, from one search of its issues. */
   async names() {
-    return this.projectsWithIssues(`label:${READY}`);
+    return this.projectsFound(`label:${READY} is:open is:issue`);
   }
   async namesHeldBy(member) {
-    return this.projectsWithIssues(`label:${CLAIMED} assignee:${member}`);
+    return this.projectsFound(`label:${CLAIMED} assignee:${member} is:open is:issue`);
   }
-  /** The organisation's repositories with an open issue matching `matching`, in one search. */
-  async projectsWithIssues(matching) {
-    const query = encodeURIComponent(`org:${this.options.owner} ${matching} is:open is:issue`);
+  async namesContributedToBy(member) {
+    return this.projectsFound(`author:${member} is:pr is:merged`);
+  }
+  /** The organisation's repositories with an issue or pull request matching, in one search. */
+  async projectsFound(matching) {
+    const query = encodeURIComponent(`org:${this.options.owner} ${matching}`);
     const { items } = await this.call(
       "GET",
       `search/issues?q=${query}&per_page=100`

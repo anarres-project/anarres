@@ -32,6 +32,14 @@ describe("the read-scope hook's decision (concept §8: read-scope hooks block ot
     });
   });
 
+  it("lets the session read back its own work, where its role writes, in the task's folder (Bernard, 2026-10-24)", () => {
+    expect(
+      [`${ROOT}/modules/parser/src/lexer.ts`, `${ROOT}/feedback/FB-4.md`].map((path) =>
+        scopeDecision(TASK, ROOT, path, "read"),
+      ),
+    ).toEqual(["allowed", "allowed"]);
+  });
+
   it("lets the session write where its role writes, and not where it only reads", () => {
     expect(
       [`${ROOT}/modules/parser/src/lexer.ts`, `${ROOT}/modules/parser/tests/lexer.test.ts`].map(

@@ -7,6 +7,8 @@ import {
   askForWork,
   claim,
   claimOutcome,
+  contributions,
+  describeContributions,
   describeOffers,
   describeStatus,
   gitSteps,
@@ -120,6 +122,14 @@ try {
           heldTasks: (project, member) => github.heldTasks(project, member),
           log: (project) => github.read(project),
           pullRequestsOpenBy: (project, holder) => github.pullRequestsOpenBy(project, holder),
+        }),
+      ),
+    );
+    console.log(
+      describeContributions(
+        await contributions(member, {
+          names: () => github.namesContributedToBy(member),
+          log: (project) => github.read(project),
         }),
       ),
     );

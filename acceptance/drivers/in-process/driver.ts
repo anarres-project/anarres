@@ -1,6 +1,7 @@
 import {
   askForWork,
   claim,
+  contributions,
   memberStatus,
   preparation,
   resumption,
@@ -342,6 +343,15 @@ export class InProcessDriver implements Driver {
       { prepared: this.preparedHere.has(`${member} ${task.project}#${id}`) },
     );
     return "folder" in resumed ? { workIn: resumed.folder } : resumed;
+  }
+
+  /** The member's merged work, as their CLI's status reads it from the fake GitHub's logs. */
+  async contributionHistory(member: string): Promise<{ role: string; module: string }[]> {
+    const done = await contributions(member, {
+      names: async () => [...this.github.repositories.keys()],
+      log: (project) => this.github.read(project),
+    });
+    return done.map(({ role, module }) => ({ role: roleName(role), module }));
   }
 
   async timePasses(hours: number): Promise<void> {

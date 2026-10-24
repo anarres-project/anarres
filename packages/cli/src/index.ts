@@ -9,7 +9,7 @@ import {
   readFeedbackSignal,
   readScope,
 } from "@anarres/core";
-import { eligibility, type LogEvent, leasesFrom } from "@anarres/divlab";
+import { eligibility, type LogEvent, leasesFrom, routingDecisions } from "@anarres/divlab";
 
 /** Anarres's projects, as a member's CLI reads them from GitHub with the member's own login. */
 export interface Projects {
@@ -147,15 +147,18 @@ export function scopeDecision(
   }
   const inFolder = path.slice(root.length + 1);
   const role = ROLE_NAMES[task.role];
+  // Where the role's work writes, its feedback signal included (concept §6). In the task's folder
+  // that is the member's own work, which the session may read back too: prepare fetches nothing
+  // of anyone else's there, but for a continuation, which reads it anyway (Bernard, 2026-10-24).
+  const ownPlace = outsideScope(task.role, task.module, [inFolder]).length === 0;
   if (access === "write") {
-    // Where the role's work writes, its feedback signal included (concept §6).
-    if (outsideScope(task.role, task.module, [inFolder]).length === 0) return "allowed";
+    if (ownPlace) return "allowed";
     return {
       refused: `${inFolder} is outside what ${role} may write for this task: Anarres keeps each role to its own place`,
     };
   }
-  // What prepare fetched for the task, and nothing else, may be read.
-  if (mayRead(task.role, task.module, inFolder, task)) return "allowed";
+  // What prepare fetched for the task, and the session's own work, may be read.
+  if (ownPlace || mayRead(task.role, task.module, inFolder, task)) return "allowed";
   return {
     refused: `${inFolder} is outside what ${role} may read for this task: Anarres keeps each role to its own inputs`,
   };
@@ -424,4 +427,48 @@ export function resumption(
     };
   }
   return { folder: taskFolder(named) };
+}
+
+/** Anarres's projects, as a member's CLI reads the work they have done in them. */
+export interface Contributed {
+  /** The projects where the member's work has been merged. */
+  names(): Promise<string[]>;
+  /** The project's event log: whose work Divlab merged, and when. */
+  log(project: string): Promise<LogEvent[]>;
+}
+
+/** A piece of a member's work Divlab merged: where, for which role and module, and on which day. */
+export type Contribution = { project: string; role: Role; module: string; mergedOn?: string };
+
+/** The member's contribution history: each piece of their work Divlab merged, per project. */
+export async function contributions(member: string, sources: Contributed): Promise<Contribution[]> {
+  const done: Contribution[] = [];
+  for (const project of await sources.names()) {
+    for (const event of routingDecisions(await sources.log(project))) {
+      const { fromRole, module } = event.work;
+      // Shown in the member's session: only plain names, as Divlab writes them.
+      if (event.member !== member || !isRole(fromRole) || !isPlainName(module)) continue;
+      const at = Date.parse(event.decidedAt ?? "");
+      done.push({
+        project,
+        role: fromRole,
+        module,
+        // Read from a log people can edit: only a time that reads as one gives a day.
+        ...(Number.isNaN(at) ? {} : { mergedOn: new Date(at).toISOString().slice(0, 10) }),
+      });
+    }
+  }
+  return done;
+}
+
+/** A member's contribution history as they see it. */
+export function describeContributions(done: readonly Contribution[]): string {
+  if (done.length === 0) return "None of your work has been merged yet.";
+  return [
+    "Your merged work:",
+    ...done.map(
+      ({ project, role, module, mergedOn }) =>
+        `${project}  ${ROLE_NAMES[role]} work on ${module}, merged${mergedOn ? ` ${mergedOn}` : ""}`,
+    ),
+  ].join("\n");
 }

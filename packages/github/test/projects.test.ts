@@ -47,6 +47,27 @@ describe("the projects where a member holds a task", () => {
   });
 });
 
+describe("the projects where a member's work has been merged", () => {
+  it("are the organisation's repositories with a merged pull request of theirs, found in one search", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path ===
+            "search/issues?q=org%3Acommons%20author%3Aalice%20is%3Apr%20is%3Amerged&per_page=100"
+        ) {
+          const items = [{ repository_url: "https://api.github.com/repos/commons/atlas" }];
+          return { status: 200, data: { items } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.namesContributedToBy("alice")).toEqual(["atlas"]);
+  });
+});
+
 describe("a project's ready tasks", () => {
   it("are its open issues labelled ready, each with the role and module it is for", async () => {
     const adapter = new GitHubAdapter({

@@ -515,25 +515,31 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         from the claim or the member's latest work since, by Divlab's own lease rule); only plain
         names shown; `anarres status`, and the `/anarres:status` skill that may run only it; both
         drivers ask through the CLI;
-  - [ ] the sandbox shows it (the scenario is `@sandbox-wip`);
+  - [x] the sandbox shows it, and the draft scenario (2026-10-24, run locally; the sandbox's draft
+        now goes through the CLI's `submit --draft`, from the task's branch, as the plugin's does);
   - [x] a held task whose claim the log does not record, or whose time cannot be read: its lease
         has run out and Divlab frees it at its next check, as Divlab takes such a time to be long
         past (it threw before); the lease-end rule is now in core once, `leaseRunsOutAt`;
   - [x] the member's open pull request for each task they hold, from the task's branch: a draft,
         or finished work Divlab has not merged (it answers on it); a new scenario, in both drivers;
   - [x] more than 100 open pull requests in a project: every page is read;
-  - [ ] the member's contribution history (concept §10): what it shows is to be settled.
+  - [x] the member's contribution history (concept §10; Bernard, 2026-10-24): each piece of
+        their work Divlab merged, per project, from the event logs: project, role, module and
+        day, plain names only; a scenario in both drivers;
+  - [ ] the sandbox shows the history (the scenario is `@sandbox-wip`).
 - [ ] `/anarres:resume` (concept §10): continuing a held task in a new session.
   - [x] on the same machine: `anarres resume project#number` says the task's folder while the
         member holds it, refuses once they no longer hold it, and says to prepare it if it was
         never prepared here; the `/anarres:resume` skill may run resume, prepare and submit; two
         scenarios, in-process (the sandbox driver has no member's machine yet: `@sandbox-wip`);
+  - [x] in a new session, the hook lets Claude read back its own work, where its role writes, in
+        the task's folder (decision 0009);
   - [ ] on another machine, or after the folder is lost: preparing brings back the member's own
         work so far from their draft's branch, within the role's own place only;
   - [x] the sandbox driver plays a member's machine (a temporary folder, cleared after each
         scenario), so prepare fetches a real task's inputs with git, and resume runs, there too;
         the record prepare writes is made in one place, `taskRecord`;
-  - [ ] the sandbox shows them (the scenarios are `@sandbox-wip`);
+  - [x] the sandbox shows them (2026-10-24, run locally);
   - [ ] the next and resume skills both carry the instructions for doing and submitting the
         work: say them once (a file both skills read, mindful that the read-scope hook guards
         Claude's reads inside a task's folder).

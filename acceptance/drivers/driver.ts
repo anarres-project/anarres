@@ -110,6 +110,8 @@ export interface Driver {
   release(task: { project: string; role: string; module: string }, member: string): Promise<void>;
   /** The tasks a member is offered when they ask for work, as their plugin shows them. */
   offeredTasks(member: string): Promise<{ role: string; module: string }[]>;
+  /** The member's work Divlab has merged, as their plugin's status shows it. */
+  contributionHistory(member: string): Promise<{ role: string; module: string }[]>;
   /** The member's plugin prepares a task they hold, on their machine; gives where its work is. */
   prepare(task: { project: string; role: string; module: string }, member: string): Promise<string>;
   /**

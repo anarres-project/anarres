@@ -341,16 +341,20 @@ export class GitHubAdapter
 
   /** The organisation's projects with a task ready to claim, from one search of its issues. */
   async names(): Promise<string[]> {
-    return this.projectsWithIssues(`label:${READY}`);
+    return this.projectsFound(`label:${READY} is:open is:issue`);
   }
 
   async namesHeldBy(member: string): Promise<string[]> {
-    return this.projectsWithIssues(`label:${CLAIMED} assignee:${member}`);
+    return this.projectsFound(`label:${CLAIMED} assignee:${member} is:open is:issue`);
   }
 
-  /** The organisation's repositories with an open issue matching `matching`, in one search. */
-  private async projectsWithIssues(matching: string): Promise<string[]> {
-    const query = encodeURIComponent(`org:${this.options.owner} ${matching} is:open is:issue`);
+  async namesContributedToBy(member: string): Promise<string[]> {
+    return this.projectsFound(`author:${member} is:pr is:merged`);
+  }
+
+  /** The organisation's repositories with an issue or pull request matching, in one search. */
+  private async projectsFound(matching: string): Promise<string[]> {
+    const query = encodeURIComponent(`org:${this.options.owner} ${matching}`);
     const { items } = await this.call<{ items: { repository_url: string }[] }>(
       "GET",
       `search/issues?q=${query}&per_page=100`,
