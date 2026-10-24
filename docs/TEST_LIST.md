@@ -288,7 +288,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] `governance/members.json` exists (empty: everyone new), and CI checks every level in it;
   - [x] the sandbox shows it, with its own governance file (`anarres-sandbox/governance`, named
         by the organisation's `ANARRES_GOVERNANCE`), linked accounts too;
-  - [ ] an empty setting means Anarres's own file (written with the setting; to be tested);
+  - [x] an empty setting means Anarres's own file (written with the setting; its test passed
+        the first time it ran, kept as a regression test);
   - [ ] risk marking: a PDC coordinator marks a module high-risk, and new members may not code
         it (until then every module is low-risk, decision 0007).
 - [x] A member who wrote any artefact in a module cannot review that module (a case of the next).

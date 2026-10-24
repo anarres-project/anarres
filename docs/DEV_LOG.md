@@ -303,6 +303,9 @@ GREEN:    (129 passed)
 RED:      still waits out a limit that resets within a minute, such as search's -> expected undefined to be 40000
 GREEN:    (130 passed)
 
+A test that an empty governance setting means Anarres's own file passed the first time it ran:
+the behaviour was written with the setting. Kept as a regression test.
+
 ---
 
 ## 2026-10-24: A draft made ready, and the plugin's handover

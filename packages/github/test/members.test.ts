@@ -27,6 +27,21 @@ describe("the governance file (decision 0007)", () => {
     expect(await adapter.governanceFile()).toEqual(file);
   });
 
+  it("is read from Anarres's own repository when the organisation's setting is empty", async () => {
+    const file = { members: { alice: { level: "established" } } };
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      governance: "",
+      request: githubWithFile(
+        "anarres-project/anarres",
+        "governance/members.json",
+        JSON.stringify(file),
+      ),
+    });
+    expect(await adapter.governanceFile()).toEqual(file);
+  });
+
   it("is nothing when there is no such file: everyone is new", async () => {
     const adapter = new GitHubAdapter({
       owner: "commons",
