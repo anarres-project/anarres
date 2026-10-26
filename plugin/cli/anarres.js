@@ -7982,6 +7982,7 @@ var mainCommit = (listed) => ({
 });
 var GOVERNANCE_REPOSITORY = "anarres-project/anarres";
 var GOVERNANCE_FILE = "governance/members.json";
+var MERGE_ATTEMPTS = 3;
 var GitHubAdapter = class {
   /**
    * `app`: Divlab's GitHub App, needed only to set projects up. `request`: how requests reach
@@ -8150,10 +8151,12 @@ var GitHubAdapter = class {
       `repos/${fork}/git/ref/heads/main`
     );
     const where = `repos/${fork}/git/refs`;
-    const { status, data } = await this.request("POST", where, {
-      ref: `refs/heads/${name}`,
-      sha: object.sha
-    });
+    const { status, data } = await this.request(
+      "POST",
+      where,
+      { ref: `refs/heads/${name}`, sha: object.sha },
+      { repeatable: true }
+    );
     if (status >= 300 && status !== 422) throw new GitHubError("POST", where, status, data);
   }
   /** A file of the member's work, on their branch: a new one, or replacing what is there. */
@@ -8431,19 +8434,20 @@ var GitHubAdapter = class {
   }
   async merge(project, pullRequest, head) {
     const where = `${this.repo(project)}/pulls/${pullRequest}/merge`;
-    const { status, data } = await this.request("PUT", where, {
-      sha: head,
-      merge_method: "squash"
-    });
-    if (status >= 200 && status < 300) return data.sha;
-    if (status >= 500) {
+    for (let attempt = 1; ; attempt++) {
+      const { status, data } = await this.request("PUT", where, {
+        sha: head,
+        merge_method: "squash"
+      });
+      if (status >= 200 && status < 300) return data.sha;
+      if (status < 500) throw new GitHubError("PUT", where, status, data);
       const pull = await this.call(
         "GET",
         `${this.repo(project)}/pulls/${pullRequest}`
       );
       if (pull.merged) return pull.merge_commit_sha;
+      if (attempt === MERGE_ATTEMPTS) throw new GitHubError("PUT", where, status, data);
     }
-    throw new GitHubError("PUT", where, status, data);
   }
   async refuse(project, pullRequest, reason) {
     await this.call("POST", `${this.repo(project)}/issues/${pullRequest}/comments`, {

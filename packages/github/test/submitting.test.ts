@@ -46,6 +46,28 @@ describe("submitting through GitHub's API, with the member's own login", () => {
     ]);
   });
 
+  it("asks for the branch as a write safe to repeat, since asking again finds the branch made", async () => {
+    const asked: unknown[] = [];
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(
+        _token: string,
+        method: string,
+        path: string,
+        _body?: unknown,
+        options?: { repeatable?: boolean },
+      ) => {
+        if (method === "POST") asked.push(options);
+        return method === "GET"
+          ? { status: 200, data: { object: { sha: "f0rk" } } as T }
+          : { status: 201, data: {} as T };
+      },
+    });
+    await adapter.branch("alice/ledger", "anarres/task-4");
+    expect(asked).toEqual([{ repeatable: true }]);
+  });
+
   it("keeps the branch the member submitted to before, such as a draft's", async () => {
     const adapter = new GitHubAdapter({
       owner: "commons",

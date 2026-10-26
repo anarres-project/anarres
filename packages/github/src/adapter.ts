@@ -74,6 +74,9 @@ const mainCommit = (listed: ListedCommit): MainCommit => ({
 const GOVERNANCE_REPOSITORY = "anarres-project/anarres";
 const GOVERNANCE_FILE = "governance/members.json";
 
+/** How many times Divlab asks GitHub to merge, while GitHub's server fails and has not merged. */
+const MERGE_ATTEMPTS = 3;
+
 export class GitHubAdapter
   implements TaskBoard, EventLog, Repository, PullRequests, ProjectRepositories
 {
@@ -286,10 +289,13 @@ export class GitHubAdapter
       `repos/${fork}/git/ref/heads/main`,
     );
     const where = `repos/${fork}/git/refs`;
-    const { status, data } = await this.request("POST", where, {
-      ref: `refs/heads/${name}`,
-      sha: object.sha,
-    });
+    // Safe to ask again after a server error: if the first ask made it, the branch is there.
+    const { status, data } = await this.request(
+      "POST",
+      where,
+      { ref: `refs/heads/${name}`, sha: object.sha },
+      { repeatable: true },
+    );
     // A branch the member submitted to before, a draft's say, is kept: the work goes on it.
     if (status >= 300 && status !== 422) throw new GitHubError("POST", where, status, data);
   }
@@ -622,20 +628,22 @@ export class GitHubAdapter
 
   async merge(project: string, pullRequest: string, head: string): Promise<string> {
     const where = `${this.repo(project)}/pulls/${pullRequest}/merge`;
-    const { status, data } = await this.request<{ sha: string }>("PUT", where, {
-      sha: head,
-      merge_method: "squash",
-    });
-    if (status >= 200 && status < 300) return data.sha;
-    // A server error does not say whether the merge happened: GitHub's pull request does.
-    if (status >= 500) {
+    for (let attempt = 1; ; attempt++) {
+      const { status, data } = await this.request<{ sha: string }>("PUT", where, {
+        sha: head,
+        merge_method: "squash",
+      });
+      if (status >= 200 && status < 300) return data.sha;
+      if (status < 500) throw new GitHubError("PUT", where, status, data);
+      // A server error does not say whether the merge happened: GitHub's pull request does. If it
+      // did not, asking again is safe: GitHub merges only `head`, so never twice.
       const pull = await this.call<{ merged: boolean; merge_commit_sha: string }>(
         "GET",
         `${this.repo(project)}/pulls/${pullRequest}`,
       );
       if (pull.merged) return pull.merge_commit_sha;
+      if (attempt === MERGE_ATTEMPTS) throw new GitHubError("PUT", where, status, data);
     }
-    throw new GitHubError("PUT", where, status, data);
   }
 
   async refuse(project: string, pullRequest: string, reason: string): Promise<void> {

@@ -58,6 +58,23 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-26: Writes after a server error
+
+- GitHub's server failed two writes on 2026-10-26: a merge (500, in Divlab's run) and a member's
+  branch in a fork (502, from the sandbox driver). Reads were already retried; writes were not,
+  since repeating some could post twice. A merge GitHub did not make is now asked for again, up to
+  three times: GitHub merges only the commit Divlab read, so it cannot merge twice. A member's
+  branch is asked for as a write safe to repeat (asking again finds it made, which already
+  counts), and the sandbox driver's branch the same way. The other writes are on the test list.
+
+RED:      asks again if GitHub did not merge it -> GitHub PUT …/pulls/7/merge answered 500
+GREEN:    (138 passed)
+RED:      asks for the branch as a write safe to repeat -> expected [ undefined ] to equal [ { repeatable: true } ]
+GREEN:    (139 passed)
+REFACTOR: none
+
+---
+
 ## 2026-10-26: A task shown as claimed without a claim
 
 - Bernard (2026-10-26): a task the board shows as claimed, with no claim in Divlab's log, is made

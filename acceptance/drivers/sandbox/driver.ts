@@ -226,10 +226,16 @@ export class SandboxDriver implements Driver {
     }
     const main = reference.data.object;
     const branch = `work/${work.feedbackSignal}`;
-    await this.members.call("POST", `repos/${fork}/git/refs`, {
-      ref: `refs/heads/${branch}`,
-      sha: main.sha,
-    });
+    // The branch is the scenario's own, so if asking again finds it there, the first ask made it.
+    const made = await this.members.request(
+      "POST",
+      `repos/${fork}/git/refs`,
+      { ref: `refs/heads/${branch}`, sha: main.sha },
+      { repeatable: true },
+    );
+    if (made.status >= 300 && made.status !== 422) {
+      throw new Error(`GitHub could not make branch ${branch} in ${fork}: ${made.status}`);
+    }
     const signal = feedbackSignalFile(work, task && String(task.number));
     for (const { path, text } of [...otherFiles(work), signal]) {
       await this.members.call("PUT", `repos/${fork}/contents/${path}`, {
