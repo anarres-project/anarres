@@ -33,6 +33,14 @@ Feature: Leases
 
   # Not in the sandbox: its clock is GitHub's, and nothing can move it on 24 hours.
   @sandbox-wip
+  Scenario: Divlab's check leaves a task with its holder while their lease runs
+    Given a project with a module "parser"
+    And a member's Specification work on "parser" was accepted with a pass verdict
+    And Alice has claimed the Test task for "parser"
+    When Divlab checks the project's leases
+    Then the Test task for "parser" is claimed by Alice
+
+  @sandbox-wip
   Scenario: Draft work extends the lease
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict

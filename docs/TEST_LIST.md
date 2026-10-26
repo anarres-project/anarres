@@ -294,7 +294,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the member is told their lease ran out (a reply on the task, giving core's 24 hours);
   - [x] a claim whose recorded time cannot be read is not taken to hold forever: it has run out;
   - [ ] the sandbox shows the hourly check runs and frees nothing early (it cannot move GitHub's
-        clock on 24 hours, so the scenarios that need that stay in-process);
+        clock on 24 hours, so the scenarios that need that stay in-process): "Divlab's check
+        leaves a task with its holder while their lease runs" runs the check by hand, without
+        moving the clock; passes in-process (first time: a regression scenario there), and is
+        `@sandbox-wip` until it has passed against the sandbox;
   - [x] GitHub turns off scheduled workflows in a public repository after 60 days without
         activity: a claim on a task whose lease has run out now ends the lease there and then,
         so no task waits on the hourly check;
