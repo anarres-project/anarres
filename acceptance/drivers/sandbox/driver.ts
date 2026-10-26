@@ -57,7 +57,7 @@ import { leftBehind, sweptBy } from "./sweep.ts";
 
 /**
  * The two sandbox organisations and their tokens, from `.env` locally or the CI environment, and
- * the second account that plays a second member, if there is one.
+ * the accounts that play a second and a third member, if there are any.
  */
 function sandboxSettings() {
   const {
@@ -66,6 +66,7 @@ function sandboxSettings() {
     ANARRES_SANDBOX_MEMBERS_ORG: membersOrg,
     ANARRES_SANDBOX_MEMBERS_TOKEN: membersToken,
     ANARRES_SANDBOX_SECOND_MEMBER_TOKEN: secondMemberToken,
+    ANARRES_SANDBOX_THIRD_MEMBER_TOKEN: thirdMemberToken,
   } = process.env;
   if (!org || !token || !membersOrg || !membersToken) {
     throw new Error(
@@ -73,7 +74,7 @@ function sandboxSettings() {
         "ANARRES_SANDBOX_MEMBERS_ORG and ANARRES_SANDBOX_MEMBERS_TOKEN",
     );
   }
-  return { org, token, membersOrg, membersToken, secondMemberToken };
+  return { org, token, membersOrg, membersToken, secondMemberToken, thirdMemberToken };
 }
 
 type Issue = {
@@ -584,10 +585,11 @@ export class SandboxDriver implements Driver {
   private async playAs(member: string): Promise<GitHubApi> {
     const playing = this.played.get(member);
     if (playing) return playing;
-    const { secondMemberToken } = sandboxSettings();
+    const { secondMemberToken, thirdMemberToken } = sandboxSettings();
     const accounts = [
       this.github,
       ...(secondMemberToken ? [new GitHubApi(secondMemberToken)] : []),
+      ...(secondMemberToken && thirdMemberToken ? [new GitHubApi(thirdMemberToken)] : []),
     ];
     const account = accounts[this.played.size];
     if (!account) {

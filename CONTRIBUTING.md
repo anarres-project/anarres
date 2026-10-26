@@ -58,7 +58,8 @@ source, then run the bundle:
 `npm run test:acceptance:sandbox` runs the acceptance tests against real repositories in a
 dedicated sandbox organisation. Each run creates its repositories and deletes them at the end.
 What a run does and checks is in [`docs/SANDBOX.md`](docs/SANDBOX.md). It
-needs four values, from a git-ignored `.env` locally, or from the `sandbox` environment in CI:
+needs four values, and two more for scenarios with more than one member, from a git-ignored
+`.env` locally, or from the `sandbox` environment in CI:
 
 - `ANARRES_SANDBOX_ORG`: the sandbox organisation's name;
 - `ANARRES_SANDBOX_TOKEN`: a fine-grained personal access token whose resource owner is that
@@ -79,7 +80,11 @@ needs four values, from a git-ignored `.env` locally, or from the `sandbox` envi
   member. Its resource owner is the sandbox organisation, with access to all its repositories,
   and these repository permissions: read and write for issues (to claim) and pull requests (to
   submit work); read for metadata. The sandbox's own token plays a scenario's first member, this
-  one its second; a scenario with more members is not run in the sandbox.
+  one its second.
+
+- `ANARRES_SANDBOX_THIRD_MEMBER_TOKEN` (a secret in CI): the same, for a third GitHub account
+  (`anarres-sandbox-member-c`), which plays a scenario's third member. A scenario with more
+  members is not run in the sandbox.
 
 The sandbox's projects read members' trust levels from a governance file of the sandbox's own,
 never from this repository's: an organisation variable, `ANARRES_GOVERNANCE`, names the
