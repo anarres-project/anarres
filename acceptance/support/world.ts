@@ -4,7 +4,6 @@ import {
   Before,
   BeforeAll,
   type IWorldOptions,
-  parallelCanAssignHelpers,
   Status,
   setDefaultTimeout,
   setParallelCanAssign,
@@ -14,6 +13,7 @@ import {
 import type { Driver } from "../drivers/driver.ts";
 import { InProcessDriver } from "../drivers/in-process/driver.ts";
 import { SandboxDriver } from "../drivers/sandbox/driver.ts";
+import { mayStart } from "../drivers/sandbox/governance-alone.ts";
 import { runRepository } from "../drivers/sandbox/sweep.ts";
 import { Aliases } from "../dsl/aliases.ts";
 import { Anarres } from "../dsl/anarres.ts";
@@ -51,9 +51,9 @@ export class AnarresWorld extends World {
 
 setWorldConstructor(AnarresWorld);
 
-// In the sandbox, trust levels belong to accounts that every worker's scenarios share: scenarios
-// that set them run one at a time.
-setParallelCanAssign(parallelCanAssignHelpers.atMostOnePicklePerTag(["@governance"]));
+// In the sandbox, trust levels and linked accounts belong to accounts that every worker's
+// scenarios share: a scenario that sets them runs alone.
+setParallelCanAssign(mayStart);
 
 // Repositories an interrupted run left behind go first.
 BeforeAll(async () => {

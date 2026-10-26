@@ -69,8 +69,9 @@ winning under real GitHub ordering, not a chosen order.
 **Trust levels and linked accounts** ("Alice is an established member") go in the sandbox's own
 governance file, `anarres-sandbox/governance`, which the organisation's `ANARRES_GOVERNANCE`
 variable points Divlab at, keyed by the account playing the member. Trust belongs to an account,
-and every worker's scenarios share the two accounts, so scenarios tagged `@governance` run one at
-a time across workers, and each takes out what it recorded when it ends, pass or fail.
+and every worker's scenarios share the accounts, so a scenario tagged `@governance` runs alone:
+it starts only when no other scenario is running, nothing starts while it runs, and it takes out
+what it recorded when it ends, pass or fail.
 
 **Each check** ("the only task ready for parser is a Coding task") reads GitHub as a member or a
 PDC coordinator would: open task issues, escalation issues, finished-module issues, and the event
