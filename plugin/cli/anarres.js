@@ -7917,6 +7917,7 @@ var decisionBlock = (feedbackSignal, inputsAt) => [
 // ../github/src/rate-limits.ts
 function retryAfter(answer, now, { waitForAllowance = true } = {}) {
   if ([500, 502, 503, 504].includes(answer.status)) return 2e3;
+  if (answer.status === 405 && answer.message === "Merge already in progress") return 2e3;
   if (answer.status !== 403 && answer.status !== 429) return void 0;
   const retry = answer.headers.get("retry-after");
   if (retry !== null) return Number(retry) * 1e3;
@@ -8435,18 +8436,21 @@ var GitHubAdapter = class {
   async merge(project, pullRequest, head) {
     const where = `${this.repo(project)}/pulls/${pullRequest}/merge`;
     for (let attempt = 1; ; attempt++) {
-      const { status, data } = await this.request("PUT", where, {
-        sha: head,
-        merge_method: "squash"
-      });
+      const { status, data } = await this.request(
+        "PUT",
+        where,
+        { sha: head, merge_method: "squash" },
+        { repeatable: true }
+      );
       if (status >= 200 && status < 300) return data.sha;
-      if (status < 500) throw new GitHubError("PUT", where, status, data);
       const pull = await this.call(
         "GET",
         `${this.repo(project)}/pulls/${pullRequest}`
       );
       if (pull.merged) return pull.merge_commit_sha;
-      if (attempt === MERGE_ATTEMPTS) throw new GitHubError("PUT", where, status, data);
+      if (status < 500 || attempt === MERGE_ATTEMPTS) {
+        throw new GitHubError("PUT", where, status, data);
+      }
     }
   }
   async refuse(project, pullRequest, reason) {
