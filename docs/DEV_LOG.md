@@ -58,6 +58,38 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-26: A comment after a server error
+
+- The last of Divlab's writes GitHub's server can fail. A comment cannot simply be repeated, and
+  Divlab may rightly post the same reply twice (the same refusal to two claims), so the same text
+  being there does not show it was posted. Divlab now counts its own comments saying the same
+  before posting; after a server error it counts again: one more, and GitHub posted it; none, and
+  it posts again, three times in all. Divlab's runs for a project never overlap, so no other run
+  posts meanwhile. Only comments by a bot (Divlab's App) count, read from every page.
+- Protocol slip: the bot check went in with the first test, before one demanded it; taken out,
+  then demanded by its own test. Two older tests' fakes needed the comment listing: the
+  production change was set aside while each fake was updated green, then put back.
+
+RED:      posts it once when GitHub saved it, though it answered with a failure -> GitHub POST …/comments answered 502
+GREEN:    (156 passed)
+RED:      posts it again when GitHub's server failed before saving it -> GitHub POST …/comments answered 502
+GREEN:    (157 passed)
+RED:      posts it again, though Divlab rightly said the same before -> expected length 2 but got 1
+GREEN:    (158 passed)
+RED:      stops asking, and fails, when GitHub's server keeps failing -> promise resolved instead of rejecting
+GREEN:    (159 passed)
+RED:      posts it once on a busy task, whose newest comments are past the first page -> length 151 but got 152
+GREEN:    (160 passed)
+RED:      posts it again, though a member said the same words meanwhile -> expected [] to have a length of 1
+GREEN:    (161 passed)
+RED:      tells a member their lease ran out once … -> GitHub POST …/comments answered 502
+GREEN:    (162 passed)
+RED:      refuses a pull request once … -> GitHub POST …/comments answered 502
+GREEN:    (621 passed, whole gate)
+REFACTOR: every comment Divlab posts goes through one private `comment`
+
+---
+
 ## 2026-10-26: Governance scenarios run alone
 
 - The full sandbox run for ebdfaa4 failed 2 of 94. In one, Alice's claim was refused: "you have

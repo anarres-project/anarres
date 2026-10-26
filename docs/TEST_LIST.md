@@ -95,9 +95,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         the project's open issues are looked at; one with the same title and body means it was
         opened; otherwise it is opened again, three times in all; a closed issue saying the same
         does not count;
-  - [ ] a comment GitHub's server failed to post: not safe to repeat, and Divlab may rightly post
-        the same reply twice in a row (the same refusal to two claims), so looking for the same
-        text is not enough to tell it was posted;
+  - [x] a comment GitHub's server failed to post (a refusal, a lease run out, a pull request
+        refused): Divlab may rightly say the same twice, so it counts its own comments saying
+        the same before posting, and after a server error counts again: one more means posted;
+        otherwise it posts again, three times in all. Read from every page; a member's comment
+        saying the same words does not count. Costs one read of the comments per comment posted;
   - [x] the sandbox run stays inside the hourly allowance (5,000 requests) with room to spare:
         measured (a full run, 1,804 REST and 206 GraphQL requests, in CI on 2026-10-22), and a
         run does not start when GitHub reports too little left, saying when it resets. The

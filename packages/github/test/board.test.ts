@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GitHubAdapter, issueForClaimedWithoutClaim, issueForTask } from "../src/index.ts";
+import { commentForRefused } from "../src/representation.ts";
 
 /** A project's issues as GitHub lists them, a hundred to a page, newest first. */
 function githubWithIssues(issues: { body: string; labels: string[] }[]) {
@@ -127,6 +128,9 @@ describe("refusing a claim", () => {
         if (method === "POST" && path === "repos/commons/ledger/issues/12/comments") {
           comments.push(body);
           return { status: 201, data: {} as T };
+        }
+        if (method === "GET" && path.startsWith("repos/commons/ledger/issues/12/comments?")) {
+          return { status: 200, data: [] as T };
         }
         return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
       },
@@ -327,6 +331,9 @@ describe("telling a member their lease ran out", () => {
         if (method === "POST" && path === "repos/commons/ledger/issues/12/comments") {
           comments.push(body);
           return { status: 201, data: {} as T };
+        }
+        if (method === "GET" && path.startsWith("repos/commons/ledger/issues/12/comments?")) {
+          return { status: 200, data: [] as T };
         }
         return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
       },
@@ -537,5 +544,116 @@ describe("opening an issue, when GitHub's server fails", () => {
     const adapter = new GitHubAdapter({ owner: "commons", token: "test", request: github.request });
     await adapter.post(POSTED);
     expect(github.issues.map((i) => i.state)).toEqual(["open", "closed"]);
+  });
+});
+
+type ListedComment = { user: { login: string; type: string }; body: string };
+
+/**
+ * A task's comments on a GitHub whose server fails the first `failures` comments posted: before
+ * saving the comment if `saving` is false, after it if true. Divlab posts as its App, a bot.
+ */
+function githubFailingToComment(
+  failures: number,
+  saving: boolean,
+  comments: ListedComment[] = [],
+  /** A member who posts the same words as Divlab's comment while GitHub fails it. */
+  echoedBy?: string,
+) {
+  let failed = 0;
+  const request = async <T>(_token: string, method: string, path: string, body?: unknown) => {
+    const answer = (status: number, data: unknown) => ({ status, data: data as T });
+    if (method === "POST" && path === "repos/commons/ledger/issues/12/comments") {
+      const failing = failed < failures;
+      if (failing) failed++;
+      const { body: text } = body as { body: string };
+      if (failing && echoedBy)
+        comments.push({ user: { login: echoedBy, type: "User" }, body: text });
+      if (failing && !saving) return answer(502, { message: "Server Error" });
+      comments.push({ user: { login: "divlab[bot]", type: "Bot" }, body: text });
+      return failing ? answer(502, { message: "Server Error" }) : answer(201, {});
+    }
+    const listing = path.match(
+      /^repos\/commons\/ledger\/issues\/12\/comments\?per_page=100&page=(\d+)$/,
+    );
+    if (method === "GET" && listing) {
+      // Oldest first, a hundred to a page, as GitHub lists them.
+      const page = Number(listing[1]);
+      return answer(200, comments.slice((page - 1) * 100, page * 100));
+    }
+    return answer(404, { message: `not answered: ${method} ${path}` });
+  };
+  return { comments, request };
+}
+
+const REFUSED = {
+  project: "ledger",
+  task: "12",
+  member: "alice",
+  reason: "it has already been claimed",
+};
+
+describe("posting a comment, when GitHub's server fails", () => {
+  it("posts it once when GitHub saved it, though it answered with a failure", async () => {
+    const github = githubFailingToComment(1, true);
+    const adapter = new GitHubAdapter({ owner: "commons", token: "test", request: github.request });
+    await adapter.refuseMember(REFUSED);
+    expect(github.comments).toHaveLength(1);
+  });
+
+  it("posts it again when GitHub's server failed before saving it", async () => {
+    const github = githubFailingToComment(1, false);
+    const adapter = new GitHubAdapter({ owner: "commons", token: "test", request: github.request });
+    await adapter.refuseMember(REFUSED);
+    expect(github.comments).toHaveLength(1);
+  });
+
+  it("posts it again, though Divlab rightly said the same before, to an earlier claim", async () => {
+    const earlier = {
+      user: { login: "divlab[bot]", type: "Bot" },
+      body: commentForRefused(REFUSED),
+    };
+    const github = githubFailingToComment(1, false, [earlier]);
+    const adapter = new GitHubAdapter({ owner: "commons", token: "test", request: github.request });
+    await adapter.refuseMember(REFUSED);
+    expect(github.comments).toHaveLength(2);
+  });
+
+  it("stops asking, and fails, when GitHub's server keeps failing before saving it", async () => {
+    const github = githubFailingToComment(3, false);
+    const adapter = new GitHubAdapter({ owner: "commons", token: "test", request: github.request });
+    await expect(adapter.refuseMember(REFUSED)).rejects.toThrow("answered 502");
+  });
+
+  it("posts it once on a busy task, whose newest comments are listed past the first page", async () => {
+    const chatter = Array.from({ length: 150 }, (_, n) => ({
+      user: { login: "bob", type: "User" },
+      body: `comment ${n}`,
+    }));
+    const github = githubFailingToComment(1, true, chatter);
+    const adapter = new GitHubAdapter({ owner: "commons", token: "test", request: github.request });
+    await adapter.refuseMember(REFUSED);
+    expect(github.comments).toHaveLength(151);
+  });
+
+  it("posts it again, though a member said the same words meanwhile", async () => {
+    const github = githubFailingToComment(1, false, [], "mallory");
+    const adapter = new GitHubAdapter({ owner: "commons", token: "test", request: github.request });
+    await adapter.refuseMember(REFUSED);
+    expect(github.comments.filter((c) => c.user.type === "Bot")).toHaveLength(1);
+  });
+
+  it("tells a member their lease ran out once, when GitHub saved it but answered with a failure", async () => {
+    const github = githubFailingToComment(1, true);
+    const adapter = new GitHubAdapter({ owner: "commons", token: "test", request: github.request });
+    await adapter.tellLeaseRanOut({ project: "ledger", task: "12", member: "alice" });
+    expect(github.comments).toHaveLength(1);
+  });
+
+  it("refuses a pull request once, when GitHub saved it but answered with a failure", async () => {
+    const github = githubFailingToComment(1, true);
+    const adapter = new GitHubAdapter({ owner: "commons", token: "test", request: github.request });
+    await adapter.refuse("ledger", "12", "it changes files outside its role's place");
+    expect(github.comments).toHaveLength(1);
   });
 });

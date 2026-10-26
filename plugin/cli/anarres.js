@@ -8081,9 +8081,7 @@ var GitHubAdapter = class {
     );
   }
   async tellLeaseRanOut(ranOut) {
-    await this.call("POST", `${this.repo(ranOut.project)}/issues/${ranOut.task}/comments`, {
-      body: commentForLeaseRanOut(ranOut)
-    });
+    await this.comment(ranOut.project, ranOut.task, commentForLeaseRanOut(ranOut));
   }
   async releaseClaim(project, task) {
     const issue = `${this.repo(project)}/issues/${task}`;
@@ -8273,9 +8271,38 @@ var GitHubAdapter = class {
     }
   }
   async refuseMember(refusal) {
-    await this.call("POST", `${this.repo(refusal.project)}/issues/${refusal.task}/comments`, {
-      body: commentForRefused(refusal)
-    });
+    await this.comment(refusal.project, refusal.task, commentForRefused(refusal));
+  }
+  /**
+   * Posts Divlab's comment on an issue or pull request. Divlab may rightly say the same twice, so
+   * after a server error it is the number of times said, before and after, that tells whether
+   * GitHub posted it. Divlab's runs for a project never overlap, so no other run says it meanwhile.
+   */
+  async comment(project, issue, body, before, attempt = 1) {
+    const where = `${this.repo(project)}/issues/${issue}/comments`;
+    const said = before ?? await this.timesSaid(where, body);
+    const { status, data } = await this.request("POST", where, { body });
+    if (status >= 200 && status < 300) return;
+    if (status >= 500) {
+      if (await this.timesSaid(where, body) > said) return;
+      if (attempt < WRITE_ATTEMPTS) return this.comment(project, issue, body, said, attempt + 1);
+    }
+    throw new GitHubError("POST", where, status, data);
+  }
+  /**
+   * How many of an issue's comments by a bot, as Divlab's App is, say `body`, read from every
+   * page. A member's comment saying the same words is not Divlab's.
+   */
+  async timesSaid(where, body) {
+    let said = 0;
+    for (let page = 1; ; page++) {
+      const listed = await this.call(
+        "GET",
+        `${where}?per_page=100&page=${page}`
+      );
+      said += listed.filter((c) => c.user?.type === "Bot" && c.body === body).length;
+      if (listed.length < 100) return said;
+    }
   }
   async actedOn(project) {
     const issues = [];
@@ -8489,9 +8516,7 @@ var GitHubAdapter = class {
     }
   }
   async refuse(project, pullRequest, reason) {
-    await this.call("POST", `${this.repo(project)}/issues/${pullRequest}/comments`, {
-      body: commentForRefusal(reason)
-    });
+    await this.comment(project, pullRequest, commentForRefusal(reason));
   }
   /**
    * The event files, oldest first. Listed from main's Git tree: GitHub's contents listing stops at
