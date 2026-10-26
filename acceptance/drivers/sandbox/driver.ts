@@ -238,11 +238,26 @@ export class SandboxDriver implements Driver {
     }
     const signal = feedbackSignalFile(work, task && String(task.number));
     for (const { path, text } of [...otherFiles(work), signal]) {
-      await this.members.call("PUT", `repos/${fork}/contents/${path}`, {
-        message: `The ${work.role} work on ${work.module}`,
-        content: Buffer.from(text).toString("base64"),
-        branch,
-      });
+      const where = `repos/${fork}/contents/${path}`;
+      const content = Buffer.from(text).toString("base64");
+      const message = `The ${work.role} work on ${work.module}`;
+      // Asked again after a server error, GitHub refuses a file the first ask made: check it is.
+      const put = await this.members.request(
+        "PUT",
+        where,
+        { message, content, branch },
+        { repeatable: true },
+      );
+      if (put.status === 422) {
+        const there = await this.members.call<{ content: string }>(
+          "GET",
+          `${where}?ref=${encodeURIComponent(branch)}`,
+        );
+        if (Buffer.from(there.content, "base64").toString("utf8") === text) continue;
+      }
+      if (put.status < 200 || put.status >= 300) {
+        throw new Error(`GitHub PUT ${where} answered ${put.status}: ${JSON.stringify(put.data)}`);
+      }
     }
     const { path } = signal;
     const { number } = await member.call<{ number: number }>("POST", `${repository}/pulls`, {

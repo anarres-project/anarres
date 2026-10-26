@@ -58,6 +58,29 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-26: Governance scenarios run alone
+
+- The full sandbox run for ebdfaa4 failed 2 of 94. In one, Alice's claim was refused: "you have
+  worked on it as Specification". A governance scenario running at the same time had just linked
+  the account playing the Specification work's member with the account playing Alice, so Divlab
+  rightly judged them one member. `@governance` scenarios were kept from each other, but not from
+  the rest, though the governance file applies to every scenario. Now a scenario that changes it
+  starts only when nothing else is running, and nothing starts while it runs (four scenarios,
+  run one by one). The rule is `mayStart`, beside the sweep, with its own tests.
+- The other failure was GitHub's server failing (500) the sandbox driver's write of a member's
+  file in the fork. That write is now asked again, and a refusal because the file is there
+  counts if the file holds the same text.
+
+RED:      wait while any other scenario runs -> expected true to be false
+GREEN:    (1 passed)
+RED:      leave other scenarios to run alongside each other -> expected false to be true
+GREEN:    (2 passed)
+RED:      hold back every other scenario while one runs -> expected true to be false
+GREEN:    (3 passed)
+REFACTOR: none
+
+---
+
 ## 2026-10-26: An issue after a server error
 
 - Opening an issue cannot simply be repeated: a repeat after an issue GitHub opened would post
