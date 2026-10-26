@@ -58,6 +58,27 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-26: A third member in the sandbox
+
+- Bernard made a third GitHub account, `anarres-sandbox-member-c`, a member of the sandbox
+  organisation, with a token that may only comment and open pull requests there
+  (`ANARRES_SANDBOX_THIRD_MEMBER_TOKEN`). The sandbox driver gives it to a scenario's third
+  member.
+- The four claiming scenarios with three members passed in the sandbox: a claimed task cannot be
+  claimed by anyone else, the first of two claims made together wins, only the holder can give
+  a task back, and a task given back goes to the next claim. They run there now.
+- Two of them first failed on the driver, not on Divlab: a member claiming a task someone else
+  holds was looked for only among ready tasks, and a claim seen as done when anyone held the
+  task; a release by someone else waited for the task to be ready again. The driver now finds
+  the open task ready or claimed, takes a claim as granted only when the member is assigned, and
+  ends a refused claim or release at Divlab's reply.
+- Slip: my first run of them used an unpushed commit, so GitHub could not find the Divlab
+  version the projects named. The full run for 5e0792b then failed three scenarios on Divlab's
+  runs left pending for minutes, and one local run met a 500 from GitHub's merge; GitHub
+  reported no incident. Watching whether that recurs.
+
+---
+
 ## 2026-10-24: Work so far, back on another machine
 
 - A scenario drives restoring a draft end to end: Alice holds the Test task with a draft open,

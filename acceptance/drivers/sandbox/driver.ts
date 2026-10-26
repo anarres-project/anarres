@@ -525,12 +525,10 @@ export class SandboxDriver implements Driver {
    */
   async claim(task: { project: string; role: string; module: string }, member: string) {
     const repository = `repos/${this.org}/${task.project}`;
-    const fromRole = roleId(task.role);
-    const issue = (await this.settled(task.project, "ready")).find(
-      (i) => labelValue(i, "role:") === fromRole && labelValue(i, "module:") === task.module,
-    );
-    if (!issue) throw new Error(`No ${task.role} task for ${task.module} is ready to claim`);
+    const issue = await this.openTask(task);
+    const wasReady = issue.labels.some((l) => l.name === "state:ready");
     const account = await this.playAs(member);
+    const login = await loginOf(account);
     const started = Date.now();
     // Divlab either gives the member the task or replies saying why not: a comment after theirs.
     const before = issue.comments ?? 0;
@@ -540,7 +538,7 @@ export class SandboxDriver implements Driver {
       await new Promise((resolve) => setTimeout(resolve, 2_000));
       const now = await this.github.call<Issue>("GET", `${repository}/issues/${issue.number}`);
       const claimant = now.assignees?.[0]?.login;
-      if (now.labels.some((l) => l.name === "state:claimed") && claimant) break;
+      if (now.labels.some((l) => l.name === "state:claimed") && claimant === login) break;
       if ((now.comments ?? 0) > before + 1) return;
       if (check % 3 === 0) await this.failIfRunFailed(repository, "issue_comment", started);
       if (Date.now() - started > RUN_FINISH_LIMIT) {
@@ -549,10 +547,23 @@ export class SandboxDriver implements Driver {
         );
       }
     }
+    if (!wasReady) return;
     const expected = this.expectedFor(task.project);
     expected.ready -= 1;
     expected.claimed += 1;
     run.closed.add(issueKey(task.project, issue.number));
+  }
+
+  /** The project's open task for that role and module, ready or claimed. */
+  private async openTask(task: { project: string; role: string; module: string }) {
+    const fromRole = roleId(task.role);
+    const forTask = (i: Issue) =>
+      labelValue(i, "role:") === fromRole && labelValue(i, "module:") === task.module;
+    const issue =
+      (await this.settled(task.project, "ready")).find(forTask) ??
+      (await this.settled(task.project, "claimed")).find(forTask);
+    if (!issue) throw new Error(`No ${task.role} task for ${task.module} is open`);
+    return issue;
   }
 
   /** Divlab's replies on the project's open tasks, each to the member its account plays. */
@@ -948,6 +959,8 @@ export class SandboxDriver implements Driver {
     );
     if (!issue) throw new Error(`No ${task.role} task for ${task.module} is claimed`);
     const started = Date.now();
+    // Divlab either makes the task ready again or replies saying why not: a comment after theirs.
+    const before = issue.comments ?? 0;
     await account.call("POST", `${repository}/issues/${issue.number}/comments`, {
       body: "/release",
     });
@@ -955,6 +968,7 @@ export class SandboxDriver implements Driver {
       await new Promise((resolve) => setTimeout(resolve, 2_000));
       const now = await this.github.call<Issue>("GET", `${repository}/issues/${issue.number}`);
       if (now.labels.some((l) => l.name === "state:ready") && !now.assignees?.length) break;
+      if ((now.comments ?? 0) > before + 1) return;
       if (check % 3 === 0) await this.failIfRunFailed(repository, "issue_comment", started);
       if (Date.now() - started > RUN_FINISH_LIMIT) {
         throw new Error(

@@ -218,10 +218,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         been claimed (in-process);
   - [x] only Divlab's claimed label makes a task held: someone assigned a ready task does not
         hold it;
-  - [ ] the sandbox shows it: a second account plays a second member (Bernard, 2026-10-23); this
-        scenario has three members (the earlier work's, Alice and Bob), so it needs a third;
-        since one-role-per-module, every scenario where one member works and another claims needs
-        it too: claiming, giving back, the claim record and the draft scenario wait for it;
+  - [x] the sandbox shows it: a second account plays a second member (Bernard, 2026-10-23), and
+        a third account (`anarres-sandbox-member-c`, Bernard, 2026-10-26) the third, for the
+        scenarios with three members (the earlier work's, Alice and Bob): this one, giving back
+        only by the holder, and a task given back going to the next claim;
   - [x] a member whose claim was granted by an earlier run (which heard of another claim first)
         is left alone, not told the task is taken;
   - [x] a member claiming again a task they already hold is told they hold it: by their CLI,
@@ -237,7 +237,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         claim's run comes first, and each member whose claim lost is told by their own run
         (in-process);
   - [x] a task's comments are read from every page;
-  - [ ] the sandbox shows it (needs the second account);
+  - [x] the sandbox shows it (with the third account, 2026-10-26);
   - [x] when the earliest claim is not valid (section 3), the earliest valid one wins;
   - [x] a comment by a deleted account (GitHub gives no user) is left out, not a failure;
   - [ ] if GitHub's comment list lags and shows no claim yet, the member who asked gets the task:

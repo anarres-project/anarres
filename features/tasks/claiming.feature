@@ -15,8 +15,6 @@ Feature: Members claim tasks
     When Alice claims the Test task for "parser"
     Then Divlab's record shows Alice claimed the Test task for "parser", saying when, in UTC
 
-  # Not in the sandbox: it has three members, and the sandbox has accounts for two.
-  @sandbox-wip
   Scenario: A claimed task cannot be claimed by anyone else
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
@@ -25,8 +23,6 @@ Feature: Members claim tasks
     Then the Test task for "parser" is claimed by Alice
     And Bob is told the task has already been claimed
 
-  # Not in the sandbox: it has three members, and the sandbox has accounts for two.
-  @sandbox-wip
   Scenario: Of two claims made together, the first made wins, whichever Divlab hears of first
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
@@ -41,8 +37,6 @@ Feature: Members claim tasks
     When Alice releases the Test task for "parser"
     Then a Test task for "parser" is ready to claim
 
-  # Not in the sandbox: it has three members, and the sandbox has accounts for two.
-  @sandbox-wip
   Scenario: Only the member holding a task can give it back
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
@@ -51,8 +45,6 @@ Feature: Members claim tasks
     Then the Test task for "parser" is claimed by Alice
     And Bob is told only the member holding the task can give it back
 
-  # Not in the sandbox: it has three members, and the sandbox has accounts for two.
-  @sandbox-wip
   Scenario: A task given back goes to whoever claims it next
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
