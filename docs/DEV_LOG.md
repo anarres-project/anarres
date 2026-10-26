@@ -58,6 +58,17 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-26: A finished task claimed, as a scenario
+
+- Divlab already refused a claim on an issue that is not an open task (unit-tested). The
+  scenario "A task whose work is done cannot be claimed" now shows it end to end: red with
+  `HarnessNotYetBuilt` (no driver could claim a closed task), then a dishonest failure (the
+  Specification work had no task to close; the scenario now finishes a Test task instead), then
+  green in-process once the in-process fake kept closed tasks, as GitHub keeps closed issues.
+  The sandbox driver can claim it too; `@sandbox-wip` until it has passed there.
+
+---
+
 ## 2026-10-26: Divlab's lease check run by hand
 
 - A project's lease check can now be run by hand (`workflow_dispatch`) as well as every hour:

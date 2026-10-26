@@ -313,6 +313,26 @@ export class Anarres {
     await this.driver.claim({ ...this.aliased(task), project: this.project }, this.member(member));
   }
 
+  /** The member claims the task for that role and module after its work was done. */
+  async memberClaimsFinished(member: string, task: Work) {
+    await this.driver.claimFinished(
+      { ...this.aliased(task), project: this.project },
+      this.member(member),
+    );
+  }
+
+  async memberIsToldNotATask(member: string) {
+    const told = await this.driver.claimRefusals(this.project);
+    assert.ok(
+      told.some(
+        (refusal) =>
+          refusal.member === this.member(member) &&
+          refusal.reason.includes("it is not a task anyone can claim"),
+      ),
+      `expected ${member} to be told it is not a task anyone can claim; Divlab said: ${JSON.stringify(told)}`,
+    );
+  }
+
   /** The members claim in the order given; Divlab hears of `heardFirst`'s claim before the rest. */
   async membersClaimTogether(members: string[], task: Work, heardFirst: string) {
     await this.driver.claimTogether(

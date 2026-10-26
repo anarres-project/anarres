@@ -291,7 +291,14 @@ export class FakeGitHub
 
   async close(project: string, id: string): Promise<void> {
     const index = this.openTasks.findIndex((task) => task.project === project && task.id === id);
-    if (index !== -1) this.openTasks.splice(index, 1);
+    if (index !== -1) this.closedTasks.push(...this.openTasks.splice(index, 1));
+  }
+
+  /** Tasks closed once their work was done: their issues remain, as on GitHub. */
+  private readonly closedTasks: OpenTask[] = [];
+
+  closedTasksOf(project: string): OpenTask[] {
+    return this.closedTasks.filter((task) => task.project === project);
   }
 
   /** The tasks PDC coordinators were told were shown as claimed with no claim. */

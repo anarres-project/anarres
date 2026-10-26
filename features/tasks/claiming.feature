@@ -52,3 +52,11 @@ Feature: Members claim tasks
     And Alice releases the Test task for "parser"
     When Bob claims the Test task for "parser"
     Then the Test task for "parser" is claimed by Bob
+
+  @sandbox-wip
+  Scenario: A task whose work is done cannot be claimed
+    Given a project with a module "parser"
+    And a member's Specification work on "parser" was accepted with a pass verdict
+    And a member's Test work on "parser" was accepted with a pass verdict
+    When Alice claims the finished Test task for "parser"
+    Then Alice is told it is not a task anyone can claim

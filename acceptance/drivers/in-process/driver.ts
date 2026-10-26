@@ -194,23 +194,32 @@ export class InProcessDriver implements Driver {
       .map(signalName);
   }
 
+  /** The member comments to claim the closed task's issue, which wakes Divlab, as on GitHub. */
+  async claimFinished(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<void> {
+    const fromRole = roleId(task.role);
+    const closed = this.github
+      .closedTasksOf(task.project)
+      .find((t) => t.role === fromRole && t.module === task.module);
+    if (!closed) throw new Error(`No ${task.role} task for ${task.module} is done`);
+    await this.claimTask(task.project, closed.id, member);
+  }
+
   /** The member comments to claim the task, and the comment's run wakes Divlab, as on GitHub. */
   async claim(task: { project: string; role: string; module: string }, member: string) {
-    const id = this.openTaskId(task);
+    await this.claimTask(task.project, this.openTaskId(task), member);
+  }
+
+  private async claimTask(project: string, id: string, member: string) {
     // The member claims through their CLI, as the plugin does: it comments on the task's issue.
-    await claim(`${task.project}#${id}`, {
-      askToClaim: async (project, issue) =>
-        this.github.comment(project, issue, member, CLAIM, this.clock().toISOString()),
+    await claim(`${project}#${id}`, {
+      askToClaim: async (where, issue) =>
+        this.github.comment(where, issue, member, CLAIM, this.clock().toISOString()),
     });
-    await onClaim(
-      task.project,
-      { task: id, member },
-      this.github,
-      this.github,
-      this.clock,
-      this.github,
-    );
-    await this.afterRun(task.project);
+    await onClaim(project, { task: id, member }, this.github, this.github, this.clock, this.github);
+    await this.afterRun(project);
   }
 
   /** Every member comments first; then Divlab takes `heardFirst`'s run, then the others in turn. */

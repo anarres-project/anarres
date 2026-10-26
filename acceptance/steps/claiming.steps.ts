@@ -63,3 +63,17 @@ Then(
     return this.anarres.memberIsToldTheyDoNotHoldTask(member);
   },
 );
+
+When(
+  "{word} claims the finished {role} task for {string}",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.memberClaimsFinished(member, { role, module });
+  },
+);
+
+Then(
+  "{word} is told it is not a task anyone can claim",
+  function (this: AnarresWorld, member: string) {
+    return this.anarres.memberIsToldNotATask(member);
+  },
+);

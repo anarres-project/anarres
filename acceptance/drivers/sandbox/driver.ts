@@ -551,6 +551,40 @@ export class SandboxDriver implements Driver {
    * marks it claimed. The sandbox has one account playing every member, so the driver remembers
    * which member each claim was for.
    */
+  /** The member comments to claim the closed task's issue, and waits for Divlab's reply. */
+  async claimFinished(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<void> {
+    const repository = `repos/${this.org}/${task.project}`;
+    const labels = `role:${roleId(task.role)},module:${task.module}`;
+    const [issue] = await this.github.call<Issue[]>(
+      "GET",
+      `${repository}/issues?labels=${encodeURIComponent(labels)}&state=closed&per_page=100`,
+    );
+    if (!issue) throw new Error(`No ${task.role} task for ${task.module} is done`);
+    const account = await this.playAs(member);
+    const before = issue.comments ?? 0;
+    const started = Date.now();
+    await account.call("POST", `${repository}/issues/${issue.number}/comments`, { body: "/claim" });
+    // Done when Divlab has replied to the claim.
+    for (let check = 1; ; check++) {
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+      const now = await this.github.call<Issue>("GET", `${repository}/issues/${issue.number}`);
+      if ((now.comments ?? 0) > before + 1) break;
+      if (check % 3 === 0) await this.failIfRunFailed(repository, "issue_comment", started);
+      if (Date.now() - started > RUN_FINISH_LIMIT) {
+        throw new Error(
+          `Divlab did not answer the claim of task ${issue.number} in ${task.project}`,
+        );
+      }
+    }
+    this.finishedClaimed.push(issue.number);
+  }
+
+  /** Finished tasks this scenario claimed, whose replies are refusals to read too. */
+  private readonly finishedClaimed: number[] = [];
+
   async claim(task: { project: string; role: string; module: string }, member: string) {
     const repository = `repos/${this.org}/${task.project}`;
     const issue = await this.openTask(task);
@@ -600,6 +634,7 @@ export class SandboxDriver implements Driver {
     const tasks = [
       ...(await this.settled(project, "ready")),
       ...(await this.settled(project, "claimed")),
+      ...this.finishedClaimed.map((number) => ({ number })),
     ];
     const refusals = [];
     for (const task of tasks) {

@@ -228,8 +228,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         issue, a closed task) is refused, and the member told why;
   - [x] work whose feedback signal names an issue that is not an open task never closes it
         (found while building the claim check: before, any issue named was closed);
-  - [ ] an acceptance scenario for each of these, once the harness can name a coordinator's alert
-        or a finished task as the thing claimed;
+  - [x] an acceptance scenario for a finished task claimed (in-process; `@sandbox-wip` until it
+        has passed against the sandbox);
+  - [ ] acceptance scenarios for an alert, a finished module's issue and a member's own issue
+        claimed;
   - [x] the claimant's name is checked as a GitHub account name before Divlab uses it (claims
         and releases): anything else, a bot's included, is refused;
   - [ ] comments that are not claims cost Divlab as little as possible and do not hold up its
