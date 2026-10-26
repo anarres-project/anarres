@@ -19,3 +19,17 @@ When(
 Then("{word} is told the lease on the task ran out", function (this: AnarresWorld, member: string) {
   return this.anarres.memberIsToldLeaseRanOut(member);
 });
+
+When(
+  "the {role} task for {string} is shown as claimed by {word}, though Divlab never gave it to them",
+  function (this: AnarresWorld, role: string, module: string, member: string) {
+    return this.anarres.taskShownClaimedWithoutDivlab({ role, module }, member);
+  },
+);
+
+Then(
+  "a PDC coordinator is alerted that the {role} task for {string} was shown as claimed without a claim",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.coordinatorsAlertedOfClaimWithoutClaim({ role, module });
+  },
+);

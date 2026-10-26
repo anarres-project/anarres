@@ -178,6 +178,23 @@ export class Anarres {
     this.directChangeTook = await this.driver.changeMainDirectly(this.project);
   }
 
+  /** Someone other than Divlab marks the task claimed for the member, with no claim. */
+  async taskShownClaimedWithoutDivlab(task: Work, member: string) {
+    await this.driver.markClaimedWithoutDivlab(
+      { ...this.aliased(task), project: this.project },
+      this.member(member),
+    );
+  }
+
+  async coordinatorsAlertedOfClaimWithoutClaim(task: Work) {
+    const alerts = await this.driver.claimedWithoutClaimAlerts(this.project);
+    const { role, module } = this.aliased(task);
+    assert.ok(
+      alerts.some((alert) => alert.role === role && alert.module === module),
+      `expected an alert that the ${task.role} task for ${task.module} was shown as claimed without a claim; alerts ${JSON.stringify(alerts)}`,
+    );
+  }
+
   async coordinatorsAlertedOfChangeNotByDivlab() {
     assert.equal(
       (await this.driver.changesNotByDivlab(this.project)).length,

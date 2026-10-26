@@ -143,6 +143,13 @@ export interface Driver {
   timePasses(hours: number): Promise<void>;
   /** Divlab's scheduled run checks the project's leases, as it does every hour. */
   divlabChecksLeases(project: string): Promise<void>;
+  /** Someone other than Divlab marks the task claimed for the member: Divlab records no claim. */
+  markClaimedWithoutDivlab(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<void>;
+  /** The tasks PDC coordinators were alerted were shown as claimed with no claim in the log. */
+  claimedWithoutClaimAlerts(project: string): Promise<{ role: string; module: string }[]>;
   /** The members Divlab told that their lease ran out. */
   leaseNotices(project: string): Promise<string[]>;
   /** The claims Divlab's log records it granted, each with when. */

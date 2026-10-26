@@ -36,6 +36,8 @@ const board: TaskBoard = {
   releaseClaim: untouched,
   tellLeaseRanOut: untouched,
   alertChangeNotByDivlab: untouched,
+  claimedTasks: untouched,
+  alertClaimedWithoutClaim: untouched,
 };
 
 describe("acting on a merge", () => {

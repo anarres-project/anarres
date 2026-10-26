@@ -7,6 +7,7 @@ export {
   eventFromFile,
   issueForAlert,
   issueForChangeNotByDivlab,
+  issueForClaimedWithoutClaim,
   issueForModuleDone,
   issueForNotAccepted,
   issueForTask,

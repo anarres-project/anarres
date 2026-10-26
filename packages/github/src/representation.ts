@@ -13,7 +13,9 @@ import type {
   ChangeNotByDivlab,
   Claimed,
   ClaimedTask,
+  ClaimedWithoutClaim,
   FinishedModule,
+  FoundClaimedWithoutClaim,
   LeaseRanOut,
   LogEvent,
   MainChecked,
@@ -163,6 +165,13 @@ export function eventFromFile(content: string): LogEvent {
     typeof event.changeNotByDivlab.commit === "string"
   ) {
     return event as ChangeNotByDivlab;
+  }
+  if (
+    isObject(event) &&
+    isObject(event.claimedWithoutClaim) &&
+    typeof event.claimedWithoutClaim.task === "string"
+  ) {
+    return event as FoundClaimedWithoutClaim;
   }
   if (
     isObject(event) &&
@@ -328,6 +337,20 @@ export function issueForChangeNotByDivlab({ changeNotByDivlab }: ChangeNotByDivl
   };
 }
 
+/** Whom the task showed goes only in a code block: anyone could have assigned anyone. */
+export function issueForClaimedWithoutClaim(alert: ClaimedWithoutClaim): NewIssue {
+  const { task, role, module, shownAs } = alert;
+  return {
+    title: "Escalation: a task was shown as claimed without a claim",
+    labels: ["escalation", CLAIMED_WITHOUT_CLAIM],
+    body: `Task #${task}, ${ROLE_NAMES[role]} task for ${module}, was shown as claimed, but Divlab's log has no claim for it, so Divlab did not give it to anyone. Divlab has made it ready again. ${
+      shownAs === undefined
+        ? "Nobody was shown as holding it."
+        : `Whom it showed as holding it:\n\n${quoted(shownAs)}`
+    }`,
+  };
+}
+
 /** The path the member chose goes only in a code block, never in the title or the words. */
 export function issueForNotAccepted({ notAccepted }: NotAccepted): NewIssue {
   return {
@@ -356,6 +379,9 @@ export function issueForUnprotectedMain(): NewIssue {
 export const UNPROTECTED_MAIN = "unprotected-main";
 /** The label of an alert of a change on main that Divlab did not make. */
 export const CHANGE_NOT_BY_DIVLAB = "change-not-by-divlab";
+
+/** The label of an alert of a task shown as claimed with no claim in Divlab's log. */
+export const CLAIMED_WITHOUT_CLAIM = "claimed-without-claim";
 
 /** The feedback signal whose routing decision an issue Divlab posted came from. */
 /**

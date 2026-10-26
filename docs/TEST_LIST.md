@@ -230,7 +230,18 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         member Divlab's log says it gave it to, and a new claim is told it is taken;
   - [x] such a task's holder gets it back on the board at the next lease check (Divlab assigns
         it to them again from its log), so their CLI, which reads the assignee, sees it theirs;
-  - [ ] a task labelled claimed that the log has no claim for.
+  - [x] a task labelled claimed that the log has no claim for (Bernard, 2026-10-26): Divlab's
+        hourly check records what it found, makes the task ready again and alerts PDC
+        coordinators, naming whom the task showed as holding it, if anyone (in-process; Divlab's
+        runs for a project queue one at a time, so the check never sees a claim half made);
+  - [ ] the sandbox shows it (`@sandbox-wip`): the harness needs to run Divlab's hourly check on
+        cue;
+  - [ ] a claim the log shows given back or run out, but still labelled claimed (a run stopped
+        between recording and the board): Divlab finishes freeing it, with no alert;
+  - [ ] the claimed tasks are read from one page of 100; read every page if a project could
+        hold more;
+  - [ ] the record of a task shown as claimed is read back checking only its task; check
+        whom it names too.
 - [ ] When several members claim the same task at once, the first valid claim wins and the others
       are told the task is taken, whatever order GitHub delivers the claims in.
   - [x] Divlab gives a ready task to the earliest claim among its issue's comments, whichever

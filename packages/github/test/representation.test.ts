@@ -15,6 +15,7 @@ import {
   eventFromFile,
   issueForAlert,
   issueForChangeNotByDivlab,
+  issueForClaimedWithoutClaim,
   issueForModuleDone,
   issueForNotAccepted,
   issueForTask,
@@ -312,6 +313,10 @@ describe("a routing event as a file", () => {
       { changeNotByDivlab: { commit: "c0ffee", author: "mallory" } },
     ],
     ["how far Divlab has checked main", { mainChecked: { upTo: "c0ffee" } }],
+    [
+      "a task shown as claimed without a claim",
+      { claimedWithoutClaim: { task: "12", shownAs: "mallory" } },
+    ],
   ])("reads back a record of %s", (_what, record) => {
     const event = { project: "ledger", decidedAt: "2026-10-23T09:00:00.000Z", ...record };
     expect(eventFromFile(eventFile(event as never, 8).content)).toEqual(event);
@@ -589,5 +594,39 @@ describe("an alert of a change on main Divlab did not make, as a GitHub issue", 
         "```",
       ].join("\n"),
     });
+  });
+});
+
+describe("an alert of a task shown as claimed with no claim in Divlab's log, as a GitHub issue", () => {
+  it("tells PDC coordinators which task it was and whom it showed, quoted as text", () => {
+    expect(
+      issueForClaimedWithoutClaim({
+        project: "ledger",
+        task: "12",
+        role: "test",
+        module: "parser",
+        shownAs: "mallory",
+      }),
+    ).toEqual({
+      title: "Escalation: a task was shown as claimed without a claim",
+      labels: ["escalation", "claimed-without-claim"],
+      body: [
+        "Task #12, Test task for parser, was shown as claimed, but Divlab's log has no claim for it, so Divlab did not give it to anyone. Divlab has made it ready again. Whom it showed as holding it:",
+        "",
+        "```",
+        "mallory",
+        "```",
+      ].join("\n"),
+    });
+  });
+
+  it("says nobody was shown holding it when nobody was", () => {
+    const { body } = issueForClaimedWithoutClaim({
+      project: "ledger",
+      task: "12",
+      role: "test",
+      module: "parser",
+    });
+    expect(body.endsWith("ready again. Nobody was shown as holding it.")).toBe(true);
   });
 });

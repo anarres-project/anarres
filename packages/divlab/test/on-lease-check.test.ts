@@ -24,6 +24,10 @@ const board: TaskBoard = {
   // Telling the member is looked at by one test; the rest let it happen.
   tellLeaseRanOut: async () => {},
   alertChangeNotByDivlab: untouched,
+  // No task is marked claimed but those the tests' logs hold claims for.
+  claimedTasks: async () => [],
+  // Telling coordinators is looked at by one test; the rest let it happen.
+  alertClaimedWithoutClaim: async () => {},
 };
 
 /** Divlab's clock in these tests: 25 hours after the claim below. */
@@ -273,5 +277,83 @@ describe("checking a project's leases", () => {
     };
     await onLeaseCheck("ledger", watched, log, clock);
     expect(marked).toEqual([{ project: "ledger", task: "12", member: "alice" }]);
+  });
+});
+
+describe("checking a task marked claimed that Divlab's log has no claim for", () => {
+  it("makes the task ready again", async () => {
+    const released: string[] = [];
+    const watched: TaskBoard = {
+      ...board,
+      claimedTasks: async () => [{ task: "12", ...TEST_TASK, claimedBy: "mallory" }],
+      releaseClaim: async (_project, task) => {
+        released.push(task);
+      },
+    };
+    const noClaims: EventLog = { read: async () => [], append: async () => {} };
+    await onLeaseCheck("ledger", watched, noClaims, clock);
+    expect(released).toEqual(["12"]);
+  });
+
+  it("tells PDC coordinators which task it was", async () => {
+    const alerts: unknown[] = [];
+    const watched: TaskBoard = {
+      ...board,
+      claimedTasks: async () => [{ task: "12", ...TEST_TASK, claimedBy: "mallory" }],
+      releaseClaim: async () => {},
+      alertClaimedWithoutClaim: async (alert) => {
+        alerts.push(alert);
+      },
+    };
+    const noClaims: EventLog = { read: async () => [], append: async () => {} };
+    await onLeaseCheck("ledger", watched, noClaims, clock);
+    expect(alerts).toEqual([
+      { project: "ledger", task: "12", role: "test", module: "parser", shownAs: "mallory" },
+    ]);
+  });
+
+  it("says nobody was shown holding the task when nobody was", async () => {
+    const alerts: unknown[] = [];
+    const watched: TaskBoard = {
+      ...board,
+      claimedTasks: async () => [{ task: "12", ...TEST_TASK }],
+      releaseClaim: async () => {},
+      alertClaimedWithoutClaim: async (alert) => {
+        alerts.push(alert);
+      },
+    };
+    const noClaims: EventLog = { read: async () => [], append: async () => {} };
+    await onLeaseCheck("ledger", watched, noClaims, clock);
+    expect(alerts).toEqual([{ project: "ledger", task: "12", role: "test", module: "parser" }]);
+  });
+
+  it("records what it found, and when, before the board shows the task ready", async () => {
+    const seen: string[] = [];
+    const appended: unknown[] = [];
+    const watched: TaskBoard = {
+      ...board,
+      claimedTasks: async () => [{ task: "12", ...TEST_TASK, claimedBy: "mallory" }],
+      releaseClaim: async () => {
+        seen.push("released");
+      },
+    };
+    const log: EventLog = {
+      read: async () => [],
+      append: async (event) => {
+        seen.push("recorded");
+        appended.push(event);
+      },
+    };
+    await onLeaseCheck("ledger", watched, log, clock);
+    expect([seen, appended]).toEqual([
+      ["recorded", "released"],
+      [
+        {
+          project: "ledger",
+          decidedAt: "2026-10-23T10:00:00.000Z",
+          claimedWithoutClaim: { task: "12", shownAs: "mallory" },
+        },
+      ],
+    ]);
   });
 });

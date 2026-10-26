@@ -7816,7 +7816,25 @@ async function onRelease(project2, release, board, log, clock) {
 }
 async function onLeaseCheck(project2, board, log, clock) {
   const events = await log.read(project2);
-  for (const { task, member, since } of leasesFrom(events).values()) {
+  const leases = leasesFrom(events);
+  for (const { task, role, module, claimedBy } of await board.claimedTasks(project2)) {
+    if (leases.has(task)) continue;
+    const shownAs = claimedBy === void 0 ? {} : { shownAs: claimedBy };
+    await log.append({
+      project: project2,
+      decidedAt: clock().toISOString(),
+      claimedWithoutClaim: { task, ...shownAs }
+    });
+    await board.releaseClaim(project2, task);
+    await board.alertClaimedWithoutClaim({
+      project: project2,
+      task,
+      role,
+      module,
+      ...shownAs
+    });
+  }
+  for (const { task, member, since } of leases.values()) {
     const shown = await board.task(project2, task);
     if (!leaseHasRunOut(since, clock())) {
       const freed = lastFreed(events, task);
@@ -8160,6 +8178,9 @@ function eventFromFile(content) {
   if (isObject2(event) && isObject2(event.changeNotByDivlab) && typeof event.changeNotByDivlab.commit === "string") {
     return event;
   }
+  if (isObject2(event) && isObject2(event.claimedWithoutClaim) && typeof event.claimedWithoutClaim.task === "string") {
+    return event;
+  }
   if (isObject2(event) && isObject2(event.mainChecked) && typeof event.mainChecked.upTo === "string") {
     return event;
   }
@@ -8269,6 +8290,16 @@ function issueForChangeNotByDivlab({ changeNotByDivlab }) {
 ${quoted(`${author ?? "(no account)"} ${commit}`)}`
   };
 }
+function issueForClaimedWithoutClaim(alert) {
+  const { task, role, module, shownAs } = alert;
+  return {
+    title: "Escalation: a task was shown as claimed without a claim",
+    labels: ["escalation", CLAIMED_WITHOUT_CLAIM],
+    body: `Task #${task}, ${ROLE_NAMES[role]} task for ${module}, was shown as claimed, but Divlab's log has no claim for it, so Divlab did not give it to anyone. Divlab has made it ready again. ${shownAs === void 0 ? "Nobody was shown as holding it." : `Whom it showed as holding it:
+
+${quoted(shownAs)}`}`
+  };
+}
 function issueForNotAccepted({ notAccepted }) {
   return {
     title: "Escalation: work reached main without Divlab merging it",
@@ -8291,6 +8322,7 @@ function issueForUnprotectedMain() {
 }
 var UNPROTECTED_MAIN = "unprotected-main";
 var CHANGE_NOT_BY_DIVLAB = "change-not-by-divlab";
+var CLAIMED_WITHOUT_CLAIM = "claimed-without-claim";
 function pinnedCommit(body) {
   const json = body.match(/```json\n([\s\S]*)\n```$/)?.[1];
   let inputsAt;
@@ -8413,6 +8445,9 @@ var GitHubAdapter = class {
   async alertChangeNotByDivlab(change) {
     await this.openIssue(change.project, issueForChangeNotByDivlab(change));
   }
+  async alertClaimedWithoutClaim(alert) {
+    await this.openIssue(alert.project, issueForClaimedWithoutClaim(alert));
+  }
   async alertNotAccepted(record) {
     await this.openIssue(record.project, issueForNotAccepted(record));
   }
@@ -8484,6 +8519,19 @@ var GitHubAdapter = class {
     return issues.flatMap((issue) => {
       const task = isTask(issue) ? taskFromIssue(issue) : void 0;
       return task ? [{ id: String(issue.number), role: task.role, module: task.module }] : [];
+    });
+  }
+  /** The project's tasks its issues show as claimed, whoever marked them, each read as data. */
+  async claimedTasks(project2) {
+    const issues = await this.call(
+      "GET",
+      `${this.repo(project2)}/issues?labels=${encodeURIComponent(CLAIMED)}&state=open&per_page=100`
+    );
+    return issues.flatMap((issue) => {
+      const task = isTask(issue) ? taskFromIssue(issue) : void 0;
+      if (task === void 0) return [];
+      const { role, module, claimedBy } = task;
+      return [{ task: String(issue.number), role, module, ...claimedBy ? { claimedBy } : {} }];
     });
   }
   async heldTasks(project2, member) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GitHubAdapter, issueForTask } from "../src/index.ts";
+import { GitHubAdapter, issueForClaimedWithoutClaim, issueForTask } from "../src/index.ts";
 
 /** A project's issues as GitHub lists them, a hundred to a page, newest first. */
 function githubWithIssues(issues: { body: string; labels: string[] }[]) {
@@ -297,5 +297,82 @@ describe("telling a member their lease ran out", () => {
         body: "@alice, your lease on this task ran out: 24 hours passed without activity on it, so it is ready for anyone to claim again.",
       },
     ]);
+  });
+});
+
+describe("the tasks a project's board shows as claimed", () => {
+  it("are its open task issues marked claimed, each with its role, module and assignee", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/issues?labels=state%3Aclaimed&state=open&per_page=100"
+        ) {
+          const issues = [
+            {
+              number: 12,
+              state: "open",
+              labels: ["role:test", "module:parser", "state:claimed"].map((name) => ({ name })),
+              assignees: [{ login: "mallory" }],
+            },
+            {
+              number: 13,
+              state: "open",
+              labels: ["escalation", "state:claimed"].map((name) => ({ name })),
+            },
+          ];
+          return { status: 200, data: issues as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.claimedTasks("ledger")).toEqual([
+      { task: "12", role: "test", module: "parser", claimedBy: "mallory" },
+    ]);
+  });
+
+  it("name nobody as holding a task marked claimed that nobody is assigned", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (method === "GET" && path.startsWith("repos/commons/ledger/issues?labels=")) {
+          const labels = ["role:test", "module:parser", "state:claimed"].map((name) => ({ name }));
+          return { status: 200, data: [{ number: 12, state: "open", labels }] as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.claimedTasks("ledger")).toEqual([
+      { task: "12", role: "test", module: "parser" },
+    ]);
+  });
+});
+
+describe("alerting PDC coordinators to a task shown as claimed without a claim", () => {
+  it("opens an issue in the project saying which task it was", async () => {
+    const opened: unknown[] = [];
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string, body?: unknown) => {
+        if (method === "POST" && path === "repos/commons/ledger/issues") {
+          opened.push(body);
+          return { status: 201, data: { number: 30 } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    const alert = {
+      project: "ledger",
+      task: "12",
+      role: "test" as const,
+      module: "parser",
+      shownAs: "mallory",
+    };
+    await adapter.alertClaimedWithoutClaim(alert);
+    expect(opened).toEqual([issueForClaimedWithoutClaim(alert)]);
   });
 });

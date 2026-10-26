@@ -27,6 +27,8 @@ function project(protectedMain: boolean, alertOpen = false) {
     releaseClaim: untouched,
     tellLeaseRanOut: untouched,
     alertChangeNotByDivlab: untouched,
+    claimedTasks: untouched,
+    alertClaimedWithoutClaim: untouched,
     alertUnprotectedMain: async (name) => {
       alerts.push(name);
     },

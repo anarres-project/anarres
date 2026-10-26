@@ -682,6 +682,14 @@ export class SandboxDriver implements Driver {
     throw new HarnessNotYetBuilt("moving GitHub's clock on");
   }
 
+  async markClaimedWithoutDivlab(): Promise<void> {
+    throw new HarnessNotYetBuilt("running Divlab's hourly check on cue");
+  }
+
+  async claimedWithoutClaimAlerts(): Promise<{ role: string; module: string }[]> {
+    throw new HarnessNotYetBuilt("running Divlab's hourly check on cue");
+  }
+
   /**
    * The sandbox's governance file records the level for the account playing the member. Trust
    * belongs to the account, which other workers' scenarios share, so scenarios that set it run one

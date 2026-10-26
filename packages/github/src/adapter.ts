@@ -1,6 +1,7 @@
 import type {
   ChangeNotByDivlab,
   ClaimedTask,
+  ClaimedWithoutClaim,
   EventLog,
   FinishedModule,
   LogEvent,
@@ -24,6 +25,7 @@ import {
   eventFile,
   issueForAlert,
   issueForChangeNotByDivlab,
+  issueForClaimedWithoutClaim,
   issueForModuleDone,
   issueForNotAccepted,
   issueForTask,
@@ -118,6 +120,10 @@ export class GitHubAdapter
     await this.openIssue(change.project, issueForChangeNotByDivlab(change));
   }
 
+  async alertClaimedWithoutClaim(alert: ClaimedWithoutClaim): Promise<void> {
+    await this.openIssue(alert.project, issueForClaimedWithoutClaim(alert));
+  }
+
   async alertNotAccepted(record: NotAccepted): Promise<void> {
     await this.openIssue(record.project, issueForNotAccepted(record));
   }
@@ -199,6 +205,20 @@ export class GitHubAdapter
     return issues.flatMap((issue) => {
       const task = isTask(issue) ? taskFromIssue(issue) : undefined;
       return task ? [{ id: String(issue.number), role: task.role, module: task.module }] : [];
+    });
+  }
+
+  /** The project's tasks its issues show as claimed, whoever marked them, each read as data. */
+  async claimedTasks(project: string) {
+    const issues = await this.call<(ListedIssue & { number: number })[]>(
+      "GET",
+      `${this.repo(project)}/issues?labels=${encodeURIComponent(CLAIMED)}&state=open&per_page=100`,
+    );
+    return issues.flatMap((issue) => {
+      const task = isTask(issue) ? taskFromIssue(issue) : undefined;
+      if (task === undefined) return [];
+      const { role, module, claimedBy } = task;
+      return [{ task: String(issue.number), role, module, ...(claimedBy ? { claimedBy } : {}) }];
     });
   }
 

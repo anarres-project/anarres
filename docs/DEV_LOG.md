@@ -58,6 +58,45 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-26: A task shown as claimed without a claim
+
+- Bernard (2026-10-26): a task the board shows as claimed, with no claim in Divlab's log, is made
+  ready again by Divlab's hourly check, and PDC coordinators are told. Divlab records a claim
+  before the board shows it, so such a task was marked by someone else. The check records what
+  it found (`claimedWithoutClaim`, read back like every event), frees the task, and opens an
+  alert naming the task and whom it showed as holding it, quoted as text. Divlab's runs for a
+  project share one queue, so the check cannot catch a claim between its record and its mark.
+- A new scenario shows it in-process; it is `@sandbox-wip` until the harness can run the hourly
+  check on cue.
+
+RED:      a task marked claimed with no claim -> expected [] to deeply equal [ '12' ]
+GREEN:    makes the task ready again (151 passed)
+RED:      tells PDC coordinators which task it was -> expected [] to deeply equal [ { …(4) } ]
+GREEN:    (152 passed)
+REFACTOR: the board's claimed list carries each task's role, module and holder, so no second read
+RED:      says nobody was shown holding the task when nobody was -> expected { …(4) } to equal { …(3) }
+GREEN:    (153 passed)
+RED:      records what it found, and when, before the board shows the task ready -> [ [ 'released' ], [] ]
+GREEN:    (154 passed)
+RED:      the alert issue -> TypeError (stub) -> expected { title: '' … } to equal { …(3) }
+GREEN:    (132 passed)
+RED:      says nobody was shown holding it when nobody was -> expected false to be true
+GREEN:    (133 passed)
+RED:      the adapter's claimed tasks -> TypeError (stub) -> expected [] to equal [ { task: '12' … } ]
+GREEN:    (18 passed)
+RED:      name nobody as holding a task nobody is assigned -> expected { …(2) } to equal { …(1) }
+GREEN:    (135 passed)
+RED:      opens an issue saying which task it was -> TypeError (stub) -> expected [] to equal [ { …(3) } ]
+GREEN:    (136 passed)
+RED:      reads back a record of a task shown as claimed -> "it is not a routing record"
+GREEN:    (137 passed)
+
+- Protocol slips: twice I wrote a branch no test had asked for (for a task nobody is assigned,
+  in Divlab and in the adapter). Each time I took it out, watched a new test fail, and put it
+  back. Once I changed the test and the code it covers in one step, to show that red.
+
+---
+
 ## 2026-10-26: A third member in the sandbox
 
 - Bernard made a third GitHub account, `anarres-sandbox-member-c`, a member of the sandbox

@@ -1,6 +1,7 @@
 import type {
   ChangeNotByDivlab,
   ClaimedTask,
+  ClaimedWithoutClaim,
   CoordinatorAlert,
   EventLog,
   FinishedModule,
@@ -293,6 +294,27 @@ export class FakeGitHub
     if (index !== -1) this.openTasks.splice(index, 1);
   }
 
+  /** The tasks PDC coordinators were told were shown as claimed with no claim. */
+  private readonly claimAlerts: { project: string; role: PostedTask["role"]; module: string }[] =
+    [];
+
+  claimedWithoutClaimAlerts(project: string) {
+    return this.claimAlerts.filter((alert) => alert.project === project);
+  }
+
+  async alertClaimedWithoutClaim(alert: ClaimedWithoutClaim): Promise<void> {
+    this.claimAlerts.push(alert);
+  }
+
+  async claimedTasks(project: string) {
+    return this.tasksHeld(project).map(({ id, role, module, claimedBy }) => ({
+      task: id,
+      role,
+      module,
+      claimedBy,
+    }));
+  }
+
   async markClaimed(claim: ClaimedTask): Promise<void> {
     const task = this.openTasks.find((t) => t.project === claim.project && t.id === claim.task);
     if (task) task.claimedBy = claim.member;
@@ -371,7 +393,7 @@ export class FakeGitHub
     return this.openTasks.filter((task) => task.project === project && !task.claimedBy);
   }
 
-  claimedTasks(project: string): (OpenTask & { claimedBy: string })[] {
+  tasksHeld(project: string): (OpenTask & { claimedBy: string })[] {
     return this.openTasks.filter(
       (task): task is OpenTask & { claimedBy: string } =>
         task.project === project && task.claimedBy !== undefined,

@@ -116,9 +116,31 @@ export interface TaskBoard {
   tellLeaseRanOut(ranOut: ClaimedTask): Promise<void>;
   /** The task's claim is over: it is ready again, held by nobody. */
   releaseClaim(project: string, task: string): Promise<void>;
+  /** The open tasks the board shows as claimed, whoever marked them, and whom each shows. */
+  claimedTasks(
+    project: string,
+  ): Promise<{ task: string; role: Role; module: string; claimedBy?: string }[]>;
+  /** PDC coordinators are told a task was shown as claimed with no claim in Divlab's log. */
+  alertClaimedWithoutClaim(alert: ClaimedWithoutClaim): Promise<void>;
   /** Divlab did not do as the member asked, such as giving them the task: they are told why. */
   refuseMember(refusal: Refused): Promise<void>;
 }
+
+/** A task shown as claimed, for `shownAs` if anyone, that Divlab's log has no claim for. */
+export type ClaimedWithoutClaim = {
+  project: string;
+  task: string;
+  role: Role;
+  module: string;
+  shownAs?: string;
+};
+
+/** Divlab found a task shown as claimed with no claim in its log: recorded before it frees it. */
+export type FoundClaimedWithoutClaim = {
+  project: string;
+  decidedAt: string;
+  claimedWithoutClaim: { task: string; shownAs?: string };
+};
 
 /** Divlab gave a member a task: recorded before the board shows it. */
 export type Claimed = {
@@ -318,7 +340,25 @@ export async function onLeaseCheck(
   clock: Clock,
 ): Promise<void> {
   const events = await log.read(project);
-  for (const { task, member, since } of leasesFrom(events).values()) {
+  const leases = leasesFrom(events);
+  for (const { task, role, module, claimedBy } of await board.claimedTasks(project)) {
+    if (leases.has(task)) continue;
+    const shownAs = claimedBy === undefined ? {} : { shownAs: claimedBy };
+    await log.append({
+      project,
+      decidedAt: clock().toISOString(),
+      claimedWithoutClaim: { task, ...shownAs },
+    });
+    await board.releaseClaim(project, task);
+    await board.alertClaimedWithoutClaim({
+      project,
+      task,
+      role,
+      module,
+      ...shownAs,
+    });
+  }
+  for (const { task, member, since } of leases.values()) {
     const shown = await board.task(project, task);
     if (!leaseHasRunOut(since, clock())) {
       // Recorded but not shown, or shown with nobody assigned: the board is put right from the
@@ -454,7 +494,8 @@ export type LogEvent =
   | Activity
   | Released
   | ChangeNotByDivlab
-  | MainChecked;
+  | MainChecked
+  | FoundClaimedWithoutClaim;
 
 /** The routing decisions in a log, which are all its history routing depends on. */
 export const routingDecisions = (log: readonly LogEvent[]): RoutingEvent[] =>

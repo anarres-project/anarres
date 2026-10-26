@@ -271,6 +271,20 @@ export class InProcessDriver implements Driver {
     return this.github.leaseNotices(project);
   }
 
+  /** As an administrator could: the board shows the task claimed, and Divlab's log has nothing. */
+  async markClaimedWithoutDivlab(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<void> {
+    await this.github.markClaimed({ project: task.project, task: this.openTaskId(task), member });
+  }
+
+  async claimedWithoutClaimAlerts(project: string): Promise<{ role: string; module: string }[]> {
+    return this.github
+      .claimedWithoutClaimAlerts(project)
+      .map(({ role, module }) => ({ role: roleName(role), module }));
+  }
+
   async setTrustLevel(member: string, level: string): Promise<void> {
     this.github.setTrustLevel(member, level);
   }
@@ -299,7 +313,7 @@ export class InProcessDriver implements Driver {
       names: async () => [...this.github.repositories.keys()],
       heldTasks: async (project, holder) =>
         this.github
-          .claimedTasks(project)
+          .tasksHeld(project)
           .filter((task) => task.claimedBy === holder)
           .map(({ id, role, module }) => ({ id, role, module })),
       log: (project) => this.github.read(project),
@@ -446,7 +460,7 @@ export class InProcessDriver implements Driver {
   }
 
   async claimedTasks(project: string): Promise<ClaimedTask[]> {
-    return this.github.claimedTasks(project).map(({ role, module, claimedBy }) => ({
+    return this.github.tasksHeld(project).map(({ role, module, claimedBy }) => ({
       role: roleName(role),
       module,
       member: claimedBy,

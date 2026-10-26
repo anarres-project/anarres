@@ -56,3 +56,16 @@ Feature: Leases
     When Bob claims the Test task for "parser"
     Then the Test task for "parser" is claimed by Bob
     And Alice is told the lease on the task ran out
+
+  # Not in the sandbox: Divlab's hourly check runs on GitHub's schedule, not on cue.
+  @sandbox-wip
+  Scenario: A task shown as claimed that Divlab never gave anyone is made ready again
+    Divlab records each claim before the task shows it, so a task shown as claimed with no claim
+    in Divlab's log was changed by someone else. PDC coordinators are told.
+
+    Given a project with a module "parser"
+    And a member's Specification work on "parser" was accepted with a pass verdict
+    And the Test task for "parser" is shown as claimed by Mallory, though Divlab never gave it to them
+    When Divlab checks the project's leases
+    Then a Test task for "parser" is ready to claim
+    And a PDC coordinator is alerted that the Test task for "parser" was shown as claimed without a claim
