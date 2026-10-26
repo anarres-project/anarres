@@ -60,13 +60,18 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ## 2026-10-26: Claimed tasks read from every page
 
-- The hourly check's claimed tasks were read from one page of 100, so in a project with more,
-  some would never be checked. Now read from every page. The ready tasks and a member's held
-  tasks read one page the same way: on the test list.
+- The hourly check's claimed tasks, the ready tasks a member is offered and the tasks a member
+  holds were each read from one page of 100, so in a busy project some would be missed. Each is
+  now read from every page.
 
 RED:      are read from every page, however many tasks are claimed -> expected [ …(100) ] to have a length of 150 but got 100
 GREEN:    (165 passed)
 REFACTOR: none (the older test's fake first made to answer the first page however asked, green)
+RED:      a project's ready tasks are read from every page -> expected [ …(100) ] to have a length of 150 but got 100
+GREEN:    (166 passed)
+RED:      the tasks a member holds are read from every page -> expected [ …(100) ] to have a length of 150 but got 100
+GREEN:    (167 passed)
+REFACTOR: the three listings read through one private `everyPage`
 
 ---
 

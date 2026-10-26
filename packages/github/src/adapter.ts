@@ -213,12 +213,10 @@ export class GitHubAdapter
     );
   }
 
-  /** The governance file, as read: core checks what it says (decision 0007). */
   /** The project's tasks ready to claim, each read as Divlab reads a task: as data. */
   async readyTasks(project: string): Promise<{ id: string; role: string; module: string }[]> {
-    const issues = await this.call<(ListedIssue & { number: number })[]>(
-      "GET",
-      `${this.repo(project)}/issues?labels=${encodeURIComponent(READY)}&state=open&per_page=100`,
+    const issues = await this.everyPage<ListedIssue & { number: number }>(
+      `${this.repo(project)}/issues?labels=${encodeURIComponent(READY)}&state=open`,
     );
     return issues.flatMap((issue) => {
       const task = isTask(issue) ? taskFromIssue(issue) : undefined;
@@ -228,15 +226,9 @@ export class GitHubAdapter
 
   /** The project's tasks its issues show as claimed, whoever marked them, each read as data. */
   async claimedTasks(project: string) {
-    const issues: (ListedIssue & { number: number })[] = [];
-    for (let page = 1; ; page++) {
-      const listed = await this.call<(ListedIssue & { number: number })[]>(
-        "GET",
-        `${this.repo(project)}/issues?labels=${encodeURIComponent(CLAIMED)}&state=open&per_page=100&page=${page}`,
-      );
-      issues.push(...listed);
-      if (listed.length < 100) break;
-    }
+    const issues = await this.everyPage<ListedIssue & { number: number }>(
+      `${this.repo(project)}/issues?labels=${encodeURIComponent(CLAIMED)}&state=open`,
+    );
     return issues.flatMap((issue) => {
       const task = isTask(issue) ? taskFromIssue(issue) : undefined;
       if (task === undefined) return [];
@@ -249,9 +241,8 @@ export class GitHubAdapter
     project: string,
     member: string,
   ): Promise<{ id: string; role: string; module: string }[]> {
-    const issues = await this.call<(ListedIssue & { number: number })[]>(
-      "GET",
-      `${this.repo(project)}/issues?labels=${encodeURIComponent(CLAIMED)}&assignee=${encodeURIComponent(member)}&state=open&per_page=100`,
+    const issues = await this.everyPage<ListedIssue & { number: number }>(
+      `${this.repo(project)}/issues?labels=${encodeURIComponent(CLAIMED)}&assignee=${encodeURIComponent(member)}&state=open`,
     );
     return issues.flatMap((issue) => {
       const task = isTask(issue) ? taskFromIssue(issue) : undefined;
@@ -408,6 +399,7 @@ export class GitHubAdapter
     return [...new Set(items.map((item) => item.repository_url.split("/").at(-1) ?? ""))];
   }
 
+  /** The governance file, as read: core checks what it says (decision 0007). */
   async governanceFile(): Promise<unknown> {
     const repository = this.options.governance || GOVERNANCE_REPOSITORY;
     const where = `repos/${repository}/contents/${GOVERNANCE_FILE}`;
@@ -778,6 +770,16 @@ export class GitHubAdapter
       if (attempt < WRITE_ATTEMPTS) return this.openIssue(project, issue, attempt + 1);
     }
     throw new GitHubError("POST", where, status, data);
+  }
+
+  /** Everything GitHub lists at `path`, read a hundred to a page until a page is not full. */
+  private async everyPage<T>(path: string): Promise<T[]> {
+    const all: T[] = [];
+    for (let page = 1; ; page++) {
+      const listed = await this.call<T[]>("GET", `${path}&per_page=100&page=${page}`);
+      all.push(...listed);
+      if (listed.length < 100) return all;
+    }
   }
 
   private repo(project: string): string {

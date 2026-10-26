@@ -76,7 +76,9 @@ describe("a project's ready tasks", () => {
       request: async <T>(_token: string, method: string, path: string) => {
         if (
           method === "GET" &&
-          path === "repos/commons/ledger/issues?labels=state%3Aready&state=open&per_page=100"
+          /^repos\/commons\/ledger\/issues\?labels=state%3Aready&state=open&per_page=100(&page=1)?$/.test(
+            path,
+          )
         ) {
           const issues = [
             {
@@ -99,6 +101,29 @@ describe("a project's ready tasks", () => {
       { id: "4", role: "test", module: "lexer" },
     ]);
   });
+
+  it("are read from every page, however many are ready", async () => {
+    const ready = Array.from({ length: 150 }, (_, n) => ({
+      number: n + 1,
+      state: "open",
+      labels: ["role:test", `module:m${n}`, "state:ready"].map((name) => ({ name })),
+    }));
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        const listing = path.match(
+          /^repos\/commons\/ledger\/issues\?labels=state%3Aready&state=open&per_page=100(?:&page=(\d+))?$/,
+        );
+        if (method === "GET" && listing) {
+          const page = Number(listing[1] ?? 1);
+          return { status: 200, data: ready.slice((page - 1) * 100, page * 100) as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.readyTasks("ledger")).toHaveLength(150);
+  });
 });
 
 describe("the tasks a member holds in a project", () => {
@@ -109,8 +134,9 @@ describe("the tasks a member holds in a project", () => {
       request: async <T>(_token: string, method: string, path: string) => {
         if (
           method === "GET" &&
-          path ===
-            "repos/commons/ledger/issues?labels=state%3Aclaimed&assignee=alice&state=open&per_page=100"
+          /^repos\/commons\/ledger\/issues\?labels=state%3Aclaimed&assignee=alice&state=open&per_page=100(&page=1)?$/.test(
+            path,
+          )
         ) {
           const issues = [
             {
@@ -147,6 +173,30 @@ describe("the tasks a member holds in a project", () => {
       },
     });
     expect(await adapter.heldTasks("ledger", "alice")).toEqual([]);
+  });
+
+  it("are read from every page, however many the member holds", async () => {
+    const held = Array.from({ length: 150 }, (_, n) => ({
+      number: n + 1,
+      state: "open",
+      labels: ["role:test", `module:m${n}`, "state:claimed"].map((name) => ({ name })),
+      assignees: [{ login: "alice" }],
+    }));
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        const listing = path.match(
+          /^repos\/commons\/ledger\/issues\?labels=state%3Aclaimed&assignee=alice&state=open&per_page=100(?:&page=(\d+))?$/,
+        );
+        if (method === "GET" && listing) {
+          const page = Number(listing[1] ?? 1);
+          return { status: 200, data: held.slice((page - 1) * 100, page * 100) as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.heldTasks("ledger", "alice")).toHaveLength(150);
   });
 });
 

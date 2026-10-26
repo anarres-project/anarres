@@ -8093,12 +8093,10 @@ var GitHubAdapter = class {
       { repeatable: true }
     );
   }
-  /** The governance file, as read: core checks what it says (decision 0007). */
   /** The project's tasks ready to claim, each read as Divlab reads a task: as data. */
   async readyTasks(project) {
-    const issues = await this.call(
-      "GET",
-      `${this.repo(project)}/issues?labels=${encodeURIComponent(READY)}&state=open&per_page=100`
+    const issues = await this.everyPage(
+      `${this.repo(project)}/issues?labels=${encodeURIComponent(READY)}&state=open`
     );
     return issues.flatMap((issue) => {
       const task = isTask(issue) ? taskFromIssue(issue) : void 0;
@@ -8107,15 +8105,9 @@ var GitHubAdapter = class {
   }
   /** The project's tasks its issues show as claimed, whoever marked them, each read as data. */
   async claimedTasks(project) {
-    const issues = [];
-    for (let page = 1; ; page++) {
-      const listed = await this.call(
-        "GET",
-        `${this.repo(project)}/issues?labels=${encodeURIComponent(CLAIMED)}&state=open&per_page=100&page=${page}`
-      );
-      issues.push(...listed);
-      if (listed.length < 100) break;
-    }
+    const issues = await this.everyPage(
+      `${this.repo(project)}/issues?labels=${encodeURIComponent(CLAIMED)}&state=open`
+    );
     return issues.flatMap((issue) => {
       const task = isTask(issue) ? taskFromIssue(issue) : void 0;
       if (task === void 0) return [];
@@ -8124,9 +8116,8 @@ var GitHubAdapter = class {
     });
   }
   async heldTasks(project, member) {
-    const issues = await this.call(
-      "GET",
-      `${this.repo(project)}/issues?labels=${encodeURIComponent(CLAIMED)}&assignee=${encodeURIComponent(member)}&state=open&per_page=100`
+    const issues = await this.everyPage(
+      `${this.repo(project)}/issues?labels=${encodeURIComponent(CLAIMED)}&assignee=${encodeURIComponent(member)}&state=open`
     );
     return issues.flatMap((issue) => {
       const task = isTask(issue) ? taskFromIssue(issue) : void 0;
@@ -8251,6 +8242,7 @@ var GitHubAdapter = class {
     );
     return [...new Set(items.map((item) => item.repository_url.split("/").at(-1) ?? ""))];
   }
+  /** The governance file, as read: core checks what it says (decision 0007). */
   async governanceFile() {
     const repository = this.options.governance || GOVERNANCE_REPOSITORY;
     const where = `repos/${repository}/contents/${GOVERNANCE_FILE}`;
@@ -8555,6 +8547,15 @@ var GitHubAdapter = class {
       if (attempt < WRITE_ATTEMPTS) return this.openIssue(project, issue, attempt + 1);
     }
     throw new GitHubError("POST", where, status, data);
+  }
+  /** Everything GitHub lists at `path`, read a hundred to a page until a page is not full. */
+  async everyPage(path) {
+    const all = [];
+    for (let page = 1; ; page++) {
+      const listed = await this.call("GET", `${path}&per_page=100&page=${page}`);
+      all.push(...listed);
+      if (listed.length < 100) return all;
+    }
   }
   repo(project) {
     return `repos/${this.options.owner}/${project}`;
