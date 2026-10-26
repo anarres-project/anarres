@@ -58,6 +58,29 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-26: An event file after a server error
+
+- Writing an event creates a numbered file, so it cannot simply be repeated: a repeat after a
+  write GitHub saved would be refused as a number taken, and the event recorded again under the
+  next. After a server error Divlab now looks at the file instead: holding this event, it was
+  saved; missing, it is asked for again, three times in all (the limit the merge uses, now one
+  constant).
+- Protocol: reading the file went in with a 404 branch and an error branch no test demanded;
+  cut back before the next test. The test for the limit went red by running out of memory (the
+  asking never stopped) rather than by assertion.
+
+RED:      carries on when GitHub saved the event, though it answered with a failure
+          -> promise rejected "GitHub PUT …/events/000251.json answered 502" instead of resolving
+GREEN:    (149 passed)
+RED:      records the event when GitHub's server failed before saving it
+          -> TypeError (no answer for a missing file: stub), then GitHub PUT … answered 502
+GREEN:    (150 passed)
+RED:      stops asking, and fails, when GitHub's server keeps failing -> worker out of memory
+GREEN:    (151 passed)
+REFACTOR: the merge's and the event's attempts share `WRITE_ATTEMPTS`
+
+---
+
 ## 2026-10-26: Label and close writes repeated safely
 
 - Marking a task claimed, making it ready again and closing an issue each set values outright

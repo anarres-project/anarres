@@ -28,12 +28,15 @@ class FakeGitHub {
   readonly files = new Map<string, string>();
   /** How many requests GitHub has been sent. */
   requests = 0;
+  private writesFailedUnsaved = 0;
 
   constructor(
     events: number,
     private readonly limits: {
       textsPerRequest?: number;
       failWritesAfterSaving?: boolean;
+      /** How many writes GitHub fails without carrying them out, before it carries them out. */
+      failWritesUnsaved?: number;
       /** GitHub lists only part of a tree past 100,000 entries, and says so. */
       truncatedTree?: boolean;
       /** The repository's top level listed in part, leaving the event log out. */
@@ -100,10 +103,19 @@ class FakeGitHub {
         return answer(200, { data: { repository } });
       }
     }
+    if (method === "GET" && local.startsWith("contents/events/")) {
+      const text = this.files.get(local.slice("contents/".length));
+      if (text === undefined) return answer(404, { message: "Not Found" });
+      return answer(200, { content: Buffer.from(text).toString("base64"), encoding: "base64" });
+    }
     if (method === "PUT" && local.startsWith("contents/events/")) {
       const file = local.slice("contents/".length);
       // Creating a file that already exists fails, as on GitHub.
       if (this.files.has(file)) return answer(422, { message: "sha wasn't supplied" });
+      if ((this.limits.failWritesUnsaved ?? 0) > this.writesFailedUnsaved) {
+        this.writesFailedUnsaved++;
+        return answer(502, undefined);
+      }
       const { content } = body as { content: string };
       this.files.set(file, Buffer.from(content, "base64").toString("utf8"));
       // A failure from GitHub does not show that it did not carry the request out.
@@ -177,6 +189,32 @@ describe("a project's event log on GitHub", () => {
     await adapter.read("ledger");
     await adapter.append(event(251)).catch(() => {});
     expect(github.files.size).toBe(251);
+  });
+
+  it("carries on when GitHub saved the event, though it answered with a failure", async () => {
+    const github = new FakeGitHub(250, { failWritesAfterSaving: true });
+    const adapter = adapterFor(github);
+    await adapter.read("ledger");
+    await expect(adapter.append(event(251))).resolves.toBeUndefined();
+  });
+
+  it("records the event when GitHub's server failed before saving it", async () => {
+    const github = new FakeGitHub(250, { failWritesUnsaved: 1 });
+    const adapter = adapterFor(github);
+    await adapter.read("ledger");
+    await adapter.append(event(251));
+    expect(JSON.parse(github.files.get("events/000251.json") ?? "{}").work?.module).toBe(
+      "module-251",
+    );
+  });
+
+  it("stops asking, and fails, when GitHub's server keeps failing before saving the event", async () => {
+    const github = new FakeGitHub(250, { failWritesUnsaved: Infinity });
+    const adapter = adapterFor(github);
+    await adapter.read("ledger");
+    const before = github.requests;
+    await expect(adapter.append(event(251))).rejects.toThrow("answered 502");
+    expect(github.requests - before).toBeLessThanOrEqual(6);
   });
 
   it("is never read in part, when GitHub lists only part of it", async () => {

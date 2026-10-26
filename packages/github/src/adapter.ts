@@ -74,8 +74,8 @@ const mainCommit = (listed: ListedCommit): MainCommit => ({
 const GOVERNANCE_REPOSITORY = "anarres-project/anarres";
 const GOVERNANCE_FILE = "governance/members.json";
 
-/** How many times Divlab asks GitHub to merge, while GitHub's server fails and has not merged. */
-const MERGE_ATTEMPTS = 3;
+/** How many times to ask for a write GitHub's server failed without carrying out, a merge included. */
+const WRITE_ATTEMPTS = 3;
 
 export class GitHubAdapter
   implements TaskBoard, EventLog, Repository, PullRequests, ProjectRepositories
@@ -488,7 +488,11 @@ export class GitHubAdapter
   }
 
   /** Creates the event's file, numbered `sequence`: "taken" if that file exists already. */
-  private async createEvent(event: LogEvent, sequence: number): Promise<"created" | "taken"> {
+  private async createEvent(
+    event: LogEvent,
+    sequence: number,
+    attempt = 1,
+  ): Promise<"created" | "taken"> {
     const { path, content } = eventFile(event, sequence);
     const put = `${this.repo(event.project)}/contents/${path}`;
     const { status, data } = await this.request("PUT", put, {
@@ -496,9 +500,30 @@ export class GitHubAdapter
       content: Buffer.from(content).toString("base64"),
     });
     if (status === NUMBER_TAKEN) return "taken";
+    if (status >= 500) {
+      // A server error does not say whether GitHub saved the file: the file does.
+      const saved = await this.fileText(event.project, path);
+      if (saved === content) {
+        this.eventsRead.set(event.project, sequence);
+        return "created";
+      }
+      if (saved === undefined && attempt < WRITE_ATTEMPTS) {
+        return this.createEvent(event, sequence, attempt + 1);
+      }
+    }
     if (status < 200 || status >= 300) throw new GitHubError("PUT", put, status, data);
     this.eventsRead.set(event.project, sequence);
     return "created";
+  }
+
+  /** A file's text on main, or undefined if there is no such file. */
+  private async fileText(project: string, path: string): Promise<string | undefined> {
+    const { status, data } = await this.request<{ content: string }>(
+      "GET",
+      `${this.repo(project)}/contents/${path}`,
+    );
+    if (status === 404) return undefined;
+    return Buffer.from(data.content, "base64").toString("utf8");
   }
 
   /**
@@ -660,7 +685,7 @@ export class GitHubAdapter
         `${this.repo(project)}/pulls/${pullRequest}`,
       );
       if (pull.merged) return pull.merge_commit_sha;
-      if (status < 500 || attempt === MERGE_ATTEMPTS) {
+      if (status < 500 || attempt === WRITE_ATTEMPTS) {
         throw new GitHubError("PUT", where, status, data);
       }
     }

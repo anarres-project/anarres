@@ -7983,7 +7983,7 @@ var mainCommit = (listed) => ({
 });
 var GOVERNANCE_REPOSITORY = "anarres-project/anarres";
 var GOVERNANCE_FILE = "governance/members.json";
-var MERGE_ATTEMPTS = 3;
+var WRITE_ATTEMPTS = 3;
 var GitHubAdapter = class {
   /**
    * `app`: Divlab's GitHub App, needed only to set projects up. `request`: how requests reach
@@ -8317,7 +8317,7 @@ var GitHubAdapter = class {
     }
   }
   /** Creates the event's file, numbered `sequence`: "taken" if that file exists already. */
-  async createEvent(event, sequence) {
+  async createEvent(event, sequence, attempt = 1) {
     const { path, content } = eventFile(event, sequence);
     const put = `${this.repo(event.project)}/contents/${path}`;
     const { status, data } = await this.request("PUT", put, {
@@ -8325,9 +8325,28 @@ var GitHubAdapter = class {
       content: Buffer.from(content).toString("base64")
     });
     if (status === NUMBER_TAKEN) return "taken";
+    if (status >= 500) {
+      const saved = await this.fileText(event.project, path);
+      if (saved === content) {
+        this.eventsRead.set(event.project, sequence);
+        return "created";
+      }
+      if (saved === void 0 && attempt < WRITE_ATTEMPTS) {
+        return this.createEvent(event, sequence, attempt + 1);
+      }
+    }
     if (status < 200 || status >= 300) throw new GitHubError("PUT", put, status, data);
     this.eventsRead.set(event.project, sequence);
     return "created";
+  }
+  /** A file's text on main, or undefined if there is no such file. */
+  async fileText(project, path) {
+    const { status, data } = await this.request(
+      "GET",
+      `${this.repo(project)}/contents/${path}`
+    );
+    if (status === 404) return void 0;
+    return Buffer.from(data.content, "base64").toString("utf8");
   }
   /**
    * The whole event log. The files are listed with the REST API, which reflects writes at once,
@@ -8464,7 +8483,7 @@ var GitHubAdapter = class {
         `${this.repo(project)}/pulls/${pullRequest}`
       );
       if (pull.merged) return pull.merge_commit_sha;
-      if (status < 500 || attempt === MERGE_ATTEMPTS) {
+      if (status < 500 || attempt === WRITE_ATTEMPTS) {
         throw new GitHubError("PUT", where, status, data);
       }
     }
