@@ -357,3 +357,83 @@ describe("checking a task marked claimed that Divlab's log has no claim for", ()
     ]);
   });
 });
+
+describe("checking a task the log shows free but the board still shows claimed", () => {
+  it("makes a task given back ready, finishing what a stopped run began", async () => {
+    const released: string[] = [];
+    const watched: TaskBoard = {
+      ...board,
+      claimedTasks: async () => [{ task: "12", ...TEST_TASK, claimedBy: "alice" }],
+      task: async () => ({ ...TEST_TASK, claimedBy: "alice" }),
+      releaseClaim: async (_project, task) => {
+        released.push(task);
+      },
+    };
+    const givenBack: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          decidedAt: "2026-10-23T09:00:00.000Z",
+          claimed: { task: "12", member: "alice" },
+        },
+        {
+          project: "ledger",
+          decidedAt: "2026-10-23T09:30:00.000Z",
+          released: { task: "12", member: "alice" },
+        },
+      ],
+      append: async () => {},
+    };
+    await onLeaseCheck("ledger", watched, givenBack, clock);
+    expect(released).toEqual(["12"]);
+  });
+
+  it("frees a task given back long ago without saying its lease ran out", async () => {
+    const appended: unknown[] = [];
+    const told: unknown[] = [];
+    const watched: TaskBoard = {
+      ...board,
+      claimedTasks: async () => [{ task: "12", ...TEST_TASK, claimedBy: "alice" }],
+      task: async () => ({ ...TEST_TASK, claimedBy: "alice" }),
+      releaseClaim: async () => {},
+      tellLeaseRanOut: async (ranOut) => void told.push(ranOut),
+    };
+    const givenBackLongAgo: EventLog = {
+      read: async () => [
+        ...(await claimedLongAgo.read("ledger")),
+        {
+          project: "ledger",
+          decidedAt: "2026-10-22T09:30:00.000Z",
+          released: { task: "12", member: "alice" },
+        },
+      ],
+      append: async (event) => void appended.push(event),
+    };
+    await onLeaseCheck("ledger", watched, givenBackLongAgo, clock);
+    expect([appended, told]).toEqual([[], []]);
+  });
+
+  it("frees a task whose lease ran out in the log once, without recording or saying it again", async () => {
+    const seen: unknown[] = [];
+    const watched: TaskBoard = {
+      ...board,
+      claimedTasks: async () => [{ task: "12", ...TEST_TASK, claimedBy: "alice" }],
+      task: async () => ({ ...TEST_TASK, claimedBy: "alice" }),
+      releaseClaim: async (_project, task) => void seen.push(`released ${task}`),
+      tellLeaseRanOut: async () => void seen.push("told"),
+    };
+    const ranOut: EventLog = {
+      read: async () => [
+        ...(await claimedLongAgo.read("ledger")),
+        {
+          project: "ledger",
+          decidedAt: "2026-10-23T09:30:00.000Z",
+          leaseRanOut: { task: "12", member: "alice" },
+        },
+      ],
+      append: async () => void seen.push("recorded"),
+    };
+    await onLeaseCheck("ledger", watched, ranOut, clock);
+    expect(seen).toEqual(["released 12"]);
+  });
+});

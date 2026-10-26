@@ -58,6 +58,23 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-26: A task freed in the log but still shown claimed
+
+- If a run stopped after recording a task given back, or its lease run out, but before the board
+  showed it ready, the hourly check left a given-back task claimed, then a day after the claim
+  recorded its lease as run out and told the member so; a lease already run out was recorded and
+  told twice. The check now makes such a task ready and does nothing else.
+
+RED:      makes a task given back ready, finishing what a stopped run began -> expected [] to deeply equal [ '12' ]
+GREEN:    (155 passed)
+RED:      frees a task given back long ago without saying its lease ran out -> expected [ …(2) ] to deeply equal [ [], [] ]
+GREEN:    (156 passed)
+          frees a task whose lease ran out in the log once … -> passed first time (regression test:
+          the previous change covers it)
+REFACTOR: the freed-in-the-log check moved ahead of the lease's expiry, replacing `stillHeld`
+
+---
+
 ## 2026-10-26: An event's number taken while GitHub failed its write
 
 - After a server error, an event file found holding another event was another run's: the event

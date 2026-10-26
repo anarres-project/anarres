@@ -360,13 +360,16 @@ export async function onLeaseCheck(
   }
   for (const { task, member, since } of leases.values()) {
     const shown = await board.task(project, task);
+    const freed = lastFreed(events, task);
+    if (freed !== undefined && Date.parse(freed) >= Date.parse(since)) {
+      // Freed in the log but still shown claimed: a run stopped before the board showed it.
+      if (shown?.claimedBy === member) await board.releaseClaim(project, task);
+      continue;
+    }
     if (!leaseHasRunOut(since, clock())) {
       // Recorded but not shown, or shown with nobody assigned: the board is put right from the
-      // log (a run stopped part way, or the assignee was taken off). Not for a claim given back,
-      // or whose lease ran out, since.
-      const freed = lastFreed(events, task);
-      const stillHeld = freed === undefined || Date.parse(freed) < Date.parse(since);
-      if (stillHeld && shown !== undefined && shown.claimedBy === undefined) {
+      // log (a run stopped part way, or the assignee was taken off).
+      if (shown !== undefined && shown.claimedBy === undefined) {
         await board.markClaimed({ project, task, member });
       }
       continue;

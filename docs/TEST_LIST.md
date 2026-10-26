@@ -263,8 +263,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         runs for a project queue one at a time, so the check never sees a claim half made);
   - [ ] the sandbox shows it (`@sandbox-wip`): the harness needs to run Divlab's hourly check on
         cue;
-  - [ ] a claim the log shows given back or run out, but still labelled claimed (a run stopped
-        between recording and the board): Divlab finishes freeing it, with no alert;
+  - [x] a claim the log shows given back or run out, but still labelled claimed (a run stopped
+        between recording and the board): the hourly check makes the task ready, with no alert,
+        no new record and no word to the member (before, a task given back was left claimed,
+        then reported as a lease run out, and one whose lease ran out was reported twice);
   - [ ] the claimed tasks are read from one page of 100; read every page if a project could
         hold more;
   - [ ] the record of a task shown as claimed is read back checking only its task; check
