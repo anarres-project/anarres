@@ -8042,7 +8042,7 @@ var GitHubAdapter = class {
   async markModuleDone(done) {
     const { project } = done;
     const { number } = await this.openIssue(project, issueForModuleDone(done));
-    await this.call("PATCH", `${this.repo(project)}/issues/${number}`, { state: "closed" });
+    await this.closeIssue(project, number);
   }
   async task(project, task) {
     const number = issueNumber(task);
@@ -8059,15 +8059,26 @@ var GitHubAdapter = class {
   async close(project, task) {
     const number = issueNumber(task);
     if (number === void 0) return;
-    await this.call("PATCH", `${this.repo(project)}/issues/${number}`, { state: "closed" });
+    await this.closeIssue(project, number);
+  }
+  /** Closing an issue closed already leaves it closed, so it is safe to repeat. */
+  async closeIssue(project, number) {
+    await this.call(
+      "PATCH",
+      `${this.repo(project)}/issues/${number}`,
+      { state: "closed" },
+      { repeatable: true }
+    );
   }
   async markClaimed(claim2) {
     const issue = `${this.repo(claim2.project)}/issues/${claim2.task}`;
     const listed = await this.call("GET", issue);
-    await this.call("PATCH", issue, {
-      labels: labelsWhenClaimed(listed),
-      assignees: [claim2.member]
-    });
+    await this.call(
+      "PATCH",
+      issue,
+      { labels: labelsWhenClaimed(listed), assignees: [claim2.member] },
+      { repeatable: true }
+    );
   }
   async tellLeaseRanOut(ranOut) {
     await this.call("POST", `${this.repo(ranOut.project)}/issues/${ranOut.task}/comments`, {
@@ -8077,7 +8088,12 @@ var GitHubAdapter = class {
   async releaseClaim(project, task) {
     const issue = `${this.repo(project)}/issues/${task}`;
     const listed = await this.call("GET", issue);
-    await this.call("PATCH", issue, { labels: labelsWhenReleased(listed), assignees: [] });
+    await this.call(
+      "PATCH",
+      issue,
+      { labels: labelsWhenReleased(listed), assignees: [] },
+      { repeatable: true }
+    );
   }
   /** The governance file, as read: core checks what it says (decision 0007). */
   /** The project's tasks ready to claim, each read as Divlab reads a task: as data. */

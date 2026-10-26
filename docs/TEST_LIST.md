@@ -81,9 +81,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         merge is a write safe to repeat, paused between asks, and a merge still in progress is
         waited out (seen 2026-10-26: retried at once, it was refused as already in progress);
         a refused merge that an earlier ask made carries on with its commit;
-  - [ ] the other writes, each as it can be made safe: labels (the whole set, so repeatable),
-        event files (a second write finds the file there), comments and issues (not safe to
-        repeat: check for the first before posting again);
+  - [x] a task marked claimed or ready again, and an issue closed (a task's, or a finished
+        module's), are writes safe to repeat: each sets the whole set of labels and assignees, or
+        the state, so repeating it changes nothing more;
+  - [ ] the other writes, each as it can be made safe: event files (a second write finds the
+        file there), comments and issues (not safe to repeat: check for the first before posting
+        again; seen 2026-10-26: a 502 opening an issue failed a Divlab run);
   - [x] the sandbox run stays inside the hourly allowance (5,000 requests) with room to spare:
         measured (a full run, 1,804 REST and 206 GraphQL requests, in CI on 2026-10-22), and a
         run does not start when GitHub reports too little left, saying when it resets. The

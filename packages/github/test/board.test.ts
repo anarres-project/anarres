@@ -95,6 +95,26 @@ describe("marking a task claimed", () => {
       { labels: ["role:test", "module:parser", "state:claimed"], assignees: ["alice"] },
     ]);
   });
+
+  it("asks for the change as a write safe to repeat, since it sets the whole set of labels", async () => {
+    const asked: unknown[] = [];
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(
+        _token: string,
+        method: string,
+        _path: string,
+        _body?: unknown,
+        options?: { repeatable?: boolean },
+      ) => {
+        if (method === "PATCH") asked.push(options);
+        return { status: 200, data: { labels: [], body: "" } as T };
+      },
+    });
+    await adapter.markClaimed({ project: "ledger", task: "12", member: "alice" });
+    expect(asked).toEqual([{ repeatable: true }]);
+  });
 });
 
 describe("refusing a claim", () => {
@@ -275,6 +295,26 @@ describe("releasing a claim", () => {
       { labels: ["role:test", "module:parser", "state:ready"], assignees: [] },
     ]);
   });
+
+  it("asks for the change as a write safe to repeat, since it sets the whole set of labels", async () => {
+    const asked: unknown[] = [];
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(
+        _token: string,
+        method: string,
+        _path: string,
+        _body?: unknown,
+        options?: { repeatable?: boolean },
+      ) => {
+        if (method === "PATCH") asked.push(options);
+        return { status: 200, data: { labels: [], body: "" } as T };
+      },
+    });
+    await adapter.releaseClaim("ledger", "12");
+    expect(asked).toEqual([{ repeatable: true }]);
+  });
 });
 
 describe("telling a member their lease ran out", () => {
@@ -374,5 +414,66 @@ describe("alerting PDC coordinators to a task shown as claimed without a claim",
     };
     await adapter.alertClaimedWithoutClaim(alert);
     expect(opened).toEqual([issueForClaimedWithoutClaim(alert)]);
+  });
+});
+
+describe("closing a task", () => {
+  it("closes the task's issue", async () => {
+    const changes: unknown[] = [];
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string, body?: unknown) => {
+        if (method === "PATCH" && path === "repos/commons/ledger/issues/12") {
+          changes.push(body);
+          return { status: 200, data: {} as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    await adapter.close("ledger", "12");
+    expect(changes).toEqual([{ state: "closed" }]);
+  });
+
+  it("asks for it as a write safe to repeat, since a closed issue closed again stays closed", async () => {
+    const asked: unknown[] = [];
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(
+        _token: string,
+        method: string,
+        _path: string,
+        _body?: unknown,
+        options?: { repeatable?: boolean },
+      ) => {
+        if (method === "PATCH") asked.push(options);
+        return { status: 200, data: {} as T };
+      },
+    });
+    await adapter.close("ledger", "12");
+    expect(asked).toEqual([{ repeatable: true }]);
+  });
+});
+
+describe("marking a module done", () => {
+  it("closes the issue saying so as a write safe to repeat", async () => {
+    const asked: unknown[] = [];
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(
+        _token: string,
+        method: string,
+        _path: string,
+        _body?: unknown,
+        options?: { repeatable?: boolean },
+      ) => {
+        if (method === "PATCH") asked.push(options);
+        return { status: 201, data: { number: 30 } as T };
+      },
+    });
+    await adapter.markModuleDone({ project: "ledger", module: "parser", decidedOn: "e1" });
+    expect(asked).toEqual([{ repeatable: true }]);
   });
 });

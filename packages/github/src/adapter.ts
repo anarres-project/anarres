@@ -155,7 +155,7 @@ export class GitHubAdapter
   async markModuleDone(done: FinishedModule): Promise<void> {
     const { project } = done;
     const { number } = await this.openIssue(project, issueForModuleDone(done));
-    await this.call("PATCH", `${this.repo(project)}/issues/${number}`, { state: "closed" });
+    await this.closeIssue(project, number);
   }
 
   async task(project: string, task: string): Promise<ReturnType<typeof taskFromIssue>> {
@@ -174,16 +174,28 @@ export class GitHubAdapter
   async close(project: string, task: string): Promise<void> {
     const number = issueNumber(task);
     if (number === undefined) return;
-    await this.call("PATCH", `${this.repo(project)}/issues/${number}`, { state: "closed" });
+    await this.closeIssue(project, number);
+  }
+
+  /** Closing an issue closed already leaves it closed, so it is safe to repeat. */
+  private async closeIssue(project: string, number: number): Promise<void> {
+    await this.call(
+      "PATCH",
+      `${this.repo(project)}/issues/${number}`,
+      { state: "closed" },
+      { repeatable: true },
+    );
   }
 
   async markClaimed(claim: ClaimedTask): Promise<void> {
     const issue = `${this.repo(claim.project)}/issues/${claim.task}`;
     const listed = await this.call<ListedIssue>("GET", issue);
-    await this.call("PATCH", issue, {
-      labels: labelsWhenClaimed(listed),
-      assignees: [claim.member],
-    });
+    await this.call(
+      "PATCH",
+      issue,
+      { labels: labelsWhenClaimed(listed), assignees: [claim.member] },
+      { repeatable: true },
+    );
   }
 
   async tellLeaseRanOut(ranOut: ClaimedTask): Promise<void> {
@@ -195,7 +207,12 @@ export class GitHubAdapter
   async releaseClaim(project: string, task: string): Promise<void> {
     const issue = `${this.repo(project)}/issues/${task}`;
     const listed = await this.call<ListedIssue>("GET", issue);
-    await this.call("PATCH", issue, { labels: labelsWhenReleased(listed), assignees: [] });
+    await this.call(
+      "PATCH",
+      issue,
+      { labels: labelsWhenReleased(listed), assignees: [] },
+      { repeatable: true },
+    );
   }
 
   /** The governance file, as read: core checks what it says (decision 0007). */

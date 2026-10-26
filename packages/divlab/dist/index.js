@@ -8474,7 +8474,7 @@ var GitHubAdapter = class {
   async markModuleDone(done) {
     const { project: project2 } = done;
     const { number } = await this.openIssue(project2, issueForModuleDone(done));
-    await this.call("PATCH", `${this.repo(project2)}/issues/${number}`, { state: "closed" });
+    await this.closeIssue(project2, number);
   }
   async task(project2, task) {
     const number = issueNumber(task);
@@ -8491,15 +8491,26 @@ var GitHubAdapter = class {
   async close(project2, task) {
     const number = issueNumber(task);
     if (number === void 0) return;
-    await this.call("PATCH", `${this.repo(project2)}/issues/${number}`, { state: "closed" });
+    await this.closeIssue(project2, number);
+  }
+  /** Closing an issue closed already leaves it closed, so it is safe to repeat. */
+  async closeIssue(project2, number) {
+    await this.call(
+      "PATCH",
+      `${this.repo(project2)}/issues/${number}`,
+      { state: "closed" },
+      { repeatable: true }
+    );
   }
   async markClaimed(claim) {
     const issue = `${this.repo(claim.project)}/issues/${claim.task}`;
     const listed = await this.call("GET", issue);
-    await this.call("PATCH", issue, {
-      labels: labelsWhenClaimed(listed),
-      assignees: [claim.member]
-    });
+    await this.call(
+      "PATCH",
+      issue,
+      { labels: labelsWhenClaimed(listed), assignees: [claim.member] },
+      { repeatable: true }
+    );
   }
   async tellLeaseRanOut(ranOut) {
     await this.call("POST", `${this.repo(ranOut.project)}/issues/${ranOut.task}/comments`, {
@@ -8509,7 +8520,12 @@ var GitHubAdapter = class {
   async releaseClaim(project2, task) {
     const issue = `${this.repo(project2)}/issues/${task}`;
     const listed = await this.call("GET", issue);
-    await this.call("PATCH", issue, { labels: labelsWhenReleased(listed), assignees: [] });
+    await this.call(
+      "PATCH",
+      issue,
+      { labels: labelsWhenReleased(listed), assignees: [] },
+      { repeatable: true }
+    );
   }
   /** The governance file, as read: core checks what it says (decision 0007). */
   /** The project's tasks ready to claim, each read as Divlab reads a task: as data. */

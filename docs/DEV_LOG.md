@@ -58,6 +58,27 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-26: Label and close writes repeated safely
+
+- Marking a task claimed, making it ready again and closing an issue each set values outright
+  (the whole set of labels and the assignees, or the state), so each is now asked for as a write
+  safe to repeat, and the request layer asks again after a server error. Each is marked
+  explicitly rather than every PATCH by default, since a later PATCH may not be safe. Closing had
+  no adapter test; its regression test passed first time, as the behaviour existed.
+
+RED:      marking a task claimed > asks for the change as a write safe to repeat -> expected [ undefined ] to equal [ { repeatable: true } ]
+GREEN:    (21 passed)
+RED:      releasing a claim > asks for the change as a write safe to repeat -> expected [ undefined ] to equal [ { repeatable: true } ]
+GREEN:    (22 passed)
+          closing a task > closes the task's issue -> passed first time (regression test)
+RED:      closing a task > asks for it as a write safe to repeat -> expected [ undefined ] to equal [ { repeatable: true } ]
+GREEN:    (24 passed)
+RED:      marking a module done > closes the issue saying so as a write safe to repeat -> expected [ undefined ] to equal [ { repeatable: true } ]
+GREEN:    (25 passed)
+REFACTOR: both closes go through one private `closeIssue`
+
+---
+
 ## 2026-10-26: Bundles, and a sweep that raced
 
 - 40704df went to main without its bundles rebuilt, so CI's check that they match their source
