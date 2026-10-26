@@ -30,7 +30,8 @@ export class FakeGitHub
   readonly repositories = new Map<string, string[]>();
   private readonly files = new Map<string, Map<string, string>>();
   private readonly openTasks: OpenTask[] = [];
-  private tasksPosted = 0;
+  /** Issues opened, tasks and alerts alike, which GitHub numbers in one sequence. */
+  private issuesOpened = 0;
   private readonly alerts: CoordinatorAlert[] = [];
   private readonly finished: { project: string; module: string }[] = [];
   private readonly events: LogEvent[] = [];
@@ -43,13 +44,26 @@ export class FakeGitHub
 
   async post(task: PostedTask): Promise<void> {
     this.decisions.push({ project: task.project, feedbackSignal: task.decidedOn });
-    this.tasksPosted += 1;
-    this.openTasks.push({ ...task, id: String(this.tasksPosted) });
+    this.issuesOpened += 1;
+    this.openTasks.push({ ...task, id: String(this.issuesOpened) });
   }
 
   async alertCoordinators(alert: CoordinatorAlert): Promise<void> {
     this.decisions.push({ project: alert.project, feedbackSignal: alert.work.feedbackSignal });
     this.alerts.push(alert);
+    this.issuesOpened += 1;
+    this.alertIssues.push({
+      project: alert.project,
+      module: alert.work.module,
+      id: String(this.issuesOpened),
+    });
+  }
+
+  /** The issue each alert to PDC coordinators was opened as. */
+  private readonly alertIssues: { project: string; module: string; id: string }[] = [];
+
+  alertIssueAbout(project: string, module: string): string | undefined {
+    return this.alertIssues.find((a) => a.project === project && a.module === module)?.id;
   }
 
   private readonly notAcceptedAlerts: NotAccepted[] = [];

@@ -546,23 +546,33 @@ export class SandboxDriver implements Driver {
     }
   }
 
-  /**
-   * The member comments to claim the task, as their plugin will, and Divlab's run for the comment
-   * marks it claimed. The sandbox has one account playing every member, so the driver remembers
-   * which member each claim was for.
-   */
+  /** The member comments to claim PDC coordinators' alert about the module, as if a task. */
+  async claimAlert(alert: { project: string; module: string }, member: string): Promise<void> {
+    const issue = (await this.settled(alert.project, "escalation")).find((i) => {
+      const json = i.body?.match(/```json\n([\s\S]*)\n```$/)?.[1];
+      return (JSON.parse(json ?? "null") as RoutingEvent | null)?.work.module === alert.module;
+    });
+    if (!issue) throw new Error(`No PDC coordinators' alert about ${alert.module} was opened`);
+    await this.claimIssue(alert.project, issue, member);
+  }
+
   /** The member comments to claim the closed task's issue, and waits for Divlab's reply. */
   async claimFinished(
     task: { project: string; role: string; module: string },
     member: string,
   ): Promise<void> {
-    const repository = `repos/${this.org}/${task.project}`;
     const labels = `role:${roleId(task.role)},module:${task.module}`;
     const [issue] = await this.github.call<Issue[]>(
       "GET",
-      `${repository}/issues?labels=${encodeURIComponent(labels)}&state=closed&per_page=100`,
+      `repos/${this.org}/${task.project}/issues?labels=${encodeURIComponent(labels)}&state=closed&per_page=100`,
     );
     if (!issue) throw new Error(`No ${task.role} task for ${task.module} is done`);
+    await this.claimIssue(task.project, issue, member);
+  }
+
+  /** The member comments to claim an issue that is not an open task, and waits for the reply. */
+  private async claimIssue(project: string, issue: Issue, member: string): Promise<void> {
+    const repository = `repos/${this.org}/${project}`;
     const account = await this.playAs(member);
     const before = issue.comments ?? 0;
     const started = Date.now();
@@ -574,17 +584,20 @@ export class SandboxDriver implements Driver {
       if ((now.comments ?? 0) > before + 1) break;
       if (check % 3 === 0) await this.failIfRunFailed(repository, "issue_comment", started);
       if (Date.now() - started > RUN_FINISH_LIMIT) {
-        throw new Error(
-          `Divlab did not answer the claim of task ${issue.number} in ${task.project}`,
-        );
+        throw new Error(`Divlab did not answer the claim of issue ${issue.number} in ${project}`);
       }
     }
-    this.finishedClaimed.push(issue.number);
+    this.notTasksClaimed.push(issue.number);
   }
 
-  /** Finished tasks this scenario claimed, whose replies are refusals to read too. */
-  private readonly finishedClaimed: number[] = [];
+  /** Issues other than open tasks this scenario claimed, whose replies are refusals to read too. */
+  private readonly notTasksClaimed: number[] = [];
 
+  /**
+   * The member comments to claim the task, as their plugin will, and Divlab's run for the comment
+   * marks it claimed. The sandbox has one account playing every member, so the driver remembers
+   * which member each claim was for.
+   */
   async claim(task: { project: string; role: string; module: string }, member: string) {
     const repository = `repos/${this.org}/${task.project}`;
     const issue = await this.openTask(task);
@@ -634,7 +647,7 @@ export class SandboxDriver implements Driver {
     const tasks = [
       ...(await this.settled(project, "ready")),
       ...(await this.settled(project, "claimed")),
-      ...this.finishedClaimed.map((number) => ({ number })),
+      ...this.notTasksClaimed.map((number) => ({ number })),
     ];
     const refusals = [];
     for (const task of tasks) {

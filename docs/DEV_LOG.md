@@ -66,6 +66,9 @@ Divlab refuses work that changes files outside its role's place, naming them.
   Specification work had no task to close; the scenario now finishes a Test task instead), then
   green in-process once the in-process fake kept closed tasks, as GitHub keeps closed issues.
   The sandbox driver can claim it too; `@sandbox-wip` until it has passed there.
+- Then "An alert to PDC coordinators cannot be claimed": red with `HarnessNotYetBuilt`, green
+  in-process once the fake numbered alerts in the same sequence as tasks, as GitHub numbers a
+  project's issues; `@sandbox-wip` likewise.
 
 ---
 

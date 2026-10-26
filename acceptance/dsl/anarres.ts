@@ -321,6 +321,14 @@ export class Anarres {
     );
   }
 
+  /** The member claims PDC coordinators' alert about the module, as if it were a task. */
+  async memberClaimsAlert(member: string, module: string) {
+    await this.driver.claimAlert(
+      { project: this.project, module: this.aliases.of(module) },
+      this.member(member),
+    );
+  }
+
   async memberIsToldNotATask(member: string) {
     const told = await this.driver.claimRefusals(this.project);
     assert.ok(

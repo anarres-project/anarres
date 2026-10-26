@@ -77,3 +77,10 @@ Then(
     return this.anarres.memberIsToldNotATask(member);
   },
 );
+
+When(
+  "{word} claims the PDC coordinators' alert about {string}",
+  function (this: AnarresWorld, member: string, module: string) {
+    return this.anarres.memberClaimsAlert(member, module);
+  },
+);

@@ -207,6 +207,13 @@ export class InProcessDriver implements Driver {
     await this.claimTask(task.project, closed.id, member);
   }
 
+  /** The member comments to claim the alert's issue, which wakes Divlab, as on GitHub. */
+  async claimAlert(alert: { project: string; module: string }, member: string): Promise<void> {
+    const id = this.github.alertIssueAbout(alert.project, alert.module);
+    if (!id) throw new Error(`No PDC coordinators' alert about ${alert.module} was opened`);
+    await this.claimTask(alert.project, id, member);
+  }
+
   /** The member comments to claim the task, and the comment's run wakes Divlab, as on GitHub. */
   async claim(task: { project: string; role: string; module: string }, member: string) {
     await this.claimTask(task.project, this.openTaskId(task), member);
