@@ -329,6 +329,16 @@ export class Anarres {
     );
   }
 
+  /** The member opens an issue in the project, as anyone may: it is not a task. */
+  async memberOpensIssue(member: string) {
+    await this.driver.openIssueAs(this.project, this.member(member));
+  }
+
+  /** The member claims the issue `owner` opened, as if it were a task. */
+  async memberClaimsIssueOf(member: string, owner: string) {
+    await this.driver.claimIssueOf(this.project, this.member(owner), this.member(member));
+  }
+
   async memberIsToldNotATask(member: string) {
     const told = await this.driver.claimRefusals(this.project);
     assert.ok(

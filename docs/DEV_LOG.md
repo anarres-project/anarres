@@ -69,6 +69,7 @@ Divlab refuses work that changes files outside its role's place, naming them.
 - Then "An alert to PDC coordinators cannot be claimed": red with `HarnessNotYetBuilt`, green
   in-process once the fake numbered alerts in the same sequence as tasks, as GitHub numbers a
   project's issues; `@sandbox-wip` likewise.
+- Then "An issue a member opened cannot be claimed", the same way.
 
 ---
 

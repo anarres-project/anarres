@@ -84,3 +84,11 @@ When(
     return this.anarres.memberClaimsAlert(member, module);
   },
 );
+
+Given("{word} has opened an issue in the project", function (this: AnarresWorld, member: string) {
+  return this.anarres.memberOpensIssue(member);
+});
+
+When("{word} claims {word}'s issue", function (this: AnarresWorld, member: string, owner: string) {
+  return this.anarres.memberClaimsIssueOf(member, owner);
+});

@@ -207,6 +207,17 @@ export class InProcessDriver implements Driver {
     await this.claimTask(task.project, closed.id, member);
   }
 
+  async openIssueAs(project: string, member: string): Promise<void> {
+    this.github.openIssueAs(project, member);
+  }
+
+  /** The member comments to claim the issue, which wakes Divlab, as on GitHub. */
+  async claimIssueOf(project: string, owner: string, member: string): Promise<void> {
+    const id = this.github.issueOpenedBy(project, owner);
+    if (!id) throw new Error(`${owner} has opened no issue in ${project}`);
+    await this.claimTask(project, id, member);
+  }
+
   /** The member comments to claim the alert's issue, which wakes Divlab, as on GitHub. */
   async claimAlert(alert: { project: string; module: string }, member: string): Promise<void> {
     const id = this.github.alertIssueAbout(alert.project, alert.module);

@@ -68,3 +68,10 @@ Feature: Members claim tasks
     And a member's Coding work on "parser" was accepted with a fail verdict, reporting test failures
     When Alice claims the PDC coordinators' alert about "parser"
     Then Alice is told it is not a task anyone can claim
+
+  @sandbox-wip
+  Scenario: An issue a member opened cannot be claimed
+    Given a project with a module "parser"
+    And Bob has opened an issue in the project
+    When Alice claims Bob's issue
+    Then Alice is told it is not a task anyone can claim

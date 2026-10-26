@@ -59,6 +59,18 @@ export class FakeGitHub
     });
   }
 
+  /** Issues members opened of their own: not tasks, which only Divlab posts. */
+  private readonly memberIssues: { project: string; member: string; id: string }[] = [];
+
+  openIssueAs(project: string, member: string): void {
+    this.issuesOpened += 1;
+    this.memberIssues.push({ project, member, id: String(this.issuesOpened) });
+  }
+
+  issueOpenedBy(project: string, member: string): string | undefined {
+    return this.memberIssues.find((i) => i.project === project && i.member === member)?.id;
+  }
+
   /** The issue each alert to PDC coordinators was opened as. */
   private readonly alertIssues: { project: string; module: string; id: string }[] = [];
 

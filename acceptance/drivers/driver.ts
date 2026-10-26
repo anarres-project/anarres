@@ -98,6 +98,10 @@ export interface Driver {
   readyTasks(project: string): Promise<ReadyTask[]>;
   /** The member asks to claim the project's ready task for that role and module. */
   claim(task: { project: string; role: string; module: string }, member: string): Promise<void>;
+  /** The member opens an issue of their own in the project. */
+  openIssueAs(project: string, member: string): Promise<void>;
+  /** The member claims the issue `owner` opened, as if it were a task. */
+  claimIssueOf(project: string, owner: string, member: string): Promise<void>;
   /** The member claims PDC coordinators' alert about the module, as if it were a task. */
   claimAlert(alert: { project: string; module: string }, member: string): Promise<void>;
   /** The member claims the task for that role and module once its work is done and it is closed. */

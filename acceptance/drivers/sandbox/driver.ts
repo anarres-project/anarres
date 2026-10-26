@@ -546,6 +546,25 @@ export class SandboxDriver implements Driver {
     }
   }
 
+  /** The member opens an issue with their own account, as anyone may in a public project. */
+  async openIssueAs(project: string, member: string): Promise<void> {
+    const account = await this.playAs(member);
+    const issue = await account.call<Issue>("POST", `repos/${this.org}/${project}/issues`, {
+      title: "A question about the project",
+      body: "Opened by a member: not a task.",
+    });
+    this.issuesOpened.set(member, issue);
+  }
+
+  /** Issues the scenario's members opened of their own. */
+  private readonly issuesOpened = new Map<string, Issue>();
+
+  async claimIssueOf(project: string, owner: string, member: string): Promise<void> {
+    const issue = this.issuesOpened.get(owner);
+    if (!issue) throw new Error(`${owner} has opened no issue in ${project}`);
+    await this.claimIssue(project, issue, member);
+  }
+
   /** The member comments to claim PDC coordinators' alert about the module, as if a task. */
   async claimAlert(alert: { project: string; module: string }, member: string): Promise<void> {
     const issue = (await this.settled(alert.project, "escalation")).find((i) => {
