@@ -546,6 +546,18 @@ export class SandboxDriver implements Driver {
     }
   }
 
+  /** The member comments to claim the finished module's issue, and waits for the reply. */
+  async claimFinishedModule(
+    done: { project: string; module: string },
+    member: string,
+  ): Promise<void> {
+    const issue = (await this.settled(done.project, "done")).find(
+      (i) => labelValue(i, "module:") === done.module,
+    );
+    if (!issue) throw new Error(`The module ${done.module} is not done`);
+    await this.claimIssue(done.project, issue, member);
+  }
+
   /** The member opens an issue with their own account, as anyone may in a public project. */
   async openIssueAs(project: string, member: string): Promise<void> {
     const account = await this.playAs(member);

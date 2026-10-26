@@ -98,6 +98,8 @@ export interface Driver {
   readyTasks(project: string): Promise<ReadyTask[]>;
   /** The member asks to claim the project's ready task for that role and module. */
   claim(task: { project: string; role: string; module: string }, member: string): Promise<void>;
+  /** The member claims the issue that says the module is done, as if it were a task. */
+  claimFinishedModule(module: { project: string; module: string }, member: string): Promise<void>;
   /** The member opens an issue of their own in the project. */
   openIssueAs(project: string, member: string): Promise<void>;
   /** The member claims the issue `owner` opened, as if it were a task. */

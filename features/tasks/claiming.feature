@@ -75,3 +75,10 @@ Feature: Members claim tasks
     And Bob has opened an issue in the project
     When Alice claims Bob's issue
     Then Alice is told it is not a task anyone can claim
+
+  @sandbox-wip
+  Scenario: A finished module cannot be claimed
+    Given a project with a module "parser"
+    And a member's Security & Quality work on "parser" was accepted with a pass verdict
+    When Alice claims the finished module "parser"
+    Then Alice is told it is not a task anyone can claim

@@ -110,6 +110,15 @@ export class FakeGitHub
   async markModuleDone(module: FinishedModule): Promise<void> {
     this.decisions.push({ project: module.project, feedbackSignal: module.decidedOn });
     this.finished.push(module);
+    this.issuesOpened += 1;
+    this.finishedIssues.push({ ...module, id: String(this.issuesOpened) });
+  }
+
+  /** The issue each finished module was marked done with. */
+  private readonly finishedIssues: (FinishedModule & { id: string })[] = [];
+
+  finishedModuleIssue(project: string, module: string): string | undefined {
+    return this.finishedIssues.find((f) => f.project === project && f.module === module)?.id;
   }
 
   doneModules(project: string): string[] {

@@ -233,7 +233,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] an acceptance scenario for an alert to PDC coordinators claimed (in-process;
         `@sandbox-wip` until it has passed against the sandbox);
   - [x] an acceptance scenario for a member's own issue claimed (in-process; `@sandbox-wip`);
-  - [ ] an acceptance scenario for a finished module's issue claimed;
+  - [x] an acceptance scenario for a finished module's issue claimed (in-process;
+        `@sandbox-wip`);
   - [x] the claimant's name is checked as a GitHub account name before Divlab uses it (claims
         and releases): anything else, a bot's included, is refused;
   - [ ] comments that are not claims cost Divlab as little as possible and do not hold up its

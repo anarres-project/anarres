@@ -92,3 +92,10 @@ Given("{word} has opened an issue in the project", function (this: AnarresWorld,
 When("{word} claims {word}'s issue", function (this: AnarresWorld, member: string, owner: string) {
   return this.anarres.memberClaimsIssueOf(member, owner);
 });
+
+When(
+  "{word} claims the finished module {string}",
+  function (this: AnarresWorld, member: string, module: string) {
+    return this.anarres.memberClaimsFinishedModule(member, module);
+  },
+);

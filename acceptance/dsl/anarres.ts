@@ -339,6 +339,14 @@ export class Anarres {
     await this.driver.claimIssueOf(this.project, this.member(owner), this.member(member));
   }
 
+  /** The member claims the issue that says the module is done, as if it were a task. */
+  async memberClaimsFinishedModule(member: string, module: string) {
+    await this.driver.claimFinishedModule(
+      { project: this.project, module: this.aliases.of(module) },
+      this.member(member),
+    );
+  }
+
   async memberIsToldNotATask(member: string) {
     const told = await this.driver.claimRefusals(this.project);
     assert.ok(

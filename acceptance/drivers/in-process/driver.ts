@@ -207,6 +207,16 @@ export class InProcessDriver implements Driver {
     await this.claimTask(task.project, closed.id, member);
   }
 
+  /** The member comments to claim the finished module's issue, which wakes Divlab. */
+  async claimFinishedModule(
+    done: { project: string; module: string },
+    member: string,
+  ): Promise<void> {
+    const id = this.github.finishedModuleIssue(done.project, done.module);
+    if (!id) throw new Error(`The module ${done.module} is not done`);
+    await this.claimTask(done.project, id, member);
+  }
+
   async openIssueAs(project: string, member: string): Promise<void> {
     this.github.openIssueAs(project, member);
   }
