@@ -249,12 +249,14 @@ export class SandboxDriver implements Driver {
       const content = Buffer.from(text).toString("base64");
       const message = `The ${work.role} work on ${work.module}`;
       // Asked again after a server error, GitHub refuses a file the first ask made: check it is.
-      const put = await this.members.request(
-        "PUT",
-        where,
-        { message, content, branch },
-        { repeatable: true },
-      );
+      // A branch just made can be missing for a moment (seen 2026-10-26): wait for it.
+      const madeBy = Date.now() + LISTS_CATCH_UP_LIMIT;
+      let put = await this.putFile(where, { message, content, branch });
+      while (put.status === 404 && /^Branch .* not found$/.test(messageOf(put.data))) {
+        if (Date.now() > madeBy) break;
+        await new Promise((resolve) => setTimeout(resolve, 2_000));
+        put = await this.putFile(where, { message, content, branch });
+      }
       if (put.status === 422) {
         const there = await this.members.call<{ content: string }>(
           "GET",
@@ -577,6 +579,10 @@ export class SandboxDriver implements Driver {
     await this.claimIssue(project, issue, member);
   }
 
+  private putFile(where: string, body: { message: string; content: string; branch: string }) {
+    return this.members.request("PUT", where, body, { repeatable: true });
+  }
+
   /** The member comments to claim PDC coordinators' alert about the module, as if a task. */
   async claimAlert(alert: { project: string; module: string }, member: string): Promise<void> {
     const issue = (await this.settled(alert.project, "escalation")).find((i) => {
@@ -802,7 +808,16 @@ export class SandboxDriver implements Driver {
       (i) => labelValue(i, "role:") === fromRole && labelValue(i, "module:") === task.module,
     );
     if (!issue) throw new Error(`No ${task.role} task for ${task.module} is ready to claim`);
-    const login = await loginOf(await this.playAs(member));
+    const account = await this.playAs(member);
+    const login = await loginOf(account);
+    // GitHub lets an issue be assigned to anyone who has commented on it; this is no claim.
+    await account.call(
+      "POST",
+      `repos/${this.org}/${task.project}/issues/${issue.number}/comments`,
+      {
+        body: "Looking at this.",
+      },
+    );
     await this.github.call("PATCH", `repos/${this.org}/${task.project}/issues/${issue.number}`, {
       labels: issue.labels.map((l) => (l.name === "state:ready" ? "state:claimed" : l.name)),
       assignees: [login],
@@ -1482,6 +1497,10 @@ const REQUESTS_A_SCENARIO_NEEDS = 200;
  * in two runs though Divlab had posted every task.
  */
 const LISTS_CATCH_UP_LIMIT = 120_000;
+
+/** GitHub's message in an answer's body, if it gives one. */
+const messageOf = (data: unknown): string =>
+  String((data as { message?: unknown } | undefined)?.message ?? "");
 
 /** How long Divlab may take to decide on a pull request, within a step's timeout. */
 const RUN_FINISH_LIMIT = 240_000;

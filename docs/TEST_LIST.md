@@ -228,13 +228,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         issue, a closed task) is refused, and the member told why;
   - [x] work whose feedback signal names an issue that is not an open task never closes it
         (found while building the claim check: before, any issue named was closed);
-  - [x] an acceptance scenario for a finished task claimed (in-process; `@sandbox-wip` until it
-        has passed against the sandbox);
-  - [x] an acceptance scenario for an alert to PDC coordinators claimed (in-process;
-        `@sandbox-wip` until it has passed against the sandbox);
-  - [x] an acceptance scenario for a member's own issue claimed (in-process; `@sandbox-wip`);
-  - [x] an acceptance scenario for a finished module's issue claimed (in-process;
-        `@sandbox-wip`);
+  - [x] an acceptance scenario for a finished task claimed (in-process and in the sandbox);
+  - [x] an acceptance scenario for an alert to PDC coordinators claimed (in-process and in the
+        sandbox);
+  - [x] an acceptance scenario for a member's own issue claimed (in-process and in the sandbox);
+  - [x] an acceptance scenario for a finished module's issue claimed (in-process and in the
+        sandbox);
   - [x] the claimant's name is checked as a GitHub account name before Divlab uses it (claims
         and releases): anything else, a bot's included, is refused;
   - [ ] comments that are not claims cost Divlab as little as possible and do not hold up its
@@ -267,7 +266,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         coordinators, naming whom the task showed as holding it, if anyone (in-process; Divlab's
         runs for a project queue one at a time, so the check never sees a claim half made);
   - [ ] the sandbox shows it (`@sandbox-wip`): the lease check can now be run by hand and the
-        driver does so; to pass against the sandbox, then lose its tag;
+        driver does so, but the sandbox token may not run workflows (403, 2026-10-26): it needs
+        "Actions: Read and write" (Bernard); the task is assigned to Mallory's account once it
+        has commented, as GitHub requires;
   - [x] a claim the log shows given back or run out, but still labelled claimed (a run stopped
         between recording and the board): the hourly check makes the task ready, with no alert,
         no new record and no word to the member (before, a task given back was left claimed,

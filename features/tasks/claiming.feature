@@ -53,7 +53,6 @@ Feature: Members claim tasks
     When Bob claims the Test task for "parser"
     Then the Test task for "parser" is claimed by Bob
 
-  @sandbox-wip
   Scenario: A task whose work is done cannot be claimed
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
@@ -61,7 +60,6 @@ Feature: Members claim tasks
     When Alice claims the finished Test task for "parser"
     Then Alice is told it is not a task anyone can claim
 
-  @sandbox-wip
   Scenario: An alert to PDC coordinators cannot be claimed
     Given a project with a module "parser"
     And a member's Coding work on "parser" has been sent back for test failures 3 times
@@ -69,14 +67,12 @@ Feature: Members claim tasks
     When Alice claims the PDC coordinators' alert about "parser"
     Then Alice is told it is not a task anyone can claim
 
-  @sandbox-wip
   Scenario: An issue a member opened cannot be claimed
     Given a project with a module "parser"
     And Bob has opened an issue in the project
     When Alice claims Bob's issue
     Then Alice is told it is not a task anyone can claim
 
-  @sandbox-wip
   Scenario: A finished module cannot be claimed
     Given a project with a module "parser"
     And a member's Security & Quality work on "parser" was accepted with a pass verdict

@@ -58,6 +58,20 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-26: New scenarios against the sandbox
+
+- Run locally against the sandbox (HEAD 34d62ea pushed): the four "cannot be claimed" scenarios
+  (a finished task, an alert, a member's own issue, a finished module) passed and lose
+  `@sandbox-wip`. The two lease-check scenarios failed: running the check by hand was refused
+  (403), since the sandbox token may not run workflows (it needs "Actions: Read and write";
+  Bernard to decide); and an issue can be assigned only to someone who has commented on it, so
+  the driver now has Mallory's account comment first (not a claim). Both stay `@sandbox-wip`.
+- The 22:00 full run failed 1 of 94: writing a member's file just after making its branch in a
+  new fork, GitHub answered "Branch … not found". The driver now waits for the branch, as it
+  waits for a new fork.
+
+---
+
 ## 2026-10-26: A finished task claimed, as a scenario
 
 - Divlab already refused a claim on an issue that is not an open task (unit-tested). The
