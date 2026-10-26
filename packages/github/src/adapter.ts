@@ -629,20 +629,23 @@ export class GitHubAdapter
   async merge(project: string, pullRequest: string, head: string): Promise<string> {
     const where = `${this.repo(project)}/pulls/${pullRequest}/merge`;
     for (let attempt = 1; ; attempt++) {
-      const { status, data } = await this.request<{ sha: string }>("PUT", where, {
-        sha: head,
-        merge_method: "squash",
-      });
+      const { status, data } = await this.request<{ sha: string }>(
+        "PUT",
+        where,
+        { sha: head, merge_method: "squash" },
+        { repeatable: true },
+      );
       if (status >= 200 && status < 300) return data.sha;
-      if (status < 500) throw new GitHubError("PUT", where, status, data);
-      // A server error does not say whether the merge happened: GitHub's pull request does. If it
-      // did not, asking again is safe: GitHub merges only `head`, so never twice.
+      // Neither a server error nor a refused repeat says whether an earlier ask merged it: GitHub's
+      // pull request does. If not, asking again is safe: GitHub merges only `head`, so never twice.
       const pull = await this.call<{ merged: boolean; merge_commit_sha: string }>(
         "GET",
         `${this.repo(project)}/pulls/${pullRequest}`,
       );
       if (pull.merged) return pull.merge_commit_sha;
-      if (attempt === MERGE_ATTEMPTS) throw new GitHubError("PUT", where, status, data);
+      if (status < 500 || attempt === MERGE_ATTEMPTS) {
+        throw new GitHubError("PUT", where, status, data);
+      }
     }
   }
 

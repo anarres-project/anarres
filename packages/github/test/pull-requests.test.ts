@@ -109,4 +109,41 @@ describe("merging, when GitHub's server fails part way", () => {
     });
     await expect(adapter.merge("ledger", "7", "c0ffee")).rejects.toThrow("answered 502");
   });
+
+  it("carries on with the merge's commit if GitHub refused a repeat because it merged it already", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (method === "PUT" && path === "repos/commons/ledger/pulls/7/merge") {
+          return { status: 405, data: { message: "Pull Request is not mergeable" } as T };
+        }
+        if (method === "GET" && path === "repos/commons/ledger/pulls/7") {
+          return { status: 200, data: { merged: true, merge_commit_sha: "m3rg3d" } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.merge("ledger", "7", "c0ffee")).toBe("m3rg3d");
+  });
+
+  it("asks for the merge as a write safe to repeat, since GitHub merges only the commit Divlab read", async () => {
+    const asked: unknown[] = [];
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(
+        _token: string,
+        method: string,
+        _path: string,
+        _body?: unknown,
+        options?: { repeatable?: boolean },
+      ) => {
+        if (method === "PUT") asked.push(options);
+        return { status: 200, data: { sha: "m3rg3d", merged: true } as T };
+      },
+    });
+    await adapter.merge("ledger", "7", "c0ffee");
+    expect(asked).toEqual([{ repeatable: true }]);
+  });
 });

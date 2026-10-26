@@ -93,4 +93,19 @@ describe("waiting out GitHub's rate limits", () => {
   it("tries again shortly when GitHub fails with an error of its own", () => {
     expect(retryAfter({ status: 500, headers: new Headers(), message: "" }, NOW)).toBe(2_000);
   });
+
+  it("tries again shortly when GitHub is still busy with a merge asked for before", () => {
+    expect(
+      retryAfter(
+        { status: 405, headers: new Headers(), message: "Merge already in progress" },
+        NOW,
+      ),
+    ).toBe(2_000);
+  });
+
+  it("does not retry a merge GitHub refuses for good, such as one whose branch has moved on", () => {
+    expect(
+      retryAfter({ status: 405, headers: new Headers(), message: "Head branch was modified" }, NOW),
+    ).toBeUndefined();
+  });
 });

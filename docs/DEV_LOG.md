@@ -58,6 +58,32 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-26: A merge GitHub is still busy with
+
+- The full sandbox run for 018a939 failed 2 of 94 scenarios. In one, Divlab's merge was refused
+  with "Merge already in progress" and the pull request stayed open. The merge's retries went out
+  back to back, so a retry could find GitHub still working on an earlier ask. A neighbouring run
+  hit a 502 opening an issue, still not retried (on the test list); the other failed scenario
+  waited for a run in the same project that never finished. The merge is now asked for as a
+  write safe to repeat, so the request layer pauses and asks again after a server error or a
+  merge still in progress. And whenever the merge is refused, Divlab first checks whether an
+  earlier ask merged it, since a repeat after a merge that went through is refused.
+- Protocol slip: the check on GitHub's message went in before a test demanded it. Taken out,
+  the test that demands it written and watched red, then put back.
+
+RED:      tries again shortly when GitHub is still busy with a merge -> expected undefined to be 2000
+GREEN:    (10 passed)
+RED:      does not retry a merge GitHub refuses for good -> expected 2000 to be undefined
+GREEN:    (11 passed)
+RED:      asks for the merge as a write safe to repeat -> expected [ undefined ] to equal [ { repeatable: true } ]
+GREEN:    (7 passed)
+RED:      carries on with the merge's commit if GitHub refused a repeat because it merged it already
+          -> GitHub PUT …/pulls/7/merge answered 405
+GREEN:    (143 passed)
+REFACTOR: none
+
+---
+
 ## 2026-10-26: Writes after a server error
 
 - GitHub's server failed two writes on 2026-10-26: a merge (500, in Divlab's run) and a member's

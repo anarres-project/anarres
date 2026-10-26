@@ -10,6 +10,8 @@ export function retryAfter(
 ): number | undefined {
   // An error of GitHub's own, or a failing gateway, is usually a passing blip.
   if ([500, 502, 503, 504].includes(answer.status)) return 2_000;
+  // So is a merge GitHub is still busy with, perhaps one a failed request set going.
+  if (answer.status === 405 && answer.message === "Merge already in progress") return 2_000;
   // GitHub signals rate limits with 403 or 429; anything else is not about them.
   if (answer.status !== 403 && answer.status !== 429) return undefined;
   const retry = answer.headers.get("retry-after");

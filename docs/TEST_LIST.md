@@ -77,7 +77,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         in a fork, from the sandbox driver; a 500 on Divlab's merge, whose run then failed): a
         merge GitHub did not make is asked for again, up to three times (it merges only the
         commit Divlab read, so never twice); a member's branch is asked for as a write safe to
-        repeat, since asking again finds it made; the sandbox driver's branch the same;
+        repeat, since asking again finds it made; the sandbox driver's branch the same; the
+        merge is a write safe to repeat, paused between asks, and a merge still in progress is
+        waited out (seen 2026-10-26: retried at once, it was refused as already in progress);
+        a refused merge that an earlier ask made carries on with its commit;
   - [ ] the other writes, each as it can be made safe: labels (the whole set, so repeatable),
         event files (a second write finds the file there), comments and issues (not safe to
         repeat: check for the first before posting again);

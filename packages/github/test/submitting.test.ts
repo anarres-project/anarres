@@ -54,7 +54,7 @@ describe("submitting through GitHub's API, with the member's own login", () => {
       request: async <T>(
         _token: string,
         method: string,
-        path: string,
+        _path: string,
         _body?: unknown,
         options?: { repeatable?: boolean },
       ) => {
