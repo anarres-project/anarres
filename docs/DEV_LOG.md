@@ -58,6 +58,18 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-26: Bundles, and a sweep that raced
+
+- 40704df went to main without its bundles rebuilt, so CI's check that they match their source
+  failed and main was red for about 20 minutes. Fixed in ebdfaa4, pushed at once, inside the hour
+  since the previous sandbox run. Lesson: `npm run bundle` before committing a change to Divlab
+  or the CLI; the local gate does not check the bundles.
+- That run's sandbox suite stopped before any scenario: two of the four workers' sweeps were
+  refused (403) deleting a repository the other workers deleted at the same moment. A refused
+  delete is now looked at again, and counts as swept if the repository has gone. Harness only.
+
+---
+
 ## 2026-10-26: A merge GitHub is still busy with
 
 - The full sandbox run for 018a939 failed 2 of 94 scenarios. In one, Divlab's merge was refused

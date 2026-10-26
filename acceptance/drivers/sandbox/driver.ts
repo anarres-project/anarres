@@ -1148,7 +1148,11 @@ export class SandboxDriver implements Driver {
       // Every worker sweeps as the run starts, so others may be deleting the same repositories.
       for (const name of leftBehind(repositories, Date.now())) {
         const { status, data } = await github.request("DELETE", `repos/${owner}/${name}`);
-        if (!sweptBy(status)) {
+        // GitHub may refuse a delete another worker's is part way through: look again first.
+        if (
+          !sweptBy(status) &&
+          !sweptBy((await github.request("GET", `repos/${owner}/${name}`)).status)
+        ) {
           throw new Error(
             `GitHub DELETE repos/${owner}/${name} answered ${status}: ${JSON.stringify(data)}`,
           );
