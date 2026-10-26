@@ -151,7 +151,14 @@ export class SandboxDriver implements Driver {
       request: countedRequest,
     });
     if (!options.unprotected) await setUpProject(project, divlab);
-    run.expected.set(project, { ready: 0, claimed: 0, escalation: 0, done: 0, notAccepted: 0 });
+    run.expected.set(project, {
+      ready: 0,
+      claimed: 0,
+      escalation: 0,
+      done: 0,
+      notAccepted: 0,
+      claimedWithoutClaim: 0,
+    });
   }
 
   /** The member submits the work and Divlab merges it: accepted work has been merged. */
@@ -703,12 +710,40 @@ export class SandboxDriver implements Driver {
     throw new HarnessNotYetBuilt("moving GitHub's clock on");
   }
 
-  async markClaimedWithoutDivlab(): Promise<void> {
-    throw new HarnessNotYetBuilt("running Divlab's hourly check on cue");
+  /**
+   * Labels the ready task claimed and assigns it to the account playing the member, as only
+   * Divlab should, with the sandbox's own token, which can: Divlab's log has no claim for it.
+   */
+  async markClaimedWithoutDivlab(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<void> {
+    const fromRole = roleId(task.role);
+    const issue = (await this.settled(task.project, "ready")).find(
+      (i) => labelValue(i, "role:") === fromRole && labelValue(i, "module:") === task.module,
+    );
+    if (!issue) throw new Error(`No ${task.role} task for ${task.module} is ready to claim`);
+    const login = await loginOf(await this.playAs(member));
+    await this.github.call("PATCH", `repos/${this.org}/${task.project}/issues/${issue.number}`, {
+      labels: issue.labels.map((l) => (l.name === "state:ready" ? "state:claimed" : l.name)),
+      assignees: [login],
+    });
+    const expected = this.expectedFor(task.project);
+    expected.ready -= 1;
+    expected.claimed += 1;
+    run.closed.add(issueKey(task.project, issue.number));
+    this.claimedBehindDivlab.push(issue.number);
   }
 
-  async claimedWithoutClaimAlerts(): Promise<{ role: string; module: string }[]> {
-    throw new HarnessNotYetBuilt("running Divlab's hourly check on cue");
+  /** Tasks this scenario marked claimed behind Divlab's back, which its lease check frees. */
+  private readonly claimedBehindDivlab: number[] = [];
+
+  async claimedWithoutClaimAlerts(project: string): Promise<{ role: string; module: string }[]> {
+    const issues = await this.settled(project, "claimedWithoutClaim");
+    return issues.flatMap((issue) => {
+      const named = issue.body?.match(/^Task #\d+, (.+?) task for (\S+), was shown as claimed/);
+      return named ? [{ role: named[1] ?? "", module: named[2] ?? "" }] : [];
+    });
   }
 
   /**
@@ -899,8 +934,42 @@ export class SandboxDriver implements Driver {
     throw new HarnessNotYetBuilt("moving GitHub's clock on");
   }
 
-  async divlabChecksLeases(): Promise<void> {
-    throw new HarnessNotYetBuilt("moving GitHub's clock on");
+  /**
+   * Runs Divlab's lease check by hand, as a PDC coordinator may, and waits for it. Only a task this
+   * scenario marked claimed behind Divlab's back is expected to change: the sandbox cannot move
+   * GitHub's clock, so no lease here has run out.
+   */
+  async divlabChecksLeases(project: string): Promise<void> {
+    const repository = `repos/${this.org}/${project}`;
+    const workflow = `${repository}/actions/workflows/divlab-leases.yml`;
+    const started = Date.now();
+    await this.github.call("POST", `${workflow}/dispatches`, { ref: "main" });
+    for (;;) {
+      await new Promise((resolve) => setTimeout(resolve, 3_000));
+      const { workflow_runs: runs } = await this.github.call<{ workflow_runs: WorkflowRun[] }>(
+        "GET",
+        `${workflow}/runs?event=workflow_dispatch&per_page=10`,
+      );
+      const check = runs.find((r) => Date.parse(r.created_at) >= started - 5_000);
+      if (check?.status === "completed") {
+        if (check.conclusion !== "success") {
+          throw new Error(
+            `Divlab's lease check ended ${check.conclusion}: ${await this.whyRunFailed(repository, check)} (${check.html_url})`,
+          );
+        }
+        break;
+      }
+      if (Date.now() - started > RUN_FINISH_LIMIT) {
+        throw new Error(`Divlab's lease check in ${project} did not finish`);
+      }
+    }
+    const expected = this.expectedFor(project);
+    for (const number of this.claimedBehindDivlab.splice(0)) {
+      expected.claimed -= 1;
+      expected.ready += 1;
+      expected.claimedWithoutClaim += 1;
+      run.closed.delete(issueKey(project, number));
+    }
   }
 
   /**
@@ -1249,7 +1318,12 @@ export class SandboxDriver implements Driver {
     // Alerts of work not accepted, or of an unprotected main, are escalations too, but not
     // routing alerts.
     const notRouting = (issue: Issue) =>
-      issue.labels.some((l) => l.name === "not-accepted" || l.name === "unprotected-main");
+      issue.labels.some(
+        (l) =>
+          l.name === "not-accepted" ||
+          l.name === "unprotected-main" ||
+          l.name === "claimed-without-claim",
+      );
     // Alerts of a change Divlab did not make are not accepted too, but no feedback signal's.
     const aChange = (issue: Issue) => issue.labels.some((l) => l.name === "change-not-by-divlab");
     return issues.filter(
@@ -1261,7 +1335,7 @@ export class SandboxDriver implements Driver {
   }
 }
 
-type Listing = "ready" | "claimed" | "escalation" | "done" | "notAccepted";
+type Listing = "ready" | "claimed" | "escalation" | "done" | "notAccepted" | "claimedWithoutClaim";
 
 /**
  * The sandbox organisation's repository holding its governance file, as its `ANARRES_GOVERNANCE`
@@ -1356,6 +1430,7 @@ const LISTINGS: Record<Listing, [label: string, state: "open" | "all"]> = {
   escalation: ["escalation", "all"],
   done: ["state:done", "all"],
   notAccepted: ["not-accepted", "all"],
+  claimedWithoutClaim: ["claimed-without-claim", "all"],
 };
 
 const labelValue = (issue: Issue, prefix: string) =>
