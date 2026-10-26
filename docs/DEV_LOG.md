@@ -54,7 +54,14 @@ life (decision 0007), and Divlab refuses a claim that breaks it, or that the mem
 does not allow; accounts a PDC coordinator linked are one member. Section 3 is built. Every
 Divlab run checks every change to main. Section 5 has begun: the CLI offers a member the ready
 tasks they may take (in-process). Section 4:
-Divlab refuses work that changes files outside its role's place, naming them.
+Divlab refuses work that changes files outside its role's place, naming them. Every write Divlab
+makes to GitHub now survives a server error without being repeated twice (merges, labels,
+closing, event files, issues, comments), each in the way that is safe for it. A task shown as
+claimed without a claim in Divlab's log is freed and PDC coordinators alerted; a task the log
+shows freed but still shown claimed is freed quietly. The lease check can be run by hand as well
+as hourly. Claims on what is not a task (a finished task, an alert, a member's own issue, a
+finished module) are refused, in-process and in the sandbox, which plays three members; its
+governance scenarios run alone.
 
 ---
 
