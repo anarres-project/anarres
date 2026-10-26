@@ -228,10 +228,15 @@ export class GitHubAdapter
 
   /** The project's tasks its issues show as claimed, whoever marked them, each read as data. */
   async claimedTasks(project: string) {
-    const issues = await this.call<(ListedIssue & { number: number })[]>(
-      "GET",
-      `${this.repo(project)}/issues?labels=${encodeURIComponent(CLAIMED)}&state=open&per_page=100`,
-    );
+    const issues: (ListedIssue & { number: number })[] = [];
+    for (let page = 1; ; page++) {
+      const listed = await this.call<(ListedIssue & { number: number })[]>(
+        "GET",
+        `${this.repo(project)}/issues?labels=${encodeURIComponent(CLAIMED)}&state=open&per_page=100&page=${page}`,
+      );
+      issues.push(...listed);
+      if (listed.length < 100) break;
+    }
     return issues.flatMap((issue) => {
       const task = isTask(issue) ? taskFromIssue(issue) : undefined;
       if (task === undefined) return [];

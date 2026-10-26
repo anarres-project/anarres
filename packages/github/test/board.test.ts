@@ -355,7 +355,9 @@ describe("the tasks a project's board shows as claimed", () => {
       request: async <T>(_token: string, method: string, path: string) => {
         if (
           method === "GET" &&
-          path === "repos/commons/ledger/issues?labels=state%3Aclaimed&state=open&per_page=100"
+          /^repos\/commons\/ledger\/issues\?labels=state%3Aclaimed&state=open&per_page=100(&page=1)?$/.test(
+            path,
+          )
         ) {
           const issues = [
             {
@@ -395,6 +397,29 @@ describe("the tasks a project's board shows as claimed", () => {
     expect(await adapter.claimedTasks("ledger")).toEqual([
       { task: "12", role: "test", module: "parser" },
     ]);
+  });
+
+  it("are read from every page, however many tasks are claimed", async () => {
+    const claimed = Array.from({ length: 150 }, (_, n) => ({
+      number: n + 1,
+      state: "open",
+      labels: ["role:test", `module:m${n}`, "state:claimed"].map((name) => ({ name })),
+    }));
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        const listing = path.match(
+          /^repos\/commons\/ledger\/issues\?labels=state%3Aclaimed&state=open&per_page=100(?:&page=(\d+))?$/,
+        );
+        if (method === "GET" && listing) {
+          const page = Number(listing[1] ?? 1);
+          return { status: 200, data: claimed.slice((page - 1) * 100, page * 100) as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.claimedTasks("ledger")).toHaveLength(150);
   });
 });
 

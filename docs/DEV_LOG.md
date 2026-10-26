@@ -58,6 +58,18 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-26: Claimed tasks read from every page
+
+- The hourly check's claimed tasks were read from one page of 100, so in a project with more,
+  some would never be checked. Now read from every page. The ready tasks and a member's held
+  tasks read one page the same way: on the test list.
+
+RED:      are read from every page, however many tasks are claimed -> expected [ …(100) ] to have a length of 150 but got 100
+GREEN:    (165 passed)
+REFACTOR: none (the older test's fake first made to answer the first page however asked, green)
+
+---
+
 ## 2026-10-26: A task freed in the log but still shown claimed
 
 - If a run stopped after recording a task given back, or its lease run out, but before the board

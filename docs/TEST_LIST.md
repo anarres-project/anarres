@@ -267,8 +267,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         between recording and the board): the hourly check makes the task ready, with no alert,
         no new record and no word to the member (before, a task given back was left claimed,
         then reported as a lease run out, and one whose lease ran out was reported twice);
-  - [ ] the claimed tasks are read from one page of 100; read every page if a project could
-        hold more;
+  - [x] the claimed tasks are read from every page, however many are claimed;
+  - [ ] the ready tasks a member is offered, and the tasks a member holds, are each read from
+        one page of 100: read every page, as for the claimed tasks;
   - [ ] the record of a task shown as claimed is read back checking only its task; check
         whom it names too.
 - [ ] When several members claim the same task at once, the first valid claim wins and the others
