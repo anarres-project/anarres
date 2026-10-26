@@ -317,6 +317,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the sandbox shows a draft is not merged and is recorded;
   - [ ] each push to a draft is activity too (the workflow runs on it; to be shown);
   - [ ] work for a task whose holder is someone else is refused (section 4);
+  - [ ] work is accepted only from the member holding the task it is for, so the checks made
+        when a task is claimed (eligibility, conflict of interest) hold for the work too
+        (2026-10-26: Divlab checks the holder for drafts only; raised with Bernard, since it
+        changes how members submit and most scenarios);
   - [ ] the sandbox re-forks a project whose fork GitHub reports empty (seen 2026-10-23: one
         worker's fork broke mid-run while GitHub was answering 504s, failing its 8 scenarios).
 - [ ] A member can release a task early.
