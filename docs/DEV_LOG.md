@@ -115,6 +115,9 @@ GREEN:    (137 passed)
   version the projects named. The full run for 5e0792b then failed three scenarios on Divlab's
   runs left pending for minutes, and one local run met a 500 from GitHub's merge; GitHub
   reported no incident. Watching whether that recurs.
+- The full run for 668214b, the first with the three-member scenarios: 93 of 94 passed. The one
+  failure was GitHub answering 502 when the driver made a member's branch in a fork. Writes are
+  not retried on a server error; that is now on the test list.
 
 ---
 

@@ -73,6 +73,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         makes, never one a live run may still be using;
   - [x] the adapter retries when GitHub rate-limits it (`retry-after`), so a busy sandbox run
         slows down instead of failing; reads also retry a failing gateway or dropped connection;
+  - [ ] writes GitHub answers with a server error (seen 2026-10-26: a 502 making a member's branch
+        in a fork, from the sandbox driver; a 500 on Divlab's merge, whose run then failed): a
+        write that can be repeated safely, or checked for having taken, is retried; show that
+        Divlab's next run finishes a merge GitHub answered with a server error;
   - [x] the sandbox run stays inside the hourly allowance (5,000 requests) with room to spare:
         measured (a full run, 1,804 REST and 206 GraphQL requests, in CI on 2026-10-22), and a
         run does not start when GitHub reports too little left, saying when it resets. The
