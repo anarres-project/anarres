@@ -35,7 +35,7 @@ git clone https://github.com/anarres-project/anarres.git
 cd anarres
 nvm use          # or your version manager's equivalent
 npm ci           # installs the locked tool versions
-npm test         # the gate: typecheck, lint, unit and acceptance tests
+npm test         # the gate: bundles rebuilt, then typecheck, lint, unit and acceptance tests
 ```
 
 `npm ci` may warn that the install scripts of `esbuild` and `fsevents` were not run. That is

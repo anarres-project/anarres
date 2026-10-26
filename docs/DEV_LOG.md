@@ -63,7 +63,8 @@ Divlab refuses work that changes files outside its role's place, naming them.
 - 40704df went to main without its bundles rebuilt, so CI's check that they match their source
   failed and main was red for about 20 minutes. Fixed in ebdfaa4, pushed at once, inside the hour
   since the previous sandbox run. Lesson: `npm run bundle` before committing a change to Divlab
-  or the CLI; the local gate does not check the bundles.
+  or the CLI. The gate (`npm test`) now rebuilds the bundles first (about 1.5 seconds), so a
+  commit made after a green gate carries them; CI's comparison stays as the backstop.
 - That run's sandbox suite stopped before any scenario: two of the four workers' sweeps were
   refused (403) deleting a repository the other workers deleted at the same moment. A refused
   delete is now looked at again, and counts as swept if the repository has gone. Harness only.

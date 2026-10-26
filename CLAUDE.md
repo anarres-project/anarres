@@ -280,7 +280,7 @@ The walking skeleton creates these. Until a command exists, making it real is th
 needs it.
 
 ```bash
-npm test                         # the gate: typecheck + lint + unit + acceptance (in-process). Run before every commit.
+npm test                         # the gate: bundle + typecheck + lint + unit + acceptance (in-process). Run before every commit.
 npm run test:unit                # unit only (fast)
 npm run test:acceptance          # acceptance, in-process driver
 npm run test:acceptance:sandbox  # acceptance against the real GitHub sandbox (needs a sandbox token)
