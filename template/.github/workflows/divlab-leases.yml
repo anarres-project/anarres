@@ -4,9 +4,13 @@ name: Divlab (leases)
 # on it for 24 hours, is ready again for anyone to claim.
 # Off the hour: GitHub may delay or drop scheduled runs at the start of the hour, when load is
 # highest. A lease can run on for up to an hour past its 24 before the check frees it.
+# Someone who may run the project's workflows, such as a PDC coordinator, can also run the check
+# by hand. Members, who work from forks, cannot. The check judges leases by Divlab's log and the
+# time, so running it early frees nothing early.
 on:
   schedule:
     - cron: "17 * * * *"
+  workflow_dispatch:
 
 # The workflow's own token gets nothing: Divlab acts only with its App's token.
 permissions: {}

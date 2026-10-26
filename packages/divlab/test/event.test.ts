@@ -102,6 +102,10 @@ describe("what Divlab acts on, from the event that started its run", () => {
     expect(whatToActOn("schedule", { schedule: "17 * * * *" })).toEqual({ leases: true });
   });
 
+  it("checks the project's leases when someone who may run its workflows asks for it", () => {
+    expect(whatToActOn("workflow_dispatch", { inputs: null })).toEqual({ leases: true });
+  });
+
   it("refuses to act on an event it was not made for", () => {
     expect(() => whatToActOn("discussion", {})).toThrow("Divlab does not act on discussion events");
   });

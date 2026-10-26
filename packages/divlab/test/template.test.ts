@@ -47,8 +47,11 @@ describe("the project template's claim workflow", () => {
 });
 
 describe("the project template's lease workflow", () => {
-  it("runs every hour, and on nothing else", () => {
-    expect(templateWorkflow(LEASE_WORKFLOW).on).toEqual({ schedule: [{ cron: "17 * * * *" }] });
+  it("runs every hour, or when someone who may run the project's workflows asks, and on nothing else", () => {
+    expect(templateWorkflow(LEASE_WORKFLOW).on).toEqual({
+      schedule: [{ cron: "17 * * * *" }],
+      workflow_dispatch: null,
+    });
   });
 });
 

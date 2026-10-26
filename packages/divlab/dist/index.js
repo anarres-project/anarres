@@ -7692,7 +7692,7 @@ function whatToActOn(name, event) {
     return { pullRequest: String(number) };
   }
   if (name === "push") return { merge: true };
-  if (name === "schedule") return { leases: true };
+  if (name === "schedule" || name === "workflow_dispatch") return { leases: true };
   if (name === "issue_comment") {
     const { issue, comment } = event;
     const command = isClaim(comment.body) ? "claim" : isRelease(comment.body) ? "release" : void 0;

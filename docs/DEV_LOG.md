@@ -58,6 +58,26 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-26: Divlab's lease check run by hand
+
+- A project's lease check can now be run by hand (`workflow_dispatch`) as well as every hour:
+  by someone who may run the project's workflows, such as a PDC coordinator; members, who work
+  from forks, cannot. The check judges leases by Divlab's log and the time, so running it early
+  frees nothing early. Divlab acts on such a run as on its schedule.
+- The sandbox driver uses it: it marks a task claimed behind Divlab's back, runs the check, and
+  reads back the coordinators' alert, which it keeps out of the routing alerts. The scenario
+  stays `@sandbox-wip` until it has passed against the sandbox.
+
+RED:      checks the project's leases when someone who may run its workflows asks for it
+          -> Error: Divlab does not act on workflow_dispatch events
+GREEN:    (158 passed)
+RED:      the lease workflow runs every hour, or when someone who may run the project's workflows
+          asks, and on nothing else -> expected { Object (schedule) } to deeply equal { …(2) }
+GREEN:    (158 passed)
+REFACTOR: none
+
+---
+
 ## 2026-10-26: Whom a claimed-without-claim record names, checked
 
 - Event files can be edited by people, so what is read back is checked. The record of a task

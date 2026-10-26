@@ -33,7 +33,8 @@ export function whatToActOn(name: string, event: unknown): Run {
     return { pullRequest: String(number) };
   }
   if (name === "push") return { merge: true };
-  if (name === "schedule") return { leases: true };
+  // The hourly check, or the same check run by hand by someone who may run the project's workflows.
+  if (name === "schedule" || name === "workflow_dispatch") return { leases: true };
   if (name === "issue_comment") {
     const { issue, comment } = event as {
       issue: { number: unknown; pull_request?: unknown };
