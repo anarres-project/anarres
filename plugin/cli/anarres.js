@@ -7747,6 +7747,12 @@ function eventFromFile(content) {
     return event;
   }
   if (isObject2(event) && isObject2(event.claimedWithoutClaim) && typeof event.claimedWithoutClaim.task === "string") {
+    const { shownAs } = event.claimedWithoutClaim;
+    if (shownAs !== void 0 && typeof shownAs !== "string") {
+      throw new Error(
+        "The event file cannot be read: the record names whom the task showed as holding it as something other than an account"
+      );
+    }
     return event;
   }
   if (isObject2(event) && isObject2(event.mainChecked) && typeof event.mainChecked.upTo === "string") {

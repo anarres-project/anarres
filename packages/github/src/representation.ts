@@ -171,6 +171,12 @@ export function eventFromFile(content: string): LogEvent {
     isObject(event.claimedWithoutClaim) &&
     typeof event.claimedWithoutClaim.task === "string"
   ) {
+    const { shownAs } = event.claimedWithoutClaim;
+    if (shownAs !== undefined && typeof shownAs !== "string") {
+      throw new Error(
+        "The event file cannot be read: the record names whom the task showed as holding it as something other than an account",
+      );
+    }
     return event as FoundClaimedWithoutClaim;
   }
   if (

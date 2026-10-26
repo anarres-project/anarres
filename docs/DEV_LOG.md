@@ -58,6 +58,21 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-26: Whom a claimed-without-claim record names, checked
+
+- Event files can be edited by people, so what is read back is checked. The record of a task
+  shown as claimed without a claim was checked for its task only; whom it names as shown holding
+  it is now checked too: an account's name, or nobody.
+
+RED:      is refused when a record of a task shown as claimed names its holder as anything but an account
+          -> expected [Function] to throw an error
+GREEN:    (629 passed, whole gate)
+          reads back a record of a task shown as claimed by nobody -> passed first time (regression
+          test for the case the check must let through)
+REFACTOR: none
+
+---
+
 ## 2026-10-26: Claimed tasks read from every page
 
 - The hourly check's claimed tasks, the ready tasks a member is offered and the tasks a member

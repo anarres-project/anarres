@@ -317,9 +317,19 @@ describe("a routing event as a file", () => {
       "a task shown as claimed without a claim",
       { claimedWithoutClaim: { task: "12", shownAs: "mallory" } },
     ],
+    ["a task shown as claimed by nobody, without a claim", { claimedWithoutClaim: { task: "12" } }],
   ])("reads back a record of %s", (_what, record) => {
     const event = { project: "ledger", decidedAt: "2026-10-23T09:00:00.000Z", ...record };
     expect(eventFromFile(eventFile(event as never, 8).content)).toEqual(event);
+  });
+
+  it("is refused when a record of a task shown as claimed names its holder as anything but an account", () => {
+    const record = {
+      project: "ledger",
+      decidedAt: "2026-10-23T09:00:00.000Z",
+      claimedWithoutClaim: { task: "12", shownAs: 42 },
+    };
+    expect(() => eventFromFile(JSON.stringify(record))).toThrow("cannot be read");
   });
 
   it("is refused, saying why, when the work it was about to merge could not be routed", () => {

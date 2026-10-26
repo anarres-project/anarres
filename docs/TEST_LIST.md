@@ -270,8 +270,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the claimed tasks are read from every page, however many are claimed;
   - [x] the ready tasks a member is offered, and the tasks a member holds, are read from every
         page, as the claimed tasks are;
-  - [ ] the record of a task shown as claimed is read back checking only its task; check
-        whom it names too.
+  - [x] the record of a task shown as claimed is read back checking whom it names too: an
+        account, or nobody; anything else is refused as unreadable.
 - [ ] When several members claim the same task at once, the first valid claim wins and the others
       are told the task is taken, whatever order GitHub delivers the claims in.
   - [x] Divlab gives a ready task to the earliest claim among its issue's comments, whichever
