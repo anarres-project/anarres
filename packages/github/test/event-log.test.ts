@@ -29,6 +29,7 @@ class FakeGitHub {
   /** How many requests GitHub has been sent. */
   requests = 0;
   private writesFailedUnsaved = 0;
+  private taken = false;
 
   constructor(
     events: number,
@@ -37,6 +38,8 @@ class FakeGitHub {
       failWritesAfterSaving?: boolean;
       /** How many writes GitHub fails without carrying them out, before it carries them out. */
       failWritesUnsaved?: number;
+      /** Another run records an event under the same number while GitHub fails the first write. */
+      takenWhileFailing?: boolean;
       /** GitHub lists only part of a tree past 100,000 entries, and says so. */
       truncatedTree?: boolean;
       /** The repository's top level listed in part, leaving the event log out. */
@@ -112,6 +115,11 @@ class FakeGitHub {
       const file = local.slice("contents/".length);
       // Creating a file that already exists fails, as on GitHub.
       if (this.files.has(file)) return answer(422, { message: "sha wasn't supplied" });
+      if (this.limits.takenWhileFailing && !this.taken) {
+        this.taken = true;
+        this.files.set(file, eventFile(event(0), 0).content);
+        return answer(502, undefined);
+      }
       if ((this.limits.failWritesUnsaved ?? 0) > this.writesFailedUnsaved) {
         this.writesFailedUnsaved++;
         return answer(502, undefined);
@@ -215,6 +223,16 @@ describe("a project's event log on GitHub", () => {
     const before = github.requests;
     await expect(adapter.append(event(251))).rejects.toThrow("answered 502");
     expect(github.requests - before).toBeLessThanOrEqual(6);
+  });
+
+  it("gives the event the next free number when another run took its number while GitHub failed", async () => {
+    const github = new FakeGitHub(250, { takenWhileFailing: true });
+    const adapter = adapterFor(github);
+    await adapter.read("ledger");
+    await adapter.append(event(251));
+    expect(JSON.parse(github.files.get("events/000252.json") ?? "{}").work?.module).toBe(
+      "module-251",
+    );
   });
 
   it("is never read in part, when GitHub lists only part of it", async () => {

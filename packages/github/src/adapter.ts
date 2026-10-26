@@ -542,9 +542,9 @@ export class GitHubAdapter
         this.eventsRead.set(event.project, sequence);
         return "created";
       }
-      if (saved === undefined && attempt < WRITE_ATTEMPTS) {
-        return this.createEvent(event, sequence, attempt + 1);
-      }
+      // Holding another event, the file is another run's, made while GitHub failed this one.
+      if (saved !== undefined) return "taken";
+      if (attempt < WRITE_ATTEMPTS) return this.createEvent(event, sequence, attempt + 1);
     }
     if (status < 200 || status >= 300) throw new GitHubError("PUT", put, status, data);
     this.eventsRead.set(event.project, sequence);

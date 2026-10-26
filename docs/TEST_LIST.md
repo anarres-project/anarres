@@ -87,8 +87,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] an event file GitHub's server failed to write: the file is looked at; holding this
         event, it was saved and the run carries on; missing, it is written again, up to three
         times in all, then the run fails;
-  - [ ] an event file found holding another event after a server error (another run took the
-        number meanwhile): give the event the next free number rather than failing the run;
+  - [x] an event file found holding another event after a server error (another run took the
+        number meanwhile): the event gets the next free number rather than failing the run;
   - [ ] pause between asking again for an event file, as the merge does, if the sandbox shows
         back-to-back asks failing;
   - [x] an issue GitHub's server failed to open (seen 2026-10-26: a 502 failed a Divlab run):

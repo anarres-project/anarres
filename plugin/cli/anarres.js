@@ -8358,9 +8358,8 @@ var GitHubAdapter = class {
         this.eventsRead.set(event.project, sequence);
         return "created";
       }
-      if (saved === void 0 && attempt < WRITE_ATTEMPTS) {
-        return this.createEvent(event, sequence, attempt + 1);
-      }
+      if (saved !== void 0) return "taken";
+      if (attempt < WRITE_ATTEMPTS) return this.createEvent(event, sequence, attempt + 1);
     }
     if (status < 200 || status >= 300) throw new GitHubError("PUT", put, status, data);
     this.eventsRead.set(event.project, sequence);

@@ -58,6 +58,19 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-26: An event's number taken while GitHub failed its write
+
+- After a server error, an event file found holding another event was another run's: the event
+  now gets the next free number, as when a number is found taken at once, rather than failing
+  the run.
+
+RED:      gives the event the next free number when another run took its number while GitHub failed
+          -> GitHub PUT …/events/000251.json answered 502
+GREEN:    (164 passed)
+REFACTOR: none
+
+---
+
 ## 2026-10-26: A comment after a server error
 
 - The last of Divlab's writes GitHub's server can fail. A comment cannot simply be repeated, and
