@@ -8944,8 +8944,20 @@ var GitHubAdapter = class {
     }
     return listed.tree;
   }
-  openIssue(project2, issue) {
-    return this.call("POST", `${this.repo(project2)}/issues`, issue);
+  async openIssue(project2, issue, attempt = 1) {
+    const where = `${this.repo(project2)}/issues`;
+    const { status, data } = await this.request("POST", where, issue);
+    if (status >= 200 && status < 300) return data;
+    if (status >= 500) {
+      const open = await this.call(
+        "GET",
+        `${where}?state=open&sort=created&direction=desc&per_page=100`
+      );
+      const opened = open.find((i) => i.title === issue.title && i.body === issue.body);
+      if (opened) return opened;
+      if (attempt < WRITE_ATTEMPTS) return this.openIssue(project2, issue, attempt + 1);
+    }
+    throw new GitHubError("POST", where, status, data);
   }
   repo(project2) {
     return `repos/${this.options.owner}/${project2}`;

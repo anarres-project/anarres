@@ -91,9 +91,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         number meanwhile): give the event the next free number rather than failing the run;
   - [ ] pause between asking again for an event file, as the merge does, if the sandbox shows
         back-to-back asks failing;
-  - [ ] the other writes, each as it can be made safe: comments and issues (not safe to repeat:
-        check for the first before posting again; seen 2026-10-26: a 502 opening an issue failed
-        a Divlab run);
+  - [x] an issue GitHub's server failed to open (seen 2026-10-26: a 502 failed a Divlab run):
+        the project's open issues are looked at; one with the same title and body means it was
+        opened; otherwise it is opened again, three times in all; a closed issue saying the same
+        does not count;
+  - [ ] a comment GitHub's server failed to post: not safe to repeat, and Divlab may rightly post
+        the same reply twice in a row (the same refusal to two claims), so looking for the same
+        text is not enough to tell it was posted;
   - [x] the sandbox run stays inside the hourly allowance (5,000 requests) with room to spare:
         measured (a full run, 1,804 REST and 206 GraphQL requests, in CI on 2026-10-22), and a
         run does not start when GitHub reports too little left, saying when it resets. The

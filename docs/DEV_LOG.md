@@ -58,6 +58,33 @@ Divlab refuses work that changes files outside its role's place, naming them.
 
 ---
 
+## 2026-10-26: An issue after a server error
+
+- Opening an issue cannot simply be repeated: a repeat after an issue GitHub opened would post
+  the task (or alert) twice. After a server error Divlab now looks at the project's open issues,
+  newest first: one with the same title and body was this one; none, and it is opened again,
+  three times in all. A task, a coordinators' alert and a finished module name the decision
+  they came from, a change not by Divlab names its commit, and the unprotected-main alert is
+  opened only when none is open, so for these the same title and body is this issue. Two alerts
+  can recur with the same words while the first is still open (a task shown claimed without a
+  claim, work not accepted): after a server error, coordinators may then see one open alert
+  where there were two occurrences. A closed issue saying the same is not counted.
+- Protocol slip: the query for open issues went in before a test demanded it. Taken out (all
+  issues), the test written and watched red, then put back.
+
+RED:      opens it once when GitHub saved it, though it answered with a failure -> GitHub POST …/issues answered 502
+GREEN:    (152 passed)
+RED:      opens it again when GitHub's server failed before saving it -> GitHub POST …/issues answered 502
+GREEN:    (153 passed)
+RED:      stops asking, and fails, when GitHub's server keeps failing -> promise resolved "undefined" instead of rejecting
+GREEN:    (154 passed)
+RED:      opens it again, though an issue saying the same was opened and closed before
+          -> expected [ 'closed' ] to deeply equal [ 'open', 'closed' ]
+GREEN:    (155 passed)
+REFACTOR: none
+
+---
+
 ## 2026-10-26: An event file after a server error
 
 - Writing an event creates a numbered file, so it cannot simply be repeated: a repeat after a

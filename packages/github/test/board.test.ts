@@ -477,3 +477,65 @@ describe("marking a module done", () => {
     expect(asked).toEqual([{ repeatable: true }]);
   });
 });
+
+/**
+ * A project's issues on a GitHub whose server fails the first `failures` issues opened: before
+ * saving the issue if `saving` is false, after it if true. Listed newest first, as GitHub does.
+ */
+function githubFailingToOpen(
+  failures: number,
+  saving: boolean,
+  issues: { number: number; title: string; body: string; state: string }[] = [],
+) {
+  let failed = 0;
+  const request = async <T>(_token: string, method: string, path: string, body?: unknown) => {
+    const answer = (status: number, data: unknown) => ({ status, data: data as T });
+    if (method === "POST" && path === "repos/commons/ledger/issues") {
+      const { title, body: text } = body as { title: string; body: string };
+      const failing = failed < failures;
+      if (failing) failed++;
+      if (failing && !saving) return answer(502, { message: "Server Error" });
+      const issue = { number: issues.length + 1, title, body: text, state: "open" };
+      issues.unshift(issue);
+      return failing ? answer(502, { message: "Server Error" }) : answer(201, issue);
+    }
+    if (method === "GET" && path.startsWith("repos/commons/ledger/issues?")) {
+      const state = new URLSearchParams(path.split("?")[1]).get("state") ?? "open";
+      return answer(200, state === "all" ? issues : issues.filter((i) => i.state === state));
+    }
+    return answer(404, { message: `not answered: ${method} ${path}` });
+  };
+  return { issues, request };
+}
+
+const POSTED = { project: "ledger", role: "test" as const, module: "parser", decidedOn: "e1" };
+
+describe("opening an issue, when GitHub's server fails", () => {
+  it("opens it once when GitHub saved it, though it answered with a failure", async () => {
+    const github = githubFailingToOpen(1, true);
+    const adapter = new GitHubAdapter({ owner: "commons", token: "test", request: github.request });
+    await adapter.post(POSTED);
+    expect(github.issues).toHaveLength(1);
+  });
+
+  it("opens it again when GitHub's server failed before saving it", async () => {
+    const github = githubFailingToOpen(1, false);
+    const adapter = new GitHubAdapter({ owner: "commons", token: "test", request: github.request });
+    await adapter.post(POSTED);
+    expect(github.issues).toHaveLength(1);
+  });
+
+  it("stops asking, and fails, when GitHub's server keeps failing before saving it", async () => {
+    const github = githubFailingToOpen(3, false);
+    const adapter = new GitHubAdapter({ owner: "commons", token: "test", request: github.request });
+    await expect(adapter.post(POSTED)).rejects.toThrow("answered 502");
+  });
+
+  it("opens it again, though an issue saying the same was opened and closed before", async () => {
+    const { title, body } = issueForTask(POSTED, "commons/ledger");
+    const github = githubFailingToOpen(1, false, [{ number: 1, title, body, state: "closed" }]);
+    const adapter = new GitHubAdapter({ owner: "commons", token: "test", request: github.request });
+    await adapter.post(POSTED);
+    expect(github.issues.map((i) => i.state)).toEqual(["open", "closed"]);
+  });
+});

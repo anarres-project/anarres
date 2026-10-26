@@ -721,8 +721,25 @@ export class GitHubAdapter
     return listed.tree;
   }
 
-  private openIssue(project: string, issue: NewIssue): Promise<{ number: number }> {
-    return this.call("POST", `${this.repo(project)}/issues`, issue);
+  private async openIssue(
+    project: string,
+    issue: NewIssue,
+    attempt = 1,
+  ): Promise<{ number: number }> {
+    const where = `${this.repo(project)}/issues`;
+    const { status, data } = await this.request<{ number: number }>("POST", where, issue);
+    if (status >= 200 && status < 300) return data;
+    if (status >= 500) {
+      // A server error does not say whether GitHub opened the issue: its open issues do.
+      const open = await this.call<{ number: number; title: string; body: string | null }[]>(
+        "GET",
+        `${where}?state=open&sort=created&direction=desc&per_page=100`,
+      );
+      const opened = open.find((i) => i.title === issue.title && i.body === issue.body);
+      if (opened) return opened;
+      if (attempt < WRITE_ATTEMPTS) return this.openIssue(project, issue, attempt + 1);
+    }
+    throw new GitHubError("POST", where, status, data);
   }
 
   private repo(project: string): string {
