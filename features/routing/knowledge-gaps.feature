@@ -12,6 +12,11 @@ Feature: Divlab sends a knowledge gap to Research
     Examples:
       | role          |
       | Architecture  |
+
+    # The rest of the table: in-process only, as one row shows the rule against GitHub.
+    @in-process-only
+    Examples:
+      | role          |
       | Specification |
       | Test          |
       | Coding        |
@@ -30,4 +35,9 @@ Feature: Divlab sends a knowledge gap to Research
     Examples:
       | role   |
       | Test   |
+
+    # The rest of the table: in-process only, as one row shows the rule against GitHub.
+    @in-process-only
+    Examples:
+      | role   |
       | Coding |

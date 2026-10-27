@@ -24,11 +24,11 @@ It is not part of the blocking gate: it is slower (tens of minutes) and depends 
 
 ## What happens in a run
 
-**Setting up.** The scenarios run in six parallel workers. Each creates one public repository,
+**Setting up.** The scenarios run in four parallel workers. Each creates one public repository,
 named after the run and the worker, and sets it up as a project is set up. It
 installs both of the project template's workflows, with Divlab pinned to the commit under test, so
 a change to Divlab is tested before any project uses it. A worker's scenarios share its
-repository, and the six repositories' Divlab runs go at once; each scenario
+repository, and the four repositories' Divlab runs go at once; each scenario
 gives its modules names of its own (`parser` becomes `parser-s17`), so no scenario sees another's
 tasks, alerts or records. Each scenario starts its modules in the worker's repository as a project
 does, with Divlab's App: each gets its first task, Specification, ready.
@@ -123,6 +123,14 @@ The scenarios are in `features/`, one file per capability. Today:
   at the commit Divlab read, commenting, issues, labels and the event log.
 - Divlab's workflows take turns, and the tripwire leaves Divlab's own merges alone.
 - All of it copes with GitHub's delays, lagging lists and rate limits.
+
+## Routing tables run in-process
+
+A scenario outline over the routing table (which role's work goes where) keeps its first row in
+the sandbox and tags the rest of its table `@in-process-only` (Bernard, 2026-10-27). The table is
+pure routing in `packages/core`, checked in full by unit tests and in-process; one row shows each
+rule working against GitHub. Running every row cost the sandbox more Divlab runs than its time
+limit and the App's share of GitHub's limits allow, once each piece of work needed a claim first.
 
 ## Scenarios not yet run in the sandbox
 

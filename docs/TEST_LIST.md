@@ -332,7 +332,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           done by an unnamed member trusted as far as its role needs, one for each role in a
           module; in the sandbox the sandbox token's account plays them, recorded as trusted in
           the sandbox's governance file as a standing record (Bernard, 2026-10-27);
-    - [ ] the sandbox shows it (a run about 10 minutes longer, for the claims: Bernard agreed);
+    - [ ] the sandbox shows it. Claiming first cost far more than the 10 minutes expected (runs
+          cut off at 45 minutes, 2026-10-27), so routing-table outlines keep one row in the
+          sandbox and the rest run in-process only (Bernard, 2026-10-27);
+  - [ ] Divlab says in its run's log when it waits on GitHub (a rate limit, or a server error),
+        and for how long, so a run that sits silent explains itself (2026-10-27: a run sat ten
+        minutes without a word, most likely waiting out secondary limits);
     - [x] work that does not say which task it was for is refused, and its member told why;
     - [x] work naming a task Divlab did not post, or has closed, is refused: nobody holds it;
     - [x] work from a member other than the task's holder is refused with a plain refusal (no

@@ -13,6 +13,11 @@ Feature: Divlab posts the next task
     Examples:
       | role          | next role          |
       | Architecture  | Specification      |
+
+    # The rest of the table: in-process only, as one row shows the rule against GitHub.
+    @in-process-only
+    Examples:
+      | role          | next role          |
       | Specification | Test               |
       | Test          | Coding             |
       | Coding        | Reviewer           |

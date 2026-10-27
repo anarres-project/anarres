@@ -11,6 +11,11 @@ Feature: Divlab marks a module done
     Examples:
       | verdict          |
       | pass             |
+
+    # The rest of the table: in-process only, as one row shows the rule against GitHub.
+    @in-process-only
+    Examples:
+      | verdict          |
       | conditional pass |
 
   Scenario: A module is not done before its security and quality check

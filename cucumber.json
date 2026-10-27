@@ -13,8 +13,8 @@
   },
   "sandbox": {
     "import": ["acceptance/support/**/*.ts", "acceptance/steps/**/*.ts"],
-    "tags": "not @wip and not @sandbox-wip",
+    "tags": "not @wip and not @sandbox-wip and not @in-process-only",
     "format": ["progress"],
-    "parallel": 6
+    "parallel": 4
   }
 }

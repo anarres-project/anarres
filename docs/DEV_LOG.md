@@ -136,6 +136,12 @@ governance scenarios run alone.
   writes (rightly). Dropped. Instead the sandbox runs six workers, not four: a claim waits in
   its own project's queue, so more projects side by side shorten the run at the same request
   cost. If that is not enough, a longer limit or fewer scenarios in the sandbox is for Bernard.
+- The d1beac1 run (six workers) hit the limit too, and three scenarios in one worker's project
+  failed after a Divlab run there sat silent for its 10-minute limit: most likely waiting out
+  GitHub's secondary limits, which every sandbox project's runs share through the one App
+  installation. Divlab says nothing while it waits, so this is not certain.
+- Bernard chose fewer scenarios in the sandbox: each routing-table outline keeps its first row
+  there, and the other 24 rows are tagged `@in-process-only`. Back to four workers.
 
 ---
 
