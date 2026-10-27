@@ -535,8 +535,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         open pull requests at that commit, found by their head, as GitHub's event names none for
         a pull request from a fork (in-process; `@sandbox-wip`);
   - [ ] the template's Divlab workflow runs when the checks workflow completes, and only then;
-  - [ ] a check counts only if GitHub Actions made it in the project's repository, by the
-        template's checks workflow, for the commit Divlab merges;
+  - [x] a check counts only if GitHub Actions made it in the project's repository, for the
+        commit Divlab merges; work changing the workflows, the test command or the tests is
+        refused by the write scopes first, so the run is the template's workflow's;
   - [ ] other roles' work needs no check;
   - [ ] the template's checks workflow runs the test command `anarres.yaml` declares, in its dev
         container image, on every pull request;

@@ -756,6 +756,29 @@ describe("acting on a pull request", () => {
     expect(merged).toEqual(["7"]);
   });
 
+  it("refuses Coding work that changes the project's workflows, whatever its check found", async () => {
+    const [merged, refusals]: string[][] = [[], []];
+    const codingAndWorkflow = [
+      {
+        path: "feedback/FB-7.md",
+        text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: coding\n  module: parser\n  verdict: pass\n---\n',
+      },
+      { path: ".github/workflows/checks.yml", text: "name: Project checks\n" },
+    ];
+    await onPullRequest(
+      "ledger",
+      "7",
+      submitting(merged, codingAndWorkflow, refusals),
+      { ...held, post: async () => {} },
+      log,
+      clock,
+    );
+    expect([merged, refusals]).toEqual([
+      [],
+      ["7: The work changes files outside what Coding may change: .github/workflows/checks.yml"],
+    ]);
+  });
+
   it("merges a pull request whose feedback signal it can read", async () => {
     const merged: string[] = [];
     await onPullRequest(

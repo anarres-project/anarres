@@ -732,9 +732,15 @@ export class GitHubAdapter
     head: string,
   ): Promise<{ state: "passed" | "failed" | "running"; url: string }> {
     const { check_runs: runs } = await this.call<{
-      check_runs: { status: string; conclusion: string | null; html_url: string }[];
+      check_runs: {
+        status: string;
+        conclusion: string | null;
+        html_url: string;
+        app?: { slug?: string };
+      }[];
     }>("GET", `${this.repo(project)}/commits/${head}/check-runs?check_name=${PROJECT_CHECK}`);
-    const run = runs[0];
+    // Only GitHub Actions' run counts: another app could give a check the same name.
+    const run = runs.find((run) => run.app?.slug === "github-actions");
     const url = run?.html_url ?? "";
     if (run?.status !== "completed") return { state: "running", url };
     return { state: run.conclusion === "success" ? "passed" : "failed", url };

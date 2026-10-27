@@ -197,6 +197,9 @@ governance scenarios run alone.
   is, from every page -> `adapter.openAt is not a function`, then `expected [] to deeply equal [
   '5', '101' ]`. GREEN (631). The Action sends a checks run to `onChecked`.
 - The scenario passes in-process and loses `@wip` (`@sandbox-wip`).
+- RED: counts only GitHub Actions' run of the check, never another app's of the same name ->
+  `expected 'passed' to be 'running'`. GREEN (632). Passed first time, kept: Coding work that
+  changes the project's workflows is refused for its scope whatever its check found.
 
 ---
 

@@ -8524,7 +8524,7 @@ var GitHubAdapter = class {
   /** The project's own check on the commit: the template's checks workflow's run (decision 0010). */
   async check(project, head) {
     const { check_runs: runs } = await this.call("GET", `${this.repo(project)}/commits/${head}/check-runs?check_name=${PROJECT_CHECK}`);
-    const run = runs[0];
+    const run = runs.find((run2) => run2.app?.slug === "github-actions");
     const url = run?.html_url ?? "";
     if (run?.status !== "completed") return { state: "running", url };
     return { state: run.conclusion === "success" ? "passed" : "failed", url };

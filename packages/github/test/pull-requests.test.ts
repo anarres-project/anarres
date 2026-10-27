@@ -234,6 +234,28 @@ describe("the project's own check on a commit (decision 0010)", () => {
     });
     expect((await adapter.check("ledger", "c0ffee")).state).toBe("running");
   });
+  it("counts only GitHub Actions' run of it, never another app's of the same name", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/commits/c0ffee/check-runs?check_name=project-tests"
+        ) {
+          const elsewhere = {
+            status: "completed",
+            conclusion: "success",
+            html_url: "https://example.test/checks/1",
+            app: { slug: "another-app" },
+          };
+          return { status: 200, data: { check_runs: [elsewhere] } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect((await adapter.check("ledger", "c0ffee")).state).toBe("running");
+  });
 });
 
 describe("the open pull requests at a commit", () => {
