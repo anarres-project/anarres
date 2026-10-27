@@ -200,6 +200,12 @@ governance scenarios run alone.
 - RED: counts only GitHub Actions' run of the check, never another app's of the same name ->
   `expected 'passed' to be 'running'`. GREEN (632). Passed first time, kept: Coding work that
   changes the project's workflows is refused for its scope whatever its check found.
+- Bernard: only Coding work that says it passed needs the check; work reporting a failure or
+  blocked, and partial work, advances nothing and its tests may well fail. RED: merges Coding
+  work reporting failure whatever its check found -> `expected [] to deeply equal [ '7' ]`.
+  GREEN (634), with core's `failed` exported, so the rule is stated once. RED: merges partial
+  Coding work handed over whatever its check found -> the same failure. GREEN (635).
+- The e1740e7 sandbox run passed all 79 scenarios in 35 minutes.
 
 ---
 

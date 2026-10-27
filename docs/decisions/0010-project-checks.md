@@ -21,8 +21,11 @@ finished, so it cannot simply look the result up then.
 - **Which check.** The project template adds the project's checks workflow, which runs on every
   pull request and runs the test command `anarres.yaml` declares, in its dev container image. Its
   check is the one Divlab reads, by a name the template fixes, not one a project chooses.
-- **Which work.** Divlab merges Coding work only once that check has passed on exactly the commit
-  Divlab read and will merge. Other roles' work changes no code and needs no check. (Test work's
+- **Which work.** Divlab merges Coding work that says it passed (a pass or conditional pass
+  verdict) only once that check has passed on exactly the commit Divlab read and will merge.
+  Coding work reporting a failure or blocked, and partial work handed over, needs no check: it
+  advances nothing (it goes back to the role that can fix it, or is continued), and its tests may
+  well fail (Bernard, 2026-10-27). Other roles' work changes no code and needs no check. (Test work's
   own check, that the new tests run and fail, is a separate decision: test list, section 4a.)
 - **Hearing the result.** The template's Divlab workflows also run when the checks workflow
   completes. Divlab then acts on the open pull requests at that commit, as it does when one is

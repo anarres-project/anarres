@@ -779,6 +779,40 @@ describe("acting on a pull request", () => {
     ]);
   });
 
+  it("merges Coding work reporting failure whatever its check found: it advances nothing", async () => {
+    const merged: string[] = [];
+    const codingFails = {
+      path: "feedback/FB-7.md",
+      text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: coding\n  module: parser\n  verdict: fail\n  impediments:\n    - type: test_failures\n---\n',
+    };
+    const failing: PullRequests = {
+      ...submitting(merged, [codingFails]),
+      check: async () => ({
+        state: "failed",
+        url: "https://github.com/commons/ledger/actions/runs/42",
+      }),
+    };
+    await onPullRequest("ledger", "7", failing, { ...held, post: async () => {} }, log, clock);
+    expect(merged).toEqual(["7"]);
+  });
+
+  it("merges partial Coding work handed over whatever its check found: it advances nothing", async () => {
+    const merged: string[] = [];
+    const partialCoding = {
+      path: "feedback/FB-7.md",
+      text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: coding\n  module: parser\n  status: partial\n  verdict: pass\n---\n',
+    };
+    const failing: PullRequests = {
+      ...submitting(merged, [partialCoding]),
+      check: async () => ({
+        state: "failed",
+        url: "https://github.com/commons/ledger/actions/runs/42",
+      }),
+    };
+    await onPullRequest("ledger", "7", failing, { ...held, post: async () => {} }, log, clock);
+    expect(merged).toEqual(["7"]);
+  });
+
   it("merges a pull request whose feedback signal it can read", async () => {
     const merged: string[] = [];
     await onPullRequest(

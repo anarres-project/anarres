@@ -62,7 +62,8 @@ export function route(work: AcceptedWork): RoutingDecision {
 }
 
 /** Blocked work is routed just as failed work is. */
-export const failed = (work: AcceptedWork) => work.verdict === "fail" || work.verdict === "blocked";
+export const failed = (work: Pick<AcceptedWork, "verdict">) =>
+  work.verdict === "fail" || work.verdict === "blocked";
 
 export function rule(work: AcceptedWork): Ruling {
   if (work.partial) return continuation(work);

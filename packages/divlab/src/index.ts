@@ -1,5 +1,6 @@
 import {
   type FeedbackSignal,
+  failed,
   isRole,
   leaseHasRunOut,
   mayTake,
@@ -772,8 +773,10 @@ export async function onPullRequest(
     );
     return;
   }
-  // Coding work is merged only once the project's own tests pass on it (decision 0010).
-  if (role === "coding") {
+  // Coding work saying it passed is merged only once the project's own tests pass on it; work
+  // reporting a failure, or handed over partial, advances nothing, and its tests may well fail
+  // (decision 0010).
+  if (role === "coding" && !failed(signal) && !signal.partial) {
     const check = await pullRequests.check(project, head);
     // Not finished: Divlab acts again when it does.
     if (check.state === "running") return;

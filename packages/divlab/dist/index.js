@@ -8070,7 +8070,7 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     );
     return;
   }
-  if (role === "coding") {
+  if (role === "coding" && !failed(signal) && !signal.partial) {
     const check = await pullRequests.check(project2, head);
     if (check.state === "running") return;
     if (check.state === "failed") {

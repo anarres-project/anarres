@@ -538,6 +538,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] a check counts only if GitHub Actions made it in the project's repository, for the
         commit Divlab merges; work changing the workflows, the test command or the tests is
         refused by the write scopes first, so the run is the template's workflow's;
+  - [x] only Coding work that says it passed needs the check: work reporting a failure or
+        blocked, and partial work, advances nothing and is merged without it (Bernard,
+        2026-10-27);
   - [ ] other roles' work needs no check;
   - [ ] the template's checks workflow runs the test command `anarres.yaml` declares, in its dev
         container image, on every pull request;
