@@ -541,7 +541,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] only Coding work that says it passed needs the check: work reporting a failure or
         blocked, and partial work, advances nothing and is merged without it (Bernard,
         2026-10-27);
-  - [ ] other roles' work needs no check;
+  - [x] other roles' work needs no check (passed first time: a regression test);
   - [ ] the template's checks workflow runs the test command `anarres.yaml` declares, in its dev
         container image, on every pull request;
   - [ ] a push by the task's holder to their pull request for it renews the lease, draft or not;

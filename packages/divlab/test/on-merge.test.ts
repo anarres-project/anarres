@@ -813,6 +813,19 @@ describe("acting on a pull request", () => {
     expect(merged).toEqual(["7"]);
   });
 
+  it("merges other roles' work whatever the project's check found: it changes no code", async () => {
+    const merged: string[] = [];
+    const failing: PullRequests = {
+      ...submitting(merged),
+      check: async () => ({
+        state: "failed",
+        url: "https://github.com/commons/ledger/actions/runs/42",
+      }),
+    };
+    await onPullRequest("ledger", "7", failing, { ...held, post: async () => {} }, log, clock);
+    expect(merged).toEqual(["7"]);
+  });
+
   it("merges a pull request whose feedback signal it can read", async () => {
     const merged: string[] = [];
     await onPullRequest(
