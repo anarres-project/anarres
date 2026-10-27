@@ -315,11 +315,22 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] Divlab runs again when a member marks a draft ready, and acts on it as on any work;
   - [x] the sandbox shows a draft is not merged and is recorded;
   - [ ] each push to a draft is activity too (the workflow runs on it; to be shown);
-  - [ ] work for a task whose holder is someone else is refused (section 4);
-  - [ ] work is accepted only from the member holding the task it is for, so the checks made
-        when a task is claimed (eligibility, conflict of interest) hold for the work too
-        (2026-10-26: Divlab checks the holder for drafts only; raised with Bernard, since it
-        changes how members submit and most scenarios);
+  - [ ] work is merged only from the member Divlab shows holding the task it is for, so the
+        checks made when a task is claimed (eligibility, conflict of interest) hold for the work
+        too (Bernard, 2026-10-27; before, Divlab checked the holder for drafts only):
+    - [ ] a module starts with its first task ready, Specification, so all work has a task
+          (Bernard, 2026-10-27; until the Programme Architect's `modules.yaml` exists, a
+          project's modules are named when it is set up). `startModule` posts it, and its issue
+          says it was posted as the module began, with no decision behind it;
+    - [ ] scenarios that begin a module partway along its pipeline have the module set up as it
+          would stand: its earlier tasks done and the task for the work's role ready (walking
+          the pipeline would cost several Divlab runs a scenario in the sandbox); the member then
+          claims it through Divlab before submitting;
+    - [ ] work naming no task, or a task Divlab did not post or has closed, is refused;
+    - [ ] work from a member other than the task's holder is refused with a plain refusal (no
+          alert unless one turns out to be needed: Bernard, 2026-10-27);
+    - [ ] a holder whose lease has run out, while Divlab still shows them holding the task, has
+          their work accepted (Bernard, 2026-10-27);
   - [ ] the sandbox re-forks a project whose fork GitHub reports empty (seen 2026-10-23: one
         worker's fork broke mid-run while GitHub was answering 504s, failing its 8 scenarios).
 - [ ] A member can release a task early.

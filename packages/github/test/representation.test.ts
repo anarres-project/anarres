@@ -69,6 +69,12 @@ describe("a task as a GitHub issue", () => {
     ).not.toContain("Feedback signal:");
   });
 
+  it("says a module's first task was posted as the module began, with no decision behind it", () => {
+    expect(issueForTask({ project: "ledger", role: "specification", module: "parser" }).body).toBe(
+      "Divlab posted this as the module began: the first task in its pipeline.",
+    );
+  });
+
   it("records on a Research task which role it is for", () => {
     expect(
       issueForTask({

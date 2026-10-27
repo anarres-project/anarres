@@ -42,8 +42,8 @@ export type PostedTask = {
   module: string;
   feedbackSignal?: string;
   researchFor?: string;
-  /** The feedback signal whose routing decision posted the task. */
-  decidedOn: string;
+  /** The feedback signal whose routing decision posted the task; none for a module's first. */
+  decidedOn?: string;
   /** The commit the task's inputs are read at: the merge that decided it. */
   inputsAt?: string;
   /** A continuation of partial work, which also reads its role's own place (decision 0008). */
@@ -816,6 +816,15 @@ export async function setUpProject(
 ): Promise<void> {
   await repositories.protectMain(project);
   await repositories.allowDivlabChecks(project);
+}
+
+/** A module begins: Divlab posts its first task. */
+export async function startModule(
+  project: string,
+  module: string,
+  board: TaskBoard,
+): Promise<void> {
+  await board.post({ project, role: "specification", module });
 }
 
 /** On every run: is the project's main branch still protected as decision 0006 requires? */

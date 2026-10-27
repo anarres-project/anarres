@@ -8124,7 +8124,7 @@ function issueForTask(task, repository) {
         `Decided by [${task.decidedOn}](https://github.com/${repository}/blob/${task.inputsAt}/${task.decidedOn}).`,
         ""
       ],
-      decisionBlock(task.decidedOn, task.inputsAt)
+      task.decidedOn === void 0 ? "Divlab posted this as the module began: the first task in its pipeline." : decisionBlock(task.decidedOn, task.inputsAt)
     ].join("\n")
   };
 }

@@ -43,7 +43,9 @@ export class FakeGitHub
   }
 
   async post(task: PostedTask): Promise<void> {
-    this.decisions.push({ project: task.project, feedbackSignal: task.decidedOn });
+    if (task.decidedOn !== undefined) {
+      this.decisions.push({ project: task.project, feedbackSignal: task.decidedOn });
+    }
     this.issuesOpened += 1;
     this.openTasks.push({ ...task, id: String(this.issuesOpened) });
   }

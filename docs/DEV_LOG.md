@@ -65,6 +65,27 @@ governance scenarios run alone.
 
 ---
 
+## 2026-10-27: Work only from the task's holder, and a module's first task
+
+- Bernard decided: Divlab merges work only from the member it shows holding the task the work is
+  for, so the checks made at claiming hold for the work too. A holder whose lease has run out
+  but who still holds the task has their work accepted; anyone else gets a plain refusal. Work no
+  task was posted for (a module's first) cannot meet that, so a module now starts with its first
+  task, Specification, ready.
+- Scenario (`@wip`, not yet right): "A new project has a Specification task ready for its module".
+- RED: posts a ready Specification task, the first role in a module's pipeline -> `startModule is
+  not a function`; with the stub, `expected [] to deeply equal [ { project: 'ledger', …(2) } ]`.
+  GREEN (159 passed). A first task has no feedback signal that decided it, so `decidedOn` is
+  optional.
+- RED: says a module's first task was posted as the module began, with no decision behind it ->
+  the issue carried an empty decision block. GREEN (170 passed). The fake keeps a decision only
+  for a task that has one, as an issue does.
+- Wired into the in-process driver, the scenario passed but 37 others failed: they begin a module
+  partway along its pipeline (a Reviewer's work in a new project), so its first task was left
+  ready. Unwired until the scenarios set the module up as it would stand (test list).
+
+---
+
 ## 2026-10-27: The lease check run by hand in the sandbox
 
 - The 23:00 full sandbox run (604aab8) passed: 98 of 98.
