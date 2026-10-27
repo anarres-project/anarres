@@ -153,9 +153,11 @@ export class InProcessDriver implements Driver {
   async submitWork(work: AcceptedWork): Promise<void> {
     const fromRole = roleId(work.role);
     // The member's feedback signal names the task the work was for, ready or claimed by them.
-    const task = this.github
-      .openTasksOf(work.project)
-      .find((task) => task.role === fromRole && task.module === work.module);
+    const task = (
+      work.forFinishedTask
+        ? this.github.closedTasksOf(work.project)
+        : this.github.openTasksOf(work.project)
+    ).find((task) => task.role === fromRole && task.module === work.module);
     const pullRequest = this.github.openPullRequest(work.project, workFiles(work, task?.id), {
       author: work.member,
     });

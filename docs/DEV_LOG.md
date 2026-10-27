@@ -118,6 +118,9 @@ governance scenarios run alone.
   late refusal said "you are new" only because the timed-out scenario had already put its trust
   record back. The limit is now six minutes, and a step may take 15 (a claim and its work).
 - The sandbox's governance file now records the sandbox token's account as trusted.
+- Passed first time, kept as a regression scenario: "Work for a module that is already done is
+  not merged" (Bernard, 2026-10-21): work naming the module's finished task is refused, since
+  nobody holds a closed task. The drivers can now name a finished task in a feedback signal.
 
 ---
 

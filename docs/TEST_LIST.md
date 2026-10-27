@@ -175,9 +175,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [x] Security & Quality *pass* or *conditional pass* marks the module done, posting no task
       (AutoPM: "pipeline complete", "complete with caveats"; the caveats belong in the event
       record).
-- [ ] Work for a module that is already done is refused, and the member told why: a done module
+- [x] Work for a module that is already done is refused, and the member told why: a done module
       has no open task to claim (Bernard, 2026-10-21; validated in section 4, and anything that
-      reaches main another way is handled as decision 0005 says).
+      reaches main another way is handled as decision 0005 says). Shown 2026-10-27: work naming
+      the module's finished task is refused, since nobody holds a closed task.
 - [ ] All module pipelines done → the integration pipeline starts (concept §9; Phase 2).
 - [x] Escalation: the same role is re-run more than three times → a PDC coordinator is alerted and
       no further task is posted (Bernard, 2026-10-12: per module, revision tasks only, the count
@@ -306,7 +307,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         so no task waits on the hourly check;
   - [x] when a task is free again (given back, or its lease run out), only claims made since
         count: before, a task given back went straight back to its old claimant;
-  - [ ] work submitted for a task whose lease ran out (section 4: the task it was claimed for).
+  - [x] work submitted for a task whose lease ran out is merged while its member still holds it
+        (Bernard, 2026-10-27; see section 4).
 - [ ] Submitting draft work extends the lease.
   - [x] Divlab never merges a draft, and says nothing about one with no feedback signal yet;
   - [x] a draft whose feedback signal names a task the draft's author holds is recorded as
@@ -498,7 +500,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       that are not plain, and (a scenario passing first time, kept as a regression test) a
       signal that leaves out its verdict;
   - [x] the sandbox shows the missing-verdict scenario (2026-10-24).
-- [ ] Work for a task the member has not claimed is rejected.
+- [x] Work for a task the member has not claimed is rejected (2026-10-27: work is merged only
+      from the member Divlab shows holding its task; section 3).
 - [x] A feedback signal whose role, module, verdict or impediment types are not plain names
       (lower-case letters and digits joined by single hyphens or underscores, at most 40 long) is
       unreadable: Divlab writes them into issue titles, labels and text. The member is told why

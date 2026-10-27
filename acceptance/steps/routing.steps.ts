@@ -145,6 +145,18 @@ When(
   },
 );
 
+When(
+  "{word} submits {role} work on {string} for its finished task, with a {verdict} verdict",
+  function (this: AnarresWorld, member: string, role: string, module: string, verdict: string) {
+    return this.anarres.namedMemberSubmitsWork(member, {
+      role,
+      module,
+      verdict,
+      forFinishedTask: true,
+    });
+  },
+);
+
 Then(
   "{word} is told only the member holding the task can submit its work",
   function (this: AnarresWorld, _member: string) {

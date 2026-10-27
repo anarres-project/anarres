@@ -182,7 +182,10 @@ export class Anarres {
   }
 
   /** The member opens a pull request with their work, claiming nothing first. */
-  async namedMemberSubmitsWork(named: string, work: Work & { verdict: string }) {
+  async namedMemberSubmitsWork(
+    named: string,
+    work: Work & { verdict: string; forFinishedTask?: boolean },
+  ) {
     this.signalsWritten += 1;
     const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
     this.feedbackSignals.set(workOn(this.aliased(work)), feedbackSignal);

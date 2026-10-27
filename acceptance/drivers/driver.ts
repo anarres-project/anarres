@@ -20,6 +20,8 @@ export type AcceptedWork = {
   partial?: boolean;
   /** The member's feedback signal does not say which task the work was for. */
   withoutTask?: boolean;
+  /** The member's feedback signal names the role's task on the module that is already done. */
+  forFinishedTask?: boolean;
 };
 
 export type ReadyTask = {

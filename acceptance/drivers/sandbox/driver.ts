@@ -225,7 +225,7 @@ export class SandboxDriver implements Driver {
       (this.expectedFor(work.project).claimed > 0
         ? (await this.settled(work.project, "claimed")).find(forWork)
         : undefined);
-    const task = ready ?? claimed;
+    const task = work.forFinishedTask ? await this.finishedTask(work) : (ready ?? claimed);
     const listing: Listing = ready ? "ready" : "claimed";
     const fork = await this.forkOf(work.project);
     // A new fork can answer "Git Repository is empty" for a while after GitHub says it exists.
@@ -615,6 +615,17 @@ export class SandboxDriver implements Driver {
     );
     if (!issue) throw new Error(`No ${task.role} task for ${task.module} is done`);
     await this.claimIssue(task.project, issue, member);
+  }
+
+  /** The role's task on the module that is already done: closed, as its issue stays. */
+  private async finishedTask(task: { project: string; role: string; module: string }) {
+    const labels = `role:${roleId(task.role)},module:${task.module}`;
+    const [issue] = await this.github.call<Issue[]>(
+      "GET",
+      `repos/${this.org}/${task.project}/issues?labels=${encodeURIComponent(labels)}&state=closed&per_page=100`,
+    );
+    if (!issue) throw new Error(`No ${task.role} task for ${task.module} is done`);
+    return issue;
   }
 
   /** The member comments to claim an issue that is not an open task, and waits for the reply. */
