@@ -227,16 +227,13 @@ export class SandboxDriver implements Driver {
         : undefined);
     const task = work.forFinishedTask ? await this.finishedTask(work) : (ready ?? claimed);
     const listing: Listing = ready ? "ready" : "claimed";
-    const fork = await this.forkOf(work.project);
-    // A new fork can answer "Git Repository is empty" for a while after GitHub says it exists.
-    const deadline = Date.now() + LISTS_CATCH_UP_LIMIT;
-    let reference = await this.members.request<{ object: { sha: string } }>(
-      "GET",
-      `repos/${fork}/git/ref/heads/main`,
-    );
-    while (reference.status === 409 && Date.now() < deadline) {
-      await new Promise((resolve) => setTimeout(resolve, 3_000));
-      reference = await this.members.request("GET", `repos/${fork}/git/ref/heads/main`);
+    let fork = await this.forkOf(work.project);
+    let reference = await this.mainOf(fork);
+    if (reference.status === 409) {
+      // A fork can stay empty for good, broken while GitHub answers errors (seen 2026-10-23,
+      // failing all its worker's later scenarios): fork the project again, once.
+      fork = await this.forkAgain(work.project, fork);
+      reference = await this.mainOf(fork);
     }
     if (reference.status !== 200) {
       throw new Error(`GitHub GET repos/${fork}/git/ref/heads/main answered ${reference.status}`);
@@ -304,6 +301,28 @@ export class SandboxDriver implements Driver {
       merged,
     });
     if (merged) await this.expectWhatDivlabDecided(work.project, path, task, listing);
+  }
+
+  /** The fork's main branch: a new fork can answer "Git Repository is empty" for a while. */
+  private async mainOf(fork: string) {
+    const deadline = Date.now() + LISTS_CATCH_UP_LIMIT;
+    let reference = await this.members.request<{ object: { sha: string } }>(
+      "GET",
+      `repos/${fork}/git/ref/heads/main`,
+    );
+    while (reference.status === 409 && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 3_000));
+      reference = await this.members.request("GET", `repos/${fork}/git/ref/heads/main`);
+    }
+    return reference;
+  }
+
+  /** The broken fork is deleted and the project forked afresh, for this run's later scenarios. */
+  private async forkAgain(project: string, broken: string): Promise<string> {
+    console.log(`The fork ${broken} stayed empty: forking ${project} again`);
+    await this.members.request("DELETE", `repos/${broken}`);
+    run.forks.delete(project);
+    return this.forkOf(project);
   }
 
   /**

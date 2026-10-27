@@ -124,6 +124,8 @@ governance scenarios run alone.
 - Passed first time, kept as a regression scenario: "Each push to a draft extends the lease too"
   (the pull request workflow runs on `synchronize`, and Divlab records the draft as activity
   again). Without the push the same steps fail, so it shows the push. In-process only.
+- The sandbox driver forks a project again, once, when its fork stays empty past the wait for a
+  new fork (seen 2026-10-23); it logs when it does.
 
 ---
 

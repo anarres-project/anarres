@@ -340,8 +340,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
     - [x] a holder whose lease has run out, while Divlab still shows them holding the task, has
           their work accepted (Bernard, 2026-10-27; in-process only, `@sandbox-wip`: the
           sandbox cannot move GitHub's clock);
-  - [ ] the sandbox re-forks a project whose fork GitHub reports empty (seen 2026-10-23: one
-        worker's fork broke mid-run while GitHub was answering 504s, failing its 8 scenarios).
+  - [x] the sandbox re-forks a project whose fork GitHub reports empty (seen 2026-10-23: one
+        worker's fork broke mid-run while GitHub was answering 504s, failing its 8 scenarios):
+        once the wait for a new fork runs out, the fork is deleted and made again, once. Not
+        reproducible on cue; it logs when it happens.
 - [ ] A member can release a task early.
   - [x] the member holding a task comments to give it back; Divlab records it and makes the
         task ready again; a release from anyone else changes nothing (in-process);
