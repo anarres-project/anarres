@@ -524,7 +524,20 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 ## 4a. Any language (hosted projects)
 
 - [ ] Coding work is accepted only when the project's own CI check passes; Divlab never runs
-      project code.
+      project code (decision 0010, Bernard, 2026-10-27: Coding only; the template's check, by a
+      name it fixes; a holder's push to their pull request renews the lease, draft or not):
+  - [ ] Coding work whose check has passed on the commit Divlab read is merged; failed, it is
+        not, and the member is told which check failed, with a link; still running, Divlab does
+        nothing and says nothing;
+  - [ ] Divlab acts again when the project's checks workflow completes, on the open pull
+        requests at that commit;
+  - [ ] a check counts only if GitHub Actions made it in the project's repository, by the
+        template's checks workflow, for the commit Divlab merges;
+  - [ ] other roles' work needs no check;
+  - [ ] the template's checks workflow runs the test command `anarres.yaml` declares, in its dev
+        container image, on every pull request;
+  - [ ] a push by the task's holder to their pull request for it renews the lease, draft or not;
+  - [ ] the sandbox shows it: a project whose tests pass or fail on cue.
 - [ ] Test work is accepted when the project's report shows the new tests running and failing.
 - [ ] Test counts for metrics come from the project's JUnit XML report, whatever the language.
 - [ ] A project without a declared toolchain cannot be started.
