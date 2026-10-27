@@ -5,6 +5,7 @@ export type Run =
   | { claim: { task: string; member: string } }
   | { release: { task: string; member: string } }
   | { leases: true }
+  | { checked: string }
   | { nothing: true };
 
 /** Whether a comment is a claim: exactly the claim command, nothing more. */
@@ -18,6 +19,9 @@ export const CLAIM = "/claim";
 
 /** Whether a comment is a release: exactly the release command, nothing more. */
 const isRelease = (text: unknown): boolean => text === "/release";
+
+/** A commit as GitHub names one: 40 lower-case hexadecimal digits. */
+const COMMIT = /^[0-9a-f]{40}$/;
 
 /** A number GitHub could have given an issue or pull request. */
 const numberedByGitHub = (number: unknown): number is number =>
@@ -60,6 +64,14 @@ export function whatToActOn(name: string, event: unknown): Run {
     }
     const asked = { task: String(issue.number), member };
     return command === "claim" ? { claim: asked } : { release: asked };
+  }
+  // The project's checks finished on a commit: the pull requests at it may be ready (decision 0010).
+  if (name === "workflow_run") {
+    const commit = (event as { workflow_run?: { head_sha?: unknown } }).workflow_run?.head_sha;
+    if (typeof commit !== "string" || !COMMIT.test(commit)) {
+      throw new Error("The checks event does not say which commit it is about");
+    }
+    return { checked: commit };
   }
   throw new Error(`Divlab does not act on ${name} events`);
 }

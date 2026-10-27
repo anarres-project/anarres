@@ -89,6 +89,8 @@ export interface Driver {
   submitThroughPlugin(work: AcceptedWork): Promise<void>;
   /** The member opens a draft pull request with their work so far. */
   submitDraftWork(work: AcceptedWork): Promise<void>;
+  /** The project's tests finish on the member's work, and the check's completion wakes Divlab. */
+  testsFinish(work: AcceptedWork, passed: boolean): Promise<void>;
   /** The member pushes more work to their draft for the task, which wakes Divlab again. */
   pushToDraft(work: AcceptedWork): Promise<void>;
   /** Members open pull requests together, before Divlab has decided on any of them. */

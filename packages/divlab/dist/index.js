@@ -7682,6 +7682,7 @@ var isClaim = (text) => text === CLAIM;
 var ACCOUNT_NAME = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/;
 var CLAIM = "/claim";
 var isRelease = (text) => text === "/release";
+var COMMIT = /^[0-9a-f]{40}$/;
 var numberedByGitHub = (number) => Number.isSafeInteger(number) && number >= 1;
 function whatToActOn(name, event) {
   if (name === "pull_request_target") {
@@ -7709,6 +7710,13 @@ function whatToActOn(name, event) {
     }
     const asked = { task: String(issue.number), member };
     return command === "claim" ? { claim: asked } : { release: asked };
+  }
+  if (name === "workflow_run") {
+    const commit = event.workflow_run?.head_sha;
+    if (typeof commit !== "string" || !COMMIT.test(commit)) {
+      throw new Error("The checks event does not say which commit it is about");
+    }
+    return { checked: commit };
   }
   throw new Error(`Divlab does not act on ${name} events`);
 }
@@ -7946,6 +7954,11 @@ async function acceptSignal(project2, path, signal, board, log, clock, events, m
 }
 var holds = async (board, project2, task, member) => (await board.task(project2, task))?.claimedBy === member;
 var cannotRead = (path, { unreadable }) => `The feedback signal ${path} cannot be read: ${unreadable}`;
+async function onChecked(project2, commit, pullRequests, board, log, clock) {
+  for (const pullRequest of await pullRequests.openAt(project2, commit)) {
+    await onPullRequest(project2, pullRequest, pullRequests, board, log, clock);
+  }
+}
 async function onMerge(project2, repository, board, log, clock) {
   const events = await log.read(project2);
   const finished = new Set(events.filter((e) => !("aboutToMerge" in e)).map(signalOf));
@@ -8993,6 +9006,16 @@ var GitHubAdapter = class {
     if (run?.status !== "completed") return { state: "running", url };
     return { state: run.conclusion === "success" ? "passed" : "failed", url };
   }
+  /**
+   * The open pull requests whose head is the commit. GitHub's checks event names none for a pull
+   * request from a fork, as members' are, so they are found by their head.
+   */
+  async openAt(project2, commit) {
+    const open = await this.everyPage(
+      `${this.repo(project2)}/pulls?state=open`
+    );
+    return open.filter((pull) => pull.head.sha === commit).map((pull) => String(pull.number));
+  }
   async refuse(project2, pullRequest, reason) {
     await this.comment(project2, pullRequest, commentForRefusal(reason));
   }
@@ -9083,6 +9106,8 @@ try {
     await onRelease(project, run.release, github, github, clock);
   } else if ("leases" in run) {
     await onLeaseCheck(project, github, github, clock);
+  } else if ("checked" in run) {
+    await onChecked(project, run.checked, github, github, github, clock);
   } else {
     await onMerge(project, github, github, github, clock);
   }

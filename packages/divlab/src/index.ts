@@ -470,6 +470,8 @@ export interface PullRequests {
     project: string,
     head: string,
   ): Promise<{ state: "passed" | "failed" | "running"; url: string }>;
+  /** The project's open pull requests whose head is the commit. */
+  openAt(project: string, commit: string): Promise<string[]>;
 }
 
 /**
@@ -616,6 +618,20 @@ const holds = async (board: TaskBoard, project: string, task: string, member: st
 
 const cannotRead = (path: string, { unreadable }: Unreadable) =>
   `The feedback signal ${path} cannot be read: ${unreadable}`;
+
+/** The project's checks finished on a commit: its open pull requests may now be decided. */
+export async function onChecked(
+  project: string,
+  commit: string,
+  pullRequests: PullRequests,
+  board: TaskBoard,
+  log: EventLog,
+  clock: Clock,
+): Promise<void> {
+  for (const pullRequest of await pullRequests.openAt(project, commit)) {
+    await onPullRequest(project, pullRequest, pullRequests, board, log, clock);
+  }
+}
 
 /** Work has been merged to the project's main branch. */
 export async function onMerge(

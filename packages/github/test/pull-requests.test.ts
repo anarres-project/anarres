@@ -235,3 +235,32 @@ describe("the project's own check on a commit (decision 0010)", () => {
     expect((await adapter.check("ledger", "c0ffee")).state).toBe("running");
   });
 });
+
+describe("the open pull requests at a commit", () => {
+  it("are those whose head is the commit, read from every page", async () => {
+    const pull = (number: number, sha: string) => ({ number, head: { sha } });
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/pulls?state=open&per_page=100&page=1"
+        ) {
+          const first = Array.from({ length: 100 }, (_, i) =>
+            pull(i + 1, i === 4 ? "c0ffee" : "0ther"),
+          );
+          return { status: 200, data: first as T };
+        }
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/pulls?state=open&per_page=100&page=2"
+        ) {
+          return { status: 200, data: [pull(101, "c0ffee")] as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.openAt("ledger", "c0ffee")).toEqual(["5", "101"]);
+  });
+});

@@ -3,6 +3,7 @@ import {
   type EventLog,
   type LogEvent,
   type NotAccepted,
+  onChecked,
   onMerge,
   onPullRequest,
   type PostedTask,
@@ -527,6 +528,7 @@ describe("acting on a pull request", () => {
       state: "passed",
       url: "https://github.com/commons/ledger/actions/runs/1",
     }),
+    openAt: async () => [],
   });
   const log: EventLog = { read: async () => [], append: async () => {} };
 
@@ -742,6 +744,16 @@ describe("acting on a pull request", () => {
     };
     await onPullRequest("ledger", "7", running, { ...held, post: async () => {} }, log, clock);
     expect([merged, refusals]).toEqual([[], []]);
+  });
+
+  it("acts on the open pull requests at a commit once the project's checks finish on it", async () => {
+    const merged: string[] = [];
+    const atCommit: PullRequests = {
+      ...submitting(merged),
+      openAt: async (_project, commit) => (commit === "c0ffee" ? ["7"] : []),
+    };
+    await onChecked("ledger", "c0ffee", atCommit, { ...held, post: async () => {} }, log, clock);
+    expect(merged).toEqual(["7"]);
   });
 
   it("merges a pull request whose feedback signal it can read", async () => {

@@ -268,6 +268,37 @@ export class FakeGitHub
     return String(this.pullRequests.length);
   }
 
+  /** The project's open pull requests whose head is the commit. */
+  async openAt(project: string, commit: string): Promise<string[]> {
+    return this.pullRequests.flatMap(({ project: of }, index) => {
+      const number = String(index + 1);
+      return of === project &&
+        `head-of-${number}` === commit &&
+        !this.mergedPullRequests.includes(number)
+        ? [number]
+        : [];
+    });
+  }
+
+  /** The pull request that carries the feedback signal. */
+  pullRequestFor(project: string, feedbackSignal: string): string {
+    const index = this.pullRequests.findIndex(
+      (opened) =>
+        opened.project === project &&
+        opened.files.some((file) => file.path === `feedback/${feedbackSignal}.md`),
+    );
+    if (index === -1) throw new Error(`No pull request carries ${feedbackSignal}`);
+    return String(index + 1);
+  }
+
+  /** The project's tests finish on the pull request's commit, passing or failing. */
+  finishTests(pullRequest: string, passed: boolean): string {
+    const opened = this.opened(pullRequest);
+    opened.testsRunning = false;
+    opened.testsFail = !passed;
+    return `head-of-${pullRequest}`;
+  }
+
   /** The project's own check on a pull request's commit: its tests pass unless a scenario says. */
   async check(_project: string, head: string) {
     const number = head.replace(/^head-of-/, "");

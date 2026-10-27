@@ -4,6 +4,7 @@ import { whatToActOn } from "./event.ts";
 import {
   checkMain,
   checkProtection,
+  onChecked,
   onClaim,
   onLeaseCheck,
   onMerge,
@@ -13,8 +14,9 @@ import {
 
 /**
  * The GitHub Action: a member's pull request, a push to a project's main branch, a comment, or the
- * hourly lease check. It wires Divlab to GitHub and nothing more; what Divlab does is decided in
- * `onPullRequest`, `onMerge`, `onClaim`, `onRelease` and `onLeaseCheck`.
+ * hourly lease check, or the project's checks finishing. It wires Divlab to GitHub and nothing
+ * more; what Divlab does is decided in `onPullRequest`, `onMerge`, `onClaim`, `onRelease`,
+ * `onLeaseCheck` and `onChecked`.
  */
 const [owner, project] = (process.env.GITHUB_REPOSITORY ?? "").split("/");
 const token = process.env.INPUT_TOKEN;
@@ -37,6 +39,8 @@ try {
     await onRelease(project, run.release, github, github, clock);
   } else if ("leases" in run) {
     await onLeaseCheck(project, github, github, clock);
+  } else if ("checked" in run) {
+    await onChecked(project, run.checked, github, github, github, clock);
   } else {
     await onMerge(project, github, github, github, clock);
   }

@@ -487,3 +487,10 @@ When(
 Then("the member has been told nothing about their work yet", function (this: AnarresWorld) {
   return this.anarres.memberIsToldNothing();
 });
+
+When(
+  "the project's tests pass on the member's {role} work on {string}",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.testsFinish({ role, module }, true);
+  },
+);

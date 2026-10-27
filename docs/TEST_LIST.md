@@ -531,8 +531,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         checks workflow); the adapter reads GitHub Actions' run of `project-tests`;
   - [x] while the check is still running, or has not started, Divlab does nothing and says
         nothing (in-process; `@sandbox-wip`);
-  - [ ] Divlab acts again when the project's checks workflow completes, on the open pull
-        requests at that commit;
+  - [x] Divlab acts again when the project's checks workflow completes (`workflow_run`), on the
+        open pull requests at that commit, found by their head, as GitHub's event names none for
+        a pull request from a fork (in-process; `@sandbox-wip`);
+  - [ ] the template's Divlab workflow runs when the checks workflow completes, and only then;
   - [ ] a check counts only if GitHub Actions made it in the project's repository, by the
         template's checks workflow, for the commit Divlab merges;
   - [ ] other roles' work needs no check;

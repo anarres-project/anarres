@@ -473,6 +473,22 @@ export class Anarres {
     });
   }
 
+  /** The project's tests finish on the member's latest work for the role and module. */
+  async testsFinish(work: Work, passed: boolean) {
+    const feedbackSignal = this.feedbackSignals.get(workOn(this.aliased(work))) ?? "";
+    await this.driver.testsFinish(
+      {
+        impediments: [],
+        verdict: "pass",
+        ...this.aliased(work),
+        project: this.project,
+        member: this.aliases.of(DEFAULT_MEMBER),
+        feedbackSignal,
+      },
+      passed,
+    );
+  }
+
   /** The member pushes more work to their draft; it carries the same feedback signal. */
   async memberPushesToDraft(member: string, work: Work) {
     const feedbackSignal = this.feedbackSignals.get(workOn(this.aliased(work))) ?? "";

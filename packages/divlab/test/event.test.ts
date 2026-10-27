@@ -106,6 +106,19 @@ describe("what Divlab acts on, from the event that started its run", () => {
     expect(whatToActOn("workflow_dispatch", { inputs: null })).toEqual({ leases: true });
   });
 
+  it("acts on the pull requests at a commit when the project's checks finish on it", () => {
+    const sha = "0123456789abcdef0123456789abcdef01234567";
+    expect(whatToActOn("workflow_run", { workflow_run: { head_sha: sha } })).toEqual({
+      checked: sha,
+    });
+  });
+
+  it("refuses a checks event that does not name its commit as GitHub names one", () => {
+    expect(() =>
+      whatToActOn("workflow_run", { workflow_run: { head_sha: "../pulls/7/merge" } }),
+    ).toThrow("The checks event does not say which commit it is about");
+  });
+
   it("refuses to act on an event it was not made for", () => {
     expect(() => whatToActOn("discussion", {})).toThrow("Divlab does not act on discussion events");
   });

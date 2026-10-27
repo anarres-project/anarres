@@ -186,6 +186,17 @@ governance scenarios run alone.
   scenario loses `@wip` (`@sandbox-wip`). Still not pushed: in the sandbox, Coding work would
   now wait for a check that never comes, until the template has the checks workflow and Divlab
   acts again when it completes.
+- Scenario: "Coding work is merged once the project's tests pass on it" (`@wip`,
+  `NotYetImplemented` at the driver).
+- RED: acts on the pull requests at a commit when the project's checks finish on it -> "Divlab
+  does not act on workflow_run events". GREEN (628). RED: refuses a checks event that does not
+  name its commit as GitHub names one -> `expected [Function] to throw an error`. GREEN (629).
+- RED: acts on the open pull requests at a commit once the project's checks finish ->
+  `onChecked is not a function`, then `expected [] to deeply equal [ '7' ]`. GREEN (630): the
+  port gains `openAt`. RED: the adapter's open pull requests at a commit are those whose head it
+  is, from every page -> `adapter.openAt is not a function`, then `expected [] to deeply equal [
+  '5', '101' ]`. GREEN (631). The Action sends a checks run to `onChecked`.
+- The scenario passes in-process and loses `@wip` (`@sandbox-wip`).
 
 ---
 

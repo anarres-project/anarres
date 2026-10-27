@@ -8529,6 +8529,16 @@ var GitHubAdapter = class {
     if (run?.status !== "completed") return { state: "running", url };
     return { state: run.conclusion === "success" ? "passed" : "failed", url };
   }
+  /**
+   * The open pull requests whose head is the commit. GitHub's checks event names none for a pull
+   * request from a fork, as members' are, so they are found by their head.
+   */
+  async openAt(project, commit) {
+    const open = await this.everyPage(
+      `${this.repo(project)}/pulls?state=open`
+    );
+    return open.filter((pull) => pull.head.sha === commit).map((pull) => String(pull.number));
+  }
   async refuse(project, pullRequest, reason) {
     await this.comment(project, pullRequest, commentForRefusal(reason));
   }

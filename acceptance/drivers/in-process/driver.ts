@@ -14,6 +14,7 @@ import {
   CLAIM,
   checkMain,
   checkProtection,
+  onChecked,
   onClaim,
   onLeaseCheck,
   onMerge,
@@ -512,6 +513,14 @@ export class InProcessDriver implements Driver {
       this.github,
       this.clock,
     );
+    await this.afterRun(work.project);
+  }
+
+  /** The checks workflow's completion starts Divlab's run for the commit, as on GitHub. */
+  async testsFinish(work: AcceptedWork, passed: boolean): Promise<void> {
+    const pullRequest = this.github.pullRequestFor(work.project, work.feedbackSignal);
+    const commit = this.github.finishTests(pullRequest, passed);
+    await onChecked(work.project, commit, this.github, this.github, this.github, this.clock);
     await this.afterRun(work.project);
   }
 
