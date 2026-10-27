@@ -146,6 +146,13 @@ governance scenarios run alone.
   deeply equal [ Array(1) ]`. GREEN (621 passed). Then, since the member's CLI makes its requests
   the same way and the plugin reads what the CLI prints: RED, it says so apart from what it
   prints (standard error) -> the same failure; GREEN (637 in the gate).
+- The 31f80d2 sandbox run finished inside the limit (38 minutes, 80 scenarios): 77 passed.
+  GitHub's server errors were waited out and now say so in the log. Three failures, all the
+  harness's: a run cut off earlier had left the second account recorded as established, which
+  "putting records back as found" then kept (two scenarios saw Alice as established); and the
+  escalation scenario's second unnamed member needed a Reviewer's trust. Each run now sets the
+  governance file to its standing state before its workers start, and a second unnamed member is
+  recorded at the trust its role needs, in a scenario tagged `@governance`.
 
 ---
 

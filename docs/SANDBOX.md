@@ -67,8 +67,9 @@ standing record, so it may take any role. A second account (`anarres-sandbox-mem
 first member a scenario names, and a third (`anarres-sandbox-member-c`) the next; neither is in the
 governance file unless a scenario puts it there, so a named member is new unless the scenario says
 otherwise. A member takes one role in a module, so work by unnamed members in two roles of one
-module needs a second unnamed member, played by an account left over, who may take only roles a
-new member may. Each member must be a different account, or Divlab would see them as one person and,
+module needs a second unnamed member, played by an account left over. For a role a new member may
+not take, the driver records that account at the level needed, so the scenario changes the
+governance file and is tagged `@governance`. Each member must be a different account, or Divlab would see them as one person and,
 rightly, refuse what one person may not do twice (one role per module, decision 0007). A
 scenario with four members fails at once with `HarnessNotYetBuilt` and is tagged
 `@sandbox-wip`. A claim or a release Divlab refuses ends when Divlab replies; one it grants,
@@ -82,6 +83,9 @@ variable points Divlab at, keyed by the account playing the member. Trust belong
 and every worker's scenarios share the accounts, so a scenario tagged `@governance` runs alone:
 it starts only when no other scenario is running, nothing starts while it runs, and it puts each
 account's record back as it found it when it ends, pass or fail, so the standing record stays.
+A run its job's time limit cuts off never gets that far, so each run starts by setting the file
+to its standing state (`acceptance/drivers/sandbox/reset-governance.ts`), once, before its workers
+start.
 
 **Each check** ("the only task ready for parser is a Coding task") reads GitHub as a member or a
 PDC coordinator would: open task issues, escalation issues, finished-module issues, and the event

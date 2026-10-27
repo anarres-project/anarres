@@ -91,8 +91,8 @@ The sandbox's projects read members' trust levels from a governance file of the 
 never from this repository's: an organisation variable, `ANARRES_GOVERNANCE`, names the
 repository in the sandbox organisation that holds `governance/members.json` (decision 0007). It
 records the account of `ANARRES_SANDBOX_TOKEN` as trusted, a standing record: that account plays
-the members a scenario does not name, who may take any role. Scenarios that change the file put it
-back as they found it.
+the members a scenario does not name, who may take any role. Each sandbox run sets the file to
+that before it starts, and scenarios that change it put it back as they found it.
 
 The sandbox organisation itself needs, under Settings → Actions → General:
 

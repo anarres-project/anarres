@@ -24,7 +24,7 @@ import {
   taskFolder,
   taskRecord,
 } from "@anarres/cli";
-import { trustAllows } from "@anarres/core";
+import { TRUST_LEVELS, trustAllows } from "@anarres/core";
 import {
   type LogEvent,
   type RoutingEvent,
@@ -898,12 +898,15 @@ export class SandboxDriver implements Driver {
 
   /**
    * An unnamed member plays the sandbox's own account, which its governance file records as
-   * trusted (docs/SANDBOX.md). A second plays another account, at the level a new member has.
+   * trusted (docs/SANDBOX.md). A second plays another account, new unless recorded otherwise:
+   * for a role a new member may not take, it is recorded at the level needed, so its scenario
+   * changes the governance file and runs alone (`@governance`).
    */
   async trustFor(member: string, role: string): Promise<void> {
     const account = await this.playAs(member, { unnamed: true });
     if (account === this.github || trustAllows("new", roleId(role))) return;
-    throw new HarnessNotYetBuilt(`a second unnamed member trusted for ${role}`);
+    const level = TRUST_LEVELS.find((level) => trustAllows(level, roleId(role)));
+    if (level) await this.setTrustLevel(member, level);
   }
 
   /** Divlab's App closes the module's open tasks and posts the role's, as its runs would. */
@@ -1401,6 +1404,24 @@ export class SandboxDriver implements Driver {
    * Deletes what interrupted runs left behind in both sandbox organisations, before a run starts,
    * so leftovers never build up (nor collide with this run's names).
    */
+  /**
+   * The sandbox's governance file as it stands between runs: only the sandbox token's account,
+   * trusted, as it plays unnamed members. A run its job's time limit cut off never puts back what
+   * its scenarios recorded, so each run starts from this (seen 2026-10-27).
+   */
+  static async resetGovernance(): Promise<void> {
+    const { org, token } = sandboxSettings();
+    const github = new GitHubApi(token);
+    const where = `repos/${org}/${SANDBOX_GOVERNANCE}/contents/governance/members.json`;
+    const { sha } = await github.call<{ sha: string }>("GET", where);
+    const standing = { members: { [await loginOf(github)]: { level: "trusted" } } };
+    await github.call("PUT", where, {
+      message: "Put the sandbox's members back as they stand between runs",
+      content: Buffer.from(`${JSON.stringify(standing, null, 2)}\n`).toString("base64"),
+      sha,
+    });
+  }
+
   static async sweep(): Promise<void> {
     const { org, token, membersOrg, membersToken } = sandboxSettings();
     for (const [owner, github] of [

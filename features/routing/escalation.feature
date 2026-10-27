@@ -17,6 +17,9 @@ Feature: Divlab escalates a role that keeps being sent back
     When a member's Coding work on "parser" is accepted with a fail verdict, reporting test failures
     Then the only task ready for "parser" is a Coding task
 
+  # Its unnamed members take two roles in one module: in the sandbox the second is recorded at
+  # the trust a Reviewer needs, a change to the governance file.
+  @governance
   Scenario: The count starts again once the role's work passes
     Given a project with a module "parser"
     And a member's Coding work on "parser" has been sent back for test failures 3 times
