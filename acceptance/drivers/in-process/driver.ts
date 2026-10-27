@@ -34,6 +34,7 @@ import type {
 import {
   feedbackSignalFile,
   inScenarioWords,
+  otherFiles,
   roleId,
   roleName,
   signalName,
@@ -501,6 +502,20 @@ export class InProcessDriver implements Driver {
       draft: true,
       task: id,
     });
+    await onPullRequest(
+      work.project,
+      pullRequest,
+      this.github,
+      this.github,
+      this.github,
+      this.clock,
+    );
+    await this.afterRun(work.project);
+  }
+
+  /** The push to the draft's branch starts Divlab's pull request run again, as on GitHub. */
+  async pushToDraft(work: AcceptedWork): Promise<void> {
+    const pullRequest = this.github.pushToDraft(work.project, work.member, otherFiles(work));
     await onPullRequest(
       work.project,
       pullRequest,

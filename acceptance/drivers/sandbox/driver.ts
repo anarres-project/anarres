@@ -1191,6 +1191,10 @@ export class SandboxDriver implements Driver {
    * The member's CLI submits a draft, as `anarres submit --draft` does, early in the work.
    * Divlab never merges a draft; the driver waits for its record of the activity.
    */
+  async pushToDraft(_work: AcceptedWork): Promise<void> {
+    throw new HarnessNotYetBuilt("a push to a member's draft, waited on until Divlab records it");
+  }
+
   async submitDraftWork(work: AcceptedWork): Promise<void> {
     const { number, task: issue } = await this.submitThroughCli(work, { draft: true });
     run.submitted.push({

@@ -463,6 +463,20 @@ export class Anarres {
     });
   }
 
+  /** The member pushes more work to their draft; it carries the same feedback signal. */
+  async memberPushesToDraft(member: string, work: Work) {
+    const feedbackSignal = this.feedbackSignals.get(workOn(this.aliased(work))) ?? "";
+    await this.driver.pushToDraft({
+      impediments: [],
+      verdict: "pass",
+      ...this.aliased(work),
+      project: this.project,
+      member: this.member(member),
+      feedbackSignal,
+      changesTests: true,
+    });
+  }
+
   async timePasses(hours: number) {
     await this.driver.timePasses(hours);
   }

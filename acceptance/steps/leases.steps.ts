@@ -10,6 +10,13 @@ When("Divlab checks the project's leases", function (this: AnarresWorld) {
 });
 
 When(
+  "{word} pushes more draft {role} work on {string}",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.memberPushesToDraft(member, { role, module });
+  },
+);
+
+When(
   "{word} submits draft {role} work on {string}",
   function (this: AnarresWorld, member: string, role: string, module: string) {
     return this.anarres.memberSubmitsDraftWork(member, { role, module });

@@ -310,6 +310,16 @@ export class FakeGitHub
       .flatMap((pullRequest) => pullRequest.files.map((file) => file.path));
   }
 
+  /** The member's latest draft from a task's branch, and the files a push adds to it. */
+  pushToDraft(project: string, member: string, files: { path: string; text: string }[]): string {
+    const number = this.pullRequestsOpenBy(project, member)
+      .filter((pullRequest) => pullRequest.draft)
+      .at(-1)?.number;
+    if (number === undefined) throw new Error(`${member} has no draft open in ${project}`);
+    this.opened(number).files.push(...files);
+    return number;
+  }
+
   private opened(number: string) {
     const pullRequest = this.pullRequests[Number(number) - 1];
     if (!pullRequest) throw new Error(`There is no pull request ${number}`);

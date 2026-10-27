@@ -121,6 +121,9 @@ governance scenarios run alone.
 - Passed first time, kept as a regression scenario: "Work for a module that is already done is
   not merged" (Bernard, 2026-10-21): work naming the module's finished task is refused, since
   nobody holds a closed task. The drivers can now name a finished task in a feedback signal.
+- Passed first time, kept as a regression scenario: "Each push to a draft extends the lease too"
+  (the pull request workflow runs on `synchronize`, and Divlab records the draft as activity
+  again). Without the push the same steps fail, so it shows the push. In-process only.
 
 ---
 

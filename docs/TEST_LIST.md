@@ -316,7 +316,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         anyone else renews nothing;
   - [x] Divlab runs again when a member marks a draft ready, and acts on it as on any work;
   - [x] the sandbox shows a draft is not merged and is recorded;
-  - [ ] each push to a draft is activity too (the workflow runs on it; to be shown);
+  - [x] each push to a draft is activity too: the workflow runs on it (`synchronize`), and
+        Divlab records the draft again (in-process; `@sandbox-wip`, GitHub's clock);
   - [ ] work is merged only from the member Divlab shows holding the task it is for, so the
         checks made when a task is claimed (eligibility, conflict of interest) hold for the work
         too (Bernard, 2026-10-27; before, Divlab checked the holder for drafts only):
