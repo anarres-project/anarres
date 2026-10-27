@@ -30,12 +30,17 @@ installs both of the project template's workflows, with Divlab pinned to the com
 a change to Divlab is tested before any project uses it. A worker's scenarios share its
 repository, and the four repositories' Divlab runs go at once; each scenario
 gives its modules names of its own (`parser` becomes `parser-s17`), so no scenario sees another's
-tasks, alerts or records.
+tasks, alerts or records. Each scenario starts its modules in the worker's repository as a project
+does, with Divlab's App: each gets its first task, Specification, ready.
 
 **Each piece of work a scenario accepts** ("a member's Coding work on parser is accepted with a
 fail verdict, reporting test failures"):
 
-1. The driver finds the ready task for that role and module, as a member's plugin will.
+1. Divlab accepts work only from the member holding its task, so the member claims it first (see
+   below). A scenario that begins a module partway along its pipeline (a Reviewer's work in a new
+   project) has the module set up as it would stand there: Divlab's App closes the module's open
+   tasks and posts the task for the work's role. Walking the pipeline instead would cost several
+   Divlab runs a scenario.
 2. It writes the member's feedback signal, naming that task, on a branch of the member's fork of
    the project, and opens a pull request from it, as a real member's plugin will. The forks live
    in a second sandbox organisation playing the members; each project is forked the first time
@@ -56,9 +61,14 @@ step fails with GitHub's own error messages and a link to the run.
 issue, made with the sandbox token, as a member's plugin will make it. GitHub starts Divlab's claim
 workflow, and the driver waits until the issue shows the task claimed and assigned.
 
-**Three accounts play the members**: the sandbox's own token a scenario's first member, a second
-account (`anarres-sandbox-member-b`) its second, and a third (`anarres-sandbox-member-c`) its
-third. Each member must be a different account, or Divlab would see them as one person and,
+**Three accounts play the members.** The sandbox's own token's account plays the members a scenario
+does not name ("a member's Coding work"); the sandbox's governance file records it as trusted, a
+standing record, so it may take any role. A second account (`anarres-sandbox-member-b`) plays the
+first member a scenario names, and a third (`anarres-sandbox-member-c`) the next; neither is in the
+governance file unless a scenario puts it there, so a named member is new unless the scenario says
+otherwise. A member takes one role in a module, so work by unnamed members in two roles of one
+module needs a second unnamed member, played by an account left over, who may take only roles a
+new member may. Each member must be a different account, or Divlab would see them as one person and,
 rightly, refuse what one person may not do twice (one role per module, decision 0007). A
 scenario with four members fails at once with `HarnessNotYetBuilt` and is tagged
 `@sandbox-wip`. A claim or a release Divlab refuses ends when Divlab replies; one it grants,
@@ -70,8 +80,8 @@ winning under real GitHub ordering, not a chosen order.
 governance file, `anarres-sandbox/governance`, which the organisation's `ANARRES_GOVERNANCE`
 variable points Divlab at, keyed by the account playing the member. Trust belongs to an account,
 and every worker's scenarios share the accounts, so a scenario tagged `@governance` runs alone:
-it starts only when no other scenario is running, nothing starts while it runs, and it takes out
-what it recorded when it ends, pass or fail.
+it starts only when no other scenario is running, nothing starts while it runs, and it puts each
+account's record back as it found it when it ends, pass or fail, so the standing record stays.
 
 **Each check** ("the only task ready for parser is a Coding task") reads GitHub as a member or a
 PDC coordinator would: open task issues, escalation issues, finished-module issues, and the event

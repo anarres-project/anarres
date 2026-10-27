@@ -9,6 +9,7 @@ import {
   submit,
   taskFolder,
 } from "@anarres/cli";
+import { TRUST_LEVELS, trustAllows, trustLevelOf } from "@anarres/core";
 import {
   CLAIM,
   checkMain,
@@ -20,6 +21,7 @@ import {
   onRelease,
   routingDecisions,
   setUpProject,
+  startModule,
 } from "@anarres/divlab";
 import type {
   AcceptedWork,
@@ -56,6 +58,7 @@ export class InProcessDriver implements Driver {
   ): Promise<void> {
     this.github.repositories.set(project, modules);
     if (!options.unprotected) await setUpProject(project, this.github);
+    for (const module of modules) await startModule(project, module, this.github);
   }
 
   /** The member submits the work and Divlab merges it: accepted work has been merged. */
@@ -320,6 +323,25 @@ export class InProcessDriver implements Driver {
     return this.github
       .claimedWithoutClaimAlerts(project)
       .map(({ role, module }) => ({ role: roleName(role), module }));
+  }
+
+  async trustFor(member: string, role: string): Promise<void> {
+    const recorded = trustLevelOf(await this.github.governanceFile(), member);
+    if (trustAllows(recorded, roleId(role))) return;
+    const level = TRUST_LEVELS.find((level) => trustAllows(level, roleId(role)));
+    if (level) this.github.setTrustLevel(member, level);
+  }
+
+  async setUpModuleAt(task: { project: string; role: string; module: string }): Promise<void> {
+    for (const open of this.github.openTasksOf(task.project)) {
+      if (open.module === task.module) await this.github.close(task.project, open.id);
+    }
+    await this.github.post({
+      project: task.project,
+      role: roleId(task.role),
+      module: task.module,
+      decidedOn: `feedback/${task.module}-earlier-work.md`,
+    });
   }
 
   async setTrustLevel(member: string, level: string): Promise<void> {

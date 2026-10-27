@@ -4,6 +4,8 @@ import type { Aliases } from "./aliases.ts";
 
 /** Whoever does the work a scenario does not name a member for: never one it names. */
 const DEFAULT_MEMBER = "someone";
+/** Members a scenario does not name, one for each role in a module: a member takes only one. */
+const UNNAMED_MEMBERS = [DEFAULT_MEMBER, "someone else"];
 
 type Work = { role: string; module: string };
 
@@ -53,11 +55,12 @@ export class Anarres {
     this.signalsWritten += 1;
     const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
     this.feedbackSignals.set(workOn(this.aliased(work)), feedbackSignal);
+    const member = await this.holderOf(work);
     await this.driver.interruptAfterMerging({
       impediments: [],
       ...this.aliased(work),
       project: this.project,
-      member: this.aliases.of(DEFAULT_MEMBER),
+      member,
       feedbackSignal,
     });
   }
@@ -66,11 +69,12 @@ export class Anarres {
     this.signalsWritten += 1;
     const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
     this.feedbackSignals.set(workOn(this.aliased(work)), feedbackSignal);
+    const member = await this.holderOf(work);
     await this.driver.interruptAfterRecording({
       impediments: [],
       ...this.aliased(work),
       project: this.project,
-      member: this.aliases.of(DEFAULT_MEMBER),
+      member,
       feedbackSignal,
     });
   }
@@ -114,8 +118,9 @@ export class Anarres {
 
   async memberHasWorkAccepted(
     work: Work & { verdict: string; impediments?: string[] },
-    member = DEFAULT_MEMBER,
+    named?: string,
   ) {
+    const member = await this.holderOf(work, named);
     // Every piece of work has a feedback signal of its own.
     this.signalsWritten += 1;
     const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
@@ -124,15 +129,17 @@ export class Anarres {
       impediments: [],
       ...this.aliased(work),
       project: this.project,
-      member: this.member(member),
+      member,
       feedbackSignal,
     });
   }
 
   /** Several members open pull requests together, before Divlab has decided on any of them. */
   async membersSubmitWorkAtOnce(works: (Work & { verdict: string })[]) {
+    const members: string[] = [];
+    for (const work of works) members.push(await this.holderOf(work));
     await this.driver.submitWorkAtOnce(
-      works.map((work) => {
+      works.map((work, i) => {
         this.signalsWritten += 1;
         const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
         this.feedbackSignals.set(workOn(this.aliased(work)), feedbackSignal);
@@ -140,7 +147,7 @@ export class Anarres {
           impediments: [],
           ...this.aliased(work),
           project: this.project,
-          member: this.aliases.of(DEFAULT_MEMBER),
+          member: members[i] ?? "",
           feedbackSignal,
         };
       }),
@@ -160,6 +167,7 @@ export class Anarres {
       partial?: boolean;
     },
   ) {
+    const member = await this.holderOf(work);
     this.signalsWritten += 1;
     const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
     this.feedbackSignals.set(workOn(this.aliased(work)), feedbackSignal);
@@ -167,9 +175,46 @@ export class Anarres {
       impediments: [],
       ...this.aliased(work),
       project: this.project,
-      member: this.aliases.of(DEFAULT_MEMBER),
+      member,
       feedbackSignal,
     });
+  }
+
+  /**
+   * Divlab merges work only from the member holding its task, so whoever does the work claims it
+   * first. A scenario that begins a module partway along its pipeline has the module set up as it
+   * would stand there. Work a scenario names no member for is done by an unnamed member trusted as
+   * far as its role needs. Returns the member, as the driver knows them.
+   */
+  private async holderOf(work: Work, named?: string): Promise<string> {
+    const name = named ?? this.unnamedMemberFor(work);
+    const member = this.member(name);
+    const { role, module } = this.aliased(work);
+    if (named === undefined) await this.driver.trustFor(member, role);
+    const held = await this.driver.claimedTasks(this.project);
+    if (
+      held.some((task) => task.role === role && task.module === module && task.member === member)
+    ) {
+      return member;
+    }
+    const ready = await this.driver.readyTasks(this.project);
+    if (!ready.some((task) => task.role === role && task.module === module)) {
+      await this.driver.setUpModuleAt({ project: this.project, role, module });
+    }
+    await this.memberHasClaimed(name, { role: work.role, module: work.module });
+    return member;
+  }
+
+  /** The role each unnamed member has taken in each module. */
+  private readonly unnamedRoles = new Map<string, string>();
+
+  private unnamedMemberFor({ role, module }: Work): string {
+    const name = UNNAMED_MEMBERS.find((name) =>
+      [role, undefined].includes(this.unnamedRoles.get(`${name} in ${module}`)),
+    );
+    if (name === undefined) throw new Error(`No unnamed member is left for ${role} on ${module}`);
+    this.unnamedRoles.set(`${name} in ${module}`, role);
+    return name;
   }
 
   private directChangeTook: boolean | undefined;

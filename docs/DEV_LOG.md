@@ -83,6 +83,18 @@ governance scenarios run alone.
 - Wired into the in-process driver, the scenario passed but 37 others failed: they begin a module
   partway along its pipeline (a Reviewer's work in a new project), so its first task was left
   ready. Unwired until the scenarios set the module up as it would stand (test list).
+- Holding the task means meeting the claim's checks too: a member takes one role in a module, and
+  Architecture, Reviewer, Security & Quality and Programme Architect need more than a new member.
+  The DSL now has whoever does a piece of work claim its task first; a member a scenario does not
+  name is one of two unnamed members, one for each role in a module, trusted as far as the role
+  needs. A module partway along is set up as it would stand: its open tasks closed and the task
+  for the work's role posted. No scenario needs more than the sandbox's three accounts.
+- In the sandbox, the sandbox token's account plays unnamed members and is recorded as trusted in
+  the sandbox's own governance file, a standing record (Bernard agreed, with a run about 10
+  minutes longer); named members play the other two accounts, new unless a scenario says
+  otherwise. Governance scenarios now put back each record as they found it, not delete it.
+- Rewired: in-process, the new scenario passes and loses `@wip`; two scenarios that said no task
+  was ready for an untouched module now say its first task, Specification, is.
 
 ---
 

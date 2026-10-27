@@ -24,12 +24,14 @@ import {
   taskFolder,
   taskRecord,
 } from "@anarres/cli";
+import { trustAllows } from "@anarres/core";
 import {
   type LogEvent,
   type RoutingEvent,
   routingDecisions,
   setUpProject,
   signalOf,
+  startModule,
 } from "@anarres/divlab";
 import { GitHubAdapter, requestGitHub } from "@anarres/github";
 import type {
@@ -94,6 +96,8 @@ type Issue = {
 export class SandboxDriver implements Driver {
   private readonly github: GitHubApi;
   private readonly divlab: GitHubAdapter;
+  /** GitHub as Divlab's App acts on it, for what Divlab does outside its runs. */
+  private readonly asDivlab: GitHubAdapter;
   private readonly org: string;
   private readonly token: string;
   /** The second sandbox organisation, playing the members: their forks live there. */
@@ -112,6 +116,12 @@ export class SandboxDriver implements Driver {
     this.token = token;
     this.github = new GitHubApi(token);
     this.divlab = new GitHubAdapter({ owner: org, token, request: countedRequest });
+    this.asDivlab = new GitHubAdapter({
+      owner: org,
+      token,
+      app: DIVLAB_APP_ID,
+      request: countedRequest,
+    });
     this.membersOrg = membersOrg;
     this.members = new GitHubApi(membersToken);
   }
@@ -122,11 +132,17 @@ export class SandboxDriver implements Driver {
    */
   async createProject(
     project: string,
-    _modules: string[],
+    modules: string[],
     options: { unprotected?: boolean } = {},
   ): Promise<void> {
     this.projectOfScenario = project;
-    if (run.expected.has(project)) return;
+    if (!run.expected.has(project)) await this.makeProject(project, options);
+    // The worker's scenarios share its project, and each starts modules of its own there.
+    for (const module of modules) await startModule(project, module, this.asDivlab);
+    this.expectedFor(project).ready += modules.length;
+  }
+
+  private async makeProject(project: string, options: { unprotected?: boolean }): Promise<void> {
     await this.github.call("POST", `orgs/${this.org}/repos`, {
       name: project,
       private: false,
@@ -144,13 +160,7 @@ export class SandboxDriver implements Driver {
       );
     }
     // Set up as a project is, once the workflows are in: from now on only Divlab changes main.
-    const divlab = new GitHubAdapter({
-      owner: this.org,
-      token: this.token,
-      app: DIVLAB_APP_ID,
-      request: countedRequest,
-    });
-    if (!options.unprotected) await setUpProject(project, divlab);
+    if (!options.unprotected) await setUpProject(project, this.asDivlab);
     run.expected.set(project, {
       ready: 0,
       claimed: 0,
@@ -706,16 +716,19 @@ export class SandboxDriver implements Driver {
    * second account for its second. Divlab would see two members played by one account as one
    * person, and rightly refuse what one person may not do twice.
    */
-  private async playAs(member: string): Promise<GitHubApi> {
+  private async playAs(member: string, { unnamed = false } = {}): Promise<GitHubApi> {
     const playing = this.played.get(member);
     if (playing) return playing;
     const { secondMemberToken, thirdMemberToken } = sandboxSettings();
-    const accounts = [
-      this.github,
-      ...(secondMemberToken ? [new GitHubApi(secondMemberToken)] : []),
-      ...(secondMemberToken && thirdMemberToken ? [new GitHubApi(thirdMemberToken)] : []),
+    const others = [
+      ...(secondMemberToken ? [secondMemberToken] : []),
+      ...(secondMemberToken && thirdMemberToken ? [thirdMemberToken] : []),
     ];
-    const account = accounts[this.played.size];
+    // The sandbox's own account is kept for unnamed members: named ones are new unless told.
+    const tokens = unnamed ? [this.token, ...others] : [...others, this.token];
+    const taken = [...this.played.values()].map((account) => account.token);
+    const token = tokens.find((token) => !taken.includes(token));
+    const account = token === this.token ? this.github : token && new GitHubApi(token);
     if (!account) {
       throw new HarnessNotYetBuilt(
         `an account for the scenario's member number ${this.played.size + 1}`,
@@ -848,9 +861,39 @@ export class SandboxDriver implements Driver {
   async setTrustLevel(member: string, level: string): Promise<void> {
     const login = await loginOf(await this.playAs(member));
     await this.changeGovernance((members) => {
+      this.found(members, login);
       members[login] = { ...members[login], level };
     });
-    this.governanceTouched.add(login);
+  }
+
+  /**
+   * An unnamed member plays the sandbox's own account, which its governance file records as
+   * trusted (docs/SANDBOX.md). A second plays another account, at the level a new member has.
+   */
+  async trustFor(member: string, role: string): Promise<void> {
+    const account = await this.playAs(member, { unnamed: true });
+    if (account === this.github || trustAllows("new", roleId(role))) return;
+    throw new HarnessNotYetBuilt(`a second unnamed member trusted for ${role}`);
+  }
+
+  /** Divlab's App closes the module's open tasks and posts the role's, as its runs would. */
+  async setUpModuleAt(task: { project: string; role: string; module: string }): Promise<void> {
+    const expected = this.expectedFor(task.project);
+    const inModule = (issue: Issue) => labelValue(issue, "module:") === task.module;
+    for (const listing of ["ready", "claimed"] as const) {
+      for (const issue of (await this.settled(task.project, listing)).filter(inModule)) {
+        await this.asDivlab.close(task.project, String(issue.number));
+        expected[listing] -= 1;
+        run.closed.add(issueKey(task.project, issue.number));
+      }
+    }
+    await this.asDivlab.post({
+      project: task.project,
+      role: roleId(task.role),
+      module: task.module,
+      decidedOn: `feedback/${task.module}-earlier-work.md`,
+    });
+    expected.ready += 1;
   }
 
   /** The sandbox's governance file links the account playing `account` to the member's. */
@@ -858,21 +901,37 @@ export class SandboxDriver implements Driver {
     const owner = await loginOf(await this.playAs(member));
     const linked = await loginOf(await this.playAs(account));
     await this.changeGovernance((members) => {
+      this.found(members, owner);
       const record = members[owner] ?? {};
       members[owner] = { ...record, linked: [...(record.linked ?? []), linked] };
     });
-    this.governanceTouched.add(owner);
   }
 
-  /** The governance file as this scenario found it: the accounts it recorded are taken out. */
+  /**
+   * The governance file as this scenario found it: each account it changed is put back as it was,
+   * so the standing record of the sandbox's own account (docs/SANDBOX.md) survives.
+   */
   async restoreGovernance(): Promise<void> {
-    if (this.governanceTouched.size === 0) return;
+    if (this.governanceFound.size === 0) return;
     await this.changeGovernance((members) => {
-      for (const login of this.governanceTouched) delete members[login];
+      for (const [login, record] of this.governanceFound) {
+        if (record === undefined) delete members[login];
+        else members[login] = record;
+      }
     });
   }
 
-  private readonly governanceTouched = new Set<string>();
+  /** Each account's record as this scenario first found it, before changing it. */
+  private readonly governanceFound = new Map<
+    string,
+    { level?: string; linked?: string[] } | undefined
+  >();
+
+  private found(members: Record<string, { level?: string; linked?: string[] }>, login: string) {
+    if (this.governanceFound.has(login)) return;
+    const record = members[login];
+    this.governanceFound.set(login, record && { ...record });
+  }
 
   private async changeGovernance(
     change: (members: Record<string, { level?: string; linked?: string[] }>) => void,

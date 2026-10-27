@@ -76,7 +76,7 @@ Feature: Divlab sends failed work back to the role that can fix it
     Given a project with modules "parser" and "ledger"
     When a member's Test work on "parser" is accepted with a fail verdict, reporting an interface impediment
     Then the only task ready for "parser" is a Programme Architect task
-    And no task is ready for "ledger"
+    And the only task ready for "ledger" is a Specification task
 
   Scenario: Blocked work goes back just as failed work does
     Given a project with a module "parser"

@@ -318,14 +318,18 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] work is merged only from the member Divlab shows holding the task it is for, so the
         checks made when a task is claimed (eligibility, conflict of interest) hold for the work
         too (Bernard, 2026-10-27; before, Divlab checked the holder for drafts only):
-    - [ ] a module starts with its first task ready, Specification, so all work has a task
+    - [x] a module starts with its first task ready, Specification, so all work has a task
           (Bernard, 2026-10-27; until the Programme Architect's `modules.yaml` exists, a
           project's modules are named when it is set up). `startModule` posts it, and its issue
           says it was posted as the module began, with no decision behind it;
-    - [ ] scenarios that begin a module partway along its pipeline have the module set up as it
+    - [x] scenarios that begin a module partway along its pipeline have the module set up as it
           would stand: its earlier tasks done and the task for the work's role ready (walking
           the pipeline would cost several Divlab runs a scenario in the sandbox); the member then
-          claims it through Divlab before submitting;
+          claims it through Divlab before submitting. Work a scenario names no member for is
+          done by an unnamed member trusted as far as its role needs, one for each role in a
+          module; in the sandbox the sandbox token's account plays them, recorded as trusted in
+          the sandbox's governance file as a standing record (Bernard, 2026-10-27);
+    - [ ] the sandbox shows it (a run about 10 minutes longer, for the claims: Bernard agreed);
     - [ ] work naming no task, or a task Divlab did not post or has closed, is refused;
     - [ ] work from a member other than the task's holder is refused with a plain refusal (no
           alert unless one turns out to be needed: Bernard, 2026-10-27);

@@ -150,6 +150,13 @@ export interface Driver {
   ): Promise<{ role: string; module: string; leaseRunsOut?: string; draft?: boolean }[]>;
   /** PDC coordinators record the member at a trust level, as the governance file does. */
   setTrustLevel(member: string, level: string): Promise<void>;
+  /** The member is trusted as far as the role needs, as a member a scenario does not name is. */
+  trustFor(member: string, role: string): Promise<void>;
+  /**
+   * The module as it stands when the role's work is next: its open tasks done and a ready task
+   * for the role, as Divlab would have left them, for a scenario that begins partway along.
+   */
+  setUpModuleAt(task: { project: string; role: string; module: string }): Promise<void>;
   /** PDC coordinators link a second account to a member in the governance file. */
   linkAccount(member: string, account: string): Promise<void>;
   /** Divlab's clock moves on, as time passes for a project. */
