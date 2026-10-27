@@ -50,6 +50,11 @@ export async function requestGitHub<T>(
     if (wait === undefined || (!rateLimited && !repeatable) || attempt === ATTEMPTS) {
       return { status: response.status, data };
     }
+    // Said in the run's log, so a run that waits a long time says why; on standard error, apart
+    // from what a command prints.
+    console.error(
+      `GitHub answered ${method} ${path} with ${response.status} (${String(message ?? "")}): asking again in ${wait / 1000} s`,
+    );
     await pause(wait);
   }
 }

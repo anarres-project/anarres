@@ -7969,6 +7969,9 @@ async function requestGitHub(token, method, path, body, options = {}) {
     if (wait === void 0 || !rateLimited && !repeatable || attempt === ATTEMPTS) {
       return { status: response.status, data };
     }
+    console.error(
+      `GitHub answered ${method} ${path} with ${response.status} (${String(message ?? "")}): asking again in ${wait / 1e3} s`
+    );
     await pause(wait);
   }
 }

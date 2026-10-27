@@ -142,6 +142,10 @@ governance scenarios run alone.
   installation. Divlab says nothing while it waits, so this is not certain.
 - Bernard chose fewer scenarios in the sandbox: each routing-table outline keeps its first row
   there, and the other 24 rows are tagged `@in-process-only`. Back to four workers.
+- RED: says in the log when GitHub asks it to wait, for how long and why -> `expected [] to
+  deeply equal [ Array(1) ]`. GREEN (621 passed). Then, since the member's CLI makes its requests
+  the same way and the plugin reads what the CLI prints: RED, it says so apart from what it
+  prints (standard error) -> the same failure; GREEN (637 in the gate).
 
 ---
 

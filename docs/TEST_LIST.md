@@ -335,7 +335,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
     - [ ] the sandbox shows it. Claiming first cost far more than the 10 minutes expected (runs
           cut off at 45 minutes, 2026-10-27), so routing-table outlines keep one row in the
           sandbox and the rest run in-process only (Bernard, 2026-10-27);
-  - [ ] Divlab says in its run's log when it waits on GitHub (a rate limit, or a server error),
+  - [x] Divlab says in its run's log when it waits on GitHub (a rate limit, or a server error),
         and for how long, so a run that sits silent explains itself (2026-10-27: a run sat ten
         minutes without a word, most likely waiting out secondary limits);
     - [x] work that does not say which task it was for is refused, and its member told why;
