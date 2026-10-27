@@ -77,6 +77,9 @@ const GOVERNANCE_FILE = "governance/members.json";
 /** How many times to ask for a write GitHub's server failed without carrying out, a merge included. */
 const WRITE_ATTEMPTS = 3;
 
+/** The name of the project's own check, as the template's checks workflow gives it (decision 0010). */
+export const PROJECT_CHECK = "project-tests";
+
 export class GitHubAdapter
   implements TaskBoard, EventLog, Repository, PullRequests, ProjectRepositories
 {
@@ -721,6 +724,15 @@ export class GitHubAdapter
         throw new GitHubError("PUT", where, status, data);
       }
     }
+  }
+
+  /** The project's own check on the commit: the template's checks workflow's run (decision 0010). */
+  async check(project: string, head: string): Promise<{ state: "passed" | "failed"; url: string }> {
+    const { check_runs: runs } = await this.call<{
+      check_runs: { conclusion: string | null; html_url: string }[];
+    }>("GET", `${this.repo(project)}/commits/${head}/check-runs?check_name=${PROJECT_CHECK}`);
+    const run = runs[0];
+    return { state: run?.conclusion === "success" ? "passed" : "failed", url: run?.html_url ?? "" };
   }
 
   async refuse(project: string, pullRequest: string, reason: string): Promise<void> {

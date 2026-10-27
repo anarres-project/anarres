@@ -1,0 +1,12 @@
+Feature: Coding work passes the project's own tests
+  So that code reaches a project only once it passes the module's tests, Divlab merges Coding work
+  only when the project's own check has passed on it. Divlab never runs a project's code: the
+  project's own check does, and Divlab reads its result (decision 0010).
+
+  # Not in the sandbox yet: its projects have no checks workflow (test list, section 4).
+  @sandbox-wip
+  Scenario: Coding work whose tests fail is not merged, and the member is told why
+    Given a project with a module "parser"
+    When a member submits Coding work on "parser" whose tests fail
+    Then Divlab has not merged the member's Coding work on "parser"
+    And the member is told the project's tests failed on their work

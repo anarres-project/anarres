@@ -229,6 +229,7 @@ export class FakeGitHub
     files: { path: string; text: string }[];
     author: string;
     draft: boolean;
+    testsFail: boolean;
     task?: string;
   }[] = [];
   private readonly mergedPullRequests: string[] = [];
@@ -240,10 +241,29 @@ export class FakeGitHub
   openPullRequest(
     project: string,
     files: { path: string; text: string }[],
-    { author, draft = false, task }: { author: string; draft?: boolean; task?: string },
+    {
+      author,
+      draft = false,
+      task,
+      testsFail = false,
+    }: { author: string; draft?: boolean; task?: string; testsFail?: boolean },
   ): string {
-    this.pullRequests.push({ project, files, author, draft, ...(task ? { task } : {}) });
+    this.pullRequests.push({
+      project,
+      files,
+      author,
+      draft,
+      testsFail,
+      ...(task ? { task } : {}),
+    });
     return String(this.pullRequests.length);
+  }
+
+  /** The project's own check on a pull request's commit: its tests pass unless a scenario says. */
+  async check(_project: string, head: string) {
+    const number = head.replace(/^head-of-/, "");
+    const state: "passed" | "failed" = this.opened(number).testsFail ? "failed" : "passed";
+    return { state, url: `https://github.test/checks/${number}` };
   }
 
   /** The member's open pull requests from a task's branch: not yet merged, nor closed. */

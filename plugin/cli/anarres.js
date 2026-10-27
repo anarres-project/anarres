@@ -7993,6 +7993,7 @@ var mainCommit = (listed) => ({
 var GOVERNANCE_REPOSITORY = "anarres-project/anarres";
 var GOVERNANCE_FILE = "governance/members.json";
 var WRITE_ATTEMPTS = 3;
+var PROJECT_CHECK = "project-tests";
 var GitHubAdapter = class {
   /**
    * `app`: Divlab's GitHub App, needed only to set projects up. `request`: how requests reach
@@ -8519,6 +8520,12 @@ var GitHubAdapter = class {
         throw new GitHubError("PUT", where, status, data);
       }
     }
+  }
+  /** The project's own check on the commit: the template's checks workflow's run (decision 0010). */
+  async check(project, head) {
+    const { check_runs: runs } = await this.call("GET", `${this.repo(project)}/commits/${head}/check-runs?check_name=${PROJECT_CHECK}`);
+    const run = runs[0];
+    return { state: run?.conclusion === "success" ? "passed" : "failed", url: run?.html_url ?? "" };
   }
   async refuse(project, pullRequest, reason) {
     await this.comment(project, pullRequest, commentForRefusal(reason));

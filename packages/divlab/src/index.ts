@@ -462,6 +462,8 @@ export interface PullRequests {
   merge(project: string, pullRequest: string, head: string): Promise<string>;
   /** Divlab will not merge it: the member is told why. */
   refuse(project: string, pullRequest: string, reason: string): Promise<void>;
+  /** What the project's own check found on the commit, and where it can be seen (decision 0010). */
+  check(project: string, head: string): Promise<{ state: "passed" | "failed"; url: string }>;
 }
 
 /**
@@ -747,6 +749,18 @@ export async function onPullRequest(
       `The work changes files outside what ${ROLE_NAMES[role]} may change: ${outside.join(", ")}`,
     );
     return;
+  }
+  // Coding work is merged only once the project's own tests pass on it (decision 0010).
+  if (role === "coding") {
+    const check = await pullRequests.check(project, head);
+    if (check.state === "failed") {
+      await pullRequests.refuse(
+        project,
+        pullRequest,
+        `The project's tests failed on this work, so it is not merged: ${check.url}`,
+      );
+      return;
+    }
   }
   const events = await log.read(project);
   await log.append({

@@ -523,6 +523,10 @@ describe("acting on a pull request", () => {
     refuse: async (_project, pullRequest, reason) => {
       refusals.push(`${pullRequest}: ${reason}`);
     },
+    check: async () => ({
+      state: "passed",
+      url: "https://github.com/commons/ledger/actions/runs/1",
+    }),
   });
   const log: EventLog = { read: async () => [], append: async () => {} };
 
@@ -697,6 +701,28 @@ describe("acting on a pull request", () => {
       [],
       [
         "7: The work is for task 1, and only the member holding it can submit its work: claim a task before doing it",
+      ],
+    ]);
+  });
+
+  it("does not merge Coding work the project's tests failed on, and tells the member where", async () => {
+    const [merged, refusals]: string[][] = [[], []];
+    const coding = {
+      path: "feedback/FB-7.md",
+      text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: coding\n  module: parser\n  verdict: pass\n---\n',
+    };
+    const failing: PullRequests = {
+      ...submitting(merged, [coding], refusals),
+      check: async () => ({
+        state: "failed",
+        url: "https://github.com/commons/ledger/actions/runs/42",
+      }),
+    };
+    await onPullRequest("ledger", "7", failing, { ...held, post: async () => {} }, log, clock);
+    expect([merged, refusals]).toEqual([
+      [],
+      [
+        "7: The project's tests failed on this work, so it is not merged: https://github.com/commons/ledger/actions/runs/42",
       ],
     ]);
   });

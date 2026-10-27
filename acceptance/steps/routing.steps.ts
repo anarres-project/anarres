@@ -465,3 +465,14 @@ Then(
     return this.anarres.divlabHasPostedOnlyContinuation({ role, module });
   },
 );
+
+When(
+  "a member submits {role} work on {string} whose tests fail",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.memberSubmitsWork({ role, module, verdict: "pass", testsFail: true });
+  },
+);
+
+Then("the member is told the project's tests failed on their work", function (this: AnarresWorld) {
+  return this.anarres.memberIsToldWhy("project's tests failed on this work");
+});

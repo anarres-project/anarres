@@ -161,6 +161,7 @@ export class InProcessDriver implements Driver {
     ).find((task) => task.role === fromRole && task.module === work.module);
     const pullRequest = this.github.openPullRequest(work.project, workFiles(work, task?.id), {
       author: work.member,
+      ...(work.testsFail ? { testsFail: true } : {}),
     });
     await onPullRequest(
       work.project,

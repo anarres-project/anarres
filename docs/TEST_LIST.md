@@ -526,9 +526,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [ ] Coding work is accepted only when the project's own CI check passes; Divlab never runs
       project code (decision 0010, Bernard, 2026-10-27: Coding only; the template's check, by a
       name it fixes; a holder's push to their pull request renews the lease, draft or not):
-  - [ ] Coding work whose check has passed on the commit Divlab read is merged; failed, it is
-        not, and the member is told which check failed, with a link; still running, Divlab does
-        nothing and says nothing;
+  - [x] Coding work whose check failed on the commit Divlab read is not merged, and the member
+        is told, with a link (in-process; `@sandbox-wip` until the sandbox's projects have the
+        checks workflow); the adapter reads GitHub Actions' run of `project-tests`;
+  - [ ] while the check is still running, or has not started, Divlab does nothing and says
+        nothing (until then the adapter reads no run as failed, so nothing is pushed);
   - [ ] Divlab acts again when the project's checks workflow completes, on the open pull
         requests at that commit;
   - [ ] a check counts only if GitHub Actions made it in the project's repository, by the

@@ -161,6 +161,26 @@ governance scenarios run alone.
 
 ---
 
+## 2026-10-27: The project's own check on Coding work (decision 0010)
+
+- Decision 0010 (Bernard): Coding work is merged only once the project's own check has passed on
+  the commit Divlab merges; the template's checks workflow, by a name it fixes; Divlab acts again
+  when the check completes; a holder's push to their pull request renews the lease, draft or not.
+- Scenario: "Coding work whose tests fail is not merged, and the member is told why" (`@wip`, not
+  yet right: Divlab merged it).
+- RED: does not merge Coding work the project's tests failed on, and tells the member where ->
+  `expected [ [ '7' ], [] ] to deeply equal [ [], …(1) ]`. GREEN (163 in divlab): the pull
+  request port gains `check`.
+- RED: the adapter's check is what GitHub Actions' run of the template's check found ->
+  `adapter.check is not a function`; with the stub, `expected { state: 'passed', url: '' } to
+  deeply equal { state: 'failed', …(1) }`. GREEN, hard-coded failed. RED: has passed when the run
+  succeeded -> `expected 'failed' to be 'passed'`. GREEN (624).
+- The scenario passes in-process and loses `@wip`; `@sandbox-wip` until the sandbox's projects
+  have the checks workflow. Not pushed: the adapter reads a commit with no run as failed, which
+  would refuse all Coding work in the sandbox.
+
+---
+
 ## 2026-10-27: The lease check run by hand in the sandbox
 
 - The 23:00 full sandbox run (604aab8) passed: 98 of 98.
