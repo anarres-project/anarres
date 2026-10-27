@@ -31,8 +31,6 @@ Feature: Leases
     Then Divlab has not merged the member's Test work on "parser"
     And the Test task for "parser" is claimed by Alice
 
-  # Not in the sandbox: its clock is GitHub's, and nothing can move it on 24 hours.
-  @sandbox-wip
   Scenario: Divlab's check leaves a task with its holder while their lease runs
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
@@ -65,8 +63,6 @@ Feature: Leases
     Then the Test task for "parser" is claimed by Bob
     And Alice is told the lease on the task ran out
 
-  # Not in the sandbox: Divlab's hourly check runs on GitHub's schedule, not on cue.
-  @sandbox-wip
   Scenario: A task shown as claimed that Divlab never gave anyone is made ready again
     Divlab records each claim before the task shows it, so a task shown as claimed with no claim
     in Divlab's log was changed by someone else. PDC coordinators are told.

@@ -59,9 +59,20 @@ makes to GitHub now survives a server error without being repeated twice (merges
 closing, event files, issues, comments), each in the way that is safe for it. A task shown as
 claimed without a claim in Divlab's log is freed and PDC coordinators alerted; a task the log
 shows freed but still shown claimed is freed quietly. The lease check can be run by hand as well
-as hourly. Claims on what is not a task (a finished task, an alert, a member's own issue, a
+as hourly, and the sandbox does so. Claims on what is not a task (a finished task, an alert, a member's own issue, a
 finished module) are refused, in-process and in the sandbox, which plays three members; its
 governance scenarios run alone.
+
+---
+
+## 2026-10-27: The lease check run by hand in the sandbox
+
+- The 23:00 full sandbox run (604aab8) passed: 98 of 98.
+- Bernard gave the sandbox token "Actions: Read and write" (his own token in his own
+  organisation, so no approval was needed). Run locally against the sandbox, the two lease-check
+  scenarios ("Divlab's check leaves a task with its holder while their lease runs", "A task shown
+  as claimed that Divlab never gave anyone is made ready again") passed, and lose `@sandbox-wip`.
+  `CONTRIBUTING.md` lists the permission.
 
 ---
 

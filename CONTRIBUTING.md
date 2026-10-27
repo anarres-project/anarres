@@ -65,9 +65,10 @@ needs four values, and two more for scenarios with more than one member, from a 
 - `ANARRES_SANDBOX_TOKEN`: a fine-grained personal access token whose resource owner is that
   organisation, with access to all its repositories (the tests create new ones), and these
   repository permissions:
-  - read and write: administration, contents, issues, pull requests, workflows (the tests install
-    the project template's workflow);
-  - read: actions (the tests watch Divlab's runs), metadata;
+  - read and write: actions (the tests watch Divlab's runs and start its lease check by hand),
+    administration, contents, issues, pull requests, workflows (the tests install the project
+    template's workflow);
+  - read: metadata;
 - `ANARRES_SANDBOX_MEMBERS_ORG` (a variable in CI): a second sandbox organisation, playing the
   members, where the tests fork each project and push members' work;
 - `ANARRES_SANDBOX_MEMBERS_TOKEN` (a secret in CI): a fine-grained personal access token whose

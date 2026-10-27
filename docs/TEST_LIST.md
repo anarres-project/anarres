@@ -265,10 +265,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         hourly check records what it found, makes the task ready again and alerts PDC
         coordinators, naming whom the task showed as holding it, if anyone (in-process; Divlab's
         runs for a project queue one at a time, so the check never sees a claim half made);
-  - [ ] the sandbox shows it (`@sandbox-wip`): the lease check can now be run by hand and the
-        driver does so, but the sandbox token may not run workflows (403, 2026-10-26): it needs
-        "Actions: Read and write" (Bernard); the task is assigned to Mallory's account once it
-        has commented, as GitHub requires;
+  - [x] the sandbox shows it: the driver runs the lease check by hand (the sandbox token has
+        "Actions: Read and write", Bernard, 2026-10-27); the task is assigned to Mallory's account
+        once it has commented, as GitHub requires;
   - [x] a claim the log shows given back or run out, but still labelled claimed (a run stopped
         between recording and the board): the hourly check makes the task ready, with no alert,
         no new record and no word to the member (before, a task given back was left claimed,
