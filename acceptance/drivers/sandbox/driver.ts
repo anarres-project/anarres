@@ -1561,8 +1561,12 @@ const LISTS_CATCH_UP_LIMIT = 120_000;
 const messageOf = (data: unknown): string =>
   String((data as { message?: unknown } | undefined)?.message ?? "");
 
-/** How long Divlab may take to decide on a pull request, within a step's timeout. */
-const RUN_FINISH_LIMIT = 240_000;
+/**
+ * How long Divlab may take to decide, within a step's timeout. A run can queue behind the
+ * project's last for a minute or two, then wait as long again for one of GitHub's runners (seen
+ * 2026-10-27: four minutes in all, for a run of 13 seconds).
+ */
+const RUN_FINISH_LIMIT = 360_000;
 
 /** Shared by every scenario a worker runs: they use its one repository, one at a time. */
 const run = {

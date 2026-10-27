@@ -25,8 +25,9 @@ if (sandbox) {
   try {
     process.loadEnvFile();
   } catch {}
-  // Generous: a step may wait out one of GitHub's rate limits.
-  setDefaultTimeout(300_000);
+  // Generous: a step may wait out one of GitHub's rate limits, or two Divlab runs (a claim, then
+  // the work), each as long as the driver allows one.
+  setDefaultTimeout(900_000);
 }
 
 // In the sandbox, a run's scenarios share one repository for each worker (creating one per

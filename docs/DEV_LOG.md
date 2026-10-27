@@ -112,6 +112,12 @@ governance scenarios run alone.
   closed one, an alert) is refused, as nobody holds it; and "A member whose lease ran out has
   their work merged while they still hold the task" (`@sandbox-wip`: GitHub's clock).
 - REFACTOR: the draft path and the new check share `holds`.
+- The bb14939 sandbox run (the lease check scenarios untagged) passed 99 of 100: a claim's
+  Divlab run took four minutes, queued behind the project's last run and then waiting for one
+  of GitHub's runners, past the driver's four-minute limit (Divlab itself took 13 seconds). Its
+  late refusal said "you are new" only because the timed-out scenario had already put its trust
+  record back. The limit is now six minutes, and a step may take 15 (a claim and its work).
+- The sandbox's governance file now records the sandbox token's account as trusted.
 
 ---
 
