@@ -162,6 +162,7 @@ export class InProcessDriver implements Driver {
     const pullRequest = this.github.openPullRequest(work.project, workFiles(work, task?.id), {
       author: work.member,
       ...(work.testsFail ? { testsFail: true } : {}),
+      ...(work.testsRunning ? { testsRunning: true } : {}),
     });
     await onPullRequest(
       work.project,

@@ -727,6 +727,23 @@ describe("acting on a pull request", () => {
     ]);
   });
 
+  it("neither merges nor says anything while the project's tests are still running", async () => {
+    const [merged, refusals]: string[][] = [[], []];
+    const coding = {
+      path: "feedback/FB-7.md",
+      text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: coding\n  module: parser\n  verdict: pass\n---\n',
+    };
+    const running: PullRequests = {
+      ...submitting(merged, [coding], refusals),
+      check: async () => ({
+        state: "running",
+        url: "https://github.com/commons/ledger/actions/runs/44",
+      }),
+    };
+    await onPullRequest("ledger", "7", running, { ...held, post: async () => {} }, log, clock);
+    expect([merged, refusals]).toEqual([[], []]);
+  });
+
   it("merges a pull request whose feedback signal it can read", async () => {
     const merged: string[] = [];
     await onPullRequest(

@@ -230,6 +230,7 @@ export class FakeGitHub
     author: string;
     draft: boolean;
     testsFail: boolean;
+    testsRunning: boolean;
     task?: string;
   }[] = [];
   private readonly mergedPullRequests: string[] = [];
@@ -246,7 +247,14 @@ export class FakeGitHub
       draft = false,
       task,
       testsFail = false,
-    }: { author: string; draft?: boolean; task?: string; testsFail?: boolean },
+      testsRunning = false,
+    }: {
+      author: string;
+      draft?: boolean;
+      task?: string;
+      testsFail?: boolean;
+      testsRunning?: boolean;
+    },
   ): string {
     this.pullRequests.push({
       project,
@@ -254,6 +262,7 @@ export class FakeGitHub
       author,
       draft,
       testsFail,
+      testsRunning,
       ...(task ? { task } : {}),
     });
     return String(this.pullRequests.length);
@@ -262,7 +271,12 @@ export class FakeGitHub
   /** The project's own check on a pull request's commit: its tests pass unless a scenario says. */
   async check(_project: string, head: string) {
     const number = head.replace(/^head-of-/, "");
-    const state: "passed" | "failed" = this.opened(number).testsFail ? "failed" : "passed";
+    const { testsFail, testsRunning } = this.opened(number);
+    const state: "passed" | "failed" | "running" = testsRunning
+      ? "running"
+      : testsFail
+        ? "failed"
+        : "passed";
     return { state, url: `https://github.test/checks/${number}` };
   }
 

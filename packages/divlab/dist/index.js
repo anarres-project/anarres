@@ -8059,6 +8059,7 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
   }
   if (role === "coding") {
     const check = await pullRequests.check(project2, head);
+    if (check.state === "running") return;
     if (check.state === "failed") {
       await pullRequests.refuse(
         project2,
@@ -8988,7 +8989,9 @@ var GitHubAdapter = class {
   async check(project2, head) {
     const { check_runs: runs } = await this.call("GET", `${this.repo(project2)}/commits/${head}/check-runs?check_name=${PROJECT_CHECK}`);
     const run = runs[0];
-    return { state: run?.conclusion === "success" ? "passed" : "failed", url: run?.html_url ?? "" };
+    const url = run?.html_url ?? "";
+    if (run?.status !== "completed") return { state: "running", url };
+    return { state: run.conclusion === "success" ? "passed" : "failed", url };
   }
   async refuse(project2, pullRequest, reason) {
     await this.comment(project2, pullRequest, commentForRefusal(reason));

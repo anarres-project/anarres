@@ -196,4 +196,42 @@ describe("the project's own check on a commit (decision 0010)", () => {
     });
     expect((await adapter.check("ledger", "c0ffee")).state).toBe("passed");
   });
+  it("is still running while GitHub Actions' run of it has not completed", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/commits/c0ffee/check-runs?check_name=project-tests"
+        ) {
+          const running = {
+            status: "in_progress",
+            conclusion: null,
+            html_url: "https://github.com/commons/ledger/actions/runs/45/job/9",
+            app: { slug: "github-actions" },
+          };
+          return { status: 200, data: { check_runs: [running] } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect((await adapter.check("ledger", "c0ffee")).state).toBe("running");
+  });
+  it("is still running while GitHub Actions has not started a run of it", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/commits/c0ffee/check-runs?check_name=project-tests"
+        ) {
+          return { status: 200, data: { check_runs: [] } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect((await adapter.check("ledger", "c0ffee")).state).toBe("running");
+  });
 });

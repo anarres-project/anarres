@@ -727,12 +727,17 @@ export class GitHubAdapter
   }
 
   /** The project's own check on the commit: the template's checks workflow's run (decision 0010). */
-  async check(project: string, head: string): Promise<{ state: "passed" | "failed"; url: string }> {
+  async check(
+    project: string,
+    head: string,
+  ): Promise<{ state: "passed" | "failed" | "running"; url: string }> {
     const { check_runs: runs } = await this.call<{
-      check_runs: { conclusion: string | null; html_url: string }[];
+      check_runs: { status: string; conclusion: string | null; html_url: string }[];
     }>("GET", `${this.repo(project)}/commits/${head}/check-runs?check_name=${PROJECT_CHECK}`);
     const run = runs[0];
-    return { state: run?.conclusion === "success" ? "passed" : "failed", url: run?.html_url ?? "" };
+    const url = run?.html_url ?? "";
+    if (run?.status !== "completed") return { state: "running", url };
+    return { state: run.conclusion === "success" ? "passed" : "failed", url };
   }
 
   async refuse(project: string, pullRequest: string, reason: string): Promise<void> {

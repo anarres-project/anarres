@@ -24,6 +24,8 @@ export type AcceptedWork = {
   forFinishedTask?: boolean;
   /** The project's tests fail on the member's work. */
   testsFail?: boolean;
+  /** The project's tests are still running on the member's work. */
+  testsRunning?: boolean;
 };
 
 export type ReadyTask = {

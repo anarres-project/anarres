@@ -476,3 +476,14 @@ When(
 Then("the member is told the project's tests failed on their work", function (this: AnarresWorld) {
   return this.anarres.memberIsToldWhy("project's tests failed on this work");
 });
+
+When(
+  "a member submits {role} work on {string} whose tests are still running",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.memberSubmitsWork({ role, module, verdict: "pass", testsRunning: true });
+  },
+);
+
+Then("the member has been told nothing about their work yet", function (this: AnarresWorld) {
+  return this.anarres.memberIsToldNothing();
+});

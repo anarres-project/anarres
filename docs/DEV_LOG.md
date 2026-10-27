@@ -178,6 +178,14 @@ governance scenarios run alone.
 - The scenario passes in-process and loses `@wip`; `@sandbox-wip` until the sandbox's projects
   have the checks workflow. Not pushed: the adapter reads a commit with no run as failed, which
   would refuse all Coding work in the sandbox.
+- Scenario (`@wip`, not yet right): "Coding work is not merged while the project's tests are
+  still running". RED: neither merges nor says anything while the project's tests are still
+  running -> `expected [ [ '7' ], [] ] to deeply equal [ [], [] ]`. GREEN (625). RED: the
+  adapter's check is still running while its run has not completed -> `expected 'failed' to be
+  'running'`. GREEN (626). Passed first time, kept: no run started yet is running too. The
+  scenario loses `@wip` (`@sandbox-wip`). Still not pushed: in the sandbox, Coding work would
+  now wait for a check that never comes, until the template has the checks workflow and Divlab
+  acts again when it completes.
 
 ---
 

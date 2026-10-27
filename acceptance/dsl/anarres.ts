@@ -167,6 +167,7 @@ export class Anarres {
       partial?: boolean;
       withoutTask?: boolean;
       testsFail?: boolean;
+      testsRunning?: boolean;
     },
   ) {
     const member = await this.holderOf(work);
@@ -288,6 +289,14 @@ export class Anarres {
   }
 
   /** Divlab's message to the member says why, in words they would recognise. */
+  async memberIsToldNothing() {
+    assert.deepEqual(
+      await this.driver.refusals(this.project),
+      [],
+      "expected Divlab to have said nothing about the member's work",
+    );
+  }
+
   async memberIsToldWhy(why: string) {
     const refusals = await this.driver.refusals(this.project);
     assert.ok(

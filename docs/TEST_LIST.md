@@ -529,8 +529,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] Coding work whose check failed on the commit Divlab read is not merged, and the member
         is told, with a link (in-process; `@sandbox-wip` until the sandbox's projects have the
         checks workflow); the adapter reads GitHub Actions' run of `project-tests`;
-  - [ ] while the check is still running, or has not started, Divlab does nothing and says
-        nothing (until then the adapter reads no run as failed, so nothing is pushed);
+  - [x] while the check is still running, or has not started, Divlab does nothing and says
+        nothing (in-process; `@sandbox-wip`);
   - [ ] Divlab acts again when the project's checks workflow completes, on the open pull
         requests at that commit;
   - [ ] a check counts only if GitHub Actions made it in the project's repository, by the

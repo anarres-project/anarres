@@ -10,3 +10,11 @@ Feature: Coding work passes the project's own tests
     When a member submits Coding work on "parser" whose tests fail
     Then Divlab has not merged the member's Coding work on "parser"
     And the member is told the project's tests failed on their work
+
+  # Not in the sandbox yet: its projects have no checks workflow (test list, section 4).
+  @sandbox-wip
+  Scenario: Coding work is not merged while the project's tests are still running
+    Given a project with a module "parser"
+    When a member submits Coding work on "parser" whose tests are still running
+    Then Divlab has not merged the member's Coding work on "parser"
+    And the member has been told nothing about their work yet
