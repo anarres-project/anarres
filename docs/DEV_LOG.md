@@ -102,6 +102,16 @@ governance scenarios run alone.
 - RED: does not merge work that does not say which task it was for, and tells the member ->
   `expected [ [ '7' ], [] ] to deeply equal [ [], …(1) ]`. GREEN (618 passed). The scenario
   passes and loses `@wip` (108 scenarios).
+- Scenario (`@wip`, not yet right): "Work from a member who does not hold its task is not
+  merged, and they are told why".
+- RED: does not merge work from a member who does not hold its task, and tells them ->
+  `expected [ [ '7' ], [] ] to deeply equal [ [], …(1) ]`. GREEN (619 passed), once three tests
+  whose tasks showed no holder were given one (the refusal set aside meanwhile). The scenario
+  passes and loses `@wip`.
+- Passed first time, kept as regression tests: work naming an issue that is not an open task (a
+  closed one, an alert) is refused, as nobody holds it; and "A member whose lease ran out has
+  their work merged while they still hold the task" (`@sandbox-wip`: GitHub's clock).
+- REFACTOR: the draft path and the new check share `holds`.
 
 ---
 

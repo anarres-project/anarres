@@ -666,6 +666,41 @@ describe("acting on a pull request", () => {
     ]);
   });
 
+  it("does not merge work from a member who does not hold its task, and tells them", async () => {
+    const [merged, refusals]: string[][] = [[], []];
+    const heldByBob: TaskBoard = {
+      ...held,
+      post: async () => {},
+      task: async () => ({ role: "specification", module: "parser", claimedBy: "bob" }),
+    };
+    await onPullRequest(
+      "ledger",
+      "7",
+      submitting(merged, undefined, refusals),
+      heldByBob,
+      log,
+      clock,
+    );
+    expect([merged, refusals]).toEqual([
+      [],
+      [
+        "7: The work is for task 1, and only the member holding it can submit its work: claim a task before doing it",
+      ],
+    ]);
+  });
+
+  it("does not merge work naming an issue that is not an open task, such as a closed one", async () => {
+    const [merged, refusals]: string[][] = [[], []];
+    const noTask: TaskBoard = { ...held, post: async () => {}, task: async () => undefined };
+    await onPullRequest("ledger", "7", submitting(merged, undefined, refusals), noTask, log, clock);
+    expect([merged, refusals]).toEqual([
+      [],
+      [
+        "7: The work is for task 1, and only the member holding it can submit its work: claim a task before doing it",
+      ],
+    ]);
+  });
+
   it("merges a pull request whose feedback signal it can read", async () => {
     const merged: string[] = [];
     await onPullRequest(
@@ -812,7 +847,7 @@ describe("acting on a pull request", () => {
     const closing: TaskBoard = {
       ...held,
       post: async () => {},
-      task: async () => TEST_TASK,
+      task: async () => ({ ...TEST_TASK, claimedBy: "alice" }),
       close: async (_project, task) => {
         closed.push(task);
       },
@@ -854,7 +889,7 @@ describe("acting on a pull request", () => {
     const closing: TaskBoard = {
       ...held,
       post: async () => {},
-      task: async () => TEST_TASK,
+      task: async () => ({ ...TEST_TASK, claimedBy: "alice" }),
       close: async () => {},
     };
     await onPullRequest("ledger", "9", submitting([], [forTask]), closing, recording, clock);
@@ -919,7 +954,7 @@ describe("acting on a pull request", () => {
       post: async (task) => {
         posted.push(task);
       },
-      task: async () => ({ ...TEST_TASK, researchFor: "coding" }),
+      task: async () => ({ ...TEST_TASK, researchFor: "coding", claimedBy: "alice" }),
       close: async () => {},
     };
     await onPullRequest("ledger", "10", submitting([], [research]), recorded, log, clock);

@@ -23,6 +23,16 @@ Feature: Leases
     And Divlab checks the project's leases
     Then the Test task for "parser" is claimed by Alice
 
+  # Not in the sandbox: its clock is GitHub's, and nothing can move it on 24 hours.
+  @sandbox-wip
+  Scenario: A member whose lease ran out has their work merged while they still hold the task
+    Given a project with a module "parser"
+    And a member's Specification work on "parser" was accepted with a pass verdict
+    And Alice has claimed the Test task for "parser"
+    When 25 hours pass without activity on the task
+    And Alice submits Test work on "parser" with a pass verdict
+    Then Divlab has merged the member's Test work on "parser"
+
   Scenario: Divlab does not merge draft work
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict

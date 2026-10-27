@@ -331,11 +331,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           the sandbox's governance file as a standing record (Bernard, 2026-10-27);
     - [ ] the sandbox shows it (a run about 10 minutes longer, for the claims: Bernard agreed);
     - [x] work that does not say which task it was for is refused, and its member told why;
-    - [ ] work naming a task Divlab did not post, or has closed, is refused;
-    - [ ] work from a member other than the task's holder is refused with a plain refusal (no
+    - [x] work naming a task Divlab did not post, or has closed, is refused: nobody holds it;
+    - [x] work from a member other than the task's holder is refused with a plain refusal (no
           alert unless one turns out to be needed: Bernard, 2026-10-27);
-    - [ ] a holder whose lease has run out, while Divlab still shows them holding the task, has
-          their work accepted (Bernard, 2026-10-27);
+    - [x] a holder whose lease has run out, while Divlab still shows them holding the task, has
+          their work accepted (Bernard, 2026-10-27; in-process only, `@sandbox-wip`: the
+          sandbox cannot move GitHub's clock);
   - [ ] the sandbox re-forks a project whose fork GitHub reports empty (seen 2026-10-23: one
         worker's fork broke mid-run while GitHub was answering 504s, failing its 8 scenarios).
 - [ ] A member can release a task early.

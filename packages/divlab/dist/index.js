@@ -7944,6 +7944,7 @@ async function acceptSignal(project2, path, signal, board, log, clock, events, m
     events
   );
 }
+var holds = async (board, project2, task, member) => (await board.task(project2, task))?.claimedBy === member;
 var cannotRead = (path, { unreadable }) => `The feedback signal ${path} cannot be read: ${unreadable}`;
 async function onMerge(project2, repository, board, log, clock) {
   const events = await log.read(project2);
@@ -7992,7 +7993,7 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
   if (draft) {
     const signal2 = readFeedbackSignal(feedback?.text ?? "");
     if ("unreadable" in signal2 || signal2.task === void 0) return;
-    if ((await board.task(project2, signal2.task))?.claimedBy !== author) return;
+    if (!await holds(board, project2, signal2.task, author)) return;
     await log.append({
       project: project2,
       decidedAt: clock().toISOString(),
@@ -8023,6 +8024,14 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
       project2,
       pullRequest,
       `The feedback signal ${feedback.path} does not say which task the work was for: work is merged only for a task its member holds`
+    );
+    return;
+  }
+  if (!await holds(board, project2, signal.task, author)) {
+    await pullRequests.refuse(
+      project2,
+      pullRequest,
+      `The work is for task ${signal.task}, and only the member holding it can submit its work: claim a task before doing it`
     );
     return;
   }

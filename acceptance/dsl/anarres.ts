@@ -181,6 +181,20 @@ export class Anarres {
     });
   }
 
+  /** The member opens a pull request with their work, claiming nothing first. */
+  async namedMemberSubmitsWork(named: string, work: Work & { verdict: string }) {
+    this.signalsWritten += 1;
+    const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
+    this.feedbackSignals.set(workOn(this.aliased(work)), feedbackSignal);
+    await this.driver.submitWork({
+      impediments: [],
+      ...this.aliased(work),
+      project: this.project,
+      member: this.member(named),
+      feedbackSignal,
+    });
+  }
+
   /**
    * Divlab merges work only from the member holding its task, so whoever does the work claims it
    * first. A scenario that begins a module partway along its pipeline has the module set up as it

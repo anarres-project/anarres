@@ -28,6 +28,14 @@ Feature: Divlab merges the work members submit
     Then Divlab has not merged the member's Specification work on "parser"
     And the member is told their work must say which task it was for
 
+  Scenario: Work from a member who does not hold its task is not merged, and they are told why
+    Given a project with a module "parser"
+    And Bob has claimed the Specification task for "parser"
+    When Alice submits Specification work on "parser" with a pass verdict
+    Then Divlab has not merged the member's Specification work on "parser"
+    And Alice is told only the member holding the task can submit its work
+    And the Specification task for "parser" is claimed by Bob
+
   Scenario: Work whose feedback signal does not use plain names is not merged
     Given a project with a module "parser"
     When a member submits Specification work on "parser" whose feedback signal names its module in more than a plain name

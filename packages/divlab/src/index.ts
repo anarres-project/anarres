@@ -602,6 +602,10 @@ async function acceptSignal(
   );
 }
 
+/** Whether the board shows the member holding the task: none holds an issue that is not one. */
+const holds = async (board: TaskBoard, project: string, task: string, member: string) =>
+  (await board.task(project, task))?.claimedBy === member;
+
 const cannotRead = (path: string, { unreadable }: Unreadable) =>
   `The feedback signal ${path} cannot be read: ${unreadable}`;
 
@@ -678,7 +682,7 @@ export async function onPullRequest(
     const signal = readFeedbackSignal(feedback?.text ?? "");
     if ("unreadable" in signal || signal.task === undefined) return;
     // Only the member holding the task renews its lease: nobody else can keep a task held.
-    if ((await board.task(project, signal.task))?.claimedBy !== author) return;
+    if (!(await holds(board, project, signal.task, author))) return;
     await log.append({
       project,
       decidedAt: clock().toISOString(),
@@ -709,6 +713,15 @@ export async function onPullRequest(
       project,
       pullRequest,
       `The feedback signal ${feedback.path} does not say which task the work was for: work is merged only for a task its member holds`,
+    );
+    return;
+  }
+  // Only the holder's work, so the checks made when the task was claimed hold for the work too.
+  if (!(await holds(board, project, signal.task, author))) {
+    await pullRequests.refuse(
+      project,
+      pullRequest,
+      `The work is for task ${signal.task}, and only the member holding it can submit its work: claim a task before doing it`,
     );
     return;
   }

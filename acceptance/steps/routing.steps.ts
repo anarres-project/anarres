@@ -138,6 +138,20 @@ When(
   },
 );
 
+When(
+  "{word} submits {role} work on {string} with a {verdict} verdict",
+  function (this: AnarresWorld, member: string, role: string, module: string, verdict: string) {
+    return this.anarres.namedMemberSubmitsWork(member, { role, module, verdict });
+  },
+);
+
+Then(
+  "{word} is told only the member holding the task can submit its work",
+  function (this: AnarresWorld, _member: string) {
+    return this.anarres.memberIsToldWhy("only the member holding it can submit its work");
+  },
+);
+
 Then("the member is told their work must say which task it was for", function (this: AnarresWorld) {
   return this.anarres.memberIsToldWhy("does not say which task the work was for");
 });
