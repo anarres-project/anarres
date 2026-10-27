@@ -153,6 +153,11 @@ governance scenarios run alone.
   escalation scenario's second unnamed member needed a Reviewer's trust. Each run now sets the
   governance file to its standing state before its workers start, and a second unnamed member is
   recorded at the trust its role needs, in a scenario tagged `@governance`.
+- The eb2a206 sandbox run passed all 80 scenarios: work only from the task's holder is shown
+  against GitHub. But it took 44 of its 45 minutes, the `@governance` scenarios running alone at
+  the end for about 8. Bernard chose both: the escalation "count starts again" scenario runs
+  in-process only (routing logic; the fourth re-run shows escalation in the sandbox), and the
+  job's limit is 60 minutes, as a margin rather than a budget.
 
 ---
 

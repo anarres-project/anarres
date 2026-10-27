@@ -133,7 +133,9 @@ The scenarios are in `features/`, one file per capability. Today:
 A scenario outline over the routing table (which role's work goes where) keeps its first row in
 the sandbox and tags the rest of its table `@in-process-only` (Bernard, 2026-10-27). The table is
 pure routing in `packages/core`, checked in full by unit tests and in-process; one row shows each
-rule working against GitHub. Running every row cost the sandbox more Divlab runs than its time
+rule working against GitHub. So does escalation's count starting again once the role's work
+passes: the fourth re-run going to a PDC coordinator shows escalation against GitHub. The job's
+limit is 60 minutes, a margin over a full run's 40 or so, not a budget. Running every row cost the sandbox more Divlab runs than its time
 limit and the App's share of GitHub's limits allow, once each piece of work needed a claim first.
 
 ## Scenarios not yet run in the sandbox
