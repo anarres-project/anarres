@@ -206,6 +206,17 @@ governance scenarios run alone.
   GREEN (634), with core's `failed` exported, so the rule is stated once. RED: merges partial
   Coding work handed over whatever its check found -> the same failure. GREEN (635).
 - The e1740e7 sandbox run passed all 79 scenarios in 35 minutes.
+- Passed first time, kept: other roles' work needs no check.
+- The template's checks workflow, test-first in `template.test.ts`: RED, it runs on members'
+  pull requests as GitHub runs their own code (a missing file, then `expected [
+  'workflow_dispatch' ] to deeply equal [ 'pull_request' ]`); GREEN. RED, its token only reads
+  the code (`expected undefined to deeply equal { contents: 'read' }`); GREEN. RED, its tests'
+  check has the name Divlab reads (`expected [] to include 'project-tests'`, once the name was
+  exported); GREEN. RED, it runs the command and image `anarres.yaml` declares, the command as a
+  variable (`expected undefined to be true`); GREEN.
+- The template's Divlab workflow for the checks finishing: RED, it runs when the checks workflow
+  completes and on nothing else; GREEN. Added to the tests every Divlab workflow passes (six
+  failing at once, from one cause: it was not yet one); GREEN (45).
 
 ---
 

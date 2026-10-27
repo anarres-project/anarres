@@ -1,4 +1,4 @@
-export { GitHubAdapter } from "./adapter.ts";
+export { GitHubAdapter, PROJECT_CHECK } from "./adapter.ts";
 export { retryAfter } from "./rate-limits.ts";
 export {
   commentForRefusal,

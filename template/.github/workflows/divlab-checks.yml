@@ -1,0 +1,34 @@
+name: Divlab (checks)
+
+# Divlab acts again on members' Coding work once the project's own tests have finished on it
+# (decision 0010): it reads the check's result, and runs none of the project's code.
+on:
+  workflow_run:
+    workflows: [Project checks]
+    types: [completed]
+
+# The workflow's own token gets nothing: Divlab acts only with its App's token.
+permissions: {}
+
+# Shared with the other Divlab workflows: one Divlab run per project at a time keeps decisions in
+# order. Every run waits its turn: by default GitHub keeps only one waiting and cancels the rest.
+concurrency:
+  group: divlab
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  divlab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Pinned to a commit: this job holds the App's key.
+      - id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.DIVLAB_APP_CLIENT_ID }}
+          private-key: ${{ secrets.DIVLAB_APP_PRIVATE_KEY }}
+      - uses: anarres-project/anarres/packages/divlab@main
+        with:
+          token: ${{ steps.app.outputs.token }}
+          app: ${{ steps.app.outputs.app-slug }}

@@ -1,0 +1,40 @@
+name: Project checks
+
+# The project's own tests, on every member's pull request (decision 0010). Divlab never runs a
+# project's code: this workflow does, as GitHub runs a pull request's own code, from a fork with
+# none of the project's secrets, and Divlab reads its result.
+on:
+  pull_request:
+
+# The workflow's own token may read the project's code, and nothing more.
+permissions:
+  contents: read
+
+jobs:
+  # The project's toolchain, as anarres.yaml declares it: the image its tests run in, and the
+  # command that runs them.
+  toolchain:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.declared.outputs.image }}
+      test: ${{ steps.declared.outputs.test }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: declared
+        run: |
+          echo "image=$(yq '.toolchain.image' anarres.yaml)" >> "$GITHUB_OUTPUT"
+          echo "test=$(yq '.toolchain.test' anarres.yaml)" >> "$GITHUB_OUTPUT"
+
+  tests:
+    # The check's name, which Divlab reads the result by: Anarres fixes it, not the project.
+    name: project-tests
+    needs: toolchain
+    runs-on: ubuntu-latest
+    container: ${{ needs.toolchain.outputs.image }}
+    steps:
+      - uses: actions/checkout@v5
+      # The command reaches the shell as a variable, never pasted into the script, so nothing in
+      # it is read as workflow syntax.
+      - env:
+          TEST_COMMAND: ${{ needs.toolchain.outputs.test }}
+        run: sh -c "$TEST_COMMAND"

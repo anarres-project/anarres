@@ -534,7 +534,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] Divlab acts again when the project's checks workflow completes (`workflow_run`), on the
         open pull requests at that commit, found by their head, as GitHub's event names none for
         a pull request from a fork (in-process; `@sandbox-wip`);
-  - [ ] the template's Divlab workflow runs when the checks workflow completes, and only then;
+  - [x] the template's Divlab workflow runs when the checks workflow completes, and only then,
+        as a Divlab workflow like the others (the App's token only, one run at a time);
   - [x] a check counts only if GitHub Actions made it in the project's repository, for the
         commit Divlab merges; work changing the workflows, the test command or the tests is
         refused by the write scopes first, so the run is the template's workflow's;
@@ -542,8 +543,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         blocked, and partial work, advances nothing and is merged without it (Bernard,
         2026-10-27);
   - [x] other roles' work needs no check (passed first time: a regression test);
-  - [ ] the template's checks workflow runs the test command `anarres.yaml` declares, in its dev
-        container image, on every pull request;
+  - [x] the template's checks workflow runs the test command `anarres.yaml` declares, in its dev
+        container image, on every pull request, as GitHub runs a pull request's own code (no
+        secrets; its token reads the code only); the command reaches the shell as a variable,
+        never as workflow syntax; one line, as each is passed on as a single output;
   - [ ] a push by the task's holder to their pull request for it renews the lease, draft or not;
   - [ ] the sandbox shows it: a project whose tests pass or fail on cue.
 - [ ] Test work is accepted when the project's report shows the new tests running and failing.
