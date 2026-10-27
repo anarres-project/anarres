@@ -15,6 +15,6 @@
     "import": ["acceptance/support/**/*.ts", "acceptance/steps/**/*.ts"],
     "tags": "not @wip and not @sandbox-wip",
     "format": ["progress"],
-    "parallel": 4
+    "parallel": 6
   }
 }

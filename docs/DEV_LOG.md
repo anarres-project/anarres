@@ -126,6 +126,16 @@ governance scenarios run alone.
   again). Without the push the same steps fail, so it shows the push. In-process only.
 - The sandbox driver forks a project again, once, when its fork stays empty past the wait for a
   new fork (seen 2026-10-23); it logs when it does.
+- The 85916f8 sandbox run hit the job's 45-minute limit with about 600 of 624 steps done: each
+  claim before submitting waited for a Divlab run of its own, about 80 seconds with GitHub's
+  queue for runners, far more than the 10 minutes estimated. One step had failed; the run was
+  cut off before Cucumber named it, so a failed sandbox scenario is now logged as it fails.
+  (GitHub also started each workflow twice for that push; the second sandbox run was cancelled.)
+- Tried: having the driver record set-up claims as Divlab's App would, without a run. It cannot:
+  the driver holds the sandbox token, not the App's key, so main's protection refused its event
+  writes (rightly). Dropped. Instead the sandbox runs six workers, not four: a claim waits in
+  its own project's queue, so more projects side by side shorten the run at the same request
+  cost. If that is not enough, a longer limit or fewer scenarios in the sandbox is for Bernard.
 
 ---
 

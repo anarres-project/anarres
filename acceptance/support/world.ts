@@ -72,8 +72,15 @@ Before(async () => {
 // A scenario that set trust levels in the sandbox puts its governance file back, pass or fail,
 // and the member's machine is cleared.
 let failed = false;
-After(async function (this: AnarresWorld, { result }) {
-  if (result?.status === Status.FAILED) failed = true;
+After(async function (this: AnarresWorld, { pickle, result }) {
+  if (result?.status === Status.FAILED) {
+    failed = true;
+    // Said at once, so a run its job's time limit cuts short still says what failed.
+    if (sandbox) {
+      const why = result.message?.split("\n").find((line) => line.trim() !== "") ?? "";
+      console.log(`Failed: ${pickle.name} (${pickle.uri}): ${why}`);
+    }
+  }
   if (this.driver instanceof SandboxDriver) {
     await this.driver.restoreGovernance();
     this.driver.clearMachine();

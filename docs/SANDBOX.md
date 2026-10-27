@@ -24,11 +24,11 @@ It is not part of the blocking gate: it is slower (tens of minutes) and depends 
 
 ## What happens in a run
 
-**Setting up.** The scenarios run in four parallel workers. Each creates one public repository,
+**Setting up.** The scenarios run in six parallel workers. Each creates one public repository,
 named after the run and the worker, and sets it up as a project is set up. It
 installs both of the project template's workflows, with Divlab pinned to the commit under test, so
 a change to Divlab is tested before any project uses it. A worker's scenarios share its
-repository, and the four repositories' Divlab runs go at once; each scenario
+repository, and the six repositories' Divlab runs go at once; each scenario
 gives its modules names of its own (`parser` becomes `parser-s17`), so no scenario sees another's
 tasks, alerts or records. Each scenario starts its modules in the worker's repository as a project
 does, with Divlab's App: each gets its first task, Specification, ready.
