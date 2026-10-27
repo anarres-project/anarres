@@ -95,6 +95,13 @@ governance scenarios run alone.
   otherwise. Governance scenarios now put back each record as they found it, not delete it.
 - Rewired: in-process, the new scenario passes and loses `@wip`; two scenarios that said no task
   was ready for an untouched module now say its first task, Specification, is.
+- Scenario (`@wip`, not yet right: Divlab merged it): "Work that does not say which task it was
+  for is not merged, and the member is told why". The pull request tests' shared fixture now names
+  a task its author holds (refactored while green); four tests with signals of their own named no
+  task, so the refusal was set aside while they were given one, then restored.
+- RED: does not merge work that does not say which task it was for, and tells the member ->
+  `expected [ [ '7' ], [] ] to deeply equal [ [], …(1) ]`. GREEN (618 passed). The scenario
+  passes and loses `@wip` (108 scenarios).
 
 ---
 

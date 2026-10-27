@@ -501,7 +501,13 @@ describe("acting on a merge", () => {
 describe("acting on a pull request", () => {
   const specificationPasses = {
     path: "feedback/FB-1.md",
-    text: "---\nfeedback_signal:\n  from_role: specification\n  module: parser\n  verdict: pass\n---\n",
+    text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: specification\n  module: parser\n  verdict: pass\n---\n',
+  };
+  /** The board shows the work's task held by the member who opened the pull request. */
+  const held: TaskBoard = {
+    ...board,
+    task: async () => ({ role: "specification", module: "parser", claimedBy: "alice" }),
+    close: async () => {},
   };
   const submitting = (
     merged: string[] = [],
@@ -526,7 +532,7 @@ describe("acting on a pull request", () => {
       ...submitting(merged),
       pullRequest: async () => ({ head: "c0ffee", draft: true, author: "alice" }),
     };
-    await onPullRequest("ledger", "7", draft, { ...board, post: async () => {} }, log, clock);
+    await onPullRequest("ledger", "7", draft, { ...held, post: async () => {} }, log, clock);
     expect(merged).toEqual([]);
   });
 
@@ -592,7 +598,7 @@ describe("acting on a pull request", () => {
         appended.push(event);
       },
     };
-    await onPullRequest("ledger", "7", draft, board, recording, clock);
+    await onPullRequest("ledger", "7", draft, held, recording, clock);
     expect([merged, refusals, appended]).toEqual([[], [], []]);
   });
 
@@ -601,7 +607,7 @@ describe("acting on a pull request", () => {
     const codingWithTests = [
       {
         path: "feedback/FB-5.md",
-        text: "---\nfeedback_signal:\n  from_role: coding\n  module: parser\n  verdict: pass\n---\n",
+        text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: coding\n  module: parser\n  verdict: pass\n---\n',
       },
       { path: "modules/parser/src/lexer.ts", text: "export {};\n" },
       { path: "modules/parser/tests/lexer.test.ts", text: "// changed\n" },
@@ -610,7 +616,7 @@ describe("acting on a pull request", () => {
       "ledger",
       "7",
       submitting(merged, codingWithTests, refusals),
-      board,
+      held,
       log,
       clock,
     );
@@ -627,20 +633,36 @@ describe("acting on a pull request", () => {
     const fromNowhere = [
       {
         path: "feedback/FB-6.md",
-        text: "---\nfeedback_signal:\n  from_role: oracle\n  module: parser\n  verdict: pass\n---\n",
+        text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: oracle\n  module: parser\n  verdict: pass\n---\n',
       },
     ];
+    await onPullRequest("ledger", "7", submitting(merged, fromNowhere, refusals), held, log, clock);
+    expect([merged, refusals]).toEqual([
+      [],
+      ["7: The feedback signal feedback/FB-6.md names a role Anarres does not have: oracle"],
+    ]);
+  });
+
+  it("does not merge work that does not say which task it was for, and tells the member", async () => {
+    const merged: string[] = [];
+    const refusals: string[] = [];
+    const forNoTask = {
+      path: "feedback/FB-9.md",
+      text: "---\nfeedback_signal:\n  from_role: specification\n  module: parser\n  verdict: pass\n---\n",
+    };
     await onPullRequest(
       "ledger",
       "7",
-      submitting(merged, fromNowhere, refusals),
-      board,
+      submitting(merged, [forNoTask], refusals),
+      { ...held, post: async () => {} },
       log,
       clock,
     );
     expect([merged, refusals]).toEqual([
       [],
-      ["7: The feedback signal feedback/FB-6.md names a role Anarres does not have: oracle"],
+      [
+        "7: The feedback signal feedback/FB-9.md does not say which task the work was for: work is merged only for a task its member holds",
+      ],
     ]);
   });
 
@@ -650,7 +672,7 @@ describe("acting on a pull request", () => {
       "ledger",
       "7",
       submitting(merged),
-      { ...board, post: async () => {} },
+      { ...held, post: async () => {} },
       log,
       clock,
     );
@@ -660,7 +682,7 @@ describe("acting on a pull request", () => {
   it("routes the work in the pull request it merges", async () => {
     const posted: PostedTask[] = [];
     const posting: TaskBoard = {
-      ...board,
+      ...held,
       post: async (task) => {
         posted.push(task);
       },
@@ -684,7 +706,7 @@ describe("acting on a pull request", () => {
       "7",
       submitting(),
       {
-        ...board,
+        ...held,
         post: async (task) => {
           posted.push(task);
         },
@@ -699,13 +721,13 @@ describe("acting on a pull request", () => {
     const posted: PostedTask[] = [];
     const partialTest = {
       path: "feedback/FB-8.md",
-      text: "---\nfeedback_signal:\n  from_role: test\n  module: parser\n  status: partial\n  verdict: pass\n---\n",
+      text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: test\n  module: parser\n  status: partial\n  verdict: pass\n---\n',
     };
     await onPullRequest(
       "ledger",
       "7",
       submitting([], [partialTest]),
-      { ...board, post: async (task) => void posted.push(task) },
+      { ...held, post: async (task) => void posted.push(task) },
       log,
       clock,
     );
@@ -725,7 +747,7 @@ describe("acting on a pull request", () => {
   it("tells the board which decision each task comes from, so it is posted once", async () => {
     const posted: PostedTask[] = [];
     const posting: TaskBoard = {
-      ...board,
+      ...held,
       post: async (task) => {
         posted.push(task);
       },
@@ -738,10 +760,10 @@ describe("acting on a pull request", () => {
     const finished: unknown[] = [];
     const securityPasses = {
       path: "feedback/FB-6.md",
-      text: "---\nfeedback_signal:\n  from_role: security-and-quality\n  module: parser\n  verdict: pass\n---\n",
+      text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: security-and-quality\n  module: parser\n  verdict: pass\n---\n',
     };
     const marking: TaskBoard = {
-      ...board,
+      ...held,
       markModuleDone: async (done) => {
         finished.push(done);
       },
@@ -755,14 +777,14 @@ describe("acting on a pull request", () => {
   it("does not merge a pull request whose feedback signal it cannot read", async () => {
     const merged: string[] = [];
     const unreadable = { path: "feedback/FB-2.md", text: "Looks good to me." };
-    await onPullRequest("ledger", "8", submitting(merged, [unreadable]), board, log, clock);
+    await onPullRequest("ledger", "8", submitting(merged, [unreadable]), held, log, clock);
     expect(merged).toEqual([]);
   });
 
   it("tells the member why it did not merge their pull request", async () => {
     const refusals: string[] = [];
     const unreadable = { path: "feedback/FB-2.md", text: "Looks good to me." };
-    await onPullRequest("ledger", "8", submitting([], [unreadable], refusals), board, log, clock);
+    await onPullRequest("ledger", "8", submitting([], [unreadable], refusals), held, log, clock);
     expect(refusals).toEqual([
       "8: The feedback signal feedback/FB-2.md cannot be read: it has no feedback signal header",
     ]);
@@ -777,14 +799,7 @@ describe("acting on a pull request", () => {
         return "m3rg3d";
       },
     };
-    await onPullRequest(
-      "ledger",
-      "7",
-      pullRequests,
-      { ...board, post: async () => {} },
-      log,
-      clock,
-    );
+    await onPullRequest("ledger", "7", pullRequests, { ...held, post: async () => {} }, log, clock);
     expect(merged).toEqual(["7 at c0ffee"]);
   });
 
@@ -795,7 +810,7 @@ describe("acting on a pull request", () => {
       text: '---\nfeedback_signal:\n  task_id: "3"\n  from_role: test\n  module: parser\n  verdict: pass\n---\n',
     };
     const closing: TaskBoard = {
-      ...board,
+      ...held,
       post: async () => {},
       task: async () => TEST_TASK,
       close: async (_project, task) => {
@@ -813,7 +828,7 @@ describe("acting on a pull request", () => {
       text: '---\nfeedback_signal:\n  task_id: "3"\n  from_role: test\n  module: parser\n  verdict: pass\n---\n',
     };
     const closing: TaskBoard = {
-      ...board,
+      ...held,
       post: async () => {},
       task: async () => undefined,
       close: async (_project, task) => {
@@ -837,7 +852,7 @@ describe("acting on a pull request", () => {
       },
     };
     const closing: TaskBoard = {
-      ...board,
+      ...held,
       post: async () => {},
       task: async () => TEST_TASK,
       close: async () => {},
@@ -861,7 +876,7 @@ describe("acting on a pull request", () => {
       "ledger",
       "9",
       submitting(),
-      { ...board, post: async () => {} },
+      { ...held, post: async () => {} },
       recording,
       clock,
     );
@@ -883,7 +898,7 @@ describe("acting on a pull request", () => {
       "ledger",
       "9",
       submitting(),
-      { ...board, post: async () => {} },
+      { ...held, post: async () => {} },
       recording,
       clock,
     );
@@ -900,7 +915,7 @@ describe("acting on a pull request", () => {
       text: '---\nfeedback_signal:\n  task_id: "4"\n  from_role: research\n  module: parser\n  verdict: pass\n---\n',
     };
     const recorded: TaskBoard = {
-      ...board,
+      ...held,
       post: async (task) => {
         posted.push(task);
       },
@@ -915,14 +930,7 @@ describe("acting on a pull request", () => {
     const merged: string[] = [];
     const refusals: string[] = [];
     const notPlain = { ...specificationPasses, path: "feedback/FB-1_*see*.md" };
-    await onPullRequest(
-      "ledger",
-      "13",
-      submitting(merged, [notPlain], refusals),
-      board,
-      log,
-      clock,
-    );
+    await onPullRequest("ledger", "13", submitting(merged, [notPlain], refusals), held, log, clock);
     expect([merged, refusals]).toEqual([
       [],
       [
@@ -934,14 +942,7 @@ describe("acting on a pull request", () => {
   it("tells the member when their pull request has no feedback signal", async () => {
     const refusals: string[] = [];
     const artefactOnly = { path: "modules/parser/spec.md", text: "# Specification\n" };
-    await onPullRequest(
-      "ledger",
-      "11",
-      submitting([], [artefactOnly], refusals),
-      board,
-      log,
-      clock,
-    );
+    await onPullRequest("ledger", "11", submitting([], [artefactOnly], refusals), held, log, clock);
     expect(refusals).toEqual([
       "11: The pull request has no feedback signal: work needs one, in feedback/, saying what it was for and how it went",
     ]);
@@ -960,7 +961,7 @@ describe("acting on a pull request", () => {
       "ledger",
       "7",
       submitting(),
-      { ...board, post: async () => {} },
+      { ...held, post: async () => {} },
       recording,
       britishSummerTime,
     );
@@ -982,7 +983,7 @@ describe("acting on a pull request", () => {
       "ledger",
       "7",
       submitting(),
-      { ...board, post: async () => {} },
+      { ...held, post: async () => {} },
       recording,
       clock,
     );
@@ -1001,7 +1002,7 @@ describe("acting on a pull request", () => {
       },
     };
     const posting: TaskBoard = {
-      ...board,
+      ...held,
       post: async (task) => {
         happened.push(`posted ${task.role}`);
       },
@@ -1028,7 +1029,7 @@ describe("acting on a pull request", () => {
       "ledger",
       "7",
       submitting(),
-      { ...board, post: async () => {} },
+      { ...held, post: async () => {} },
       recording,
       clock,
     );
@@ -1048,7 +1049,7 @@ describe("acting on a pull request", () => {
       "ledger",
       "7",
       submitting(),
-      { ...board, post: async () => {} },
+      { ...held, post: async () => {} },
       counting,
       clock,
     );
@@ -1074,7 +1075,7 @@ describe("acting on a pull request", () => {
       "ledger",
       "7",
       pullRequests,
-      { ...board, post: async () => {} },
+      { ...held, post: async () => {} },
       recording,
       clock,
     );
@@ -1087,7 +1088,13 @@ describe("acting on a pull request", () => {
           head: "c0ffee",
           feedbackSignal: "feedback/FB-1.md",
           member: "alice",
-          work: { fromRole: "specification", module: "parser", verdict: "pass", impediments: [] },
+          work: {
+            task: "1",
+            fromRole: "specification",
+            module: "parser",
+            verdict: "pass",
+            impediments: [],
+          },
         },
       },
       "merged 7",

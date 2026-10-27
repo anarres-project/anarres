@@ -131,6 +131,17 @@ Then(
   },
 );
 
+When(
+  "a member submits {role} work on {string} without saying which task it was for",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.memberSubmitsWork({ role, module, verdict: "pass", withoutTask: true });
+  },
+);
+
+Then("the member is told their work must say which task it was for", function (this: AnarresWorld) {
+  return this.anarres.memberIsToldWhy("does not say which task the work was for");
+});
+
 Then("the member is told their work has no feedback signal", function (this: AnarresWorld) {
   return this.anarres.memberIsToldWhy("has no feedback signal");
 });

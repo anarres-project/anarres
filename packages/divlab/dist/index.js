@@ -8018,6 +8018,14 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     await pullRequests.refuse(project2, pullRequest, cannotRead(feedback.path, signal));
     return;
   }
+  if (signal.task === void 0) {
+    await pullRequests.refuse(
+      project2,
+      pullRequest,
+      `The feedback signal ${feedback.path} does not say which task the work was for: work is merged only for a task its member holds`
+    );
+    return;
+  }
   const role = signal.fromRole;
   if (!isRole(role)) {
     await pullRequests.refuse(

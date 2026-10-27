@@ -18,6 +18,8 @@ export type AcceptedWork = {
   changesTests?: boolean;
   /** The member hands over partial work, having run out of allowance. */
   partial?: boolean;
+  /** The member's feedback signal does not say which task the work was for. */
+  withoutTask?: boolean;
 };
 
 export type ReadyTask = {

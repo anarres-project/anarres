@@ -22,6 +22,12 @@ Feature: Divlab merges the work members submit
     And the member is told their work has no feedback signal
     And no task is ready for "parser"
 
+  Scenario: Work that does not say which task it was for is not merged, and the member is told why
+    Given a project with a module "parser"
+    When a member submits Specification work on "parser" without saying which task it was for
+    Then Divlab has not merged the member's Specification work on "parser"
+    And the member is told their work must say which task it was for
+
   Scenario: Work whose feedback signal does not use plain names is not merged
     Given a project with a module "parser"
     When a member submits Specification work on "parser" whose feedback signal names its module in more than a plain name

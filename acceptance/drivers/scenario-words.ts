@@ -20,7 +20,7 @@ export function feedbackSignalFile(work: AcceptedWork, task?: string) {
   const header = [
     "---",
     "feedback_signal:",
-    ...(task === undefined ? [] : [`  task_id: "${task}"`]),
+    ...(task === undefined || work.withoutTask ? [] : [`  task_id: "${task}"`]),
     `  from_role: ${roleId(work.role)}`,
     // Markdown in place of a name: text Divlab must never carry into what it posts.
     `  module: ${work.moduleNotPlain ? `"${work.module} [see](https://example.test)"` : work.module}`,

@@ -330,7 +330,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           module; in the sandbox the sandbox token's account plays them, recorded as trusted in
           the sandbox's governance file as a standing record (Bernard, 2026-10-27);
     - [ ] the sandbox shows it (a run about 10 minutes longer, for the claims: Bernard agreed);
-    - [ ] work naming no task, or a task Divlab did not post or has closed, is refused;
+    - [x] work that does not say which task it was for is refused, and its member told why;
+    - [ ] work naming a task Divlab did not post, or has closed, is refused;
     - [ ] work from a member other than the task's holder is refused with a plain refusal (no
           alert unless one turns out to be needed: Bernard, 2026-10-27);
     - [ ] a holder whose lease has run out, while Divlab still shows them holding the task, has
