@@ -432,8 +432,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       is, probed 2026-10-22). Not checked on every run: reading the policy needs administration
       access, which Divlab's App does not hold (Bernard, 2026-10-22); without it Divlab stops
       rather than merging anything unchecked.
-- [ ] Projects set up before this change (none outside the sandbox yet) need the policy added
-      before 2 November.
+- [x] Projects set up before this change (none outside the sandbox yet) need the policy added
+      before 2 November: none (2026-10-27): the sandbox makes its projects afresh each run, with
+      the policy, and no other project exists yet.
 - [x] The sandbox job's 45-minute limit was close (39 and 41½ minutes on 2026-10-22): the
       scenarios run in four parallel workers, a repository each; 11 minutes in CI.
 - [ ] An intermittent sandbox failure confined to one worker's repository (d5b1284: pull
