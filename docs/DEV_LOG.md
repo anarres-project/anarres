@@ -369,6 +369,7 @@ governance scenarios run alone.
   projects on one worker asked for the same repository. Only the sandbox shows it (in-process,
   each scenario has a GitHub of its own). Fixed: such a project carries the scenario's alias too.
   Gate 122 scenarios.
+- The 44cb30a sandbox run passed all 86 scenarios in 45 minutes.
 
 ---
 

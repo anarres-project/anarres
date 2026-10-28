@@ -516,7 +516,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       (lower-case letters and digits joined by single hyphens or underscores, at most 40 long) is
       unreadable: Divlab writes them into issue titles, labels and text. The member is told why
       (in the sandbox too).
-- [ ] Work naming a module the project does not have is refused (decision 0013, Bernard,
+- [x] Work naming a module the project does not have is refused (decision 0013, Bernard,
       2026-10-28):
   - [x] a module starts with the first role of core's module pipeline, Architecture, not
         Specification as built on 2026-10-27 (core's `FIRST_ROLE`, stated once);
@@ -532,7 +532,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] merging the programme's Programme Architect work starts each module its `modules.yaml`
         lists that no earlier one started (routing's `modules_listed`; the routing records'
         `modulesToStart`, read back validated); a module it leaves out goes on;
-  - [ ] the sandbox shows it.
+  - [x] the sandbox shows it (44cb30a: 86 of 86).
 - [x] Coding work that changes tests is rejected (a case of the write scopes).
 - [ ] Work based on inputs that have since changed is flagged as stale.
 
