@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { writeScope } from "@anarres/core";
-import { PROJECT_CHECK } from "@anarres/github";
+import { PROJECT_CHECK, TEST_REPORT } from "@anarres/github";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
 
@@ -115,8 +115,11 @@ describe("the project template's checks workflow (decision 0010)", () => {
     expect(Object.keys(workflow.on)).toEqual(["pull_request"]);
   });
 
-  it("runs only on pull requests changing a module's code, where only Coding writes", () => {
-    expect(workflow.on.pull_request.paths).toEqual([`${writeScope("coding", "*")}**`]);
+  it("runs only on pull requests changing a module's code or tests, where only Coding and Test write", () => {
+    expect(workflow.on.pull_request.paths).toEqual([
+      `${writeScope("coding", "*")}**`,
+      `${writeScope("test", "*")}**`,
+    ]);
   });
   it("gives the workflow's own token nothing but reading the project's code", () => {
     expect(workflow.permissions).toEqual({ contents: "read" });
@@ -141,9 +144,27 @@ describe("the project template's checks workflow (decision 0010)", () => {
     expect(read?.steps.some((step) => step.run?.includes("anarres.yaml"))).toBe(true);
     expect(tests?.needs).toBe(toolchain);
     expect(tests?.container).toBe(expression(`needs.${toolchain}.outputs.image`));
-    const running = tests?.steps.at(-1) as Step & { env?: Record<string, string> };
+    const running = tests?.steps.find((step) => step.run !== undefined) as Step & {
+      env?: Record<string, string>;
+    };
     expect(running.env).toEqual({ TEST_COMMAND: expression(`needs.${toolchain}.outputs.test`) });
     expect(running.run).toBe('sh -c "$TEST_COMMAND"');
+  });
+  it("uploads the report the toolchain names as the run's artefact, even when its tests fail", () => {
+    type Job = {
+      name?: string;
+      steps: (Step & { if?: string })[];
+      outputs?: Record<string, string>;
+    };
+    const jobs = Object.entries(workflow.jobs as Record<string, Job>);
+    const [toolchain] = jobs.find(([, job]) => job.outputs !== undefined) ?? [];
+    const tests = jobs.find(([, job]) => job.name === PROJECT_CHECK)?.[1];
+    const upload = tests?.steps.find((step) => step.uses?.startsWith("actions/upload-artifact@"));
+    expect(upload?.if).toBe("always()");
+    expect(upload?.with).toEqual({
+      name: TEST_REPORT,
+      path: expression(`needs.${toolchain}.outputs.report`),
+    });
   });
 });
 

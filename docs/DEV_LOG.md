@@ -285,6 +285,15 @@ governance scenarios run alone.
   now, "Test work whose new tests pass before any code exists is not merged" passed at once.
 - Not pushed: the checks run only on code, so Test work in the sandbox would get no report and
   wait for ever, until the template's checks run on Test work and upload the report.
+- The toolchain names its report, required (RED: the declaration without it; then RED: none
+  without a report). Two older tests had passed only because their fixtures named no report;
+  given one, each tests its own case again. Core stays at 100% branch coverage.
+- The template: RED, the checks run on Test work's place too; GREEN. RED, the report is uploaded
+  as `test-report`, even when the tests fail; GREEN, once an older test that took the last step
+  for the one running the tests looked for it by what it does instead.
+- The sandbox's toolchain runs a script at the project's root writing the JUnit report. Tried
+  locally: well-formed, a failing case per test file, passing where marked, the run failing on
+  marked code. (Biome had removed a needed escape from the script's template literal; doubled.)
 
 ---
 

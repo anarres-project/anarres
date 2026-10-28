@@ -9270,10 +9270,12 @@ function readToolchain(text) {
   }
   const toolchain = declared?.toolchain;
   if (toolchain === void 0) return void 0;
-  const { image, test } = toolchain;
-  if (typeof image !== "string" || typeof test !== "string") return void 0;
+  const { image, test, report } = toolchain;
+  if (typeof image !== "string" || typeof test !== "string" || typeof report !== "string") {
+    return void 0;
+  }
   if (test.includes("\n")) return void 0;
-  return { image, test };
+  return { image, test, report };
 }
 
 // ../divlab/src/event.ts

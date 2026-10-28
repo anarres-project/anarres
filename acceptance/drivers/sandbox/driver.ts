@@ -48,6 +48,7 @@ import {
   feedbackSignalFile,
   inScenarioWords,
   otherFiles,
+  PASSES_ON_PURPOSE,
   roleId,
   roleNameOf,
   signalName,
@@ -177,6 +178,10 @@ export class SandboxDriver implements Driver {
       await this.github.call("PUT", `repos/${this.org}/${project}/contents/anarres.yaml`, {
         message: "Declare the sandbox project's toolchain",
         content: Buffer.from(SANDBOX_TOOLCHAIN).toString("base64"),
+      });
+      await this.github.call("PUT", `repos/${this.org}/${project}/contents/${SANDBOX_TESTS}`, {
+        message: "The sandbox project's tests",
+        content: Buffer.from(SANDBOX_TESTS_SCRIPT).toString("base64"),
       });
     }
     run.expected.set(project, {
@@ -1603,14 +1608,36 @@ const TEMPLATE_WORKFLOWS = [
 /** The project's own checks workflow: the project's, not Divlab's, so installed as it is. */
 const CHECKS_WORKFLOW = "checks.yml";
 
-/**
- * A sandbox project's toolchain: a small image, and tests that fail only on work carrying the
- * marker a scenario puts in work it makes fail. One line, as the checks workflow passes it on.
- */
-const SANDBOX_TOOLCHAIN = `# The sandbox project's toolchain (decision 0010).
+/** The sandbox project's tests, a script at its root, which no member's work may change. */
+const SANDBOX_TESTS = "sandbox-tests.sh";
+
+/** A sandbox project's toolchain: a small image, its tests, and the report they write. */
+const SANDBOX_TOOLCHAIN = `# The sandbox project's toolchain (decisions 0010 and 0011).
 toolchain:
   image: debian:stable-slim
-  test: "! grep -rqs '${FAILS_ON_PURPOSE}' modules"
+  test: sh ${SANDBOX_TESTS}
+  report: junit.xml
+`;
+
+/**
+ * The sandbox project's tests: a test case for each test file, failing, as new tests do before
+ * their code exists, unless the file says it passes on purpose; and the run fails if any code
+ * fails on purpose. The JUnit report names each case by its file.
+ */
+const SANDBOX_TESTS_SCRIPT = `#!/bin/sh
+{
+  echo '<testsuites><testsuite name="sandbox">'
+  for file in modules/*/tests/*; do
+    [ -f "$file" ] || continue
+    if grep -qs '${PASSES_ON_PURPOSE}' "$file"; then
+      echo "<testcase name=\\"$file\\"/>"
+    else
+      echo "<testcase name=\\"$file\\"><failure/></testcase>"
+    fi
+  done
+  echo '</testsuite></testsuites>'
+} > junit.xml
+! grep -rqs '${FAILS_ON_PURPOSE}' modules
 `;
 
 /** Where Divlab's pull request workflow lives in a project repository. */

@@ -277,7 +277,9 @@ export class FakeGitHub
   }
 
   async toolchain(project: string) {
-    return this.withoutToolchain.has(project) ? undefined : { image: "node:24", test: "npm test" };
+    return this.withoutToolchain.has(project)
+      ? undefined
+      : { image: "node:24", test: "npm test", report: "junit.xml" };
   }
 
   /** The project's open pull requests whose head is the commit. */

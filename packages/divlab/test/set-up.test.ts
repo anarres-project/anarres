@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { type ProjectRepositories, setUpProject } from "../src/index.ts";
 
 /** A toolchain as a project declares it: the image its tests run in, and the command. */
-const DECLARED = { image: "node:24", test: "npm test" };
+const DECLARED = { image: "node:24", test: "npm test", report: "junit.xml" };
 
 describe("setting up a project", () => {
   it("protects the project's main branch so that only Divlab can change it", async () => {

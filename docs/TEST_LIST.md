@@ -571,11 +571,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         (following GitHub's redirect, the token kept to GitHub) and reads it: running until the
         run finishes; unreadable with no artefact, an empty one, one over 2 MB (not downloaded)
         or a file stated to unpack over 2 MB (not unpacked); `fflate` 0.8.3, no dependencies;
-  - [ ] the toolchain names its report, and the checks workflow uploads it as the run's
-        artefact (until then, Test work in the sandbox would wait for ever: not pushed);
-  - [ ] the checks run on Test work too (`modules/*/tests/` joins the paths), and Test work
+  - [x] the toolchain names its report (required: core reads none without it as no toolchain),
+        and the checks workflow uploads it as the `test-report` artefact, even when the tests
+        fail;
+  - [x] the checks run on Test work too (`modules/*/tests/` joins the paths), and Test work
         reporting a failure or blocked, or partial, needs no check;
-  - [ ] the sandbox shows it: a toolchain that writes a JUnit report whose tests fail on cue.
+  - [ ] the sandbox shows it: its toolchain runs a script at the project's root writing a JUnit
+        report, a failing case for each test file unless it says it passes on purpose.
 - [ ] Test counts for metrics come from the project's JUnit XML report, whatever the language.
 - [x] A project without a declared toolchain cannot be started: Divlab reads `anarres.yaml` on
       main as data (an image, and a one-line test command, both text) and refuses to set up a

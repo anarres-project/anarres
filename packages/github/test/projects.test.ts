@@ -299,7 +299,7 @@ describe("a member's claim, from their CLI", () => {
 
 describe("a project's declared toolchain", () => {
   it("is read from anarres.yaml on the project's main branch", async () => {
-    const declared = "toolchain:\n  image: node:24\n  test: npm test\n";
+    const declared = "toolchain:\n  image: node:24\n  test: npm test\n  report: junit.xml\n";
     const adapter = new GitHubAdapter({
       owner: "commons",
       token: "test",
@@ -310,7 +310,11 @@ describe("a project's declared toolchain", () => {
         return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
       },
     });
-    expect(await adapter.toolchain("ledger")).toEqual({ image: "node:24", test: "npm test" });
+    expect(await adapter.toolchain("ledger")).toEqual({
+      image: "node:24",
+      test: "npm test",
+      report: "junit.xml",
+    });
   });
   it("is none when the project has no anarres.yaml", async () => {
     const adapter = new GitHubAdapter({

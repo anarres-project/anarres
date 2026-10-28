@@ -32,9 +32,12 @@ repository, and the four repositories' Divlab runs go at once; each scenario
 gives its modules names of its own (`parser` becomes `parser-s17`), so no scenario sees another's
 tasks, alerts or records. Each scenario starts its modules in the worker's repository as a project
 does, with Divlab's App: each gets its first task, Specification, ready. The repository also gets
-the template's checks workflow and a toolchain (`anarres.yaml`) whose tests fail only on Coding
-work a scenario makes fail on purpose, so Coding work is merged once the project's own check
-passes on it, as decision 0010 says.
+the template's checks workflow and a toolchain (`anarres.yaml`) running a script at its root,
+where no member's work may write. Its tests fail only on Coding work a scenario makes fail on
+purpose, so Coding work is merged once the project's own check passes on it (decision 0010). It
+writes a JUnit report with a failing test case for each test file, as new tests fail before their
+code exists, unless the file says it passes on purpose; Divlab reads Test work's new tests from
+it (decision 0011).
 
 **Each piece of work a scenario accepts** ("a member's Coding work on parser is accepted with a
 fail verdict, reporting test failures"):

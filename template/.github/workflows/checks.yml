@@ -1,30 +1,33 @@
 name: Project checks
 
-# The project's own tests, on every member's pull request that changes a module's code (decision
-# 0010). Divlab never runs a project's code: this workflow does, as GitHub runs a pull request's
-# own code, from a fork with none of the project's secrets, and Divlab reads its result.
+# The project's own tests, on every member's pull request that changes a module's code or tests
+# (decisions 0010 and 0011). Divlab never runs a project's code: this workflow does, as GitHub runs
+# a pull request's own code, from a fork with none of the project's secrets, and Divlab reads the
+# result.
 on:
   pull_request:
-    paths: ["modules/*/src/**"]
+    paths: ["modules/*/src/**", "modules/*/tests/**"]
 
 # The workflow's own token may read the project's code, and nothing more.
 permissions:
   contents: read
 
 jobs:
-  # The project's toolchain, as anarres.yaml declares it: the image its tests run in, and the
-  # command that runs them.
+  # The project's toolchain, as anarres.yaml declares it: the image its tests run in, the command
+  # that runs them, and where it writes its report.
   toolchain:
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.declared.outputs.image }}
       test: ${{ steps.declared.outputs.test }}
+      report: ${{ steps.declared.outputs.report }}
     steps:
       - uses: actions/checkout@v5
       - id: declared
         run: |
           echo "image=$(yq '.toolchain.image' anarres.yaml)" >> "$GITHUB_OUTPUT"
           echo "test=$(yq '.toolchain.test' anarres.yaml)" >> "$GITHUB_OUTPUT"
+          echo "report=$(yq '.toolchain.report' anarres.yaml)" >> "$GITHUB_OUTPUT"
 
   tests:
     # The check's name, which Divlab reads the result by: Anarres fixes it, not the project.
@@ -39,3 +42,10 @@ jobs:
       - env:
           TEST_COMMAND: ${{ needs.toolchain.outputs.test }}
         run: sh -c "$TEST_COMMAND"
+      # The report, which Divlab reads Test work's new tests from (decision 0011): uploaded even
+      # when the tests fail, as Test work's new tests should.
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: ${{ needs.toolchain.outputs.report }}

@@ -14,6 +14,7 @@ import {
   readSignalFile,
   routingRecord,
   type TestReport,
+  type Toolchain,
   trustLevelOf,
   type Unreadable,
   writeScope,
@@ -950,7 +951,7 @@ export interface ProjectRepositories {
   /** Divlab's checks, and nothing else, may act on members' pull requests. */
   allowDivlabChecks(project: string): Promise<void>;
   /** The toolchain the project declares on main, if it declares one (decision 0010). */
-  toolchain(project: string): Promise<{ image: string; test: string } | undefined>;
+  toolchain(project: string): Promise<Toolchain | undefined>;
 }
 
 /** A project's repository has been created, and Divlab prepares it. */
