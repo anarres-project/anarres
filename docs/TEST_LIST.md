@@ -516,8 +516,18 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       (lower-case letters and digits joined by single hyphens or underscores, at most 40 long) is
       unreadable: Divlab writes them into issue titles, labels and text. The member is told why
       (in the sandbox too).
-- [ ] Work naming a module the project does not have is refused (needs the Programme Architect's
-      `modules.yaml`; until then a project has one module: concept §5, "start whole").
+- [ ] Work naming a module the project does not have is refused (decision 0013, Bernard,
+      2026-10-28):
+  - [ ] a module starts with the first role of core's module pipeline, Architecture, not
+        Specification as built on 2026-10-27 (stated once, in core);
+  - [ ] work's role and module must be its task's, or it is refused, saying so: a module the
+        project does not have has no task;
+  - [ ] a project starts with one Programme Architect task;
+  - [ ] the Programme Architect's `programme/modules.yaml` is read as data: modules with plain
+        names (requirements, dependencies and size kept for later); unreadable refuses the work;
+  - [ ] merging Programme Architect work starts each module its `modules.yaml` lists that has not
+        started; a module it leaves out goes on;
+  - [ ] the sandbox shows it.
 - [x] Coding work that changes tests is rejected (a case of the write scopes).
 - [ ] Work based on inputs that have since changed is flagged as stale.
 
