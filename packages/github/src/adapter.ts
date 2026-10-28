@@ -115,6 +115,11 @@ export class GitHubAdapter
       download?: Download;
       /** Where the governance file is, if the organisation names a repository of its own. */
       governance?: string;
+      /**
+       * The adapter serves one Divlab run, so may keep the event log it reads: Divlab's runs on a
+       * project take turns, and nothing else records events.
+       */
+      oneRun?: boolean;
     },
   ) {}
 
@@ -530,7 +535,12 @@ export class GitHubAdapter
    */
   async append(event: LogEvent): Promise<void> {
     const seen = this.eventsRead.get(event.project);
-    if (seen !== undefined && (await this.createEvent(event, seen + 1)) === "created") return;
+    if (seen !== undefined && (await this.createEvent(event, seen + 1)) === "created") {
+      this.logRead.get(event.project)?.push(event);
+      return;
+    }
+    // Something recorded an event since the run read the log: read it from GitHub again.
+    this.logRead.delete(event.project);
     const sequence = (await this.eventFiles(event.project)).length + 1;
     if ((await this.createEvent(event, sequence)) === "taken") {
       throw new GitHubError(
@@ -609,6 +619,19 @@ export class GitHubAdapter
    * less.
    */
   async read(project: string): Promise<LogEvent[]> {
+    // Divlab's runs on a project take turns (one concurrency group), so within a run the log
+    // changes only by what the run itself records.
+    const known = this.logRead.get(project);
+    if (known) return known;
+    const log = await this.readFromGitHub(project);
+    if (this.options.oneRun) this.logRead.set(project, log);
+    return log;
+  }
+
+  /** Each project's log as this run read it. */
+  private readonly logRead = new Map<string, LogEvent[]>();
+
+  private async readFromGitHub(project: string): Promise<LogEvent[]> {
     const listed = await this.eventFiles(project);
     this.eventsRead.set(project, listed.length);
     if (listed.length === 0) return [];

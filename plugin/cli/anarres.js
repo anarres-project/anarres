@@ -10599,7 +10599,11 @@ var GitHubAdapter = class {
    */
   async append(event) {
     const seen = this.eventsRead.get(event.project);
-    if (seen !== void 0 && await this.createEvent(event, seen + 1) === "created") return;
+    if (seen !== void 0 && await this.createEvent(event, seen + 1) === "created") {
+      this.logRead.get(event.project)?.push(event);
+      return;
+    }
+    this.logRead.delete(event.project);
     const sequence = (await this.eventFiles(event.project)).length + 1;
     if (await this.createEvent(event, sequence) === "taken") {
       throw new GitHubError(
@@ -10664,6 +10668,15 @@ var GitHubAdapter = class {
    * less.
    */
   async read(project) {
+    const known = this.logRead.get(project);
+    if (known) return known;
+    const log = await this.readFromGitHub(project);
+    if (this.options.oneRun) this.logRead.set(project, log);
+    return log;
+  }
+  /** Each project's log as this run read it. */
+  logRead = /* @__PURE__ */ new Map();
+  async readFromGitHub(project) {
     const listed = await this.eventFiles(project);
     this.eventsRead.set(project, listed.length);
     if (listed.length === 0) return [];

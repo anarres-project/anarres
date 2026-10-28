@@ -123,7 +123,14 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           moved to the GitHub package), and how much of the App's allowance is used;
     - [ ] the sandbox run checks the App's allowance before each scenario: needs a token of the
           App's, whose key lives only in the sandbox organisation's secrets (Bernard to decide);
-    - [ ] the requests a Divlab run makes, cut where the numbers show the cost;
+    - [ ] the requests a Divlab run makes, cut where the numbers show the cost. Sampled
+          (4bc633c, 51 runs): 10 to 25 requests a run, about 15; listing the log's Git trees
+          25%, writing events 15%, reading their text 12%, issues 8%, the ruleset check 6.5%:
+      - [x] a run reads the log from GitHub once (most read it twice: for the event, and
+            to check main), keeping it with what the run records; read again if the run finds
+            another event recorded since; only Divlab's own run keeps it (`oneRun`), never a
+            watcher such as the sandbox driver;
+      - [ ] measured again in the sandbox, after this;
     - [ ] the artefact downloads of Test and Coding work count too, and are not yet tallied;
   - [ ] GitHub's reading of the allowance used jumps between readings (2,141 then 726 a minute
         later, same window, 2026-10-22): find out why before relying on it more;

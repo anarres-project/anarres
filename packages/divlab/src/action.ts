@@ -32,6 +32,7 @@ const github = new GitHubAdapter({
   token,
   governance: process.env.INPUT_GOVERNANCE ?? "",
   request: counted.request,
+  oneRun: true,
 });
 const sayRequests = async () => {
   for (const line of summary(counted.tally)) console.log(line);

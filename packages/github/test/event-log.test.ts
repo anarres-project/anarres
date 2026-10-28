@@ -137,6 +137,10 @@ class FakeGitHub {
 const adapterFor = (github: FakeGitHub) =>
   new GitHubAdapter({ owner: "commons", token: "test", request: github.request });
 
+/** The adapter of one Divlab run, which may keep the log it reads (no other run writes to it). */
+const runAdapterFor = (github: FakeGitHub) =>
+  new GitHubAdapter({ owner: "commons", token: "test", request: github.request, oneRun: true });
+
 describe("a project's event log on GitHub", () => {
   it("is read whole, however many events it holds", async () => {
     const github = new FakeGitHub(CONTENTS_LISTING_LIMIT + 1);
@@ -150,6 +154,45 @@ describe("a project's event log on GitHub", () => {
     expect(log.map((event) => (event as RoutingEvent).work.module)).toEqual(
       Array.from({ length: 250 }, (_, i) => `module-${i + 1}`),
     );
+  });
+
+  it("is read from GitHub once a run: no other run records events meanwhile, as Divlab's runs on a project take turns", async () => {
+    const github = new FakeGitHub(250);
+    const adapter = runAdapterFor(github);
+    await adapter.read("ledger");
+    const before = github.requests;
+    expect(await adapter.read("ledger")).toHaveLength(250);
+    expect(github.requests - before).toBe(0);
+  });
+
+  it("holds, read again in a run, the events the run has recorded since", async () => {
+    const github = new FakeGitHub(250);
+    const adapter = runAdapterFor(github);
+    await adapter.read("ledger");
+    await adapter.append(event(251));
+    const log = await adapter.read("ledger");
+    expect(log.map((e) => (e as RoutingEvent).work.module).at(-1)).toBe("module-251");
+  });
+
+  it("is read from GitHub again once a run finds another run has recorded an event since", async () => {
+    const github = new FakeGitHub(250);
+    const adapter = runAdapterFor(github);
+    await adapter.read("ledger");
+    await adapterFor(github).append(event(251));
+    await adapter.append(event(252));
+    const log = await adapter.read("ledger");
+    expect(log.map((e) => (e as RoutingEvent).work.module).slice(-2)).toEqual([
+      "module-251",
+      "module-252",
+    ]);
+  });
+
+  it("is read from GitHub each time by an adapter that is not one run's, as a watcher's is", async () => {
+    const github = new FakeGitHub(250);
+    const watcher = adapterFor(github);
+    await watcher.read("ledger");
+    await adapterFor(github).append(event(251));
+    expect(await watcher.read("ledger")).toHaveLength(251);
   });
 
   it("gives a new event the next number, however many events the log holds", async () => {

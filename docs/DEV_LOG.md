@@ -421,6 +421,17 @@ governance scenarios run alone.
   sandbox driver counts with it. RED: the adapter reads the token's allowance -> not a function,
   then the stub's zeros; GREEN. Divlab's action prints both at the end of every run (wiring, no
   test: an allowance it cannot read is not said, and never fails the run).
+- The 4bc633c sandbox run: 86 of 87, the App's allowance spent again ("An established member can
+  take a Reviewer task"). Sampled 51 Divlab runs during it: about 15 requests a run; a quarter of
+  them list the event log's Git trees, as most runs read the whole log twice.
+- RED: the log is read from GitHub once a run -> `expected 5 to be +0`; GREEN, kept by the
+  adapter. RED: read again, it holds the events the run recorded since -> `module-250`, not
+  `module-251`; GREEN. RED: read from GitHub again once the run finds another event recorded
+  since; GREEN. Then a defect in my own change, caught before it ran: the sandbox driver keeps
+  one adapter for a scenario and reads the log while Divlab writes it. A test-only step first
+  (the three tests build one run's adapter, an option not yet there, still green); RED: an
+  adapter that is not one run's reads from GitHub each time -> 250, not 251; GREEN, `oneRun`,
+  which Divlab's action sets. Gate 748 and 123.
 
 ---
 
