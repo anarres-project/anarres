@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readModules } from "../src/index.ts";
+import { contractsOfModule, readModules } from "../src/index.ts";
 
 describe("the Programme Architect's modules.yaml (decision 0013)", () => {
   it("lists the project's modules by name", () => {
@@ -76,8 +76,8 @@ describe("the contracts in modules.yaml (decision 0014)", () => {
   });
   it("is unreadable when it names a contract in more than a plain name", () => {
     for (const text of [
-      "modules:\n  - name: lexer\n    provides: [\"tokens [see](https://example.test)\"]\n",
-      "modules:\n  - name: lexer\n    uses: [\"../tokens\"]\n",
+      'modules:\n  - name: lexer\n    provides: ["tokens [see](https://example.test)"]\n',
+      'modules:\n  - name: lexer\n    uses: ["../tokens"]\n',
     ]) {
       expect(readModules(text)).toEqual({
         unreadable: "modules.yaml names a contract in more than a plain name",
@@ -94,5 +94,16 @@ describe("the contracts in modules.yaml (decision 0014)", () => {
         unreadable: "modules.yaml gives a module's contracts other than as a list of names",
       });
     }
+  });
+});
+
+describe("a module's contracts (decision 0014)", () => {
+  it("are those it provides and those it uses", () => {
+    const contracts = [
+      { name: "tokens", providedBy: "lexer", usedBy: ["parser"] },
+      { name: "syntax-tree", providedBy: "parser", usedBy: [] },
+      { name: "entries", providedBy: "ledger", usedBy: [] },
+    ];
+    expect(contractsOfModule(contracts, "parser")).toEqual(["tokens", "syntax-tree"]);
   });
 });

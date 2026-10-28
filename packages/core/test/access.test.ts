@@ -135,3 +135,34 @@ describe("what a continuation of partial work may read (decision 0008)", () => {
     ).toEqual([true, true, false]);
   });
 });
+
+describe("the contracts a role's work reads (decision 0014)", () => {
+  it("lets Architecture read the contracts its module provides and uses, and no others", () => {
+    expect(
+      [
+        "programme/contracts/tokens/contract.md",
+        "programme/contracts/syntax-tree/contract.md",
+        "programme/contracts/entries/contract.md",
+      ].map((path) =>
+        mayRead("architecture", "parser", path, { contracts: ["tokens", "syntax-tree"] }),
+      ),
+    ).toEqual([true, true, false]);
+  });
+  it("lets Specification read its module's contracts too", () => {
+    expect(
+      mayRead("specification", "parser", "programme/contracts/tokens/contract.md", {
+        contracts: ["tokens"],
+      }),
+    ).toBe(true);
+  });
+  it("lets no other module role read a contract, even its module's", () => {
+    const roles: Role[] = ["test", "coding", "reviewer", "security-and-quality"];
+    expect(
+      roles.map((role) =>
+        mayRead(role, "parser", "programme/contracts/tokens/contract.md", {
+          contracts: ["tokens"],
+        }),
+      ),
+    ).toEqual([false, false, false, false]);
+  });
+});

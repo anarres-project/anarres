@@ -63,7 +63,9 @@ export function readModules(text: string): Modules | { unreadable: string } {
     for (const used of contractsOf(uses)) {
       const contract = contracts.find((c) => c.name === used);
       if (contract === undefined) {
-        return { unreadable: `modules.yaml has a module use a contract no module provides: ${used}` };
+        return {
+          unreadable: `modules.yaml has a module use a contract no module provides: ${used}`,
+        };
       }
       if (contract.providedBy === name) {
         return { unreadable: `modules.yaml has a module use a contract it provides: ${used}` };
@@ -76,3 +78,10 @@ export function readModules(text: string): Modules | { unreadable: string } {
 
 /** The first name a list has more than once. */
 const repeated = (names: string[]) => names.find((name, i) => names.indexOf(name) !== i);
+
+/** The contracts a module provides and uses. */
+export function contractsOfModule(contracts: readonly Contract[], module: string): string[] {
+  return contracts
+    .filter((contract) => contract.providedBy === module || contract.usedBy.includes(module))
+    .map((contract) => contract.name);
+}
