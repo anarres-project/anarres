@@ -27,6 +27,14 @@ export class Anarres {
     private project: string,
   ) {}
 
+  /**
+   * A project of the scenario's own. In the sandbox, a worker's scenarios share one project's
+   * name, so the scenario's alias keeps two that start their own apart.
+   */
+  private ownProject(kind: string): string {
+    return this.aliases.of(`${this.project}-${kind}`);
+  }
+
   async projectWithModules(...modules: string[]): Promise<void> {
     this.modules.push(...modules.map((module) => this.aliases.of(module)));
     await this.driver.createProject(this.project, this.modules);
@@ -36,7 +44,7 @@ export class Anarres {
   private notStarted = "";
 
   async projectWithoutToolchain(module: string): Promise<void> {
-    this.project = `${this.project}-no-toolchain`;
+    this.project = this.ownProject("no-toolchain");
     this.modules.push(this.aliases.of(module));
     this.notStarted = await this.driver.startProjectWithoutToolchain(this.project, this.modules);
   }
@@ -53,7 +61,7 @@ export class Anarres {
   /** A project of its own, whose main branch was left unprotected: a misconfiguration. */
   /** A new project of its own, started as whoever starts a project starts it. */
   async newProjectStarted(): Promise<void> {
-    this.project = `${this.project}-new`;
+    this.project = this.ownProject("new");
     await this.driver.startProject(this.project);
   }
 
@@ -69,7 +77,7 @@ export class Anarres {
 
   /** A project of its own, so its counts are its scenario's alone. */
   async projectOfItsOwn(module: string): Promise<void> {
-    this.project = `${this.project}-own`;
+    this.project = this.ownProject("own");
     this.modules.push(this.aliases.of(module));
     await this.driver.createProject(this.project, this.modules);
   }

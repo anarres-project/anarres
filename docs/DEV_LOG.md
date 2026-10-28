@@ -362,6 +362,13 @@ governance scenarios run alone.
   crash, once my fixture's board showed the programme's task, not parser's); GREEN. RED, core
   refuses a record whose `modulesToStart` are not plain names; GREEN (707), core at 100%.
 - The scenario passes in-process and loses `@wip`.
+- The 8176824 sandbox run: 85 of 86 passed. "The Programme Architect's modules start once its
+  work is merged" could not create its project: the name was taken. A defect in the harness, not
+  in Divlab: in the sandbox a worker's scenarios share one project's name, and a scenario
+  starting a project of its own added a fixed suffix to it, so two scenarios starting new
+  projects on one worker asked for the same repository. Only the sandbox shows it (in-process,
+  each scenario has a GitHub of its own). Fixed: such a project carries the scenario's alias too.
+  Gate 122 scenarios.
 
 ---
 

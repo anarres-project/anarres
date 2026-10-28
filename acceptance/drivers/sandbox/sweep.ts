@@ -2,7 +2,7 @@
 export const runRepository = (run: string) => `${RUN_PREFIX}${run}`;
 const RUN_PREFIX = "ledger-";
 
-/** Longer than any run takes (CI stops one at 45 minutes). */
+/** As long as any run takes (CI stops one at 60 minutes). */
 const RUN_LIMIT = 3_600_000;
 
 /**
