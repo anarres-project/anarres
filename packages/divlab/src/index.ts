@@ -4,6 +4,7 @@ import {
   failed,
   isRole,
   leaseHasRunOut,
+  MODULES_FILE,
   mayTake,
   memberFor,
   outsideScope,
@@ -931,9 +932,6 @@ export async function onPullRequest(
 /** The modules earlier modules.yaml started, as Divlab's routing records say. */
 const modulesStarted = (events: LogEvent[]) =>
   new Set(routingDecisions(events).flatMap((event) => event.work.modulesToStart ?? []));
-
-/** Where the Programme Architect keeps the project's modules (concept §5, decision 0013). */
-const MODULES_FILE = `${PROGRAMME}/modules.yaml`;
 
 /**
  * Every Divlab run checks the commits on main since its last check: each must be Divlab's own, a

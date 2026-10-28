@@ -2,6 +2,9 @@ import { parse } from "yaml";
 import { PROGRAMME } from "./access.ts";
 import { isPlainName } from "./feedback-signal.ts";
 
+/** Where the Programme Architect keeps the project's modules (concept §5, decision 0013). */
+export const MODULES_FILE = `${PROGRAMME}/modules.yaml`;
+
 /**
  * The Programme Architect's modules.yaml, as data (decision 0013): the modules, and the contracts
  * between them, each provided by one module and used by others (decision 0014).
