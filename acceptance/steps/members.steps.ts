@@ -92,3 +92,17 @@ Then(
     return this.anarres.memberHasWorkSoFarBack(member, { role, module });
   },
 );
+
+When(
+  "{word} prepares the {role} task for {string}",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.memberPrepares(member, { role, module });
+  },
+);
+
+Then(
+  "{word} has the contract {string} to read, and not the contract {string}",
+  function (this: AnarresWorld, member: string, contract: string, notContract: string) {
+    return this.anarres.memberHasContracts(member, [contract], [notContract]);
+  },
+);

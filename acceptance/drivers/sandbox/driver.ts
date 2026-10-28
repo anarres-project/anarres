@@ -1145,6 +1145,18 @@ export class SandboxDriver implements Driver {
     return "folder" in resumed ? { workIn: resumed.folder } : resumed;
   }
 
+  /** The contracts in the prepared task's folder: the folders of `programme/contracts/`. */
+  async contractsFetched(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<string[]> {
+    const id = this.preparedIssues.get(`${member} ${task.role} ${task.module}`);
+    if (id === undefined || this.machine === undefined) return [];
+    const folder = taskFolder({ project: task.project, task: id });
+    const contracts = join(this.machine, folder, "programme", "contracts");
+    return existsSync(contracts) ? readdirSync(contracts) : [];
+  }
+
   async workInFolder(task: { project: string; role: string; module: string }, member: string) {
     const id = this.preparedIssues.get(`${member} ${task.role} ${task.module}`);
     if (id === undefined || this.machine === undefined) return [];

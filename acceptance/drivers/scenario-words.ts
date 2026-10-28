@@ -1,6 +1,6 @@
 import { ROLE_NAMES, type Role } from "@anarres/core";
 import type { RoutingEvent } from "@anarres/divlab";
-import type { AcceptedWork, RoutingRecord } from "./driver.ts";
+import type { AcceptedWork, Contract, RoutingRecord } from "./driver.ts";
 
 /**
  * Translation between the scenarios' words and Divlab's ids, shared by every driver. Scenarios
@@ -53,15 +53,17 @@ export function otherFiles(work: AcceptedWork) {
           },
         ]
       : []),
-    // The Programme Architect's modules.yaml, listing the project's modules.
+    // The Programme Architect's modules.yaml, listing the project's modules and the contracts
+    // each provides and uses, and a folder for each contract (decision 0014).
     ...(work.modulesListed === undefined
       ? []
       : [
-          {
-            path: "programme/modules.yaml",
-            text: `modules:\n${work.modulesListed.map((name) => `  - name: ${name}\n`).join("")}`,
-          },
+          { path: "programme/modules.yaml", text: modulesYaml(work.modulesListed, work.contracts) },
         ]),
+    ...(work.contracts ?? []).map((contract) => ({
+      path: `programme/contracts/${contract.name}/contract.md`,
+      text: `# Contract ${contract.name}\n`,
+    })),
     // Coding work changes the module's code; the sandbox project's tests fail on this marker.
     ...(work.role === "Coding"
       ? [
@@ -131,3 +133,20 @@ export function roleNameOf(id: string): string {
 
 const words = (id: string) => id.replaceAll("_", " ");
 const ids = (words: string) => words.replaceAll(" ", "_");
+
+/** A modules.yaml listing the modules, each with the contracts it provides and uses. */
+function modulesYaml(modules: string[], contracts: Contract[] = []): string {
+  const list = (key: string, names: string[]) =>
+    names.length === 0 ? "" : `    ${key}:\n${names.map((name) => `      - ${name}\n`).join("")}`;
+  const entry = (module: string) =>
+    `  - name: ${module}\n` +
+    list(
+      "provides",
+      contracts.filter((c) => c.providedBy === module).map((c) => c.name),
+    ) +
+    list(
+      "uses",
+      contracts.filter((c) => c.usedBy.includes(module)).map((c) => c.name),
+    );
+  return `modules:\n${modules.map(entry).join("")}`;
+}

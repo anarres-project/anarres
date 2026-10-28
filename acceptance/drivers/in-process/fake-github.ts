@@ -435,6 +435,11 @@ export class FakeGitHub
     return pullRequest;
   }
 
+  /** The paths of the files on a project's main branch. */
+  filesOnMain(project: string): string[] {
+    return [...(this.files.get(project)?.keys() ?? [])];
+  }
+
   async feedbackSignals(project: string): Promise<string[]> {
     return [...(this.files.get(project)?.keys() ?? [])].filter((path) =>
       path.startsWith("feedback/"),

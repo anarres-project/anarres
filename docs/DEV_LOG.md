@@ -373,6 +373,22 @@ governance scenarios run alone.
 
 ---
 
+## 2026-10-28: Contracts, and what each role reads of them (decision 0014)
+
+- Decision 0014 (Bernard): `modules.yaml` says which contracts each module provides and uses; a
+  contract is a folder of its own, `programme/contracts/<c>/`; a contract provided twice, used but
+  provided by none, or used by its own provider makes the file unreadable; Architecture and
+  Specification read their module's contracts; `prepare` learns them from `modules.yaml` at the
+  pinned commit, never from the issue.
+- Scenario (`@wip`): "A member preparing an Architecture task has the contracts its module uses,
+  and no others". First `HarnessNotYetBuilt` (my own setup had also left out that Architecture
+  needs an established member: a defect in a Given, caught by the judge). The harness now writes
+  the contracts into the Programme Architect's work, and each driver sees the contracts a
+  prepared task fetched (in-process, main's files in the role's read scope; in the sandbox, the
+  checkout's folder). Now not yet right: no contract is fetched.
+
+---
+
 ## 2026-10-27: The lease check run by hand in the sandbox
 
 - The 23:00 full sandbox run (604aab8) passed: 98 of 98.

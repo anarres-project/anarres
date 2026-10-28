@@ -580,3 +580,29 @@ Given(
     });
   },
 );
+
+Given(
+  "a member's Programme Architect work for the programme was accepted, listing the modules {string}, {string} and {string}, with a contract {string} that {string} provides and {string} uses, and a contract {string} that {string} provides",
+  function (
+    this: AnarresWorld,
+    first: string,
+    second: string,
+    third: string,
+    used: string,
+    provider: string,
+    user: string,
+    unused: string,
+    otherProvider: string,
+  ) {
+    return this.anarres.memberHasWorkAccepted({
+      role: "Programme Architect",
+      module: "programme",
+      verdict: "pass",
+      modulesListed: [first, second, third],
+      contracts: [
+        { name: used, providedBy: provider, usedBy: [user] },
+        { name: unused, providedBy: otherProvider, usedBy: [] },
+      ],
+    });
+  },
+);

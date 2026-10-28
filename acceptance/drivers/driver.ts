@@ -28,11 +28,16 @@ export type AcceptedWork = {
   testsFail?: boolean;
   /** The modules the Programme Architect's modules.yaml lists, in the work's own words. */
   modulesListed?: string[];
+  /** The contracts the Programme Architect's modules.yaml says each module provides and uses. */
+  contracts?: Contract[];
   /** The project's tests are still running on the member's work. */
   testsRunning?: boolean;
   /** The new tests in the member's Test work pass before any code exists: they test nothing. */
   newTestsPass?: boolean;
 };
+
+/** A contract between modules: the one module that provides it, and those that use it. */
+export type Contract = { name: string; providedBy: string; usedBy: string[] };
 
 export type ReadyTask = {
   role: string;
@@ -154,6 +159,11 @@ export interface Driver {
   contributionHistory(member: string): Promise<{ role: string; module: string }[]>;
   /** The member's plugin prepares a task they hold, on their machine; gives where its work is. */
   prepare(task: { project: string; role: string; module: string }, member: string): Promise<string>;
+  /** The contracts among the files the member's plugin fetched when it prepared the task. */
+  contractsFetched(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<string[]>;
   /**
    * The member's plugin resumes a task in a new session: where its work is, or why not.
    */

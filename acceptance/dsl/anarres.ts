@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { PROGRAMME } from "@anarres/core";
-import type { CoordinatorAlert, Driver, RoutingRecord } from "../drivers/driver.ts";
+import type { Contract, CoordinatorAlert, Driver, RoutingRecord } from "../drivers/driver.ts";
 import type { Aliases } from "./aliases.ts";
 
 /** Whoever does the work a scenario does not name a member for: never one it names. */
@@ -175,7 +175,12 @@ export class Anarres {
   }
 
   async memberHasWorkAccepted(
-    work: Work & { verdict: string; impediments?: string[]; modulesListed?: string[] },
+    work: Work & {
+      verdict: string;
+      impediments?: string[];
+      modulesListed?: string[];
+      contracts?: Contract[];
+    },
     named?: string,
   ) {
     const member = await this.holderOf(work, named);
@@ -706,11 +711,14 @@ export class Anarres {
 
   /** Where each member's prepared work is, by member and task. */
   private readonly prepared = new Map<string, string>();
+  /** The task each member last prepared. */
+  private readonly lastPrepared = new Map<string, Work & { project: string }>();
   /** What each member was told when they last resumed a task, by member and task. */
   private readonly resumed = new Map<string, { workIn: string } | { refused: string }>();
 
   async memberPrepares(member: string, task: Work) {
     const work = { ...this.aliased(task), project: this.project };
+    this.lastPrepared.set(member, work);
     this.prepared.set(
       `${member} ${workOn(this.aliased(task))}`,
       await this.driver.prepare(work, this.member(member)),
@@ -742,6 +750,24 @@ export class Anarres {
       draft !== undefined && back.includes(draft),
       `expected ${member}'s draft ${task.role} work on ${task.module}, ${draft}, back in its folder; found ${JSON.stringify(back)}`,
     );
+  }
+
+  async memberHasContracts(member: string, contracts: string[], notContracts: string[]) {
+    const work = this.lastPrepared.get(member);
+    assert.ok(work !== undefined, `expected ${member} to have prepared a task`);
+    const fetched = await this.driver.contractsFetched(work, this.member(member));
+    for (const contract of contracts) {
+      assert.ok(
+        fetched.includes(this.aliases.of(contract)),
+        `expected ${member} to have the contract ${contract} to read; fetched ${JSON.stringify(fetched)}`,
+      );
+    }
+    for (const contract of notContracts) {
+      assert.ok(
+        !fetched.includes(this.aliases.of(contract)),
+        `expected ${member} not to have the contract ${contract}; fetched ${JSON.stringify(fetched)}`,
+      );
+    }
   }
 
   async memberIsToldNoLongerHeld(member: string, task: Work) {
@@ -888,11 +914,23 @@ export class Anarres {
   /** Modules are aliased; the programme, one per project, keeps its own name. */
   private aliased<T extends Work>(work: T): T {
     const module = work.module === PROGRAMME ? PROGRAMME : this.aliases.of(work.module);
-    const listed = (work as { modulesListed?: string[] }).modulesListed;
+    const { modulesListed: listed, contracts } = work as {
+      modulesListed?: string[];
+      contracts?: Contract[];
+    };
     return {
       ...work,
       module,
       ...(listed === undefined ? {} : { modulesListed: listed.map((m) => this.aliases.of(m)) }),
+      ...(contracts === undefined
+        ? {}
+        : {
+            contracts: contracts.map((contract) => ({
+              name: this.aliases.of(contract.name),
+              providedBy: this.aliases.of(contract.providedBy),
+              usedBy: contract.usedBy.map((m) => this.aliases.of(m)),
+            })),
+          }),
     };
   }
 

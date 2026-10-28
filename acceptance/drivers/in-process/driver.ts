@@ -44,6 +44,9 @@ import {
 } from "../scenario-words.ts";
 import { DIVLAB_ACCOUNT, FakeGitHub, Interrupted } from "./fake-github.ts";
 
+/** Where the Programme Architect's contracts are, a folder each (decision 0014). */
+const CONTRACTS = "programme/contracts/";
+
 /** Submits work to an in-memory fake of GitHub as pull requests, for Divlab to merge. */
 /** Divlab's clock in-process starts at a fixed time, so no scenario reads the wall clock. */
 const START = "2026-10-22T09:00:00Z";
@@ -428,6 +431,9 @@ export class InProcessDriver implements Driver {
    * the member's machine; the driver keeps a record that it was done there, and of the work so
    * far the CLI brings back from the member's open pull request.
    */
+  /** The files each member's prepared task fetched, by member and task. */
+  private readonly fetched = new Map<string, string[]>();
+
   async prepare(task: { project: string; role: string; module: string }, member: string) {
     const id = this.openTaskId(task);
     const held = await this.github.task(task.project, id);
@@ -447,8 +453,29 @@ export class InProcessDriver implements Driver {
       (path, text) => folder.push({ path, text }),
     );
     this.preparedHere.add(`${member} ${task.project}#${id}`);
+    // The files on main the sparse checkout of the role's read scope would fetch.
+    this.fetched.set(
+      `${member} ${task.project}#${id}`,
+      this.github
+        .filesOnMain(task.project)
+        .filter((path) => plan.paths.some((place) => path.startsWith(place))),
+    );
     this.folders.set(`${member} ${task.project}#${id}`, folder);
     return taskFolder({ project: task.project, task: id });
+  }
+
+  async contractsFetched(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<string[]> {
+    const fetched = this.fetched.get(`${member} ${task.project}#${this.openTaskId(task)}`) ?? [];
+    return [
+      ...new Set(
+        fetched
+          .filter((path) => path.startsWith(CONTRACTS))
+          .map((path) => path.slice(CONTRACTS.length).split("/")[0] ?? ""),
+      ),
+    ];
   }
 
   async workInFolder(task: { project: string; role: string; module: string }, member: string) {
