@@ -1,4 +1,5 @@
 import type { FeedbackSignal, Unreadable } from "./feedback-signal.ts";
+import { isPlainName } from "./feedback-signal.ts";
 import { ROLE_NAMES, type Role } from "./roles.ts";
 import { type AcceptedWork, failed, type Reason, type RoutingDecision, rule } from "./routing.ts";
 
@@ -90,6 +91,17 @@ function unreadableWork(
   for (const [field, named] of WORK_FIELDS) {
     if (typeof work[field] !== "string")
       return { unreadable: `its work does not give its ${named}` };
+  }
+  // Divlab knows which modules have started from these (decision 0013).
+  const { modulesToStart } = work as { modulesToStart?: unknown };
+  if (
+    modulesToStart !== undefined &&
+    !(
+      Array.isArray(modulesToStart) &&
+      modulesToStart.every((module) => typeof module === "string" && isPlainName(module))
+    )
+  ) {
+    return { unreadable: "its work names the modules it started in more than plain names" };
   }
   return undefined;
 }

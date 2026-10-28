@@ -8,6 +8,7 @@ export {
   type Unreadable,
 } from "./feedback-signal.ts";
 export { LEASE_HOURS, leaseHasRunOut, leaseRunsOutAt } from "./leases.ts";
+export { type Modules, readModules } from "./modules.ts";
 export { isRole, ROLE_NAMES, type Role } from "./roles.ts";
 export {
   type AcceptedWork,

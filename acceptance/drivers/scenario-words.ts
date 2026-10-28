@@ -53,6 +53,15 @@ export function otherFiles(work: AcceptedWork) {
           },
         ]
       : []),
+    // The Programme Architect's modules.yaml, listing the project's modules.
+    ...(work.modulesListed === undefined
+      ? []
+      : [
+          {
+            path: "programme/modules.yaml",
+            text: `modules:\n${work.modulesListed.map((name) => `  - name: ${name}\n`).join("")}`,
+          },
+        ]),
     // Coding work changes the module's code; the sandbox project's tests fail on this marker.
     ...(work.role === "Coding"
       ? [

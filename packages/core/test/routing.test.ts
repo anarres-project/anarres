@@ -16,6 +16,27 @@ describe("routing accepted work", () => {
     ).toEqual({ tasks: [{ role: "test", module: "parser" }] });
   });
 
+  it("starts each module the programme's Programme Architect lists anew, with its first task", () => {
+    expect(
+      rule({
+        fromRole: "programme-architect",
+        module: "programme",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        modulesToStart: ["parser", "lexer"],
+      }),
+    ).toEqual({
+      decision: {
+        tasks: [
+          { role: "architecture", module: "parser" },
+          { role: "architecture", module: "lexer" },
+        ],
+      },
+      reason: { rule: "modules_listed" },
+    });
+  });
+
   it("makes a Specification task when the module's architecture passes", () => {
     expect(
       route({

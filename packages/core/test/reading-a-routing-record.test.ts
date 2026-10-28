@@ -83,4 +83,18 @@ describe("reading back the work Divlab recorded as about to merge", () => {
       unreadable: "its work does not give its verdict",
     });
   });
+  it("is unreadable when the modules its work started are not plain names", () => {
+    expect(
+      readRoutingRecord({
+        work: {
+          fromRole: "programme-architect",
+          module: "programme",
+          verdict: "pass",
+          modulesToStart: ["parser", 42],
+        },
+        decision: { tasks: [] },
+        reason: { rule: "modules_listed" },
+      }),
+    ).toEqual({ unreadable: "its work names the modules it started in more than plain names" });
+  });
 });

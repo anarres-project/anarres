@@ -7265,7 +7265,7 @@ var require_public_api = __commonJS({
       }
       return doc;
     }
-    function parse3(src, reviver, options) {
+    function parse4(src, reviver, options) {
       let _reviver = void 0;
       if (typeof reviver === "function") {
         _reviver = reviver;
@@ -7306,7 +7306,7 @@ var require_public_api = __commonJS({
         return value.toString(options);
       return new Document.Document(value, _replacer, options).toString(options);
     }
-    exports.parse = parse3;
+    exports.parse = parse4;
     exports.parseAllDocuments = parseAllDocuments;
     exports.parseDocument = parseDocument;
     exports.stringify = stringify;
@@ -9119,6 +9119,33 @@ function leaseHasRunOut(lastActivity, now) {
   return runsOut === void 0 || now >= runsOut;
 }
 
+// ../core/src/modules.ts
+var import_yaml2 = __toESM(require_dist(), 1);
+function readModules(text) {
+  let declared;
+  try {
+    declared = (0, import_yaml2.parse)(text);
+  } catch {
+    return { unreadable: "modules.yaml cannot be read as YAML" };
+  }
+  const modules = declared?.modules;
+  const names = Array.isArray(modules) ? modules.map((module) => module?.name) : [];
+  if (names.length === 0 || !names.every((name) => typeof name === "string")) {
+    return { unreadable: "modules.yaml lists no modules by name" };
+  }
+  if (!names.every((name) => isPlainName(name))) {
+    return { unreadable: "modules.yaml names a module in more than a plain name" };
+  }
+  if (names.includes(PROGRAMME)) {
+    return {
+      unreadable: `modules.yaml names a module ${PROGRAMME}, the name of the whole programme`
+    };
+  }
+  const twice = names.find((name, i2) => names.indexOf(name) !== i2);
+  if (twice !== void 0) return { unreadable: `modules.yaml lists a module twice: ${twice}` };
+  return { modules: names };
+}
+
 // ../core/src/routing.ts
 var MODULE_PIPELINE = [
   "architecture",
@@ -9138,6 +9165,7 @@ function rule(work) {
   if (work.partial) return continuation(work);
   if (failed(work)) return revise(work);
   if (work.fromRole === "research") return returnResearch(work);
+  if (work.modulesToStart !== void 0) return startModules(work.modulesToStart);
   return advance(work);
 }
 function continuation(work) {
@@ -9167,6 +9195,12 @@ function returnResearch(work) {
       tasks: [{ role: reporter, module: work.module, feedbackSignal: work.feedbackSignal }]
     },
     reason: { rule: "research_returned" }
+  };
+}
+function startModules(modules) {
+  return {
+    decision: { tasks: modules.map((module) => ({ role: FIRST_ROLE, module })) },
+    reason: { rule: "modules_listed" }
   };
 }
 function advance(work) {
@@ -9269,6 +9303,10 @@ function unreadableWork(work) {
     if (typeof work[field] !== "string")
       return { unreadable: `its work does not give its ${named}` };
   }
+  const { modulesToStart } = work;
+  if (modulesToStart !== void 0 && !(Array.isArray(modulesToStart) && modulesToStart.every((module) => typeof module === "string" && isPlainName(module)))) {
+    return { unreadable: "its work names the modules it started in more than plain names" };
+  }
   return void 0;
 }
 var isObject = (value) => typeof value === "object" && value !== null;
@@ -9330,11 +9368,11 @@ function testCounts({ cases }) {
 }
 
 // ../core/src/toolchain.ts
-var import_yaml2 = __toESM(require_dist(), 1);
+var import_yaml3 = __toESM(require_dist(), 1);
 function readToolchain(text) {
   let declared;
   try {
-    declared = (0, import_yaml2.parse)(text);
+    declared = (0, import_yaml3.parse)(text);
   } catch {
     return void 0;
   }
@@ -9816,6 +9854,21 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     testsAdded = added.map((test) => test.name);
     tests = testCounts(run.report);
   }
+  let work = signal;
+  const listing = files.find((file2) => file2.path === MODULES_FILE);
+  if (role === "programme-architect" && signal.module === PROGRAMME && listing) {
+    const listed = readModules(listing.text);
+    if ("unreadable" in listed) {
+      await pullRequests.refuse(
+        project2,
+        pullRequest,
+        `The work's modules.yaml cannot be read: ${listed.unreadable}`
+      );
+      return;
+    }
+    const started = modulesStarted(events);
+    work = { ...signal, modulesToStart: listed.modules.filter((module) => !started.has(module)) };
+  }
   await log.append({
     project: project2,
     decidedAt: clock().toISOString(),
@@ -9824,17 +9877,19 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
       head,
       feedbackSignal: feedback.path,
       member: author,
-      work: signal,
+      work,
       ...testsAdded === void 0 ? {} : { testsAdded },
       ...tests === void 0 ? {} : { tests }
     }
   });
   const mergedAs = await pullRequests.merge(project2, pullRequest, head);
-  await acceptSignal(project2, feedback.path, signal, board, log, clock, events, {
+  await acceptSignal(project2, feedback.path, work, board, log, clock, events, {
     member: author,
     mergedAs
   });
 }
+var modulesStarted = (events) => new Set(routingDecisions(events).flatMap((event) => event.work.modulesToStart ?? []));
+var MODULES_FILE = `${PROGRAMME}/modules.yaml`;
 async function checkMain(project2, repository, board, log, clock, divlab) {
   const events = await log.read(project2);
   const merges = new Set(routingDecisions(events).flatMap((decision) => decision.mergedAs ?? []));

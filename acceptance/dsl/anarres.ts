@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { PROGRAMME } from "@anarres/core";
 import type { CoordinatorAlert, Driver, RoutingRecord } from "../drivers/driver.ts";
 import type { Aliases } from "./aliases.ts";
 
@@ -166,7 +167,7 @@ export class Anarres {
   }
 
   async memberHasWorkAccepted(
-    work: Work & { verdict: string; impediments?: string[] },
+    work: Work & { verdict: string; impediments?: string[]; modulesListed?: string[] },
     named?: string,
   ) {
     const member = await this.holderOf(work, named);
@@ -876,8 +877,15 @@ export class Anarres {
     return this.aliases.of(name.toLowerCase());
   }
 
+  /** Modules are aliased; the programme, one per project, keeps its own name. */
   private aliased<T extends Work>(work: T): T {
-    return { ...work, module: this.aliases.of(work.module) };
+    const module = work.module === PROGRAMME ? PROGRAMME : this.aliases.of(work.module);
+    const listed = (work as { modulesListed?: string[] }).modulesListed;
+    return {
+      ...work,
+      module,
+      ...(listed === undefined ? {} : { modulesListed: listed.map((m) => this.aliases.of(m)) }),
+    };
   }
 
   private async readyTasks(which: (task: Work) => boolean) {

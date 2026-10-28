@@ -568,3 +568,15 @@ Then(
     return this.anarres.onlyTaskReadyForTheProgramme(role);
   },
 );
+
+Given(
+  "a member's Programme Architect work for the programme was accepted, listing the modules {string} and {string}",
+  function (this: AnarresWorld, first: string, second: string) {
+    return this.anarres.memberHasWorkAccepted({
+      role: "Programme Architect",
+      module: "programme",
+      verdict: "pass",
+      modulesListed: [first, second],
+    });
+  },
+);

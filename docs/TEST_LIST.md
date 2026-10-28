@@ -525,10 +525,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] a project starts with one Programme Architect task, for the programme (core's
         `PROGRAMME`, whose place `programme/` is the Programme Architect's); in-process and, run
         locally, in the sandbox;
-  - [ ] the Programme Architect's `programme/modules.yaml` is read as data: modules with plain
-        names (requirements, dependencies and size kept for later); unreadable refuses the work;
-  - [ ] merging Programme Architect work starts each module its `modules.yaml` lists that has not
-        started; a module it leaves out goes on;
+  - [x] the Programme Architect's `programme/modules.yaml` is read as data (core's
+        `readModules`): one or more modules, each a plain name, none twice, none named
+        `programme`; unreadable refuses the work, saying why (requirements, dependencies and size
+        are for later);
+  - [x] merging the programme's Programme Architect work starts each module its `modules.yaml`
+        lists that no earlier one started (routing's `modules_listed`; the routing records'
+        `modulesToStart`, read back validated); a module it leaves out goes on;
   - [ ] the sandbox shows it.
 - [x] Coding work that changes tests is rejected (a case of the write scopes).
 - [ ] Work based on inputs that have since changed is flagged as stale.

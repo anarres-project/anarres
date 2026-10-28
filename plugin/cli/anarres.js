@@ -7266,7 +7266,7 @@ var require_public_api = __commonJS({
       }
       return doc;
     }
-    function parse3(src, reviver, options) {
+    function parse4(src, reviver, options) {
       let _reviver = void 0;
       if (typeof reviver === "function") {
         _reviver = reviver;
@@ -7307,7 +7307,7 @@ var require_public_api = __commonJS({
         return value.toString(options);
       return new Document.Document(value, _replacer, options).toString(options);
     }
-    exports.parse = parse3;
+    exports.parse = parse4;
     exports.parseAllDocuments = parseAllDocuments;
     exports.parseDocument = parseDocument;
     exports.stringify = stringify;
@@ -9141,6 +9141,9 @@ function leaseRunsOutAt(lastActivity) {
   return new Date(since + LEASE_HOURS * 60 * 60 * 1e3);
 }
 
+// ../core/src/modules.ts
+var import_yaml2 = __toESM(require_dist(), 1);
+
 // ../core/src/routing.ts
 var MODULE_PIPELINE = [
   "architecture",
@@ -9206,6 +9209,10 @@ function unreadableWork(work) {
     if (typeof work[field] !== "string")
       return { unreadable: `its work does not give its ${named2}` };
   }
+  const { modulesToStart } = work;
+  if (modulesToStart !== void 0 && !(Array.isArray(modulesToStart) && modulesToStart.every((module) => typeof module === "string" && isPlainName(module)))) {
+    return { unreadable: "its work names the modules it started in more than plain names" };
+  }
   return void 0;
 }
 var isObject = (value) => typeof value === "object" && value !== null;
@@ -9262,11 +9269,11 @@ function readTestReport(xml) {
 }
 
 // ../core/src/toolchain.ts
-var import_yaml2 = __toESM(require_dist(), 1);
+var import_yaml3 = __toESM(require_dist(), 1);
 function readToolchain(text) {
   let declared;
   try {
-    declared = (0, import_yaml2.parse)(text);
+    declared = (0, import_yaml3.parse)(text);
   } catch {
     return void 0;
   }
@@ -9333,6 +9340,7 @@ function leasesFrom(events) {
   return leases;
 }
 var routingDecisions = (log) => log.filter((event) => "work" in event);
+var MODULES_FILE = `${PROGRAMME}/modules.yaml`;
 
 // ../../node_modules/fflate/esm/index.mjs
 import { createRequire } from "module";

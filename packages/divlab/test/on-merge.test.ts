@@ -1308,6 +1308,103 @@ describe("acting on a pull request", () => {
     ]);
   });
 
+  it("starts the modules the programme's Programme Architect lists, once it merges the work", async () => {
+    const posted: PostedTask[] = [];
+    const architecting = [
+      {
+        path: "feedback/FB-11.md",
+        text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: programme-architect\n  module: programme\n  verdict: pass\n---\n',
+      },
+      { path: "programme/modules.yaml", text: "modules:\n  - name: parser\n  - name: lexer\n" },
+    ];
+    const programmeHeld: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "programme-architect", module: "programme", claimedBy: "alice" }),
+      close: async () => {},
+      post: async (task) => {
+        posted.push(task);
+      },
+    };
+    await onPullRequest("ledger", "7", submitting([], architecting), programmeHeld, log, clock);
+    expect(posted.map(({ role, module }) => ({ role, module }))).toEqual([
+      { role: "architecture", module: "parser" },
+      { role: "architecture", module: "lexer" },
+    ]);
+  });
+
+  it("starts only the modules no earlier modules.yaml started", async () => {
+    const posted: PostedTask[] = [];
+    const architecting = [
+      {
+        path: "feedback/FB-12.md",
+        text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: programme-architect\n  module: programme\n  verdict: pass\n---\n',
+      },
+      { path: "programme/modules.yaml", text: "modules:\n  - name: parser\n  - name: lexer\n" },
+    ];
+    const programmeHeld: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "programme-architect", module: "programme", claimedBy: "alice" }),
+      close: async () => {},
+      post: async (task) => {
+        posted.push(task);
+      },
+    };
+    const earlier: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          work: {
+            fromRole: "programme-architect",
+            module: "programme",
+            verdict: "pass",
+            impediments: [],
+            feedbackSignal: "feedback/FB-3.md",
+            modulesToStart: ["parser"],
+          },
+          decision: { tasks: [{ role: "architecture", module: "parser" }] },
+          reason: { rule: "modules_listed" },
+        },
+      ],
+      append: async () => {},
+    };
+    await onPullRequest("ledger", "7", submitting([], architecting), programmeHeld, earlier, clock);
+    expect(posted.map(({ role, module }) => ({ role, module }))).toEqual([
+      { role: "architecture", module: "lexer" },
+    ]);
+  });
+
+  it("refuses the Programme Architect's work when its modules.yaml cannot be read, saying why", async () => {
+    const [merged, refusals]: string[][] = [[], []];
+    const architecting = [
+      {
+        path: "feedback/FB-13.md",
+        text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: programme-architect\n  module: programme\n  verdict: pass\n---\n',
+      },
+      { path: "programme/modules.yaml", text: "modules:\n  - name: parser\n  - name: parser\n" },
+    ];
+    await onPullRequest(
+      "ledger",
+      "7",
+      submitting(merged, architecting, refusals),
+      {
+        ...board,
+        task: async () => ({
+          role: "programme-architect",
+          module: "programme",
+          claimedBy: "alice",
+        }),
+        close: async () => {},
+        post: async () => {},
+      },
+      log,
+      clock,
+    );
+    expect([merged, refusals]).toEqual([
+      [],
+      ["7: The work's modules.yaml cannot be read: modules.yaml lists a module twice: parser"],
+    ]);
+  });
+
   it("merges a pull request whose feedback signal it can read", async () => {
     const merged: string[] = [];
     await onPullRequest(

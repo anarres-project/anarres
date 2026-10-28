@@ -11,6 +11,8 @@ export type AcceptedWork = {
   researchFor?: string;
   /** Handed over part done (decision 0008). */
   partial?: true;
+  /** For the programme's Programme Architect work: the modules its modules.yaml starts (0013). */
+  modulesToStart?: string[];
 };
 
 export type Task = {
@@ -44,6 +46,7 @@ export type RoutingDecision =
 /** The rule that decided a routing decision. */
 export type Reason =
   | { rule: "passed" }
+  | { rule: "modules_listed" }
   | { rule: "partial" }
   | { rule: "pipeline_complete" }
   | { rule: "reported"; impediment: string }
@@ -72,6 +75,7 @@ export function rule(work: AcceptedWork): Ruling {
   if (work.partial) return continuation(work);
   if (failed(work)) return revise(work);
   if (work.fromRole === "research") return returnResearch(work);
+  if (work.modulesToStart !== undefined) return startModules(work.modulesToStart);
   return advance(work);
 }
 
@@ -117,6 +121,14 @@ function returnResearch(work: AcceptedWork): Ruling {
 }
 
 /** A task for the next role in the module pipeline; past its end, the module is done. */
+/** Each module the Programme Architect's modules.yaml starts begins with its first task. */
+function startModules(modules: string[]): Ruling {
+  return {
+    decision: { tasks: modules.map((module) => ({ role: FIRST_ROLE, module })) },
+    reason: { rule: "modules_listed" },
+  };
+}
+
 function advance(work: AcceptedWork): Ruling {
   const next = (MODULE_PIPELINE as readonly string[]).indexOf(work.fromRole) + 1;
   if (next === MODULE_PIPELINE.length) {

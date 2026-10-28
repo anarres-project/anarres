@@ -13,6 +13,7 @@ import {
   type Role,
   type RoutingRecord,
   readFeedbackSignal,
+  readModules,
   readSignalFile,
   routingRecord,
   type TestCounts,
@@ -602,7 +603,7 @@ const recordActing = ({ project, work }: RoutingEvent, log: EventLog) =>
 async function acceptSignal(
   project: string,
   path: string,
-  signal: FeedbackSignal,
+  signal: FeedbackSignal & { modulesToStart?: string[] },
   board: TaskBoard,
   log: EventLog,
   clock: Clock,
@@ -891,6 +892,22 @@ export async function onPullRequest(
     testsAdded = added.map((test) => test.name);
     tests = testCounts(run.report);
   }
+  // The programme's Programme Architect work starts the modules its modules.yaml lists (0013).
+  let work: FeedbackSignal & { modulesToStart?: string[] } = signal;
+  const listing = files.find((file) => file.path === MODULES_FILE);
+  if (role === "programme-architect" && signal.module === PROGRAMME && listing) {
+    const listed = readModules(listing.text);
+    if ("unreadable" in listed) {
+      await pullRequests.refuse(
+        project,
+        pullRequest,
+        `The work's modules.yaml cannot be read: ${listed.unreadable}`,
+      );
+      return;
+    }
+    const started = modulesStarted(events);
+    work = { ...signal, modulesToStart: listed.modules.filter((module) => !started.has(module)) };
+  }
   await log.append({
     project,
     decidedAt: clock().toISOString(),
@@ -899,17 +916,24 @@ export async function onPullRequest(
       head,
       feedbackSignal: feedback.path,
       member: author,
-      work: signal,
+      work,
       ...(testsAdded === undefined ? {} : { testsAdded }),
       ...(tests === undefined ? {} : { tests }),
     },
   });
   const mergedAs = await pullRequests.merge(project, pullRequest, head);
-  await acceptSignal(project, feedback.path, signal, board, log, clock, events, {
+  await acceptSignal(project, feedback.path, work, board, log, clock, events, {
     member: author,
     mergedAs,
   });
 }
+
+/** The modules earlier modules.yaml started, as Divlab's routing records say. */
+const modulesStarted = (events: LogEvent[]) =>
+  new Set(routingDecisions(events).flatMap((event) => event.work.modulesToStart ?? []));
+
+/** Where the Programme Architect keeps the project's modules (concept §5, decision 0013). */
+const MODULES_FILE = `${PROGRAMME}/modules.yaml`;
 
 /**
  * Every Divlab run checks the commits on main since its last check: each must be Divlab's own, a

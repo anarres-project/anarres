@@ -350,6 +350,18 @@ governance scenarios run alone.
   `startProject is not a function`, then `expected [] to deeply equal …`. GREEN (696): core's
   `PROGRAMME`, from which the Programme Architect's place `programme/` is made too. The scenario
   passes in-process and, run locally, in the sandbox.
+- Scenario (`@wip`, not yet right): "The Programme Architect's modules start once its work is
+  merged" (a Programme Architect pass had routed to Architecture for the programme).
+- Core reads `modules.yaml` as data, test by test (each RED shown): the names; more than a plain
+  name; no modules by name (empty, a string, names missing); not YAML; a module twice; a module
+  named `programme`. RED: routing starts each listed module with its first task (`modules_listed`)
+  -> it advanced instead. GREEN.
+- Divlab: RED, merging the programme's Programme Architect work starts the listed modules (one
+  task posted, not two); GREEN (704). RED, only those no earlier modules.yaml started; GREEN, from
+  the routing records' `modulesToStart`. RED, an unreadable file refuses the work, saying why (a
+  crash, once my fixture's board showed the programme's task, not parser's); GREEN. RED, core
+  refuses a record whose `modulesToStart` are not plain names; GREEN (707), core at 100%.
+- The scenario passes in-process and loses `@wip`.
 
 ---
 

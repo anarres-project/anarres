@@ -26,6 +26,8 @@ export type AcceptedWork = {
   forTaskOn?: string;
   /** The project's tests fail on the member's work. */
   testsFail?: boolean;
+  /** The modules the Programme Architect's modules.yaml lists, in the work's own words. */
+  modulesListed?: string[];
   /** The project's tests are still running on the member's work. */
   testsRunning?: boolean;
   /** The new tests in the member's Test work pass before any code exists: they test nothing. */

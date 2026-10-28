@@ -7,6 +7,12 @@ Feature: A new project starts with its Programme Architect's task, and each modu
     Given a new project is started
     Then the only task ready is a Programme Architect task for the programme
 
+  Scenario: The Programme Architect's modules start once its work is merged
+    Given a new project is started
+    When a member's Programme Architect work for the programme was accepted, listing the modules "parser" and "lexer"
+    Then the only task ready for "parser" is an Architecture task
+    And the only task ready for "lexer" is an Architecture task
+
   Scenario: A new project has an Architecture task ready for its module
     Given a project with a module "parser"
     Then the only task ready for "parser" is an Architecture task
