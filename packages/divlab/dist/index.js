@@ -7952,6 +7952,7 @@ async function acceptSignal(project2, path, signal, board, log, clock, events, m
     events
   );
 }
+var recordActivity = (project2, task, member, log, clock) => log.append({ project: project2, decidedAt: clock().toISOString(), activity: { task, member } });
 var holds = async (board, project2, task, member) => (await board.task(project2, task))?.claimedBy === member;
 var cannotRead = (path, { unreadable }) => `The feedback signal ${path} cannot be read: ${unreadable}`;
 async function onChecked(project2, commit, pullRequests, board, log, clock) {
@@ -8007,11 +8008,7 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     const signal2 = readFeedbackSignal(feedback?.text ?? "");
     if ("unreadable" in signal2 || signal2.task === void 0) return;
     if (!await holds(board, project2, signal2.task, author)) return;
-    await log.append({
-      project: project2,
-      decidedAt: clock().toISOString(),
-      activity: { task: signal2.task, member: author }
-    });
+    await recordActivity(project2, signal2.task, author, log, clock);
     return;
   }
   if (feedback === void 0) {
@@ -8081,6 +8078,7 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
       return;
     }
     const check = await pullRequests.check(project2, head);
+    if (check.state !== "passed") await recordActivity(project2, signal.task, author, log, clock);
     if (check.state === "running") return;
     if (check.state === "failed") {
       await pullRequests.refuse(

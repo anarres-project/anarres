@@ -550,7 +550,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the checks run only on pull requests that change a module's code (Bernard, 2026-10-28),
         and Coding work that says it passed but changes none is refused, saying so; the
         scenarios' Coding work changes the module's code, as a member's does;
-  - [ ] a push by the task's holder to their pull request for it renews the lease, draft or not;
+  - [x] a push by the task's holder to their pull request for it renews the lease, draft or not:
+        Coding work waiting on its check, or whose check failed, is recorded as activity;
   - [ ] the sandbox shows it: its projects get the template's checks workflow and a toolchain
         whose tests fail only on work made to fail; "still running" cannot be held on cue, so
         those two scenarios stay in-process.

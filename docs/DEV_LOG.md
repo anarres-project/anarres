@@ -230,6 +230,12 @@ governance scenarios run alone.
   aside meanwhile; 10 scenarios had failed). Gate 665 and 116.
 - RED: the checks workflow runs only on pull requests changing a module's code, its path filter
   tied to core's Coding scope -> no filter. GREEN (46).
+- The sandbox's projects get the template's checks workflow and a toolchain whose tests fail only
+  on work carrying the scenario's marker; "Coding work whose tests fail" runs there now.
+- RED: records the holder's Coding work waiting on its check as activity on the task ->
+  `expected [] to deeply equal [ { project: 'ledger', …(2) } ]`. GREEN (651). RED: and when its
+  check failed, a fix to follow -> the same failure. GREEN (652). REFACTOR: drafts and checked
+  work share `recordActivity`.
 
 ---
 

@@ -856,6 +856,70 @@ describe("acting on a pull request", () => {
     ]);
   });
 
+  it("records the holder's Coding work waiting on its check as activity on the task", async () => {
+    const appended: unknown[] = [];
+    const coding = [
+      {
+        path: "feedback/FB-7.md",
+        text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: coding\n  module: parser\n  verdict: pass\n---\n',
+      },
+      { path: "modules/parser/src/parser.ts", text: "export {};\n" },
+    ];
+    const running: PullRequests = {
+      ...submitting([], coding),
+      check: async () => ({
+        state: "running",
+        url: "https://github.com/commons/ledger/actions/runs/44",
+      }),
+    };
+    const recording: EventLog = {
+      read: async () => [],
+      append: async (event) => {
+        appended.push(event);
+      },
+    };
+    await onPullRequest("ledger", "7", running, held, recording, clock);
+    expect(appended).toEqual([
+      {
+        project: "ledger",
+        decidedAt: "2026-10-22T09:00:00.000Z",
+        activity: { task: "1", member: "alice" },
+      },
+    ]);
+  });
+
+  it("records the holder's Coding work its check failed on as activity: a fix will follow", async () => {
+    const appended: unknown[] = [];
+    const coding = [
+      {
+        path: "feedback/FB-7.md",
+        text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: coding\n  module: parser\n  verdict: pass\n---\n',
+      },
+      { path: "modules/parser/src/parser.ts", text: "export {};\n" },
+    ];
+    const failing: PullRequests = {
+      ...submitting([], coding),
+      check: async () => ({
+        state: "failed",
+        url: "https://github.com/commons/ledger/actions/runs/42",
+      }),
+    };
+    const recording: EventLog = {
+      read: async () => [],
+      append: async (event) => {
+        appended.push(event);
+      },
+    };
+    await onPullRequest("ledger", "7", failing, held, recording, clock);
+    expect(appended).toEqual([
+      {
+        project: "ledger",
+        decidedAt: "2026-10-22T09:00:00.000Z",
+        activity: { task: "1", member: "alice" },
+      },
+    ]);
+  });
+
   it("merges a pull request whose feedback signal it can read", async () => {
     const merged: string[] = [];
     await onPullRequest(

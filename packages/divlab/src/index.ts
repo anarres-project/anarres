@@ -614,6 +614,15 @@ async function acceptSignal(
   );
 }
 
+/** Work on the task by the member holding it: it renews their lease. */
+const recordActivity = (
+  project: string,
+  task: string,
+  member: string,
+  log: EventLog,
+  clock: Clock,
+) => log.append({ project, decidedAt: clock().toISOString(), activity: { task, member } });
+
 /** Whether the board shows the member holding the task: none holds an issue that is not one. */
 const holds = async (board: TaskBoard, project: string, task: string, member: string) =>
   (await board.task(project, task))?.claimedBy === member;
@@ -709,11 +718,7 @@ export async function onPullRequest(
     if ("unreadable" in signal || signal.task === undefined) return;
     // Only the member holding the task renews its lease: nobody else can keep a task held.
     if (!(await holds(board, project, signal.task, author))) return;
-    await log.append({
-      project,
-      decidedAt: clock().toISOString(),
-      activity: { task: signal.task, member: author },
-    });
+    await recordActivity(project, signal.task, author, log, clock);
     return;
   }
   if (feedback === undefined) {
@@ -789,6 +794,9 @@ export async function onPullRequest(
       return;
     }
     const check = await pullRequests.check(project, head);
+    // Not merged yet, the holder's work is activity on their task, draft or not: still being
+    // checked, or to be fixed (decision 0010).
+    if (check.state !== "passed") await recordActivity(project, signal.task, author, log, clock);
     // Not finished: Divlab acts again when it does.
     if (check.state === "running") return;
     if (check.state === "failed") {
