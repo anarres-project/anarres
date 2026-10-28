@@ -10,6 +10,7 @@ describe("preparing a task the member holds (concept §8)", () => {
       repository: "anarres-project/ledger",
       commit: SHA,
       paths: ["modules/parser/specifications/", "modules/parser/tests/"],
+      contracts: [],
     });
   });
 
@@ -24,6 +25,56 @@ describe("preparing a task the member holds (concept §8)", () => {
     expect(preparation("anarres-project", "ledger", task, "alice")).toMatchObject({
       paths: ["modules/parser/specifications/", "modules/parser/tests/", "modules/parser/src/"],
     });
+  });
+
+  it("fetches the contracts the task's module provides and uses, as modules.yaml says at that commit", () => {
+    const task = {
+      role: "architecture" as const,
+      module: "parser",
+      claimedBy: "alice",
+      inputsAt: SHA,
+    };
+    const modules = [
+      "modules:",
+      "  - name: lexer",
+      "    provides: [tokens]",
+      "  - name: parser",
+      "    uses: [tokens]",
+      "  - name: ledger",
+      "    provides: [entries]",
+      "",
+    ].join("\n");
+    expect(preparation("anarres-project", "ledger", task, "alice", modules)).toMatchObject({
+      paths: ["programme/slices/parser/", "programme/contracts/tokens/"],
+    });
+  });
+
+  it("says which contracts it fetches, for the record the read-scope hook keeps to", () => {
+    const task = {
+      role: "specification" as const,
+      module: "lexer",
+      claimedBy: "alice",
+      inputsAt: SHA,
+    };
+    const modules = "modules:\n  - name: lexer\n    provides: [tokens]\n  - name: parser\n";
+    expect(preparation("anarres-project", "ledger", task, "alice", modules)).toMatchObject({
+      contracts: ["tokens"],
+    });
+  });
+
+  it("is refused, saying why, when modules.yaml at that commit cannot be read", () => {
+    const task = {
+      role: "architecture" as const,
+      module: "parser",
+      claimedBy: "alice",
+      inputsAt: SHA,
+    };
+    expect(preparation("anarres-project", "ledger", task, "alice", "modules: [unclosed\n")).toEqual(
+      {
+        refused:
+          "Nothing fetched for ledger: its modules.yaml cannot be read: modules.yaml cannot be read as YAML.",
+      },
+    );
   });
 
   it.each([

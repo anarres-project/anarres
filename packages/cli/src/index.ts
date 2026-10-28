@@ -1,4 +1,5 @@
 import {
+  contractsOfModule,
   isPlainName,
   isRole,
   leaseRunsOutAt,
@@ -7,6 +8,7 @@ import {
   ROLE_NAMES,
   type Role,
   readFeedbackSignal,
+  readModules,
   readScope,
 } from "@anarres/core";
 import { eligibility, type LogEvent, leasesFrom, routingDecisions } from "@anarres/divlab";
@@ -83,10 +85,13 @@ export async function claim(named: string, claiming: Claiming): Promise<string> 
 
 /** What preparing a task fetches: the places its role may read, at its pinned commit. */
 export type Preparation =
-  | { repository: string; commit: string; paths: string[] }
+  | { repository: string; commit: string; paths: string[]; contracts: string[] }
   | { refused: string };
 
-/** How to prepare a task for the member, or why not. */
+/**
+ * How to prepare a task for the member, or why not. The project's modules.yaml at the task's
+ * pinned commit, if it has one there, says which contracts its module provides and uses.
+ */
 export function preparation(
   owner: string,
   project: string,
@@ -94,6 +99,7 @@ export function preparation(
     | { role: Role; module: string; claimedBy?: string; inputsAt?: string; continuation?: true }
     | undefined,
   member: string,
+  modulesFile?: string,
 ): Preparation {
   const refused = (why: string) => ({ refused: `Nothing fetched for ${project}: ${why}.` });
   if (task === undefined) return refused("it is not a task");
@@ -101,10 +107,16 @@ export function preparation(
   if (task.inputsAt === undefined) {
     return refused("it does not say which commit its inputs are read at");
   }
+  const listed = modulesFile === undefined ? undefined : readModules(modulesFile);
+  if (listed !== undefined && "unreadable" in listed) {
+    return refused(`its modules.yaml cannot be read: ${listed.unreadable}`);
+  }
+  const contracts = listed === undefined ? [] : contractsOfModule(listed.contracts, task.module);
   return {
     repository: `${owner}/${project}`,
     commit: task.inputsAt,
-    paths: readScope(task.role, task.module, task),
+    paths: readScope(task.role, task.module, { ...task, contracts }),
+    contracts,
   };
 }
 
@@ -134,7 +146,7 @@ export function gitSteps(
 
 /** Whether the member's session may read or write a file while doing a task, and if not why. */
 export function scopeDecision(
-  task: { role: Role; module: string; continuation?: true },
+  task: RecordedTask,
   root: string,
   path: string,
   access: "read" | "write",
@@ -182,11 +194,7 @@ const searchDecision = (root: string, folder: string): "allowed" | { refused: st
     : { refused: `${folder} is outside this task's folder: Anarres keeps a task's session to it` };
 
 /** What the read-scope hook tells Claude Code about a tool call: nothing when it may go ahead. */
-export function hookAnswer(
-  call: ToolCall,
-  task: { role: Role; module: string; continuation?: true } | undefined,
-  root: string,
-): unknown {
+export function hookAnswer(call: ToolCall, task: RecordedTask | undefined, root: string): unknown {
   const decision = toolDecision(call, task, root);
   if (decision === "allowed") return undefined;
   return {
@@ -201,7 +209,7 @@ export function hookAnswer(
 /** Whether a tool call may go ahead in a task's folder, judged by what the tool touches. */
 function toolDecision(
   call: ToolCall,
-  task: { role: Role; module: string; continuation?: true } | undefined,
+  task: RecordedTask | undefined,
   root: string,
 ): "allowed" | { refused: string } {
   if (!task) {
@@ -225,23 +233,39 @@ function toolDecision(
 export const TASK_RECORD = ".anarres-task.json";
 
 /** The record prepare leaves in a task's folder. */
-export function taskRecord(task: { role?: Role; module?: string; continuation?: true }): string {
-  return JSON.stringify({ role: task.role, module: task.module, continuation: task.continuation });
+export function taskRecord(task: Partial<RecordedTask>): string {
+  const { role, module, continuation, contracts } = task;
+  return JSON.stringify({ role, module, continuation, contracts });
 }
 
+/** A task as its folder's record gives it: what the hook judges its session's files by. */
+export type RecordedTask = {
+  role: Role;
+  module: string;
+  continuation?: true;
+  /** The contracts prepare fetched for the task's module (decision 0014). */
+  contracts?: string[];
+};
+
 /** The task a folder's record names, read as data: its role and module, if they are plain. */
-export function taskOfRecord(
-  text: string,
-): { role: Role; module: string; continuation?: true } | undefined {
-  let record: { role?: unknown; module?: unknown; continuation?: unknown };
+export function taskOfRecord(text: string): RecordedTask | undefined {
+  let record: { [key in keyof RecordedTask]?: unknown };
   try {
-    record = JSON.parse(text) as { role?: unknown; module?: unknown; continuation?: unknown };
+    record = JSON.parse(text) as { [key in keyof RecordedTask]?: unknown };
   } catch {
     return undefined;
   }
-  const { role, module } = record;
+  const { role, module, contracts } = record;
   if (!isRole(role) || typeof module !== "string" || !isPlainName(module)) return undefined;
-  return { role, module, ...(record.continuation === true ? { continuation: true as const } : {}) };
+  const plainNames = (names: unknown) =>
+    Array.isArray(names) && names.every((name) => typeof name === "string" && isPlainName(name));
+  if (contracts !== undefined && !plainNames(contracts)) return undefined;
+  return {
+    role,
+    module,
+    ...(record.continuation === true ? { continuation: true as const } : {}),
+    ...(contracts === undefined ? {} : { contracts: contracts as string[] }),
+  };
 }
 
 /**

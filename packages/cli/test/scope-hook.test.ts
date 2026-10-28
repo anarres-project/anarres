@@ -11,6 +11,21 @@ describe("the read-scope hook's decision (concept §8: read-scope hooks block ot
     ).toBe("allowed");
   });
 
+  it("lets Architecture read the contracts its record names, and no others (decision 0014)", () => {
+    const task = { role: "architecture" as const, module: "parser", contracts: ["tokens"] };
+    expect(
+      ["tokens", "entries"].map((contract) =>
+        scopeDecision(task, ROOT, `${ROOT}/programme/contracts/${contract}/contract.md`, "read"),
+      ),
+    ).toEqual([
+      "allowed",
+      {
+        refused:
+          "programme/contracts/entries/contract.md is outside what Architecture may read for this task: Anarres keeps each role to its own inputs",
+      },
+    ]);
+  });
+
   it("refuses a file of the task's folder its role may not read, saying why", () => {
     expect(
       scopeDecision(TASK, ROOT, `${ROOT}/modules/parser/architecture/overview.md`, "read"),
@@ -172,10 +187,23 @@ describe("the record prepare leaves in a task's folder, as the hook reads it", (
     expect(taskOfRecord(taskRecord(continuation))).toEqual(continuation);
   });
 
+  it("keeps the contracts prepare fetched, so the session may read them (decision 0014)", () => {
+    const task = { role: "architecture" as const, module: "parser", contracts: ["tokens"] };
+    expect(taskOfRecord(taskRecord(task))).toEqual(task);
+  });
+
   it.each([
     ["is not JSON", "role: coding"],
     ["names a role Anarres does not have", '{"role":"admin","module":"parser"}'],
     ["names a module that is not a plain name", '{"role":"coding","module":"../.."}'],
+    [
+      "names a contract that is not a plain name",
+      '{"role":"architecture","module":"parser","contracts":["../.."]}',
+    ],
+    [
+      "gives its contracts other than as a list of names",
+      '{"role":"architecture","module":"parser","contracts":"tokens"}',
+    ],
   ])("gives no task when it %s", (_what, text) => {
     expect(taskOfRecord(text)).toBeUndefined();
   });
