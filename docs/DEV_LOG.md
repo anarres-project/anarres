@@ -386,6 +386,30 @@ governance scenarios run alone.
   the contracts into the Programme Architect's work, and each driver sees the contracts a
   prepared task fetched (in-process, main's files in the role's read scope; in the sandbox, the
   checkout's folder). Now not yet right: no contract is fetched.
+- Core, test by test (each RED shown): RED, modules.yaml says which module provides each contract
+  and which use it -> `expected { modules: [...] } to deeply equal { Object (modules, contracts)
+  }`; GREEN (the older test's expectation gains `contracts: []`, as the shape grew). RED/GREEN in
+  turn: a contract used but provided by none; provided by two (REFACTOR: one `repeated` helper);
+  used by its provider; named in more than a plain name; contracts not given as a list of names
+  (RED was a TypeError: a crash on untrusted input, the defect itself).
+- Core's read scopes: RED, Architecture reads the contracts its module provides and uses ->
+  `expected [ false, false, false ] to deeply equal [ true, true, false ]`; GREEN. RED/GREEN,
+  Specification too. No other module role reads one: passed first time, kept as a regression
+  test (they never had contracts in scope). `contractsOfModule`: a slip of mine, the empty stub
+  written in the same step as its test, before running it; the red shown was the assertion.
+  Core at 100%.
+- CLI: RED, prepare fetches the module's contracts, as modules.yaml says at the pinned commit;
+  GREEN. RED/GREEN, an unreadable modules.yaml refuses, fetching nothing. RED/GREEN, preparation
+  says which contracts it fetched (the older test's exact expectation gains `contracts: []`).
+  RED/GREEN, the folder's record keeps them; RED/GREEN, a record whose contracts are not plain
+  names gives no task, so the hook refuses everything (two rows of one table failed together).
+  The hook letting Architecture read its record's contracts passed first time: it hands the
+  record to core's `mayRead`; kept as a regression test.
+- REFACTOR: `MODULES_FILE` moves from Divlab to core, as the CLI needs it too.
+- Adapter: RED, `modulesAt` reads modules.yaml at a commit -> not a function, then the stub's
+  `undefined`; GREEN. None at that commit: passed first time (a 404 is none already).
+- `prepare` in `main.ts` and both drivers read modules.yaml at the pinned commit and record the
+  contracts. The scenario passes in-process and loses `@wip`. Gate 742 and 123.
 
 ---
 

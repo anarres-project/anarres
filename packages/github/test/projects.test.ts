@@ -328,3 +328,35 @@ describe("a project's declared toolchain", () => {
     expect(await adapter.toolchain("ledger")).toBeUndefined();
   });
 });
+
+describe("a project's modules.yaml at a commit (decision 0014)", () => {
+  const SHA = "0123456789abcdef0123456789abcdef01234567";
+  it("is read as it was at that commit", async () => {
+    const listed = "modules:\n  - name: parser\n";
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path === `repos/commons/ledger/contents/programme/modules.yaml?ref=${SHA}`
+        ) {
+          return { status: 200, data: { content: Buffer.from(listed).toString("base64") } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.modulesAt("ledger", SHA)).toBe(listed);
+  });
+  it("is none when the project had none at that commit", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => ({
+        status: 404,
+        data: { message: `not answered: ${method} ${path}` } as T,
+      }),
+    });
+    expect(await adapter.modulesAt("ledger", SHA)).toBeUndefined();
+  });
+});

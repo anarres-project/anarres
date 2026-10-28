@@ -9121,6 +9121,7 @@ function leaseHasRunOut(lastActivity, now) {
 
 // ../core/src/modules.ts
 var import_yaml2 = __toESM(require_dist(), 1);
+var MODULES_FILE = `${PROGRAMME}/modules.yaml`;
 function readModules(text) {
   let declared;
   try {
@@ -9141,10 +9142,47 @@ function readModules(text) {
       unreadable: `modules.yaml names a module ${PROGRAMME}, the name of the whole programme`
     };
   }
-  const twice = names.find((name, i2) => names.indexOf(name) !== i2);
+  const twice = repeated(names);
   if (twice !== void 0) return { unreadable: `modules.yaml lists a module twice: ${twice}` };
-  return { modules: names };
+  const entries = modules;
+  const listed = (names2) => names2 === void 0 || Array.isArray(names2) && names2.every((name) => typeof name === "string");
+  if (!entries.every(({ provides, uses }) => listed(provides) && listed(uses))) {
+    return { unreadable: "modules.yaml gives a module's contracts other than as a list of names" };
+  }
+  const contractsOf = (names2) => names2 ?? [];
+  const named = entries.flatMap(({ provides, uses }) => [
+    ...contractsOf(provides),
+    ...contractsOf(uses)
+  ]);
+  if (!named.every((name) => isPlainName(name))) {
+    return { unreadable: "modules.yaml names a contract in more than a plain name" };
+  }
+  const contracts = entries.flatMap(
+    ({ name, provides }) => contractsOf(provides).map((contract) => ({ name: contract, providedBy: name, usedBy: [] }))
+  );
+  const providedTwice = repeated(contracts.map((contract) => contract.name));
+  if (providedTwice !== void 0) {
+    return {
+      unreadable: `modules.yaml has more than one module provide a contract: ${providedTwice}`
+    };
+  }
+  for (const { name, uses } of entries) {
+    for (const used of contractsOf(uses)) {
+      const contract = contracts.find((c) => c.name === used);
+      if (contract === void 0) {
+        return {
+          unreadable: `modules.yaml has a module use a contract no module provides: ${used}`
+        };
+      }
+      if (contract.providedBy === name) {
+        return { unreadable: `modules.yaml has a module use a contract it provides: ${used}` };
+      }
+      contract.usedBy.push(name);
+    }
+  }
+  return { modules: names, contracts };
 }
+var repeated = (names) => names.find((name, i2) => names.indexOf(name) !== i2);
 
 // ../core/src/routing.ts
 var MODULE_PIPELINE = [
@@ -9889,7 +9927,6 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
   });
 }
 var modulesStarted = (events) => new Set(routingDecisions(events).flatMap((event) => event.work.modulesToStart ?? []));
-var MODULES_FILE = `${PROGRAMME}/modules.yaml`;
 async function checkMain(project2, repository, board, log, clock, divlab) {
   const events = await log.read(project2);
   const merges = new Set(routingDecisions(events).flatMap((decision) => decision.mergedAs ?? []));
@@ -11155,6 +11192,10 @@ var GitHubAdapter = class {
   async toolchain(project2) {
     const text = await this.fileText(project2, "anarres.yaml");
     return text === void 0 ? void 0 : readToolchain(text);
+  }
+  /** The project's modules.yaml as it was at a commit, if it had one then (decision 0014). */
+  async modulesAt(project2, commit) {
+    return this.fileText(project2, `${MODULES_FILE}?ref=${encodeURIComponent(commit)}`);
   }
   async fileText(project2, path) {
     const { status, data } = await this.request(

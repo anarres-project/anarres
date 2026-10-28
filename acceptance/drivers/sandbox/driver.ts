@@ -1103,13 +1103,17 @@ export class SandboxDriver implements Driver {
     if (!issue) throw new Error(`No ${task.role} task for ${task.module} is claimed`);
     const id = String(issue.number);
     const held = await this.asMember(account).task(task.project, id);
-    const plan = preparation(this.org, task.project, held, await loginOf(account));
+    const modules =
+      held?.inputsAt === undefined
+        ? undefined
+        : await this.asMember(account).modulesAt(task.project, held.inputsAt);
+    const plan = preparation(this.org, task.project, held, await loginOf(account), modules);
     if ("refused" in plan) throw new Error(plan.refused);
     this.machine ??= mkdtempSync(join(tmpdir(), "anarres-member-"));
     const folder = taskFolder({ project: task.project, task: id });
     const into = join(this.machine, folder);
     for (const step of gitSteps(plan, into)) execFileSync("git", step, { stdio: "pipe" });
-    writeFileSync(join(into, TASK_RECORD), taskRecord(held ?? {}));
+    writeFileSync(join(into, TASK_RECORD), taskRecord({ ...held, contracts: plan.contracts }));
     if (held !== undefined) {
       await restoreDraft(
         { project: task.project, task: id },

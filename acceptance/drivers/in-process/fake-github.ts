@@ -1,3 +1,4 @@
+import { MODULES_FILE } from "@anarres/core";
 import type {
   ChangeNotByDivlab,
   ClaimedTask,
@@ -433,6 +434,14 @@ export class FakeGitHub
     const pullRequest = this.pullRequests[Number(number) - 1];
     if (!pullRequest) throw new Error(`There is no pull request ${number}`);
     return pullRequest;
+  }
+
+  /**
+   * The project's modules.yaml at a commit. The fake keeps main's files as they are now, not each
+   * commit's: scenarios do not change modules.yaml after a task is pinned.
+   */
+  modulesAt(project: string, _commit: string): string | undefined {
+    return this.files.get(project)?.get(MODULES_FILE);
   }
 
   /** The paths of the files on a project's main branch. */

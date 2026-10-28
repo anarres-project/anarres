@@ -8988,8 +8988,15 @@ function mayRead(role, module, path, task = {}) {
 }
 var READ_SCOPES = {
   "programme-architect": () => ["requirements/"],
-  architecture: (module) => [`programme/slices/${module}/`],
-  specification: (module) => [`programme/slices/${module}/`, `modules/${module}/architecture/`],
+  architecture: (module, contracts) => [
+    `programme/slices/${module}/`,
+    ...contractPlaces(contracts)
+  ],
+  specification: (module, contracts) => [
+    `programme/slices/${module}/`,
+    `modules/${module}/architecture/`,
+    ...contractPlaces(contracts)
+  ],
   test: (module) => [
     `programme/slices/${module}/`,
     `modules/${module}/architecture/`,
@@ -9009,8 +9016,12 @@ var READ_SCOPES = {
   research: () => []
 };
 function readScope(role, module, task = {}) {
-  return [...READ_SCOPES[role](module), ...task.continuation ? [writeScope(role, module)] : []];
+  return [
+    ...READ_SCOPES[role](module, task.contracts ?? []),
+    ...task.continuation ? [writeScope(role, module)] : []
+  ];
 }
+var contractPlaces = (contracts) => contracts.map((contract) => `${PROGRAMME}/contracts/${contract}/`);
 function writeScope(role, module) {
   return WRITE_SCOPES[role](module);
 }
@@ -9143,6 +9154,71 @@ function leaseRunsOutAt(lastActivity) {
 
 // ../core/src/modules.ts
 var import_yaml2 = __toESM(require_dist(), 1);
+var MODULES_FILE = `${PROGRAMME}/modules.yaml`;
+function readModules(text) {
+  let declared;
+  try {
+    declared = (0, import_yaml2.parse)(text);
+  } catch {
+    return { unreadable: "modules.yaml cannot be read as YAML" };
+  }
+  const modules = declared?.modules;
+  const names = Array.isArray(modules) ? modules.map((module) => module?.name) : [];
+  if (names.length === 0 || !names.every((name) => typeof name === "string")) {
+    return { unreadable: "modules.yaml lists no modules by name" };
+  }
+  if (!names.every((name) => isPlainName(name))) {
+    return { unreadable: "modules.yaml names a module in more than a plain name" };
+  }
+  if (names.includes(PROGRAMME)) {
+    return {
+      unreadable: `modules.yaml names a module ${PROGRAMME}, the name of the whole programme`
+    };
+  }
+  const twice = repeated(names);
+  if (twice !== void 0) return { unreadable: `modules.yaml lists a module twice: ${twice}` };
+  const entries = modules;
+  const listed = (names2) => names2 === void 0 || Array.isArray(names2) && names2.every((name) => typeof name === "string");
+  if (!entries.every(({ provides, uses }) => listed(provides) && listed(uses))) {
+    return { unreadable: "modules.yaml gives a module's contracts other than as a list of names" };
+  }
+  const contractsOf = (names2) => names2 ?? [];
+  const named2 = entries.flatMap(({ provides, uses }) => [
+    ...contractsOf(provides),
+    ...contractsOf(uses)
+  ]);
+  if (!named2.every((name) => isPlainName(name))) {
+    return { unreadable: "modules.yaml names a contract in more than a plain name" };
+  }
+  const contracts = entries.flatMap(
+    ({ name, provides }) => contractsOf(provides).map((contract) => ({ name: contract, providedBy: name, usedBy: [] }))
+  );
+  const providedTwice = repeated(contracts.map((contract) => contract.name));
+  if (providedTwice !== void 0) {
+    return {
+      unreadable: `modules.yaml has more than one module provide a contract: ${providedTwice}`
+    };
+  }
+  for (const { name, uses } of entries) {
+    for (const used of contractsOf(uses)) {
+      const contract = contracts.find((c) => c.name === used);
+      if (contract === void 0) {
+        return {
+          unreadable: `modules.yaml has a module use a contract no module provides: ${used}`
+        };
+      }
+      if (contract.providedBy === name) {
+        return { unreadable: `modules.yaml has a module use a contract it provides: ${used}` };
+      }
+      contract.usedBy.push(name);
+    }
+  }
+  return { modules: names, contracts };
+}
+var repeated = (names) => names.find((name, i2) => names.indexOf(name) !== i2);
+function contractsOfModule(contracts, module) {
+  return contracts.filter((contract) => contract.providedBy === module || contract.usedBy.includes(module)).map((contract) => contract.name);
+}
 
 // ../core/src/routing.ts
 var MODULE_PIPELINE = [
@@ -9340,7 +9416,6 @@ function leasesFrom(events) {
   return leases;
 }
 var routingDecisions = (log) => log.filter((event) => "work" in event);
-var MODULES_FILE = `${PROGRAMME}/modules.yaml`;
 
 // ../../node_modules/fflate/esm/index.mjs
 import { createRequire } from "module";
@@ -10563,6 +10638,10 @@ var GitHubAdapter = class {
     const text = await this.fileText(project, "anarres.yaml");
     return text === void 0 ? void 0 : readToolchain(text);
   }
+  /** The project's modules.yaml as it was at a commit, if it had one then (decision 0014). */
+  async modulesAt(project, commit) {
+    return this.fileText(project, `${MODULES_FILE}?ref=${encodeURIComponent(commit)}`);
+  }
   async fileText(project, path) {
     const { status, data } = await this.request(
       "GET",
@@ -10864,17 +10943,23 @@ async function claim(named2, claiming) {
   await claiming.askToClaim(task.project, task.task);
   return `Asked for ${named2}. Divlab answers on the task's issue: run next to see what is still offered.`;
 }
-function preparation(owner, project, task, member) {
+function preparation(owner, project, task, member, modulesFile) {
   const refused = (why) => ({ refused: `Nothing fetched for ${project}: ${why}.` });
   if (task === void 0) return refused("it is not a task");
   if (task.claimedBy !== member) return refused("you do not hold it: claim it first");
   if (task.inputsAt === void 0) {
     return refused("it does not say which commit its inputs are read at");
   }
+  const listed = modulesFile === void 0 ? void 0 : readModules(modulesFile);
+  if (listed !== void 0 && "unreadable" in listed) {
+    return refused(`its modules.yaml cannot be read: ${listed.unreadable}`);
+  }
+  const contracts = listed === void 0 ? [] : contractsOfModule(listed.contracts, task.module);
   return {
     repository: `${owner}/${project}`,
     commit: task.inputsAt,
-    paths: readScope(task.role, task.module, task)
+    paths: readScope(task.role, task.module, { ...task, contracts }),
+    contracts
   };
 }
 function gitSteps(fetch2, into) {
@@ -10948,7 +11033,8 @@ function toolDecision(call, task, root) {
 }
 var TASK_RECORD = ".anarres-task.json";
 function taskRecord(task) {
-  return JSON.stringify({ role: task.role, module: task.module, continuation: task.continuation });
+  const { role, module, continuation, contracts } = task;
+  return JSON.stringify({ role, module, continuation, contracts });
 }
 function taskOfRecord(text) {
   let record;
@@ -10957,9 +11043,16 @@ function taskOfRecord(text) {
   } catch {
     return void 0;
   }
-  const { role, module } = record;
+  const { role, module, contracts } = record;
   if (!isRole(role) || typeof module !== "string" || !isPlainName(module)) return void 0;
-  return { role, module, ...record.continuation === true ? { continuation: true } : {} };
+  const plainNames = (names) => Array.isArray(names) && names.every((name) => typeof name === "string" && isPlainName(name));
+  if (contracts !== void 0 && !plainNames(contracts)) return void 0;
+  return {
+    role,
+    module,
+    ...record.continuation === true ? { continuation: true } : {},
+    ...contracts === void 0 ? {} : { contracts }
+  };
 }
 function claimOutcome(named2, task, member) {
   if (task === void 0) return `${named2} is not a task anyone can claim now: run next again.`;
@@ -11158,12 +11251,9 @@ try {
       console.log(`Name the task as the offers do, project#number: ${named} is not one.`);
       process.exit(1);
     }
-    const plan = preparation(
-      owner,
-      task.project,
-      await github.task(task.project, task.task),
-      await github.account()
-    );
+    const pinned = await github.task(task.project, task.task);
+    const modules = pinned?.inputsAt === void 0 ? void 0 : await github.modulesAt(task.project, pinned.inputsAt);
+    const plan = preparation(owner, task.project, pinned, await github.account(), modules);
     if ("refused" in plan) {
       console.log(plan.refused);
       process.exit(1);
@@ -11171,7 +11261,7 @@ try {
     const into = taskFolder(task);
     for (const step of gitSteps(plan, into)) execFileSync("git", step, { stdio: "inherit" });
     const held = await github.task(task.project, task.task);
-    writeFileSync(join(into, TASK_RECORD), taskRecord(held ?? {}));
+    writeFileSync(join(into, TASK_RECORD), taskRecord({ ...held, contracts: plan.contracts }));
     const member = await github.account();
     const restored = held === void 0 ? 0 : await restoreDraft(task, held, member, github, (path, text) => {
       const file = join(into, path);

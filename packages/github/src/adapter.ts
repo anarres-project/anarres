@@ -1,4 +1,5 @@
 import {
+  MODULES_FILE,
   readTestReport,
   readToolchain,
   TEST_REPORT_LIMIT,
@@ -575,6 +576,11 @@ export class GitHubAdapter
   async toolchain(project: string): Promise<Toolchain | undefined> {
     const text = await this.fileText(project, "anarres.yaml");
     return text === undefined ? undefined : readToolchain(text);
+  }
+
+  /** The project's modules.yaml as it was at a commit, if it had one then (decision 0014). */
+  async modulesAt(project: string, commit: string): Promise<string | undefined> {
+    return this.fileText(project, `${MODULES_FILE}?ref=${encodeURIComponent(commit)}`);
   }
 
   private async fileText(project: string, path: string): Promise<string | undefined> {

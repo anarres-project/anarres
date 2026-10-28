@@ -646,15 +646,21 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         role reads its own module's places and its requirement slice (`programme/slices/<m>/`),
         never another module's, and no path that climbs out;
   - [ ] the contracts a module provides and uses (decision 0014, Bernard, 2026-10-28):
-    - [ ] core's `readModules` reads each module's `provides` and `uses`, by plain name;
-    - [ ] unreadable: a contract provided by two modules, used but provided by none, or used by
-          the module that provides it;
-    - [ ] Architecture and Specification read the folders `programme/contracts/<c>/` of their
-          module's contracts, and no other module role reads any;
-    - [ ] `prepare` reads `modules.yaml` at the pinned commit with core's reader, fetches those
-          folders, and records them for the hook; an unreadable file fetches nothing, saying why;
-    - [ ] an acceptance scenario: a member preparing an Architecture task has its module's
-          contracts and no other's;
+    - [x] core's `readModules` reads each module's `provides` and `uses`, by plain name, given
+          as lists of names (else unreadable: a crash, shown red first);
+    - [x] unreadable: a contract provided by two modules, used but provided by none, or used by
+          the module that provides it (Divlab refuses such Programme Architect work as it does
+          any unreadable `modules.yaml`);
+    - [x] Architecture and Specification read the folders `programme/contracts/<c>/` of their
+          module's contracts (core's `contractsOfModule`), and no other module role reads any;
+    - [x] `prepare` reads `modules.yaml` at the pinned commit with core's reader (the adapter's
+          `modulesAt`; core's `MODULES_FILE`, stated once), fetches those folders, and records
+          them for the hook, which refuses a record whose contracts are not plain names; an
+          unreadable file fetches nothing, saying why;
+    - [x] an acceptance scenario: a member preparing an Architecture task has its module's
+          contracts and no other's (in-process);
+    - [ ] `modules.yaml` changed after a task was pinned: the in-process fake keeps only main's
+          files now, so no scenario shows the pinned version being read;
     - [ ] the sandbox shows it;
   - [ ] what a Research task reads, as its question names it;
   - [x] Divlab posts each task with the commit its inputs are pinned at, the merge that decided

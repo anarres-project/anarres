@@ -95,12 +95,14 @@ try {
       console.log(`Name the task as the offers do, project#number: ${named} is not one.`);
       process.exit(1);
     }
-    const plan = preparation(
-      owner,
-      task.project,
-      await github.task(task.project, task.task),
-      await github.account(),
-    );
+    const pinned = await github.task(task.project, task.task);
+    // Which contracts the task's module provides and uses, as modules.yaml said at the pinned
+    // commit: a commit only Divlab merged, never the issue's text (decision 0014).
+    const modules =
+      pinned?.inputsAt === undefined
+        ? undefined
+        : await github.modulesAt(task.project, pinned.inputsAt);
+    const plan = preparation(owner, task.project, pinned, await github.account(), modules);
     if ("refused" in plan) {
       console.log(plan.refused);
       process.exit(1);
@@ -110,7 +112,7 @@ try {
     for (const step of gitSteps(plan, into)) execFileSync("git", step, { stdio: "inherit" });
     // The record the read-scope hook keeps the task's session to.
     const held = await github.task(task.project, task.task);
-    writeFileSync(join(into, TASK_RECORD), taskRecord(held ?? {}));
+    writeFileSync(join(into, TASK_RECORD), taskRecord({ ...held, contracts: plan.contracts }));
     // The member's work so far, from their open pull request, where it is not here already: work
     // on this machine may be newer, so it is never overwritten.
     const member = await github.account();
