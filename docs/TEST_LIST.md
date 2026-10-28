@@ -520,7 +520,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       2026-10-28):
   - [x] a module starts with the first role of core's module pipeline, Architecture, not
         Specification as built on 2026-10-27 (core's `FIRST_ROLE`, stated once);
-  - [ ] work's role and module must be its task's, or it is refused, saying so: a module the
+  - [x] work's role and module must be its task's, or it is refused, saying so: a module the
         project does not have has no task;
   - [ ] a project starts with one Programme Architect task;
   - [ ] the Programme Architect's `programme/modules.yaml` is read as data: modules with plain

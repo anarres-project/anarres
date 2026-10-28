@@ -775,11 +775,21 @@ export async function onPullRequest(
     return;
   }
   // Only the holder's work, so the checks made when the task was claimed hold for the work too.
-  if (!(await holds(board, project, signal.task, author))) {
+  const task = await board.task(project, signal.task);
+  if (task?.claimedBy !== author) {
     await pullRequests.refuse(
       project,
       pullRequest,
       `The work is for task ${signal.task}, and only the member holding it can submit its work: claim a task before doing it`,
+    );
+    return;
+  }
+  // A module the project does not have has no task, so no work for one is merged (decision 0013).
+  if (task.role !== signal.fromRole || task.module !== signal.module) {
+    await pullRequests.refuse(
+      project,
+      pullRequest,
+      `The work is for task ${signal.task}, and is not for the module and role its task is for: ${ROLE_NAMES[task.role]} on ${task.module}`,
     );
     return;
   }

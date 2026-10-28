@@ -9712,11 +9712,20 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     );
     return;
   }
-  if (!await holds(board, project2, signal.task, author)) {
+  const task = await board.task(project2, signal.task);
+  if (task?.claimedBy !== author) {
     await pullRequests.refuse(
       project2,
       pullRequest,
       `The work is for task ${signal.task}, and only the member holding it can submit its work: claim a task before doing it`
+    );
+    return;
+  }
+  if (task.role !== signal.fromRole || task.module !== signal.module) {
+    await pullRequests.refuse(
+      project2,
+      pullRequest,
+      `The work is for task ${signal.task}, and is not for the module and role its task is for: ${ROLE_NAMES[task.role]} on ${task.module}`
     );
     return;
   }

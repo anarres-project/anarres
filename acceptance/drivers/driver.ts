@@ -22,6 +22,8 @@ export type AcceptedWork = {
   withoutTask?: boolean;
   /** The member's feedback signal names the role's task on the module that is already done. */
   forFinishedTask?: boolean;
+  /** The member's feedback signal names the role's task on this module, not the work's own. */
+  forTaskOn?: string;
   /** The project's tests fail on the member's work. */
   testsFail?: boolean;
   /** The project's tests are still running on the member's work. */

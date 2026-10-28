@@ -1,3 +1,4 @@
+import type { Role } from "@anarres/core";
 import { describe, expect, it } from "vitest";
 import {
   type EventLog,
@@ -505,11 +506,13 @@ describe("acting on a pull request", () => {
     text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: specification\n  module: parser\n  verdict: pass\n---\n',
   };
   /** The board shows the work's task held by the member who opened the pull request. */
-  const held: TaskBoard = {
+  /** The board shows the work's task, for its role, held by the member who opened the pull request. */
+  const heldAs = (role: Role): TaskBoard => ({
     ...board,
-    task: async () => ({ role: "specification", module: "parser", claimedBy: "alice" }),
+    task: async () => ({ role, module: "parser", claimedBy: "alice" }),
     close: async () => {},
-  };
+  });
+  const held = heldAs("specification");
   const submitting = (
     merged: string[] = [],
     files: { path: string; text: string }[] = [specificationPasses],
@@ -628,7 +631,7 @@ describe("acting on a pull request", () => {
       "ledger",
       "7",
       submitting(merged, codingWithTests, refusals),
-      held,
+      heldAs("coding" as Role),
       log,
       clock,
     );
@@ -648,7 +651,14 @@ describe("acting on a pull request", () => {
         text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: oracle\n  module: parser\n  verdict: pass\n---\n',
       },
     ];
-    await onPullRequest("ledger", "7", submitting(merged, fromNowhere, refusals), held, log, clock);
+    await onPullRequest(
+      "ledger",
+      "7",
+      submitting(merged, fromNowhere, refusals),
+      heldAs("oracle" as Role),
+      log,
+      clock,
+    );
     expect([merged, refusals]).toEqual([
       [],
       ["7: The feedback signal feedback/FB-6.md names a role Anarres does not have: oracle"],
@@ -730,7 +740,14 @@ describe("acting on a pull request", () => {
         url: "https://github.com/commons/ledger/actions/runs/42",
       }),
     };
-    await onPullRequest("ledger", "7", failing, { ...held, post: async () => {} }, log, clock);
+    await onPullRequest(
+      "ledger",
+      "7",
+      failing,
+      { ...heldAs("coding" as Role), post: async () => {} },
+      log,
+      clock,
+    );
     expect([merged, refusals]).toEqual([
       [],
       [
@@ -756,7 +773,14 @@ describe("acting on a pull request", () => {
         url: "https://github.com/commons/ledger/actions/runs/44",
       }),
     };
-    await onPullRequest("ledger", "7", running, { ...held, post: async () => {} }, log, clock);
+    await onPullRequest(
+      "ledger",
+      "7",
+      running,
+      { ...heldAs("coding" as Role), post: async () => {} },
+      log,
+      clock,
+    );
     expect([merged, refusals]).toEqual([[], []]);
   });
 
@@ -783,7 +807,7 @@ describe("acting on a pull request", () => {
       "ledger",
       "7",
       submitting(merged, codingAndWorkflow, refusals),
-      { ...held, post: async () => {} },
+      { ...heldAs("coding" as Role), post: async () => {} },
       log,
       clock,
     );
@@ -806,7 +830,14 @@ describe("acting on a pull request", () => {
         url: "https://github.com/commons/ledger/actions/runs/42",
       }),
     };
-    await onPullRequest("ledger", "7", failing, { ...held, post: async () => {} }, log, clock);
+    await onPullRequest(
+      "ledger",
+      "7",
+      failing,
+      { ...heldAs("coding" as Role), post: async () => {} },
+      log,
+      clock,
+    );
     expect(merged).toEqual(["7"]);
   });
 
@@ -823,7 +854,14 @@ describe("acting on a pull request", () => {
         url: "https://github.com/commons/ledger/actions/runs/42",
       }),
     };
-    await onPullRequest("ledger", "7", failing, { ...held, post: async () => {} }, log, clock);
+    await onPullRequest(
+      "ledger",
+      "7",
+      failing,
+      { ...heldAs("coding" as Role), post: async () => {} },
+      log,
+      clock,
+    );
     expect(merged).toEqual(["7"]);
   });
 
@@ -850,7 +888,7 @@ describe("acting on a pull request", () => {
       "ledger",
       "7",
       submitting(merged, [noCode], refusals),
-      { ...held, post: async () => {} },
+      { ...heldAs("coding" as Role), post: async () => {} },
       log,
       clock,
     );
@@ -884,7 +922,7 @@ describe("acting on a pull request", () => {
         appended.push(event);
       },
     };
-    await onPullRequest("ledger", "7", running, held, recording, clock);
+    await onPullRequest("ledger", "7", running, heldAs("coding" as Role), recording, clock);
     expect(appended).toEqual([
       {
         project: "ledger",
@@ -916,7 +954,7 @@ describe("acting on a pull request", () => {
         appended.push(event);
       },
     };
-    await onPullRequest("ledger", "7", failing, held, recording, clock);
+    await onPullRequest("ledger", "7", failing, heldAs("coding" as Role), recording, clock);
     expect(appended).toEqual([
       {
         project: "ledger",
@@ -943,7 +981,14 @@ describe("acting on a pull request", () => {
         report: { cases: [{ name: "parser > reads a number", outcome: "passed" }] },
       }),
     };
-    await onPullRequest("ledger", "7", passing, { ...held, post: async () => {} }, log, clock);
+    await onPullRequest(
+      "ledger",
+      "7",
+      passing,
+      { ...heldAs("test" as Role), post: async () => {} },
+      log,
+      clock,
+    );
     expect([merged, refusals]).toEqual([
       [],
       [
@@ -968,7 +1013,14 @@ describe("acting on a pull request", () => {
         url: "https://github.com/commons/ledger/actions/runs/47",
       }),
     };
-    await onPullRequest("ledger", "7", running, { ...held, post: async () => {} }, log, clock);
+    await onPullRequest(
+      "ledger",
+      "7",
+      running,
+      { ...heldAs("test" as Role), post: async () => {} },
+      log,
+      clock,
+    );
     expect([merged, refusals]).toEqual([[], []]);
   });
 
@@ -994,7 +1046,7 @@ describe("acting on a pull request", () => {
         appended.push(event);
       },
     };
-    await onPullRequest("ledger", "7", running, held, recording, clock);
+    await onPullRequest("ledger", "7", running, heldAs("test" as Role), recording, clock);
     expect(appended).toEqual([
       {
         project: "ledger",
@@ -1041,7 +1093,14 @@ describe("acting on a pull request", () => {
       ],
       append: async () => {},
     };
-    await onPullRequest("ledger", "7", revising, { ...held, post: async () => {} }, earlier, clock);
+    await onPullRequest(
+      "ledger",
+      "7",
+      revising,
+      { ...heldAs("test" as Role), post: async () => {} },
+      earlier,
+      clock,
+    );
     expect(merged).toEqual(["7"]);
   });
 
@@ -1064,7 +1123,7 @@ describe("acting on a pull request", () => {
       "ledger",
       "7",
       submitting([], testWork),
-      { ...held, post: async () => {} },
+      { ...heldAs("test" as Role), post: async () => {} },
       recording,
       clock,
     );
@@ -1090,7 +1149,14 @@ describe("acting on a pull request", () => {
         report: { cases: [] },
       }),
     };
-    await onPullRequest("ledger", "7", none, { ...held, post: async () => {} }, log, clock);
+    await onPullRequest(
+      "ledger",
+      "7",
+      none,
+      { ...heldAs("test" as Role), post: async () => {} },
+      log,
+      clock,
+    );
     expect([merged, refusals]).toEqual([
       [],
       [
@@ -1116,7 +1182,14 @@ describe("acting on a pull request", () => {
         report: { unreadable: "the test report is not well-formed XML" },
       }),
     };
-    await onPullRequest("ledger", "7", unreadable, { ...held, post: async () => {} }, log, clock);
+    await onPullRequest(
+      "ledger",
+      "7",
+      unreadable,
+      { ...heldAs("test" as Role), post: async () => {} },
+      log,
+      clock,
+    );
     expect([merged, refusals]).toEqual([
       [],
       [
@@ -1132,7 +1205,14 @@ describe("acting on a pull request", () => {
       text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: test\n  module: parser\n  verdict: fail\n  impediments:\n    - type: upstream_ambiguity\n---\n',
     };
     const unread: PullRequests = { ...submitting(merged, [testFails]), testReport: untouched };
-    await onPullRequest("ledger", "7", unread, { ...held, post: async () => {} }, log, clock);
+    await onPullRequest(
+      "ledger",
+      "7",
+      unread,
+      { ...heldAs("test" as Role), post: async () => {} },
+      log,
+      clock,
+    );
     expect(merged).toEqual(["7"]);
   });
 
@@ -1155,7 +1235,7 @@ describe("acting on a pull request", () => {
       "ledger",
       "7",
       submitting([], testWork),
-      { ...held, post: async () => {} },
+      { ...heldAs("test" as Role), post: async () => {} },
       recording,
       clock,
     );
@@ -1194,7 +1274,7 @@ describe("acting on a pull request", () => {
       "ledger",
       "7",
       passing,
-      { ...held, post: async () => {} },
+      { ...heldAs("coding" as Role), post: async () => {} },
       recording,
       clock,
     );
@@ -1204,6 +1284,28 @@ describe("acting on a pull request", () => {
       passed: 1,
       failed: 0,
     });
+  });
+
+  it("does not merge work for a module other than its task's, and says so", async () => {
+    const [merged, refusals]: string[][] = [[], []];
+    const forLexer = {
+      path: "feedback/FB-10.md",
+      text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: specification\n  module: lexer\n  verdict: pass\n---\n',
+    };
+    await onPullRequest(
+      "ledger",
+      "7",
+      submitting(merged, [forLexer], refusals),
+      { ...held, post: async () => {} },
+      log,
+      clock,
+    );
+    expect([merged, refusals]).toEqual([
+      [],
+      [
+        "7: The work is for task 1, and is not for the module and role its task is for: Specification on parser",
+      ],
+    ]);
   });
 
   it("merges a pull request whose feedback signal it can read", async () => {
@@ -1267,7 +1369,7 @@ describe("acting on a pull request", () => {
       "ledger",
       "7",
       submitting([], [partialTest]),
-      { ...held, post: async (task) => void posted.push(task) },
+      { ...heldAs("test" as Role), post: async (task) => void posted.push(task) },
       log,
       clock,
     );
@@ -1303,7 +1405,7 @@ describe("acting on a pull request", () => {
       text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: security-and-quality\n  module: parser\n  verdict: pass\n---\n',
     };
     const marking: TaskBoard = {
-      ...held,
+      ...heldAs("security-and-quality" as Role),
       markModuleDone: async (done) => {
         finished.push(done);
       },
@@ -1350,7 +1452,7 @@ describe("acting on a pull request", () => {
       text: '---\nfeedback_signal:\n  task_id: "3"\n  from_role: test\n  module: parser\n  verdict: pass\n---\n',
     };
     const closing: TaskBoard = {
-      ...held,
+      ...heldAs("test" as Role),
       post: async () => {},
       task: async () => ({ ...TEST_TASK, claimedBy: "alice" }),
       close: async (_project, task) => {
@@ -1368,7 +1470,7 @@ describe("acting on a pull request", () => {
       text: '---\nfeedback_signal:\n  task_id: "3"\n  from_role: test\n  module: parser\n  verdict: pass\n---\n',
     };
     const closing: TaskBoard = {
-      ...held,
+      ...heldAs("test" as Role),
       post: async () => {},
       task: async () => undefined,
       close: async (_project, task) => {
@@ -1392,7 +1494,7 @@ describe("acting on a pull request", () => {
       },
     };
     const closing: TaskBoard = {
-      ...held,
+      ...heldAs("test" as Role),
       post: async () => {},
       task: async () => ({ ...TEST_TASK, claimedBy: "alice" }),
       close: async () => {},
@@ -1455,11 +1557,16 @@ describe("acting on a pull request", () => {
       text: '---\nfeedback_signal:\n  task_id: "4"\n  from_role: research\n  module: parser\n  verdict: pass\n---\n',
     };
     const recorded: TaskBoard = {
-      ...held,
+      ...heldAs("research" as Role),
       post: async (task) => {
         posted.push(task);
       },
-      task: async () => ({ ...TEST_TASK, researchFor: "coding", claimedBy: "alice" }),
+      task: async () => ({
+        role: "research",
+        module: "parser",
+        researchFor: "coding",
+        claimedBy: "alice",
+      }),
       close: async () => {},
     };
     await onPullRequest("ledger", "10", submitting([], [research]), recorded, log, clock);

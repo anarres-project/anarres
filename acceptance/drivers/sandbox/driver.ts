@@ -261,7 +261,8 @@ export class SandboxDriver implements Driver {
     const repository = `repos/${this.org}/${work.project}`;
     const fromRole = roleId(work.role);
     const forWork = (issue: Issue) =>
-      labelValue(issue, "role:") === fromRole && labelValue(issue, "module:") === work.module;
+      labelValue(issue, "role:") === fromRole &&
+      labelValue(issue, "module:") === (work.forTaskOn ?? work.module);
     // The task the work is for: ready, or claimed by the member doing it.
     const ready = (await this.settled(work.project, "ready")).find(forWork);
     const claimed =

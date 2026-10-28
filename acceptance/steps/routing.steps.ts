@@ -536,3 +536,24 @@ Then(
     ]);
   },
 );
+
+When(
+  "{word} submits {role} work on {string}, naming the task for {string}, with a {verdict} verdict",
+  function (
+    this: AnarresWorld,
+    member: string,
+    role: string,
+    module: string,
+    forTaskOn: string,
+    verdict: string,
+  ) {
+    return this.anarres.namedMemberSubmitsWork(member, { role, module, verdict, forTaskOn });
+  },
+);
+
+Then(
+  "{word} is told the work is not for the module and role its task is for",
+  function (this: AnarresWorld, _member: string) {
+    return this.anarres.memberIsToldWhy("is not for the module and role its task is for");
+  },
+);

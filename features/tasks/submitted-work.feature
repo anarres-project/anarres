@@ -45,6 +45,14 @@ Feature: Divlab merges the work members submit
     And Alice is told only the member holding the task can submit its work
     And the module "parser" is done
 
+  Scenario: Work for a module the project does not have is not merged
+    Given a project with a module "parser"
+    And a member's Architecture work on "parser" was accepted with a pass verdict
+    And Alice has claimed the Specification task for "parser"
+    When Alice submits Specification work on "lexer", naming the task for "parser", with a pass verdict
+    Then Divlab has not merged the member's Specification work on "lexer"
+    And Alice is told the work is not for the module and role its task is for
+
   Scenario: Work whose feedback signal does not use plain names is not merged
     Given a project with a module "parser"
     When a member submits Specification work on "parser" whose feedback signal names its module in more than a plain name

@@ -338,6 +338,12 @@ governance scenarios run alone.
   `FIRST_ROLE`, the pipeline's first, so the role is stated once. Three scenarios that took a new
   module's first task to be Specification change for that reason, one now accepting Architecture
   work first.
+- Scenario (`@wip`, not yet right): "Work for a module the project does not have is not merged".
+  RED: does not merge work for a module other than its task's, and says so -> `expected [ [ '7'
+  ], [] ] to deeply equal [ [], …(1) ]`. GREEN (695), once the pull request tests' boards showed
+  each work's task for its own role (`heldAs`): they had shown a Specification task for Coding,
+  Test and Research work alike, an inconsistency the new check exposed (the rule set aside while
+  they were fixed). The scenario loses `@wip`.
 
 ---
 

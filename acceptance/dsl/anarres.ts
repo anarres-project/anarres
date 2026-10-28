@@ -220,7 +220,7 @@ export class Anarres {
   /** The member opens a pull request with their work, claiming nothing first. */
   async namedMemberSubmitsWork(
     named: string,
-    work: Work & { verdict: string; forFinishedTask?: boolean },
+    work: Work & { verdict: string; forFinishedTask?: boolean; forTaskOn?: string },
   ) {
     this.signalsWritten += 1;
     const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
@@ -228,6 +228,7 @@ export class Anarres {
     await this.driver.submitWork({
       impediments: [],
       ...this.aliased(work),
+      ...(work.forTaskOn === undefined ? {} : { forTaskOn: this.aliases.of(work.forTaskOn) }),
       project: this.project,
       member: this.member(named),
       feedbackSignal,
