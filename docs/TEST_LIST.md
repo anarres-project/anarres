@@ -561,12 +561,18 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         its own): each test case by class and name, passed, failed (an assertion), errored or
         skipped (did not run); unreadable when not well-formed XML, when it declares a document
         type, over 2 MB, with a nameless case, or a name that is not plain text;
-  - [ ] Test work that says it passed is merged only when every new test (one main does not
+  - [x] Test work that says it passed is merged only when every new test (one main does not
         have, by name) fails; any that errors or passes, or none at all, is refused, naming them;
-  - [ ] Divlab records the names of the tests each piece of Test work added, and the module's
-        tests on main are those recorded for it;
+        an unreadable report is refused, saying why; while the tests run, Divlab waits and the
+        holder's work is activity on their task (in-process);
+  - [x] Divlab records the names of the tests each piece of Test work added (`testsAdded`, read
+        back validated), and the module's tests on main are those recorded for it;
+  - [x] Divlab finds the checks run on the commit and its `test-report` artefact, downloads it
+        (following GitHub's redirect, the token kept to GitHub) and reads it: running until the
+        run finishes; unreadable with no artefact, an empty one, one over 2 MB (not downloaded)
+        or a file stated to unpack over 2 MB (not unpacked); `fflate` 0.8.3, no dependencies;
   - [ ] the toolchain names its report, and the checks workflow uploads it as the run's
-        artefact; Divlab finds and downloads it, refusing one over a size limit;
+        artefact (until then, Test work in the sandbox would wait for ever: not pushed);
   - [ ] the checks run on Test work too (`modules/*/tests/` joins the paths), and Test work
         reporting a failure or blocked, or partial, needs no check;
   - [ ] the sandbox shows it: a toolchain that writes a JUnit report whose tests fail on cue.

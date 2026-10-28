@@ -508,3 +508,17 @@ Then(
     return this.anarres.projectNotStartedForWantOfToolchain(module);
   },
 );
+
+When(
+  "a member submits {role} work on {string} whose new tests pass before any code exists",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.memberSubmitsWork({ role, module, verdict: "pass", newTestsPass: true });
+  },
+);
+
+Then(
+  "the member is told their new tests must run and fail before the code exists",
+  function (this: AnarresWorld) {
+    return this.anarres.memberIsToldWhy("Each new test must run and fail before its code exists");
+  },
+);

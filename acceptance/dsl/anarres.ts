@@ -186,6 +186,7 @@ export class Anarres {
       withoutTask?: boolean;
       testsFail?: boolean;
       testsRunning?: boolean;
+      newTestsPass?: boolean;
     },
   ) {
     const member = await this.holderOf(work);

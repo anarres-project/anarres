@@ -44,8 +44,14 @@ export function workFiles(work: AcceptedWork, task?: string) {
 /** The files a member's work changes besides its feedback signal, as the scenario says. */
 export function otherFiles(work: AcceptedWork) {
   return [
-    ...(work.changesTests
-      ? [{ path: `modules/${work.module}/tests/${work.feedbackSignal}.md`, text: "# Tests\n" }]
+    // Test work adds the module's tests, as other work may when a scenario says it does.
+    ...(work.changesTests || work.role === "Test"
+      ? [
+          {
+            path: `modules/${work.module}/tests/${work.feedbackSignal}.md`,
+            text: work.newTestsPass ? `# Tests\n\n${PASSES_ON_PURPOSE}\n` : "# Tests\n",
+          },
+        ]
       : []),
     // Coding work changes the module's code; the sandbox project's tests fail on this marker.
     ...(work.role === "Coding"
@@ -61,6 +67,9 @@ export function otherFiles(work: AcceptedWork) {
 
 /** What a sandbox project's tests fail on: work a scenario makes fail on purpose (decision 0010). */
 export const FAILS_ON_PURPOSE = "fails on purpose";
+
+/** What makes a new test pass before its code exists: Test work a scenario makes wrong (0011). */
+export const PASSES_ON_PURPOSE = "passes on purpose";
 
 /** What makes a feedback signal file's name more than a plain name, in the scenarios. */
 const NOT_PLAIN = "_*see*";

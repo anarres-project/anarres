@@ -529,6 +529,12 @@ describe("acting on a pull request", () => {
       url: "https://github.com/commons/ledger/actions/runs/1",
     }),
     openAt: async () => [],
+    // The project's tests on Test work: its new test ran and failed, as it should.
+    testReport: async () => ({
+      state: "finished",
+      url: "https://github.com/commons/ledger/actions/runs/1",
+      report: { cases: [{ name: "parser > reads a number", outcome: "failed" }] },
+    }),
   });
   const log: EventLog = { read: async () => [], append: async () => {} };
 
@@ -918,6 +924,216 @@ describe("acting on a pull request", () => {
         activity: { task: "1", member: "alice" },
       },
     ]);
+  });
+
+  it("refuses Test work a new test of which passed, naming it: it tests nothing yet", async () => {
+    const [merged, refusals]: string[][] = [[], []];
+    const testWork = [
+      {
+        path: "feedback/FB-8.md",
+        text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: test\n  module: parser\n  verdict: pass\n---\n',
+      },
+      { path: "modules/parser/tests/parser.test.ts", text: "test('reads a number')\n" },
+    ];
+    const passing: PullRequests = {
+      ...submitting(merged, testWork, refusals),
+      testReport: async () => ({
+        state: "finished",
+        url: "https://github.com/commons/ledger/actions/runs/46",
+        report: { cases: [{ name: "parser > reads a number", outcome: "passed" }] },
+      }),
+    };
+    await onPullRequest("ledger", "7", passing, { ...held, post: async () => {} }, log, clock);
+    expect([merged, refusals]).toEqual([
+      [],
+      [
+        "7: Each new test must run and fail before its code exists, and these do not: parser > reads a number (passed). See https://github.com/commons/ledger/actions/runs/46",
+      ],
+    ]);
+  });
+
+  it("neither merges nor says anything about Test work while its tests are still running", async () => {
+    const [merged, refusals]: string[][] = [[], []];
+    const testWork = [
+      {
+        path: "feedback/FB-8.md",
+        text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: test\n  module: parser\n  verdict: pass\n---\n',
+      },
+      { path: "modules/parser/tests/parser.test.ts", text: "test('reads a number')\n" },
+    ];
+    const running: PullRequests = {
+      ...submitting(merged, testWork, refusals),
+      testReport: async () => ({
+        state: "running",
+        url: "https://github.com/commons/ledger/actions/runs/47",
+      }),
+    };
+    await onPullRequest("ledger", "7", running, { ...held, post: async () => {} }, log, clock);
+    expect([merged, refusals]).toEqual([[], []]);
+  });
+
+  it("records the holder's Test work waiting on its tests as activity on the task", async () => {
+    const appended: unknown[] = [];
+    const testWork = [
+      {
+        path: "feedback/FB-8.md",
+        text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: test\n  module: parser\n  verdict: pass\n---\n',
+      },
+      { path: "modules/parser/tests/parser.test.ts", text: "test('reads a number')\n" },
+    ];
+    const running: PullRequests = {
+      ...submitting([], testWork),
+      testReport: async () => ({
+        state: "running",
+        url: "https://github.com/commons/ledger/actions/runs/47",
+      }),
+    };
+    const recording: EventLog = {
+      read: async () => [],
+      append: async (event) => {
+        appended.push(event);
+      },
+    };
+    await onPullRequest("ledger", "7", running, held, recording, clock);
+    expect(appended).toEqual([
+      {
+        project: "ledger",
+        decidedAt: "2026-10-22T09:00:00.000Z",
+        activity: { task: "1", member: "alice" },
+      },
+    ]);
+  });
+
+  it("counts as new only the tests main does not have: those it has may pass", async () => {
+    const merged: string[] = [];
+    const testWork = [
+      {
+        path: "feedback/FB-9.md",
+        text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: test\n  module: parser\n  verdict: pass\n---\n',
+      },
+      { path: "modules/parser/tests/parser.test.ts", text: "test('reads a word')\n" },
+    ];
+    const revising: PullRequests = {
+      ...submitting(merged, testWork),
+      testReport: async () => ({
+        state: "finished",
+        url: "https://github.com/commons/ledger/actions/runs/48",
+        report: {
+          cases: [
+            { name: "parser > reads a number", outcome: "passed" },
+            { name: "parser > reads a word", outcome: "failed" },
+          ],
+        },
+      }),
+    };
+    const earlier: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          aboutToMerge: {
+            pullRequest: "3",
+            head: "0ld",
+            feedbackSignal: "feedback/FB-2.md",
+            work: { fromRole: "test", module: "parser", verdict: "pass", impediments: [] },
+            testsAdded: ["parser > reads a number"],
+          },
+        },
+      ],
+      append: async () => {},
+    };
+    await onPullRequest("ledger", "7", revising, { ...held, post: async () => {} }, earlier, clock);
+    expect(merged).toEqual(["7"]);
+  });
+
+  it("records the tests Test work added when it merges it, so main has them from then on", async () => {
+    const appended: LogEvent[] = [];
+    const testWork = [
+      {
+        path: "feedback/FB-8.md",
+        text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: test\n  module: parser\n  verdict: pass\n---\n',
+      },
+      { path: "modules/parser/tests/parser.test.ts", text: "test('reads a number')\n" },
+    ];
+    const recording: EventLog = {
+      read: async () => [],
+      append: async (event) => {
+        appended.push(event);
+      },
+    };
+    await onPullRequest(
+      "ledger",
+      "7",
+      submitting([], testWork),
+      { ...held, post: async () => {} },
+      recording,
+      clock,
+    );
+    const begun = appended.find((event) => "aboutToMerge" in event);
+    expect(begun && "aboutToMerge" in begun && begun.aboutToMerge.testsAdded).toEqual([
+      "parser > reads a number",
+    ]);
+  });
+
+  it("refuses Test work that adds no test: there is nothing to show failing", async () => {
+    const [merged, refusals]: string[][] = [[], []];
+    const testWork = [
+      {
+        path: "feedback/FB-8.md",
+        text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: test\n  module: parser\n  verdict: pass\n---\n',
+      },
+    ];
+    const none: PullRequests = {
+      ...submitting(merged, testWork, refusals),
+      testReport: async () => ({
+        state: "finished",
+        url: "https://github.com/commons/ledger/actions/runs/49",
+        report: { cases: [] },
+      }),
+    };
+    await onPullRequest("ledger", "7", none, { ...held, post: async () => {} }, log, clock);
+    expect([merged, refusals]).toEqual([
+      [],
+      [
+        "7: Test work that says it passed adds tests, and the project's tests show none new. See https://github.com/commons/ledger/actions/runs/49",
+      ],
+    ]);
+  });
+
+  it("refuses Test work whose test report cannot be read, saying why", async () => {
+    const [merged, refusals]: string[][] = [[], []];
+    const testWork = [
+      {
+        path: "feedback/FB-8.md",
+        text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: test\n  module: parser\n  verdict: pass\n---\n',
+      },
+      { path: "modules/parser/tests/parser.test.ts", text: "test('reads a number')\n" },
+    ];
+    const unreadable: PullRequests = {
+      ...submitting(merged, testWork, refusals),
+      testReport: async () => ({
+        state: "finished",
+        url: "https://github.com/commons/ledger/actions/runs/50",
+        report: { unreadable: "the test report is not well-formed XML" },
+      }),
+    };
+    await onPullRequest("ledger", "7", unreadable, { ...held, post: async () => {} }, log, clock);
+    expect([merged, refusals]).toEqual([
+      [],
+      [
+        "7: The project's test report on this work cannot be read: the test report is not well-formed XML. See https://github.com/commons/ledger/actions/runs/50",
+      ],
+    ]);
+  });
+
+  it("merges Test work reporting failure without reading its tests: it advances nothing", async () => {
+    const merged: string[] = [];
+    const testFails = {
+      path: "feedback/FB-8.md",
+      text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: test\n  module: parser\n  verdict: fail\n  impediments:\n    - type: upstream_ambiguity\n---\n',
+    };
+    const unread: PullRequests = { ...submitting(merged, [testFails]), testReport: untouched };
+    await onPullRequest("ledger", "7", unread, { ...held, post: async () => {} }, log, clock);
+    expect(merged).toEqual(["7"]);
   });
 
   it("merges a pull request whose feedback signal it can read", async () => {

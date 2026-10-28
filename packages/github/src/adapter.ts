@@ -1,4 +1,11 @@
-import { readToolchain, type Toolchain } from "@anarres/core";
+import {
+  readTestReport,
+  readToolchain,
+  TEST_REPORT_LIMIT,
+  TEST_REPORT_TOO_LARGE,
+  type TestReport,
+  type Toolchain,
+} from "@anarres/core";
 import type {
   ChangeNotByDivlab,
   ClaimedTask,
@@ -17,6 +24,7 @@ import type {
   TaskBoard,
 } from "@anarres/divlab";
 import { CLAIM } from "@anarres/divlab";
+import { strFromU8, unzipSync } from "fflate";
 import {
   CLAIMED,
   commentForLeaseRanOut,
@@ -46,7 +54,7 @@ import {
   taskFromIssue,
   UNPROTECTED_MAIN,
 } from "./representation.ts";
-import { requestGitHub } from "./request.ts";
+import { type Download, downloadGitHub, requestGitHub } from "./request.ts";
 
 /**
  * Divlab's task board, event log, merged files and members' pull requests on GitHub: each project is a repository owned
@@ -78,6 +86,15 @@ const GOVERNANCE_FILE = "governance/members.json";
 /** How many times to ask for a write GitHub's server failed without carrying out, a merge included. */
 const WRITE_ATTEMPTS = 3;
 
+/** Where the project's checks workflow lives, as the template has it (decision 0010). */
+const CHECKS_WORKFLOW = ".github/workflows/checks.yml";
+
+/** What Divlab says when the project's checks left no report to read. */
+const NO_TEST_REPORT = { unreadable: "the project's checks left no test report" };
+
+/** The artefact the checks workflow leaves its test report in (decision 0011). */
+export const TEST_REPORT = "test-report";
+
 /** The name of the project's own check, as the template's checks workflow gives it (decision 0010). */
 export const PROJECT_CHECK = "project-tests";
 
@@ -85,8 +102,8 @@ export class GitHubAdapter
   implements TaskBoard, EventLog, Repository, PullRequests, ProjectRepositories
 {
   /**
-   * `app`: Divlab's GitHub App, needed only to set projects up. `request`: how requests reach
-   * GitHub; the real API unless a test stands in for it.
+   * `app`: Divlab's GitHub App, needed only to set projects up. `request` and `download`: how
+   * requests and downloads reach GitHub; the real API unless a test stands in for it.
    */
   constructor(
     private readonly options: {
@@ -94,6 +111,7 @@ export class GitHubAdapter
       token: string;
       app?: number;
       request?: Request;
+      download?: Download;
       /** Where the governance file is, if the organisation names a repository of its own. */
       governance?: string;
     },
@@ -762,6 +780,51 @@ export class GitHubAdapter
       `${this.repo(project)}/pulls?state=open`,
     );
     return open.filter((pull) => pull.head.sha === commit).map((pull) => String(pull.number));
+  }
+
+  /**
+   * The test report the project's checks run left on the commit, as its artefact (decision
+   * 0011). The report comes from running a member's code: it is read as data.
+   */
+  async testReport(
+    project: string,
+    head: string,
+  ): Promise<
+    | { state: "running"; url: string }
+    | { state: "finished"; url: string; report: TestReport | { unreadable: string } }
+  > {
+    const { workflow_runs: runs } = await this.call<{
+      workflow_runs: { id: number; path: string; status: string; html_url: string }[];
+    }>("GET", `${this.repo(project)}/actions/runs?head_sha=${head}&event=pull_request`);
+    const run = runs.find((run) => run.path === CHECKS_WORKFLOW);
+    if (run?.status !== "completed") return { state: "running", url: run?.html_url ?? "" };
+    const { artifacts } = await this.call<{
+      artifacts: { id: number; name: string; size_in_bytes: number }[];
+    }>("GET", `${this.repo(project)}/actions/runs/${run.id}/artifacts`);
+    const artifact = artifacts.find((artifact) => artifact.name === TEST_REPORT);
+    if (artifact === undefined) {
+      return { state: "finished", url: run.html_url, report: NO_TEST_REPORT };
+    }
+    if (artifact.size_in_bytes > TEST_REPORT_LIMIT) {
+      return { state: "finished", url: run.html_url, report: TEST_REPORT_TOO_LARGE };
+    }
+    const download = this.options.download ?? downloadGitHub;
+    const zip = await download(
+      this.options.token,
+      `${this.repo(project)}/actions/artifacts/${artifact.id}/zip`,
+    );
+    // Each file's size is known before it is unpacked: one too large is never unpacked at all.
+    let tooLarge = false;
+    const files = unzipSync(zip, {
+      filter: (file) => {
+        if (file.originalSize > TEST_REPORT_LIMIT) tooLarge = true;
+        return !tooLarge;
+      },
+    });
+    if (tooLarge) return { state: "finished", url: run.html_url, report: TEST_REPORT_TOO_LARGE };
+    const [xml] = Object.values(files);
+    if (xml === undefined) return { state: "finished", url: run.html_url, report: NO_TEST_REPORT };
+    return { state: "finished", url: run.html_url, report: readTestReport(strFromU8(xml)) };
   }
 
   async refuse(project: string, pullRequest: string, reason: string): Promise<void> {

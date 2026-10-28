@@ -16,6 +16,7 @@ import type {
   Repository,
   TaskBoard,
 } from "@anarres/divlab";
+import { PASSES_ON_PURPOSE } from "../scenario-words.ts";
 
 /** Divlab's account in the fake: the name its log writes are made under. */
 export const DIVLAB_ACCOUNT = "divlab[bot]";
@@ -300,6 +301,25 @@ export class FakeGitHub
     );
     if (index === -1) throw new Error(`No pull request carries ${feedbackSignal}`);
     return String(index + 1);
+  }
+
+  /**
+   * The report the project's check wrote on a pull request's commit: a test case for each test
+   * file it adds, each failing, as new tests do before their code exists.
+   */
+  async testReport(_project: string, head: string) {
+    const number = head.replace(/^head-of-/, "");
+    const cases = this.opened(number)
+      .files.filter((file) => /^modules\/[^/]+\/tests\//.test(file.path))
+      .map((file) => ({
+        name: file.path,
+        outcome: file.text.includes(PASSES_ON_PURPOSE) ? ("passed" as const) : ("failed" as const),
+      }));
+    return {
+      state: "finished" as const,
+      url: `https://github.test/checks/${number}`,
+      report: { cases },
+    };
   }
 
   /** The project's tests finish on the pull request's commit, passing or failing. */

@@ -13,6 +13,7 @@ import {
   readFeedbackSignal,
   readSignalFile,
   routingRecord,
+  type TestReport,
   trustLevelOf,
   type Unreadable,
   writeScope,
@@ -474,6 +475,14 @@ export interface PullRequests {
   ): Promise<{ state: "passed" | "failed" | "running"; url: string }>;
   /** The project's open pull requests whose head is the commit. */
   openAt(project: string, commit: string): Promise<string[]>;
+  /** The test report the project's check wrote on the commit, once it has finished (0011). */
+  testReport(
+    project: string,
+    head: string,
+  ): Promise<
+    | { state: "running"; url: string }
+    | { state: "finished"; url: string; report: TestReport | Unreadable }
+  >;
 }
 
 /**
@@ -491,6 +500,8 @@ export type AboutToMerge = {
     work: FeedbackSignal;
     /** Who opened the pull request (absent from events recorded before Divlab kept it). */
     member?: string;
+    /** The tests Test work added to the module, by name: main has them once it merges (0011). */
+    testsAdded?: string[];
   };
 };
 
@@ -613,6 +624,16 @@ async function acceptSignal(
     events,
   );
 }
+
+/** The module's tests on main: those each piece of Test work Divlab merged added (0011). */
+const testsOnMain = (events: LogEvent[], module: string) =>
+  new Set(
+    events.flatMap((event) =>
+      "aboutToMerge" in event && event.aboutToMerge.work.module === module
+        ? (event.aboutToMerge.testsAdded ?? [])
+        : [],
+    ),
+  );
 
 /** Work on the task by the member holding it: it renews their lease. */
 const recordActivity = (
@@ -809,6 +830,45 @@ export async function onPullRequest(
     }
   }
   const events = await log.read(project);
+  // Test work saying it passed is merged only once each new test runs and fails (decision 0011).
+  let testsAdded: string[] | undefined;
+  if (role === "test" && !failed(signal) && !signal.partial) {
+    const run = await pullRequests.testReport(project, head);
+    // Not finished: the holder's work is activity on their task, and Divlab acts again after.
+    if (run.state === "running") {
+      await recordActivity(project, signal.task, author, log, clock);
+      return;
+    }
+    if ("unreadable" in run.report) {
+      await pullRequests.refuse(
+        project,
+        pullRequest,
+        `The project's test report on this work cannot be read: ${run.report.unreadable}. See ${run.url}`,
+      );
+      return;
+    }
+    const onMain = testsOnMain(events, signal.module);
+    const added = run.report.cases.filter((test) => !onMain.has(test.name));
+    if (added.length === 0) {
+      await pullRequests.refuse(
+        project,
+        pullRequest,
+        `Test work that says it passed adds tests, and the project's tests show none new. See ${run.url}`,
+      );
+      return;
+    }
+    const notFailing = added.filter((test) => test.outcome !== "failed");
+    if (notFailing.length > 0) {
+      const named = notFailing.map((test) => `${test.name} (${test.outcome})`).join(", ");
+      await pullRequests.refuse(
+        project,
+        pullRequest,
+        `Each new test must run and fail before its code exists, and these do not: ${named}. See ${run.url}`,
+      );
+      return;
+    }
+    testsAdded = added.map((test) => test.name);
+  }
   await log.append({
     project,
     decidedAt: clock().toISOString(),
@@ -818,6 +878,7 @@ export async function onPullRequest(
       feedbackSignal: feedback.path,
       member: author,
       work: signal,
+      ...(testsAdded === undefined ? {} : { testsAdded }),
     },
   });
   const mergedAs = await pullRequests.merge(project, pullRequest, head);

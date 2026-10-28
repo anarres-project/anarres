@@ -1,3 +1,4 @@
+import { strToU8, zipSync } from "fflate";
 import { describe, expect, it } from "vitest";
 import { GitHubAdapter } from "../src/index.ts";
 
@@ -284,5 +285,176 @@ describe("the open pull requests at a commit", () => {
       },
     });
     expect(await adapter.openAt("ledger", "c0ffee")).toEqual(["5", "101"]);
+  });
+});
+
+describe("the project's test report on a commit (decision 0011)", () => {
+  const xml =
+    '<testsuites><testsuite name="parser"><testcase classname="parser" name="reads a number"><failure/></testcase></testsuite></testsuites>';
+  const checksRun = {
+    id: 46,
+    path: ".github/workflows/checks.yml",
+    status: "completed",
+    html_url: "https://github.com/commons/ledger/actions/runs/46",
+  };
+
+  it("is read from the artefact the project's checks run left on the commit", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/actions/runs?head_sha=c0ffee&event=pull_request"
+        ) {
+          return { status: 200, data: { workflow_runs: [checksRun] } as T };
+        }
+        if (method === "GET" && path === "repos/commons/ledger/actions/runs/46/artifacts") {
+          const report = { id: 9, name: "test-report", size_in_bytes: 300 };
+          return { status: 200, data: { artifacts: [report] } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+      download: async (_token: string, path: string) => {
+        if (path !== "repos/commons/ledger/actions/artifacts/9/zip") throw new Error(path);
+        return zipSync({ "report.xml": strToU8(xml) });
+      },
+    });
+    expect(await adapter.testReport("ledger", "c0ffee")).toEqual({
+      state: "finished",
+      url: "https://github.com/commons/ledger/actions/runs/46",
+      report: { cases: [{ name: "parser > reads a number", outcome: "failed" }] },
+    });
+  });
+  it("is still to come while the project's checks run on the commit has not finished", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/actions/runs?head_sha=c0ffee&event=pull_request"
+        ) {
+          return {
+            status: 200,
+            data: { workflow_runs: [{ ...checksRun, status: "in_progress" }] } as T,
+          };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.testReport("ledger", "c0ffee")).toEqual({
+      state: "running",
+      url: "https://github.com/commons/ledger/actions/runs/46",
+    });
+  });
+  it("cannot be read when the project's checks left no report", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/actions/runs?head_sha=c0ffee&event=pull_request"
+        ) {
+          return { status: 200, data: { workflow_runs: [checksRun] } as T };
+        }
+        if (method === "GET" && path === "repos/commons/ledger/actions/runs/46/artifacts") {
+          return { status: 200, data: { artifacts: [] } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.testReport("ledger", "c0ffee")).toEqual({
+      state: "finished",
+      url: "https://github.com/commons/ledger/actions/runs/46",
+      report: { unreadable: "the project's checks left no test report" },
+    });
+  });
+  it("cannot be read, and is not downloaded, when its artefact is larger than 2 MB", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/actions/runs?head_sha=c0ffee&event=pull_request"
+        ) {
+          return { status: 200, data: { workflow_runs: [checksRun] } as T };
+        }
+        if (method === "GET" && path === "repos/commons/ledger/actions/runs/46/artifacts") {
+          const huge = { id: 9, name: "test-report", size_in_bytes: 2_000_001 };
+          return { status: 200, data: { artifacts: [huge] } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+      download: async () => {
+        throw new Error("a report that large should not be downloaded");
+      },
+    });
+    expect(await adapter.testReport("ledger", "c0ffee")).toEqual({
+      state: "finished",
+      url: "https://github.com/commons/ledger/actions/runs/46",
+      report: { unreadable: "the test report is larger than 2 MB" },
+    });
+  });
+  it("cannot be read, and is not unpacked, when its file unpacks larger than 2 MB", async () => {
+    // A zip whose directory says its file unpacks to more than the limit, as a zip bomb's would.
+    const zip = zipSync({ "report.xml": strToU8(xml) });
+    const directory = zip.findLastIndex(
+      (_byte, at) =>
+        zip[at] === 0x50 && zip[at + 1] === 0x4b && zip[at + 2] === 1 && zip[at + 3] === 2,
+    );
+    new DataView(zip.buffer).setUint32(directory + 24, 2_000_001, true);
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/actions/runs?head_sha=c0ffee&event=pull_request"
+        ) {
+          return { status: 200, data: { workflow_runs: [checksRun] } as T };
+        }
+        if (method === "GET" && path === "repos/commons/ledger/actions/runs/46/artifacts") {
+          const report = { id: 9, name: "test-report", size_in_bytes: zip.length };
+          return { status: 200, data: { artifacts: [report] } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+      download: async () => zip,
+    });
+    expect((await adapter.testReport("ledger", "c0ffee")) as unknown).toEqual({
+      state: "finished",
+      url: "https://github.com/commons/ledger/actions/runs/46",
+      report: { unreadable: "the test report is larger than 2 MB" },
+    });
+  });
+  it("cannot be read when its artefact holds no file", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/actions/runs?head_sha=c0ffee&event=pull_request"
+        ) {
+          return { status: 200, data: { workflow_runs: [checksRun] } as T };
+        }
+        if (method === "GET" && path === "repos/commons/ledger/actions/runs/46/artifacts") {
+          return {
+            status: 200,
+            data: { artifacts: [{ id: 9, name: "test-report", size_in_bytes: 22 }] } as T,
+          };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+      download: async () => zipSync({}),
+    });
+    expect(await adapter.testReport("ledger", "c0ffee")).toEqual({
+      state: "finished",
+      url: "https://github.com/commons/ledger/actions/runs/46",
+      report: { unreadable: "the project's checks left no test report" },
+    });
   });
 });

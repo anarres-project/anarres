@@ -25,3 +25,10 @@ Feature: Coding work passes the project's own tests
     And a member submits Coding work on "parser" whose tests are still running
     When the project's tests pass on the member's Coding work on "parser"
     Then Divlab has merged the member's Coding work on "parser"
+
+  Scenario: Test work whose new tests pass before any code exists is not merged
+    Given a project with a module "parser"
+    And a member's Specification work on "parser" was accepted with a pass verdict
+    When a member submits Test work on "parser" whose new tests pass before any code exists
+    Then Divlab has not merged the member's Test work on "parser"
+    And the member is told their new tests must run and fail before the code exists

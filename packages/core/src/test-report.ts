@@ -13,8 +13,11 @@ const ENDINGS = new Map<string, TestOutcome>([
   ["skipped", "skipped"],
 ]);
 
-/** The most of a report Divlab reads, in characters: far more than a module's tests need. */
-const REPORT_LIMIT = 2_000_000;
+/** The most of a report Divlab reads, in characters or bytes: far more than a module's tests need. */
+export const TEST_REPORT_LIMIT = 2_000_000;
+
+/** What Divlab says of a report over the limit. */
+export const TEST_REPORT_TOO_LARGE = { unreadable: "the test report is larger than 2 MB" };
 
 /** Characters no plain name holds: control characters, line breaks among them. */
 // biome-ignore lint/suspicious/noControlCharactersInRegex: matching them is the point.
@@ -28,7 +31,7 @@ export type TestReport = { cases: { name: string; outcome: TestOutcome }[] };
  * fetched, expanded or run.
  */
 export function readTestReport(xml: string): TestReport | { unreadable: string } {
-  if (xml.length > REPORT_LIMIT) return { unreadable: "the test report is larger than 2 MB" };
+  if (xml.length > TEST_REPORT_LIMIT) return TEST_REPORT_TOO_LARGE;
   const cases: TestReport["cases"] = [];
   const parser = sax.parser(true);
   let open = 0;

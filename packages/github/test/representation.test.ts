@@ -353,6 +353,22 @@ describe("a routing event as a file", () => {
     );
   });
 
+  it("is refused when the tests it says Test work added are not named as text", () => {
+    const begun = {
+      project: "ledger",
+      aboutToMerge: {
+        pullRequest: "7",
+        head: "c0ffee",
+        feedbackSignal: "feedback/T-0144.md",
+        work: { fromRole: "test", module: "parser", verdict: "pass", impediments: [] },
+        testsAdded: ["parser > reads a number", 42],
+      },
+    };
+    expect(() => eventFromFile(JSON.stringify(begun))).toThrow(
+      "The event file cannot be read: the record names the tests Test work added as something other than text",
+    );
+  });
+
   it("reads back a record that Divlab acted on a decision", () => {
     const acted = { project: "ledger", actedOn: { feedbackSignal: "feedback/T-0144.md" } };
     expect(eventFromFile(eventFile(acted, 4).content)).toEqual(acted);

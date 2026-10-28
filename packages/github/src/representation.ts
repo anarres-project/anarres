@@ -211,6 +211,15 @@ export function eventFromFile(content: string): LogEvent {
   ) {
     const work = readMergedWork(event.aboutToMerge.work);
     if ("unreadable" in work) throw new Error(`The event file cannot be read: ${work.unreadable}`);
+    const { testsAdded } = event.aboutToMerge;
+    if (
+      testsAdded !== undefined &&
+      !(Array.isArray(testsAdded) && testsAdded.every((test) => typeof test === "string"))
+    ) {
+      throw new Error(
+        "The event file cannot be read: the record names the tests Test work added as something other than text",
+      );
+    }
     return event as AboutToMerge;
   }
   const record = readRoutingRecord(event);

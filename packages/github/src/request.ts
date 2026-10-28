@@ -69,3 +69,17 @@ function parsed(text: string): unknown {
 }
 
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * One file downloaded from the GitHub REST API, as bytes. GitHub answers with a redirect to where
+ * the file is kept, which is followed; `fetch` sends the token to GitHub only, not on to there.
+ */
+export async function downloadGitHub(token: string, path: string): Promise<Uint8Array> {
+  const response = await fetch(`https://api.github.com/${path}`, {
+    headers: { authorization: `Bearer ${token}`, "x-github-api-version": "2022-11-28" },
+  });
+  if (!response.ok) throw new Error(`GitHub GET ${path} answered ${response.status}`);
+  return new Uint8Array(await response.arrayBuffer());
+}
+
+export type Download = typeof downloadGitHub;

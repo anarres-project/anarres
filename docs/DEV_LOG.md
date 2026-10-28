@@ -269,6 +269,22 @@ governance scenarios run alone.
   document type; over 2 MB; no class (named by its name); no name; a name with a control
   character. Parsed by `sax` 1.6.1, chosen for having no dependencies of its own (fast-xml-parser
   now has six), in strict mode. Core stays at 100% branch coverage.
+- Divlab's rule for Test work, test by test (each RED shown): a new test that passed is refused,
+  named (the old Test-work fixtures given a failing report first, the rule set aside meanwhile);
+  while the tests run, nothing is said (RED: a crash reading no report); the holder's work then
+  is activity (I wrote that line before its test, so took it out, wrote the test, watched it red,
+  and put it back); only tests main lacks are new; merging records `testsAdded`, which the
+  adapter validates on reading back; work adding no test is refused; an unreadable report is
+  refused, saying why. Passed first time, kept: Test work reporting failure reads no report.
+- The adapter reads the report from the checks run's `test-report` artefact, test by test: found
+  and read; running until the run finishes; no artefact; over 2 MB, not downloaded; a file whose
+  zip directory says it unpacks over 2 MB, not unpacked (a zip bomb's would); an empty artefact.
+  Downloads follow GitHub's redirect; Node's fetch keeps the token to GitHub. Unzipped by
+  `fflate` 0.8.3, which has no dependencies.
+- Protocol slip: for this slice I drove the units before writing the acceptance scenario. Written
+  now, "Test work whose new tests pass before any code exists is not merged" passed at once.
+- Not pushed: the checks run only on code, so Test work in the sandbox would get no report and
+  wait for ever, until the template's checks run on Test work and upload the report.
 
 ---
 
