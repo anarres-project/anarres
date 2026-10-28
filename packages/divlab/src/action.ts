@@ -33,8 +33,15 @@ const github = new GitHubAdapter({
   governance: process.env.INPUT_GOVERNANCE ?? "",
   request: counted.request,
 });
-const sayRequests = () => {
+const sayRequests = async () => {
   for (const line of summary(counted.tally)) console.log(line);
+  try {
+    const { used, limit, reset } = await github.allowance();
+    const resets = new Date(reset * 1000).toISOString().slice(11, 16);
+    console.log(`The App's allowance: ${used} of ${limit} used (resets ${resets} UTC)`);
+  } catch {
+    // Saying how much is left must never fail a run.
+  }
 };
 try {
   const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH ?? "", "utf8"));
@@ -42,7 +49,7 @@ try {
   // The edge of the system: the only place Divlab's clock is the wall clock.
   const clock = () => new Date();
   if ("nothing" in run) {
-    sayRequests();
+    await sayRequests();
     process.exit(0);
   }
   if ("pullRequest" in run) {
@@ -63,9 +70,9 @@ try {
   const app = process.env.INPUT_APP;
   if (!app) throw new Error("Divlab needs its App's name (the app input) to check main's changes");
   await checkMain(project, github, github, github, clock, `${app}[bot]`);
-  sayRequests();
+  await sayRequests();
 } catch (error) {
-  sayRequests();
+  await sayRequests();
   console.log(`::error::${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);
 }

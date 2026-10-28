@@ -415,6 +415,12 @@ governance scenarios run alone.
   allowance in the sandbox organisation spent (403 at 21:56, 41 minutes in), and Divlab waited
   for the reset, as built, until the run was cancelled. Not a defect in the scenario; a limit
   nothing measured (test list, section 0).
+- Bernard: measure, then reduce. REFACTOR: the sandbox driver's request tally (kinds, summary)
+  moves to the GitHub package. RED: counting a run's requests tallies each by kind ->
+  `countingRequests is not a function`, then the stub's `0 requests`; GREEN; REFACTOR, the
+  sandbox driver counts with it. RED: the adapter reads the token's allowance -> not a function,
+  then the stub's zeros; GREEN. Divlab's action prints both at the end of every run (wiring, no
+  test: an allowance it cannot read is not said, and never fails the run).
 
 ---
 

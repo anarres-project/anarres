@@ -11193,6 +11193,12 @@ var GitHubAdapter = class {
     const text = await this.fileText(project2, "anarres.yaml");
     return text === void 0 ? void 0 : readToolchain(text);
   }
+  /** The token's hourly allowance as GitHub reads it; asking does not use any of it up. */
+  async allowance() {
+    const { resources } = await this.call("GET", "rate_limit");
+    const { used, limit, reset } = resources.core;
+    return { used, limit, reset };
+  }
   /** The project's modules.yaml as it was at a commit, if it had one then (decision 0014). */
   async modulesAt(project2, commit) {
     return this.fileText(project2, `${MODULES_FILE}?ref=${encodeURIComponent(commit)}`);
@@ -11505,15 +11511,21 @@ var github = new GitHubAdapter({
   governance: process.env.INPUT_GOVERNANCE ?? "",
   request: counted.request
 });
-var sayRequests = () => {
+var sayRequests = async () => {
   for (const line of summary(counted.tally)) console.log(line);
+  try {
+    const { used, limit, reset } = await github.allowance();
+    const resets = new Date(reset * 1e3).toISOString().slice(11, 16);
+    console.log(`The App's allowance: ${used} of ${limit} used (resets ${resets} UTC)`);
+  } catch {
+  }
 };
 try {
   const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH ?? "", "utf8"));
   const run = whatToActOn(process.env.GITHUB_EVENT_NAME ?? "", event);
   const clock = () => /* @__PURE__ */ new Date();
   if ("nothing" in run) {
-    sayRequests();
+    await sayRequests();
     process.exit(0);
   }
   if ("pullRequest" in run) {
@@ -11533,9 +11545,9 @@ try {
   const app = process.env.INPUT_APP;
   if (!app) throw new Error("Divlab needs its App's name (the app input) to check main's changes");
   await checkMain(project, github, github, github, clock, `${app}[bot]`);
-  sayRequests();
+  await sayRequests();
 } catch (error) {
-  sayRequests();
+  await sayRequests();
   console.log(`::error::${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);
 }

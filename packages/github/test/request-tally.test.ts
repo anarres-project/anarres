@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countingRequests, kindOf, summary } from "../src/index.ts";
+import { countingRequests, GitHubAdapter, kindOf, summary } from "../src/index.ts";
 
 describe("the kind of request a sandbox run makes", () => {
   it("is its method and what it asks for in the repository, without the repository's name", () => {
@@ -53,5 +53,22 @@ describe("counting a run's requests to GitHub", () => {
       "  2 GET issues/{n}/comments",
       "  1 POST issues",
     ]);
+  });
+});
+
+describe("the allowance a run has used", () => {
+  it("is GitHub's reading of the token's hourly allowance, which reading does not use up", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (method === "GET" && path === "rate_limit") {
+          const core = { used: 4210, limit: 5000, reset: 1_793_052_000 };
+          return { status: 200, data: { resources: { core } } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.allowance()).toEqual({ used: 4210, limit: 5000, reset: 1_793_052_000 });
   });
 });

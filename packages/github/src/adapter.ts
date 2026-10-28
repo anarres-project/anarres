@@ -578,6 +578,15 @@ export class GitHubAdapter
     return text === undefined ? undefined : readToolchain(text);
   }
 
+  /** The token's hourly allowance as GitHub reads it; asking does not use any of it up. */
+  async allowance(): Promise<{ used: number; limit: number; reset: number }> {
+    const { resources } = await this.call<{
+      resources: { core: { used: number; limit: number; reset: number } };
+    }>("GET", "rate_limit");
+    const { used, limit, reset } = resources.core;
+    return { used, limit, reset };
+  }
+
   /** The project's modules.yaml as it was at a commit, if it had one then (decision 0014). */
   async modulesAt(project: string, commit: string): Promise<string | undefined> {
     return this.fileText(project, `${MODULES_FILE}?ref=${encodeURIComponent(commit)}`);

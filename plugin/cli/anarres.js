@@ -10638,6 +10638,12 @@ var GitHubAdapter = class {
     const text = await this.fileText(project, "anarres.yaml");
     return text === void 0 ? void 0 : readToolchain(text);
   }
+  /** The token's hourly allowance as GitHub reads it; asking does not use any of it up. */
+  async allowance() {
+    const { resources } = await this.call("GET", "rate_limit");
+    const { used, limit, reset } = resources.core;
+    return { used, limit, reset };
+  }
   /** The project's modules.yaml as it was at a commit, if it had one then (decision 0014). */
   async modulesAt(project, commit) {
     return this.fileText(project, `${MODULES_FILE}?ref=${encodeURIComponent(commit)}`);

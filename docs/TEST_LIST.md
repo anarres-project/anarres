@@ -117,9 +117,14 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         in, shared by every project there, and nothing measures or checks it. Seen 2026-10-28
         (805efa3, 87 scenarios): the App's allowance in the sandbox ran out at 21:56, 41 minutes
         into the run; a Divlab run waited for the reset until it was cancelled, and its scenario
-        failed waiting. Next: Divlab says how many requests each run made; the sandbox run checks
-        the App's allowance as it checks its own; then fewer requests per Divlab run, measured.
-        In `anarres-project` every real project would share one allowance the same way;
+        failed waiting. In `anarres-project` every real project would share one allowance the
+        same way. Measure, then reduce (Bernard, 2026-10-28):
+    - [x] each Divlab run says how many requests it made, by kind (the sandbox driver's tally,
+          moved to the GitHub package), and how much of the App's allowance is used;
+    - [ ] the sandbox run checks the App's allowance before each scenario: needs a token of the
+          App's, whose key lives only in the sandbox organisation's secrets (Bernard to decide);
+    - [ ] the requests a Divlab run makes, cut where the numbers show the cost;
+    - [ ] the artefact downloads of Test and Coding work count too, and are not yet tallied;
   - [ ] GitHub's reading of the allowance used jumps between readings (2,141 then 726 a minute
         later, same window, 2026-10-22): find out why before relying on it more;
   - [x] appending an event costs one request once the log has been read, not a listing plus a
