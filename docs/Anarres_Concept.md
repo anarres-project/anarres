@@ -118,6 +118,8 @@ CSD splits work **by role**: each agent sees one layer. That alone does not fit 
 
 **Start whole, split when it hurts.** Decomposition is not a design done up front. A project starts as **one module**, and the Programme Architect's first `modules.yaml` may say exactly that. A split must be earned by evidence: the sizing rule failing (a layer too big for one session), or feedback that the current boundaries do not work (`interface_impediment`, `scope_gap`). Never by speculation about how the system might grow. Requirements start the same way: a first slice, enough to begin, grown by the same loop that grows the decomposition. Every split adds a contract, and contracts are the costliest artefacts to change, so the decomposition stays as coarse as the evidence allows. Heavy contract churn (ω(t) at programme level, §17) is the sign that a split was guessed too early.
 
+**Which module provides and uses each contract** is stated in `modules.yaml`: each contract is provided by exactly one module, and used by any others (decision 0014).
+
 **Interface contracts are the joints of the system.** A module's Specification AI turns the contracts its module *provides* and *uses* into contract scenarios. The Coding AI, which never sees architecture, still meets every interface through the specifications and tests.
 
 **Interface change protocol.** When a module agent finds that a contract does not work, it raises a feedback signal of type `interface_impediment`. Divlab sends that to the Programme Architect, never to the other module. A revised contract creates revision tasks for every affected module. That keeps module teams independent of each other while still letting contracts change.
@@ -192,7 +194,7 @@ proj-<name>/
 ├── requirements/           Programme requirements
 ├── programme/
 │   ├── modules.yaml
-│   ├── contracts/          One contract per module boundary
+│   ├── contracts/<c>/      One contract per module boundary, a folder each (decision 0014)
 │   └── slices/             Requirement slices per module
 ├── modules/<m>/
 │   ├── architecture/

@@ -645,7 +645,17 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] core holds the access matrix's read scopes beside its write scopes, once: each module
         role reads its own module's places and its requirement slice (`programme/slices/<m>/`),
         never another module's, and no path that climbs out;
-  - [ ] the contracts a module provides and uses (needs the Programme Architect's modules.yaml);
+  - [ ] the contracts a module provides and uses (decision 0014, Bernard, 2026-10-28):
+    - [ ] core's `readModules` reads each module's `provides` and `uses`, by plain name;
+    - [ ] unreadable: a contract provided by two modules, used but provided by none, or used by
+          the module that provides it;
+    - [ ] Architecture and Specification read the folders `programme/contracts/<c>/` of their
+          module's contracts, and no other module role reads any;
+    - [ ] `prepare` reads `modules.yaml` at the pinned commit with core's reader, fetches those
+          folders, and records them for the hook; an unreadable file fetches nothing, saying why;
+    - [ ] an acceptance scenario: a member preparing an Architecture task has its module's
+          contracts and no other's;
+    - [ ] the sandbox shows it;
   - [ ] what a Research task reads, as its question names it;
   - [x] Divlab posts each task with the commit its inputs are pinned at, the merge that decided
         it, in the issue's words and its decision block; read back only if it is a commit name;
