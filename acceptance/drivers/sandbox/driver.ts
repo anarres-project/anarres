@@ -1431,15 +1431,17 @@ export class SandboxDriver implements Driver {
       "GET",
       `${repository}/actions/runs/${failed.id}/jobs`,
     );
-    const messages: string[] = [];
+    const annotations: { message: string; annotation_level?: string }[] = [];
     for (const job of jobs) {
-      const { status, data } = await this.github.request<{ message: string }[]>(
-        "GET",
-        `${repository}/check-runs/${job.id}/annotations`,
-      );
-      if (status === 200) messages.push(...data.map((annotation) => annotation.message));
+      const { status, data } = await this.github.request<
+        { message: string; annotation_level?: string }[]
+      >("GET", `${repository}/check-runs/${job.id}/annotations`);
+      if (status === 200) annotations.push(...data);
     }
-    return messages.join("; ") || "GitHub gave no reason";
+    // GitHub's own notices (a runner image changing, say) come too: the failures say why.
+    const failures = annotations.filter((annotation) => annotation.annotation_level === "failure");
+    const said = (failures.length > 0 ? failures : annotations).map((a) => a.message);
+    return said.join("; ") || "GitHub gave no reason";
   }
 
   /**
