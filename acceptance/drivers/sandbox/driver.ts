@@ -197,6 +197,12 @@ export class SandboxDriver implements Driver {
   }
 
   /** A repository of the scenario's own, declaring no toolchain, which Divlab sets up as usual. */
+  async testCounts(project: string): Promise<{ total: number; passed: number; failed: number }[]> {
+    return (await this.divlab.read(project)).flatMap((event) =>
+      "aboutToMerge" in event && event.aboutToMerge.tests ? [event.aboutToMerge.tests] : [],
+    );
+  }
+
   async startProjectWithoutToolchain(project: string, modules: string[]): Promise<string> {
     this.projectOfScenario = project;
     try {
@@ -1622,16 +1628,18 @@ toolchain:
 `;
 
 /**
- * The sandbox project's tests: a test case for each test file, failing, as new tests do before
- * their code exists, unless the file says it passes on purpose; and the run fails if any code
- * fails on purpose. The JUnit report names each case by its file.
+ * The sandbox project's tests: a test case for each test file, passing once its module has code
+ * and none of it fails on purpose, failing before, as new tests do, unless the file says it passes
+ * on purpose; and the run fails if any code fails on purpose. The JUnit report names each case by
+ * its file.
  */
 const SANDBOX_TESTS_SCRIPT = `#!/bin/sh
 {
   echo '<testsuites><testsuite name="sandbox">'
   for file in modules/*/tests/*; do
     [ -f "$file" ] || continue
-    if grep -qs '${PASSES_ON_PURPOSE}' "$file"; then
+    module=$(echo "$file" | cut -d/ -f2)
+    if grep -qs '${PASSES_ON_PURPOSE}' "$file" || { ls modules/$module/src/* >/dev/null 2>&1 && ! grep -rqs '${FAILS_ON_PURPOSE}' modules/$module/src; }; then
       echo "<testcase name=\\"$file\\"/>"
     else
       echo "<testcase name=\\"$file\\"><failure/></testcase>"

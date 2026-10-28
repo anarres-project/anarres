@@ -581,10 +581,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         on purpose.
 - [ ] Test counts for metrics come from the project's JUnit XML report, whatever the language
       (decision 0012, Bernard, 2026-10-28):
-  - [ ] n_test, n_pass and n_fail from a report: errored counts as failing, skipped is not
-        counted, so n_pass + n_fail = n_test;
-  - [ ] the event recording each merge of Coding or Test work carries the counts from its report,
-        programme-wide; the adapter reads them back validated;
+  - [x] n_test, n_pass and n_fail from a report (core's `testCounts`): errored counts as
+        failing, skipped is not counted, so n_pass + n_fail = n_test;
+  - [x] the event recording each merge of Coding or Test work carries the counts from its report,
+        programme-wide (`tests` on the merge record); the adapter reads them back validated:
+        whole numbers that add up;
   - [ ] the sandbox shows it;
   - [ ] per module counts, once a report reliably says which module a test belongs to.
 - [x] A project without a declared toolchain cannot be started: Divlab reads `anarres.yaml` on

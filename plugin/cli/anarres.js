@@ -9920,12 +9920,24 @@ function eventFromFile(content) {
         "The event file cannot be read: the record names the tests Test work added as something other than text"
       );
     }
+    const { tests } = event.aboutToMerge;
+    if (tests !== void 0 && !countsAddUp(tests)) {
+      throw new Error(
+        "The event file cannot be read: the record's test counts are not whole numbers that add up"
+      );
+    }
     return event;
   }
   const record = readRoutingRecord(event);
   if ("unreadable" in record)
     throw new Error(`The event file cannot be read: ${record.unreadable}`);
   return event;
+}
+function countsAddUp(tests) {
+  if (!isObject2(tests)) return false;
+  const { total, passed, failed: failed2 } = tests;
+  const whole = (n) => Number.isSafeInteger(n) && n >= 0;
+  return whole(total) && whole(passed) && whole(failed2) && passed + failed2 === total;
 }
 var isObject2 = (value) => typeof value === "object" && value !== null;
 function issueForAlert(alert) {

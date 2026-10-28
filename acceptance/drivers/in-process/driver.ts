@@ -149,6 +149,12 @@ export class InProcessDriver implements Driver {
     return this.github.refusals(project);
   }
 
+  async testCounts(project: string): Promise<{ total: number; passed: number; failed: number }[]> {
+    return (await this.github.read(project)).flatMap((event) =>
+      "aboutToMerge" in event && event.aboutToMerge.tests ? [event.aboutToMerge.tests] : [],
+    );
+  }
+
   async routingRecords(project: string): Promise<RoutingRecord[]> {
     return routingDecisions(await this.github.read(project)).map(inScenarioWords);
   }

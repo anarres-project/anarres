@@ -27,8 +27,10 @@ export {
   readTestReport,
   TEST_REPORT_LIMIT,
   TEST_REPORT_TOO_LARGE,
+  type TestCounts,
   type TestOutcome,
   type TestReport,
+  testCounts,
 } from "./test-report.ts";
 export { readToolchain, type Toolchain } from "./toolchain.ts";
 export {

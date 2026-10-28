@@ -369,6 +369,22 @@ describe("a routing event as a file", () => {
     );
   });
 
+  it("is refused when its test counts are not whole numbers that add up", () => {
+    const begun = {
+      project: "ledger",
+      aboutToMerge: {
+        pullRequest: "7",
+        head: "c0ffee",
+        feedbackSignal: "feedback/T-0144.md",
+        work: { fromRole: "coding", module: "parser", verdict: "pass", impediments: [] },
+        tests: { total: 3, passed: 1, failed: 1 },
+      },
+    };
+    expect(() => eventFromFile(JSON.stringify(begun))).toThrow(
+      "The event file cannot be read: the record's test counts are not whole numbers that add up",
+    );
+  });
+
   it("reads back a record that Divlab acted on a decision", () => {
     const acted = { project: "ledger", actedOn: { feedbackSignal: "feedback/T-0144.md" } };
     expect(eventFromFile(eventFile(acted, 4).content)).toEqual(acted);

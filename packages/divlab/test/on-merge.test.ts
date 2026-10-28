@@ -1136,6 +1136,76 @@ describe("acting on a pull request", () => {
     expect(merged).toEqual(["7"]);
   });
 
+  it("records the project's test counts from its report when it merges Test work", async () => {
+    const appended: LogEvent[] = [];
+    const testWork = [
+      {
+        path: "feedback/FB-8.md",
+        text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: test\n  module: parser\n  verdict: pass\n---\n',
+      },
+      { path: "modules/parser/tests/parser.test.ts", text: "test('reads a number')\n" },
+    ];
+    const recording: EventLog = {
+      read: async () => [],
+      append: async (event) => {
+        appended.push(event);
+      },
+    };
+    await onPullRequest(
+      "ledger",
+      "7",
+      submitting([], testWork),
+      { ...held, post: async () => {} },
+      recording,
+      clock,
+    );
+    const begun = appended.find((event) => "aboutToMerge" in event);
+    expect(begun && "aboutToMerge" in begun && begun.aboutToMerge.tests).toEqual({
+      total: 1,
+      passed: 0,
+      failed: 1,
+    });
+  });
+
+  it("records the project's test counts from its report when it merges Coding work", async () => {
+    const appended: LogEvent[] = [];
+    const coding = [
+      {
+        path: "feedback/FB-7.md",
+        text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: coding\n  module: parser\n  verdict: pass\n---\n',
+      },
+      { path: "modules/parser/src/parser.ts", text: "export {};\n" },
+    ];
+    const passing: PullRequests = {
+      ...submitting([], coding),
+      testReport: async () => ({
+        state: "finished",
+        url: "https://github.com/commons/ledger/actions/runs/51",
+        report: { cases: [{ name: "parser > reads a number", outcome: "passed" }] },
+      }),
+    };
+    const recording: EventLog = {
+      read: async () => [],
+      append: async (event) => {
+        appended.push(event);
+      },
+    };
+    await onPullRequest(
+      "ledger",
+      "7",
+      passing,
+      { ...held, post: async () => {} },
+      recording,
+      clock,
+    );
+    const begun = appended.find((event) => "aboutToMerge" in event);
+    expect(begun && "aboutToMerge" in begun && begun.aboutToMerge.tests).toEqual({
+      total: 1,
+      passed: 1,
+      failed: 0,
+    });
+  });
+
   it("merges a pull request whose feedback signal it can read", async () => {
     const merged: string[] = [];
     await onPullRequest(

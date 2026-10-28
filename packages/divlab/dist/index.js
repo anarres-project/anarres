@@ -9321,6 +9321,11 @@ function readTestReport(xml) {
   if (!wellFormed || open !== 0) return { unreadable: "the test report is not well-formed XML" };
   return { cases };
 }
+function testCounts({ cases }) {
+  const ran = cases.filter((test) => test.outcome !== "skipped");
+  const passed = ran.filter((test) => test.outcome === "passed").length;
+  return { total: ran.length, passed, failed: ran.length - passed };
+}
 
 // ../core/src/toolchain.ts
 var import_yaml2 = __toESM(require_dist(), 1);
@@ -9736,6 +9741,7 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     );
     return;
   }
+  let tests;
   if (role === "coding" && !failed(signal) && !signal.partial) {
     const code = writeScope("coding", signal.module);
     if (!files.some((file2) => file2.path.startsWith(code))) {
@@ -9757,6 +9763,8 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
       );
       return;
     }
+    const run = await pullRequests.testReport(project2, head);
+    if (run.state === "finished" && !("unreadable" in run.report)) tests = testCounts(run.report);
   }
   const events = await log.read(project2);
   let testsAdded;
@@ -9795,6 +9803,7 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
       return;
     }
     testsAdded = added.map((test) => test.name);
+    tests = testCounts(run.report);
   }
   await log.append({
     project: project2,
@@ -9805,7 +9814,8 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
       feedbackSignal: feedback.path,
       member: author,
       work: signal,
-      ...testsAdded === void 0 ? {} : { testsAdded }
+      ...testsAdded === void 0 ? {} : { testsAdded },
+      ...tests === void 0 ? {} : { tests }
     }
   });
   const mergedAs = await pullRequests.merge(project2, pullRequest, head);
@@ -10447,12 +10457,24 @@ function eventFromFile(content) {
         "The event file cannot be read: the record names the tests Test work added as something other than text"
       );
     }
+    const { tests } = event.aboutToMerge;
+    if (tests !== void 0 && !countsAddUp(tests)) {
+      throw new Error(
+        "The event file cannot be read: the record's test counts are not whole numbers that add up"
+      );
+    }
     return event;
   }
   const record = readRoutingRecord(event);
   if ("unreadable" in record)
     throw new Error(`The event file cannot be read: ${record.unreadable}`);
   return event;
+}
+function countsAddUp(tests) {
+  if (!isObject2(tests)) return false;
+  const { total, passed, failed: failed2 } = tests;
+  const whole = (n) => Number.isSafeInteger(n) && n >= 0;
+  return whole(total) && whole(passed) && whole(failed2) && passed + failed2 === total;
 }
 var isObject2 = (value) => typeof value === "object" && value !== null;
 function issueForAlert(alert) {

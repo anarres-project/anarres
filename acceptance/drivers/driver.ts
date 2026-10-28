@@ -198,4 +198,6 @@ export interface Driver {
   coordinatorAlerts(project: string): Promise<CoordinatorAlert[]>;
   doneModules(project: string): Promise<string[]>;
   routingRecords(project: string): Promise<RoutingRecord[]>;
+  /** The project's test counts Divlab recorded, merge by merge, oldest first (decision 0012). */
+  testCounts(project: string): Promise<{ total: number; passed: number; failed: number }[]>;
 }

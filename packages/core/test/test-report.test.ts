@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readTestReport } from "../src/index.ts";
+import { readTestReport, testCounts } from "../src/index.ts";
 
 /** A JUnit XML report, as a project's test framework writes it. */
 const report = (cases: string) =>
@@ -77,5 +77,24 @@ describe("a project's test report (JUnit XML, decision 0011)", () => {
     ).toEqual({
       unreadable: "a test case's name in the test report is not plain text",
     });
+  });
+});
+
+describe("the test counts a report gives the state vector (decision 0012)", () => {
+  it("counts the tests, those passing and those failing", () => {
+    const cases = [
+      { name: "a", outcome: "passed" as const },
+      { name: "b", outcome: "failed" as const },
+      { name: "c", outcome: "failed" as const },
+    ];
+    expect(testCounts({ cases })).toEqual({ total: 3, passed: 1, failed: 2 });
+  });
+  it("counts an errored test as failing and leaves out a skipped one, which did not run", () => {
+    const cases = [
+      { name: "a", outcome: "passed" as const },
+      { name: "b", outcome: "errored" as const },
+      { name: "c", outcome: "skipped" as const },
+    ];
+    expect(testCounts({ cases })).toEqual({ total: 2, passed: 1, failed: 1 });
   });
 });

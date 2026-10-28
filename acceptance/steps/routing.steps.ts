@@ -522,3 +522,17 @@ Then(
     return this.anarres.memberIsToldWhy("Each new test must run and fail before its code exists");
   },
 );
+
+Given("a project of its own with a module {string}", function (this: AnarresWorld, module: string) {
+  return this.anarres.projectOfItsOwn(module);
+});
+
+Then(
+  "Divlab's records show the project's test failing after the Test work, and passing after the Coding work",
+  function (this: AnarresWorld) {
+    return this.anarres.divlabRecordsTestCounts([
+      { total: 1, passed: 0, failed: 1 },
+      { total: 1, passed: 1, failed: 0 },
+    ]);
+  },
+);

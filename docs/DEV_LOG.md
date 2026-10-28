@@ -306,6 +306,25 @@ governance scenarios run alone.
 
 ---
 
+## 2026-10-28: Test counts in the state vector (decision 0012)
+
+- Decision 0012 (Bernard): n_test, n_pass and n_fail from each merged Coding or Test work's
+  report, programme-wide, in the merge's event; errored fails, skipped is not counted.
+- Scenario first this time (`@wip`, `NotYetImplemented`): "Divlab records how many of the
+  project's tests pass as its Test and Coding work is merged", in a project of its own, as counts
+  are project-wide; the DSL needed a third unnamed member (Specification, Test, Coding).
+- RED: core counts the tests, passing and failing -> `testCounts is not a function`, then the
+  zero stub. GREEN. RED: an errored test fails, a skipped one is not counted -> `expected {
+  total: 3, … failed: +0 }`. GREEN (215).
+- RED: merging Test work records the counts -> `expected undefined to deeply equal …`. GREEN
+  (692). RED: and Coding work, from its report -> the same. GREEN (693). RED: the adapter refuses
+  counts that are not whole numbers adding up -> `expected [Function] to throw`. GREEN (694).
+- Both fakes now model a project's tests alike: a test file passes once its module has code not
+  failing on purpose, fails before, unless it passes on purpose. The scenario passes in-process
+  and loses `@wip`.
+
+---
+
 ## 2026-10-27: The lease check run by hand in the sandbox
 
 - The 23:00 full sandbox run (604aab8) passed: 98 of 98.

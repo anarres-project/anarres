@@ -5,7 +5,7 @@ import type { Aliases } from "./aliases.ts";
 /** Whoever does the work a scenario does not name a member for: never one it names. */
 const DEFAULT_MEMBER = "someone";
 /** Members a scenario does not name, one for each role in a module: a member takes only one. */
-const UNNAMED_MEMBERS = [DEFAULT_MEMBER, "someone else"];
+const UNNAMED_MEMBERS = [DEFAULT_MEMBER, "someone else", "a third member"];
 
 type Work = { role: string; module: string };
 
@@ -50,6 +50,21 @@ export class Anarres {
   }
 
   /** A project of its own, whose main branch was left unprotected: a misconfiguration. */
+  /** A project of its own, so its counts are its scenario's alone. */
+  async projectOfItsOwn(module: string): Promise<void> {
+    this.project = `${this.project}-own`;
+    this.modules.push(this.aliases.of(module));
+    await this.driver.createProject(this.project, this.modules);
+  }
+
+  async divlabRecordsTestCounts(expected: { total: number; passed: number; failed: number }[]) {
+    assert.deepEqual(
+      await this.driver.testCounts(this.project),
+      expected,
+      "expected Divlab's records to show the project's tests as counted after each merge",
+    );
+  }
+
   async projectLeftUnprotected(module: string): Promise<void> {
     this.project = `${this.project}-unprotected`;
     this.modules.push(this.aliases.of(module));

@@ -71,3 +71,13 @@ export function readTestReport(xml: string): TestReport | { unreadable: string }
   if (!wellFormed || open !== 0) return { unreadable: "the test report is not well-formed XML" };
   return { cases };
 }
+
+/** The tests in the state vector (decision 0012): n_test, n_pass and n_fail. */
+export type TestCounts = { total: number; passed: number; failed: number };
+
+/** A test that errored is not passing, so it counts as failing; one skipped did not run. */
+export function testCounts({ cases }: TestReport): TestCounts {
+  const ran = cases.filter((test) => test.outcome !== "skipped");
+  const passed = ran.filter((test) => test.outcome === "passed").length;
+  return { total: ran.length, passed, failed: ran.length - passed };
+}

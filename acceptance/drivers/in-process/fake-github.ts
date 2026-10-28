@@ -16,7 +16,7 @@ import type {
   Repository,
   TaskBoard,
 } from "@anarres/divlab";
-import { PASSES_ON_PURPOSE } from "../scenario-words.ts";
+import { FAILS_ON_PURPOSE, PASSES_ON_PURPOSE } from "../scenario-words.ts";
 
 /** Divlab's account in the fake: the name its log writes are made under. */
 export const DIVLAB_ACCOUNT = "divlab[bot]";
@@ -307,15 +307,26 @@ export class FakeGitHub
 
   /**
    * The report the project's check wrote on a pull request's commit: a test case for each test
-   * file it adds, each failing, as new tests do before their code exists.
+   * file on main or in the pull request, passing once its module has code that does not fail on
+   * purpose, failing before, as new tests do, unless it passes on purpose.
    */
-  async testReport(_project: string, head: string) {
+  async testReport(project: string, head: string) {
     const number = head.replace(/^head-of-/, "");
-    const cases = this.opened(number)
-      .files.filter((file) => /^modules\/[^/]+\/tests\//.test(file.path))
-      .map((file) => ({
-        name: file.path,
-        outcome: file.text.includes(PASSES_ON_PURPOSE) ? ("passed" as const) : ("failed" as const),
+    const files = new Map(this.files.get(project));
+    for (const { path, text } of this.opened(number).files) files.set(path, text);
+    const hasCode = (module: string) =>
+      [...files].some(
+        ([path, text]) =>
+          path.startsWith(`modules/${module}/src/`) && !text.includes(FAILS_ON_PURPOSE),
+      );
+    const cases = [...files]
+      .filter(([path]) => /^modules\/[^/]+\/tests\//.test(path))
+      .map(([path, text]) => ({
+        name: path,
+        outcome:
+          text.includes(PASSES_ON_PURPOSE) || hasCode(path.split("/")[1] ?? "")
+            ? ("passed" as const)
+            : ("failed" as const),
       }));
     return {
       state: "finished" as const,

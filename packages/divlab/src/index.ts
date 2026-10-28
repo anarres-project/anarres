@@ -13,8 +13,10 @@ import {
   readFeedbackSignal,
   readSignalFile,
   routingRecord,
+  type TestCounts,
   type TestReport,
   type Toolchain,
+  testCounts,
   trustLevelOf,
   type Unreadable,
   writeScope,
@@ -503,6 +505,8 @@ export type AboutToMerge = {
     member?: string;
     /** The tests Test work added to the module, by name: main has them once it merges (0011). */
     testsAdded?: string[];
+    /** The project's tests as the work's report counts them: part of the state vector (0012). */
+    tests?: TestCounts;
   };
 };
 
@@ -801,6 +805,8 @@ export async function onPullRequest(
     );
     return;
   }
+  // The project's tests as the report counts them, recorded with the merge (decision 0012).
+  let tests: TestCounts | undefined;
   // Coding work saying it passed is merged only once the project's own tests pass on it; work
   // reporting a failure, or handed over partial, advances nothing, and its tests may well fail
   // (decision 0010).
@@ -829,6 +835,8 @@ export async function onPullRequest(
       );
       return;
     }
+    const run = await pullRequests.testReport(project, head);
+    if (run.state === "finished" && !("unreadable" in run.report)) tests = testCounts(run.report);
   }
   const events = await log.read(project);
   // Test work saying it passed is merged only once each new test runs and fails (decision 0011).
@@ -869,6 +877,7 @@ export async function onPullRequest(
       return;
     }
     testsAdded = added.map((test) => test.name);
+    tests = testCounts(run.report);
   }
   await log.append({
     project,
@@ -880,6 +889,7 @@ export async function onPullRequest(
       member: author,
       work: signal,
       ...(testsAdded === undefined ? {} : { testsAdded }),
+      ...(tests === undefined ? {} : { tests }),
     },
   });
   const mergedAs = await pullRequests.merge(project, pullRequest, head);

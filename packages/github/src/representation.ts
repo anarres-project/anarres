@@ -220,12 +220,31 @@ export function eventFromFile(content: string): LogEvent {
         "The event file cannot be read: the record names the tests Test work added as something other than text",
       );
     }
+    const { tests } = event.aboutToMerge;
+    if (tests !== undefined && !countsAddUp(tests)) {
+      throw new Error(
+        "The event file cannot be read: the record's test counts are not whole numbers that add up",
+      );
+    }
     return event as AboutToMerge;
   }
   const record = readRoutingRecord(event);
   if ("unreadable" in record)
     throw new Error(`The event file cannot be read: ${record.unreadable}`);
   return event as RoutingEvent;
+}
+
+/** Test counts as the state vector has them: whole numbers, passing and failing making the total. */
+function countsAddUp(tests: unknown): boolean {
+  if (!isObject(tests)) return false;
+  const { total, passed, failed } = tests;
+  const whole = (n: unknown) => Number.isSafeInteger(n) && (n as number) >= 0;
+  return (
+    whole(total) &&
+    whole(passed) &&
+    whole(failed) &&
+    (passed as number) + (failed as number) === total
+  );
 }
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
