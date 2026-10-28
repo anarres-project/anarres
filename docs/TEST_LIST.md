@@ -601,7 +601,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the event recording each merge of Coding or Test work carries the counts from its report,
         programme-wide (`tests` on the merge record); the adapter reads them back validated:
         whole numbers that add up;
-  - [ ] the sandbox shows it;
+  - [x] the sandbox shows it (2c5bea6: 83 of 83);
   - [ ] per module counts, once a report reliably says which module a test belongs to.
 - [x] A project without a declared toolchain cannot be started: Divlab reads `anarres.yaml` on
       main as data (an image, and a one-line test command, both text) and refuses to set up a
