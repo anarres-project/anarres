@@ -24,14 +24,17 @@ export type Task = {
   continuation?: true;
 };
 
-const MODULE_PIPELINE: readonly Role[] = [
+const MODULE_PIPELINE = [
   "architecture",
   "specification",
   "test",
   "coding",
   "reviewer",
   "security-and-quality",
-];
+] as const satisfies readonly Role[];
+
+/** The role a module starts with: the first of its pipeline (decision 0013). */
+export const FIRST_ROLE: Role = MODULE_PIPELINE[0];
 
 export type RoutingDecision =
   | { tasks: Task[] }

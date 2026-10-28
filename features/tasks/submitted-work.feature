@@ -30,6 +30,7 @@ Feature: Divlab merges the work members submit
 
   Scenario: Work from a member who does not hold its task is not merged, and they are told why
     Given a project with a module "parser"
+    And a member's Architecture work on "parser" was accepted with a pass verdict
     And Bob has claimed the Specification task for "parser"
     When Alice submits Specification work on "parser" with a pass verdict
     Then Divlab has not merged the member's Specification work on "parser"

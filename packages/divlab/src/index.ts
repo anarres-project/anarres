@@ -1,5 +1,6 @@
 import {
   type FeedbackSignal,
+  FIRST_ROLE,
   failed,
   isRole,
   leaseHasRunOut,
@@ -985,7 +986,7 @@ export async function startModule(
   module: string,
   board: TaskBoard,
 ): Promise<void> {
-  await board.post({ project, role: "specification", module });
+  await board.post({ project, role: FIRST_ROLE, module });
 }
 
 /** On every run: is the project's main branch still protected as decision 0006 requires? */

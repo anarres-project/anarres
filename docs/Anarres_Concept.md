@@ -235,7 +235,7 @@ This is how members' Claude sessions find out there is work for them, and how ev
                                               Divlab reads feedback header, opens next task(s)
 ```
 
-1. **Task creation.** Divlab opens an issue for each task, labelled `role:<role>`, `module:<m>` and `state:ready`. The issue body lists the input artefact paths **pinned to a commit SHA**, the output paths, a size estimate and a link to the feedback signal that triggered it, if any. A module starts with its first task, Specification, ready, so all work is done for a task.
+1. **Task creation.** Divlab opens an issue for each task, labelled `role:<role>`, `module:<m>` and `state:ready`. The issue body lists the input artefact paths **pinned to a commit SHA**, the output paths, a size estimate and a link to the feedback signal that triggered it, if any. A module starts with its first task, Architecture, ready, so all work is done for a task.
 2. **Discovery of work.** The model is pull-based. The member runs `/anarres:next` in Claude Code whenever they have allowance to spare. The plugin searches open issues across Anarres projects for the roles the member is eligible for, ranks them by priority and size, and offers a choice. Nothing is ever pushed into a member's session.
 3. **Claiming.** The plugin posts a `/claim` comment. Divlab checks eligibility (trust level, conflict of interest), then applies `state:claimed` and a lease expiry (default 24 hours).
 4. **Preparing the workspace.** The plugin syncs the member's fork and uses sparse checkout to fetch **only the paths the role may read, at the pinned SHA**. Read-scope hooks block any other file access. The role's instructions load as a skill.

@@ -9127,6 +9127,7 @@ var MODULE_PIPELINE = [
   "reviewer",
   "security-and-quality"
 ];
+var FIRST_ROLE = MODULE_PIPELINE[0];
 var NO_RULE_COVERS_IT = {
   decision: { alert: { reason: "no_matching_rule" } },
   reason: { rule: "no_matching_rule" }

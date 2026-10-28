@@ -31,7 +31,7 @@ a change to Divlab is tested before any project uses it. A worker's scenarios sh
 repository, and the four repositories' Divlab runs go at once; each scenario
 gives its modules names of its own (`parser` becomes `parser-s17`), so no scenario sees another's
 tasks, alerts or records. Each scenario starts its modules in the worker's repository as a project
-does, with Divlab's App: each gets its first task, Specification, ready. The repository also gets
+does, with Divlab's App: each gets its first task, Architecture, ready. The repository also gets
 the template's checks workflow and a toolchain (`anarres.yaml`) running a script at its root,
 where no member's work may write. Its tests fail only on Coding work a scenario makes fail on
 purpose, so Coding work is merged once the project's own check passes on it (decision 0010). It

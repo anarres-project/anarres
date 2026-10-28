@@ -325,6 +325,22 @@ governance scenarios run alone.
 
 ---
 
+## 2026-10-28: modules.yaml (decision 0013), and a module's first task
+
+- Decision 0013 (Bernard): a project starts with one Programme Architect task; merging its work
+  starts each module its `modules.yaml` lists; work's role and module must be its task's, so no
+  work for a module the project lacks is merged; a module left out goes on, for now.
+- A mistake of mine corrected (Bernard): on 2026-10-27 I called Specification the first role of
+  a module's pipeline, and `startModule` posted a Specification task. Core's pipeline starts with
+  Architecture, and a Programme Architect's pass already routed there. The scenario now says a
+  new project's module has an Architecture task ready (`@wip`, not yet right); RED: posts a ready
+  Architecture task -> the posted task was Specification. GREEN (694): core exports
+  `FIRST_ROLE`, the pipeline's first, so the role is stated once. Three scenarios that took a new
+  module's first task to be Specification change for that reason, one now accepting Architecture
+  work first.
+
+---
+
 ## 2026-10-27: The lease check run by hand in the sandbox
 
 - The 23:00 full sandbox run (604aab8) passed: 98 of 98.

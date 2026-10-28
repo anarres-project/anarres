@@ -33,9 +33,9 @@ function boardKeepingPosts() {
 }
 
 describe("starting a module", () => {
-  it("posts a ready Specification task, the first role in a module's pipeline", async () => {
+  it("posts a ready Architecture task, the first role in a module's pipeline", async () => {
     const { posted, board } = boardKeepingPosts();
     await startModule("ledger", "parser", board);
-    expect(posted).toEqual([{ project: "ledger", role: "specification", module: "parser" }]);
+    expect(posted).toEqual([{ project: "ledger", role: "architecture", module: "parser" }]);
   });
 });

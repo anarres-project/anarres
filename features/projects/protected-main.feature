@@ -11,7 +11,7 @@ Feature: Only Divlab changes a project's main branch
   Scenario: Work that reaches main without Divlab merging it is never routed
     Given a project with a module "parser" whose main branch was left unprotected
     When a member's Specification work on "parser" reaches main without Divlab merging it
-    Then the only task ready for "parser" is a Specification task
+    Then the only task ready for "parser" is an Architecture task
     And a PDC coordinator is alerted that the Specification work on "parser" reached main without Divlab merging it
 
   Scenario: Divlab alerts PDC coordinators, once, when a project's main branch is not protected

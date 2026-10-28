@@ -9149,6 +9149,7 @@ var MODULE_PIPELINE = [
   "reviewer",
   "security-and-quality"
 ];
+var FIRST_ROLE = MODULE_PIPELINE[0];
 var FAILURE_ROUTES = [
   { from: "architecture", reporting: "upstream_ambiguity", to: "programme-architect" },
   { from: "architecture", reporting: "architecture_impediment", to: "architecture" },

@@ -10,8 +10,7 @@ depends on and a size estimate, with one interface contract per boundary. A proj
 module, and the first `modules.yaml` may say exactly that ("start whole, split when it hurts").
 
 Today a project's modules are named when it is set up, and each starts with its first task (test
-list, 2026-10-27). Work names its task, and only its holder's work
-is merged.
+list, 2026-10-27). Work names its task, and only its holder's work is merged.
 
 ## Decision
 
@@ -20,7 +19,6 @@ is merged.
    each module it lists that has not started: its first task, the first role of the module
    pipeline in core, Architecture, ready. (On 2026-10-27 modules started at Specification, wrongly
    called the pipeline's first role; corrected here, Bernard, 2026-10-28.)
-
 2. **Work for a module the project does not have.** Work's role and module must be its task's,
    or it is refused, saying so. A module the project does not have has no task, so no work for it
    is ever merged, without consulting `modules.yaml` on every pull request.

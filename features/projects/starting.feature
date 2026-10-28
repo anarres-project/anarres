@@ -1,7 +1,7 @@
 Feature: A new project starts with a task for each module
   So that all work is done for a task a member holds, a project's modules start with their first
-  task ready: Specification, the first role in a module's pipeline.
+  task ready: Architecture, the first role in a module's pipeline (decision 0013).
 
-  Scenario: A new project has a Specification task ready for its module
+  Scenario: A new project has an Architecture task ready for its module
     Given a project with a module "parser"
-    Then the only task ready for "parser" is a Specification task
+    Then the only task ready for "parser" is an Architecture task

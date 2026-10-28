@@ -11,6 +11,7 @@ export { LEASE_HOURS, leaseHasRunOut, leaseRunsOutAt } from "./leases.ts";
 export { isRole, ROLE_NAMES, type Role } from "./roles.ts";
 export {
   type AcceptedWork,
+  FIRST_ROLE,
   failed,
   type RoutingDecision,
   route,
