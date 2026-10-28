@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { kindOf, summary } from "./request-tally.ts";
+import { kindOf, summary } from "../src/index.ts";
 
 describe("the kind of request a sandbox run makes", () => {
   it("is its method and what it asks for in the repository, without the repository's name", () => {
