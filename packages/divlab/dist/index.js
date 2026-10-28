@@ -1,4 +1,4 @@
-import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);
+import { createRequire as anarresCreateRequire } from 'node:module'; const require = anarresCreateRequire(import.meta.url);
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;

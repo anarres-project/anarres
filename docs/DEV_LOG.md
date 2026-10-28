@@ -294,6 +294,13 @@ governance scenarios run alone.
 - The sandbox's toolchain runs a script at the project's root writing the JUnit report. Tried
   locally: well-formed, a failing case per test file, passing where marked, the run failing on
   marked code. (Biome had removed a needed escape from the script's template literal; doubled.)
+- The 70980bf sandbox run passed all 81 scenarios (39 minutes). The 565b8e5 run failed 78 of 82:
+  every Divlab run stopped at once with "Identifier 'createRequire' has already been declared".
+  fflate's ESM build imports `createRequire`, and the line the bundle step adds at the top
+  imported it under the same name, so neither Divlab's bundle nor the member's CLI could load.
+  The gate never loads a bundle, so it passed. Now the added line names its import apart, and
+  each bundle step checks its bundle parses (`node --check`): RED with the old line (the bundle
+  step stops on the SyntaxError), GREEN with the new; the CLI runs again.
 
 ---
 
