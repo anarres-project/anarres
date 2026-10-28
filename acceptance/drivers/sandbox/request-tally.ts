@@ -1,16 +1,14 @@
-import { kindOf, requestGitHub } from "@anarres/github";
-
-/** Every request the sandbox driver has made to GitHub in this run, by kind. */
-export const tally = new Map<string, number>();
+import { countingRequests, requestGitHub } from "@anarres/github";
 
 /**
- * Sends a request to GitHub, counting it in the run's tally. A spent hourly allowance stops the
- * scenario at once, saying so, rather than waiting out the reset until a step times out.
+ * Sends a request to GitHub, counting it in the run's tally of every request the sandbox driver
+ * has made, by kind. A spent hourly allowance stops the scenario at once, saying so, rather than
+ * waiting out the reset until a step times out.
  */
-export const countedRequest: typeof requestGitHub = (token, method, path, body, options) => {
-  const kind = kindOf(method, path);
-  tally.set(kind, (tally.get(kind) ?? 0) + 1);
-  return requestGitHub(token, method, path, body, { ...options, waitForAllowance: false });
-};
+const counted = countingRequests((token, method, path, body, options) =>
+  requestGitHub(token, method, path, body, { ...options, waitForAllowance: false }),
+);
+export const tally = counted.tally;
+export const countedRequest = counted.request;
 
-export { kindOf, summary } from "@anarres/github";
+export { summary } from "@anarres/github";

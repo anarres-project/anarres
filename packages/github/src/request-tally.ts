@@ -1,3 +1,5 @@
+import type { requestGitHub } from "./request.ts";
+
 /** What a request to GitHub asks for, without the names of the repository, issues, runs or files. */
 export function kindOf(method: string, path: string): string {
   const [what = ""] = path.replace(/^repos\/[^/]+\/[^/]+\//, "").split("?");
@@ -15,4 +17,20 @@ export function summary(tally: Map<string, number>): string[] {
     `${total} requests to GitHub`,
     ...kinds.map(([kind, count]) => `${String(count).padStart(width)} ${kind}`),
   ];
+}
+
+/** Passes each request on, counting it by kind: how a run says what it asked GitHub for. */
+export function countingRequests(request: typeof requestGitHub): {
+  request: typeof requestGitHub;
+  tally: Map<string, number>;
+} {
+  const tally = new Map<string, number>();
+  return {
+    request: (token, method, path, body, options) => {
+      const kind = kindOf(method, path);
+      tally.set(kind, (tally.get(kind) ?? 0) + 1);
+      return request(token, method, path, body, options);
+    },
+    tally,
+  };
 }

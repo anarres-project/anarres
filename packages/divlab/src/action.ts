@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { GitHubAdapter } from "@anarres/github";
+import { countingRequests, GitHubAdapter, requestGitHub, summary } from "@anarres/github";
 import { whatToActOn } from "./event.ts";
 import {
   checkMain,
@@ -24,13 +24,27 @@ if (!owner || !project || !token) {
   console.log("::error::Divlab needs GITHUB_REPOSITORY and a token");
   process.exit(1);
 }
-const github = new GitHubAdapter({ owner, token, governance: process.env.INPUT_GOVERNANCE ?? "" });
+// Each run says how many requests it made, and of what kinds: the App's hourly allowance is
+// shared by every project in the organisation.
+const counted = countingRequests(requestGitHub);
+const github = new GitHubAdapter({
+  owner,
+  token,
+  governance: process.env.INPUT_GOVERNANCE ?? "",
+  request: counted.request,
+});
+const sayRequests = () => {
+  for (const line of summary(counted.tally)) console.log(line);
+};
 try {
   const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH ?? "", "utf8"));
   const run = whatToActOn(process.env.GITHUB_EVENT_NAME ?? "", event);
   // The edge of the system: the only place Divlab's clock is the wall clock.
   const clock = () => new Date();
-  if ("nothing" in run) process.exit(0);
+  if ("nothing" in run) {
+    sayRequests();
+    process.exit(0);
+  }
   if ("pullRequest" in run) {
     await onPullRequest(project, run.pullRequest, github, github, github, clock);
   } else if ("claim" in run) {
@@ -49,7 +63,9 @@ try {
   const app = process.env.INPUT_APP;
   if (!app) throw new Error("Divlab needs its App's name (the app input) to check main's changes");
   await checkMain(project, github, github, github, clock, `${app}[bot]`);
+  sayRequests();
 } catch (error) {
+  sayRequests();
   console.log(`::error::${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);
 }

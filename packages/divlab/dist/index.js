@@ -11465,6 +11465,32 @@ var GitHubError = class extends Error {
   }
 };
 
+// ../github/src/request-tally.ts
+function kindOf(method, path) {
+  const [what = ""] = path.replace(/^repos\/[^/]+\/[^/]+\//, "").split("?");
+  return `${method} ${what.replace(/^(contents|git\/[a-z]+)\/.+$/, "$1/\u2026").replace(/\/\d+(?=\/|$)/g, "/{n}")}`;
+}
+function summary(tally) {
+  const kinds = [...tally].sort(([, a], [, b]) => b - a);
+  const total = kinds.reduce((sum, [, count]) => sum + count, 0);
+  const width = String(kinds[0]?.[1] ?? 0).length + 2;
+  return [
+    `${total} requests to GitHub`,
+    ...kinds.map(([kind, count]) => `${String(count).padStart(width)} ${kind}`)
+  ];
+}
+function countingRequests(request) {
+  const tally = /* @__PURE__ */ new Map();
+  return {
+    request: (token2, method, path, body, options) => {
+      const kind = kindOf(method, path);
+      tally.set(kind, (tally.get(kind) ?? 0) + 1);
+      return request(token2, method, path, body, options);
+    },
+    tally
+  };
+}
+
 // src/action.ts
 var [owner, project] = (process.env.GITHUB_REPOSITORY ?? "").split("/");
 var token = process.env.INPUT_TOKEN;
@@ -11472,12 +11498,24 @@ if (!owner || !project || !token) {
   console.log("::error::Divlab needs GITHUB_REPOSITORY and a token");
   process.exit(1);
 }
-var github = new GitHubAdapter({ owner, token, governance: process.env.INPUT_GOVERNANCE ?? "" });
+var counted = countingRequests(requestGitHub);
+var github = new GitHubAdapter({
+  owner,
+  token,
+  governance: process.env.INPUT_GOVERNANCE ?? "",
+  request: counted.request
+});
+var sayRequests = () => {
+  for (const line of summary(counted.tally)) console.log(line);
+};
 try {
   const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH ?? "", "utf8"));
   const run = whatToActOn(process.env.GITHUB_EVENT_NAME ?? "", event);
   const clock = () => /* @__PURE__ */ new Date();
-  if ("nothing" in run) process.exit(0);
+  if ("nothing" in run) {
+    sayRequests();
+    process.exit(0);
+  }
   if ("pullRequest" in run) {
     await onPullRequest(project, run.pullRequest, github, github, github, clock);
   } else if ("claim" in run) {
@@ -11495,7 +11533,9 @@ try {
   const app = process.env.INPUT_APP;
   if (!app) throw new Error("Divlab needs its App's name (the app input) to check main's changes");
   await checkMain(project, github, github, github, clock, `${app}[bot]`);
+  sayRequests();
 } catch (error) {
+  sayRequests();
   console.log(`::error::${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);
 }

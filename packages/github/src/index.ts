@@ -23,4 +23,4 @@ export {
   taskFromIssue,
 } from "./representation.ts";
 export { requestGitHub } from "./request.ts";
-export { kindOf, summary } from "./request-tally.ts";
+export { countingRequests, kindOf, summary } from "./request-tally.ts";

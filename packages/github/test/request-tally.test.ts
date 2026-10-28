@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { kindOf, summary } from "../src/index.ts";
+import { countingRequests, kindOf, summary } from "../src/index.ts";
 
 describe("the kind of request a sandbox run makes", () => {
   it("is its method and what it asks for in the repository, without the repository's name", () => {
@@ -34,5 +34,24 @@ describe("a sandbox run's requests, summed up", () => {
         ]),
       ),
     ).toEqual(["42 requests to GitHub", "  40 GET issues", "   2 POST issues"]);
+  });
+});
+
+describe("counting a run's requests to GitHub", () => {
+  it("tallies each request it passes on, by kind", async () => {
+    const answered: string[] = [];
+    const counted = countingRequests(async <T>(_token: string, method: string, path: string) => {
+      answered.push(`${method} ${path}`);
+      return { status: 200, data: {} as T };
+    });
+    await counted.request("t", "GET", "repos/commons/ledger/issues/4/comments");
+    await counted.request("t", "GET", "repos/commons/ledger/issues/5/comments");
+    await counted.request("t", "POST", "repos/commons/ledger/issues");
+    expect(answered).toHaveLength(3);
+    expect(summary(counted.tally)).toEqual([
+      "3 requests to GitHub",
+      "  2 GET issues/{n}/comments",
+      "  1 POST issues",
+    ]);
   });
 });
