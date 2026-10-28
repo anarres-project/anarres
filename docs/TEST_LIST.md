@@ -113,6 +113,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         while Divlab decides, issue lists while GitHub catches up): it polls less often since
         c5666a4 (about 3,100 requests a full run before; 2,466 for 83 scenarios after, 2,739 for
         87); asking only once Divlab's run has finished is the next step if it is needed;
+  - [ ] Divlab's App has an hourly allowance of its own for each organisation it is installed
+        in, shared by every project there, and nothing measures or checks it. Seen 2026-10-28
+        (805efa3, 87 scenarios): the App's allowance in the sandbox ran out at 21:56, 41 minutes
+        into the run; a Divlab run waited for the reset until it was cancelled, and its scenario
+        failed waiting. Next: Divlab says how many requests each run made; the sandbox run checks
+        the App's allowance as it checks its own; then fewer requests per Divlab run, measured.
+        In `anarres-project` every real project would share one allowance the same way;
   - [ ] GitHub's reading of the allowance used jumps between readings (2,141 then 726 a minute
         later, same window, 2026-10-22): find out why before relying on it more;
   - [x] appending an event costs one request once the log has been read, not a listing plus a
@@ -659,9 +666,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           unreadable file fetches nothing, saying why;
     - [x] an acceptance scenario: a member preparing an Architecture task has its module's
           contracts and no other's (in-process);
+    - [x] the sandbox shows it (805efa3: the scenario passed; 86 of 87, the other failing on a
+          Divlab run that waited too long, below);
     - [ ] `modules.yaml` changed after a task was pinned: the in-process fake keeps only main's
           files now, so no scenario shows the pinned version being read;
-    - [ ] the sandbox shows it;
   - [ ] what a Research task reads, as its question names it;
   - [x] Divlab posts each task with the commit its inputs are pinned at, the merge that decided
         it, in the issue's words and its decision block; read back only if it is a commit name;

@@ -410,6 +410,11 @@ governance scenarios run alone.
   `undefined`; GREEN. None at that commit: passed first time (a 404 is none already).
 - `prepare` in `main.ts` and both drivers read modules.yaml at the pinned commit and record the
   contracts. The scenario passes in-process and loses `@wip`. Gate 742 and 123.
+- The 805efa3 sandbox run: 86 of 87. The new scenario passed. "Accounts a PDC coordinator has
+  linked are one member" failed waiting for Divlab: GitHub refused Divlab's App, its hourly
+  allowance in the sandbox organisation spent (403 at 21:56, 41 minutes in), and Divlab waited
+  for the reset, as built, until the run was cancelled. Not a defect in the scenario; a limit
+  nothing measured (test list, section 0).
 
 ---
 
