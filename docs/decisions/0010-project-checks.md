@@ -18,9 +18,13 @@ finished, so it cannot simply look the result up then.
 
 ## Decision
 
-- **Which check.** The project template adds the project's checks workflow, which runs on every
-  pull request and runs the test command `anarres.yaml` declares, in its dev container image. Its
-  check is the one Divlab reads, by a name the template fixes, not one a project chooses.
+- **Which check.** The project template adds the project's checks workflow, which runs the test
+  command `anarres.yaml` declares, in its dev container image, on every pull request that changes
+  a module's code (Coding's place, which only Coding writes): other work would only wake Divlab a
+  second time for nothing (Bernard, 2026-10-28). Its check is the one Divlab reads, by a name the
+  template fixes, not one a project chooses. Coding work that says it passed must change the
+  module's code, or Divlab refuses it, saying so: it would otherwise wait for a check that never
+  runs.
 - **Which work.** Divlab merges Coding work that says it passed (a pass or conditional pass
   verdict) only once that check has passed on exactly the commit Divlab read and will merge.
   Coding work reporting a failure or blocked, and partial work handed over, needs no check: it

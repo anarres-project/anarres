@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { writeScope } from "@anarres/core";
 import { PROJECT_CHECK } from "@anarres/github";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
@@ -112,6 +113,10 @@ describe("the project template's checks workflow (decision 0010)", () => {
 
   it("runs on members' pull requests as GitHub runs their own code: never with the project's secrets", () => {
     expect(Object.keys(workflow.on)).toEqual(["pull_request"]);
+  });
+
+  it("runs only on pull requests changing a module's code, where only Coding writes", () => {
+    expect(workflow.on.pull_request.paths).toEqual([`${writeScope("coding", "*")}**`]);
   });
   it("gives the workflow's own token nothing but reading the project's code", () => {
     expect(workflow.permissions).toEqual({ contents: "read" });

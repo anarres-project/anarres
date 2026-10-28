@@ -15,6 +15,7 @@ import {
   routingRecord,
   trustLevelOf,
   type Unreadable,
+  writeScope,
 } from "@anarres/core";
 import { isClaim } from "./event.ts";
 
@@ -777,6 +778,16 @@ export async function onPullRequest(
   // reporting a failure, or handed over partial, advances nothing, and its tests may well fail
   // (decision 0010).
   if (role === "coding" && !failed(signal) && !signal.partial) {
+    // The project's checks run only on code, so work changing none would wait for ever.
+    const code = writeScope("coding", signal.module);
+    if (!files.some((file) => file.path.startsWith(code))) {
+      await pullRequests.refuse(
+        project,
+        pullRequest,
+        `Coding work that says it passed changes the module's code, in ${code}, and this changes none: the project's tests run only on code`,
+      );
+      return;
+    }
     const check = await pullRequests.check(project, head);
     // Not finished: Divlab acts again when it does.
     if (check.state === "running") return;

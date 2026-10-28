@@ -714,7 +714,11 @@ describe("acting on a pull request", () => {
       text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: coding\n  module: parser\n  verdict: pass\n---\n',
     };
     const failing: PullRequests = {
-      ...submitting(merged, [coding], refusals),
+      ...submitting(
+        merged,
+        [coding, { path: "modules/parser/src/parser.ts", text: "export {};\n" }],
+        refusals,
+      ),
       check: async () => ({
         state: "failed",
         url: "https://github.com/commons/ledger/actions/runs/42",
@@ -736,7 +740,11 @@ describe("acting on a pull request", () => {
       text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: coding\n  module: parser\n  verdict: pass\n---\n',
     };
     const running: PullRequests = {
-      ...submitting(merged, [coding], refusals),
+      ...submitting(
+        merged,
+        [coding, { path: "modules/parser/src/parser.ts", text: "export {};\n" }],
+        refusals,
+      ),
       check: async () => ({
         state: "running",
         url: "https://github.com/commons/ledger/actions/runs/44",
@@ -824,6 +832,28 @@ describe("acting on a pull request", () => {
     };
     await onPullRequest("ledger", "7", failing, { ...held, post: async () => {} }, log, clock);
     expect(merged).toEqual(["7"]);
+  });
+
+  it("refuses Coding work that says it passed but changes none of the module's code", async () => {
+    const [merged, refusals]: string[][] = [[], []];
+    const noCode = {
+      path: "feedback/FB-7.md",
+      text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: coding\n  module: parser\n  verdict: pass\n---\n',
+    };
+    await onPullRequest(
+      "ledger",
+      "7",
+      submitting(merged, [noCode], refusals),
+      { ...held, post: async () => {} },
+      log,
+      clock,
+    );
+    expect([merged, refusals]).toEqual([
+      [],
+      [
+        "7: Coding work that says it passed changes the module's code, in modules/parser/src/, and this changes none: the project's tests run only on code",
+      ],
+    ]);
   });
 
   it("merges a pull request whose feedback signal it can read", async () => {

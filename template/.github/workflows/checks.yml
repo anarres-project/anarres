@@ -1,10 +1,11 @@
 name: Project checks
 
-# The project's own tests, on every member's pull request (decision 0010). Divlab never runs a
-# project's code: this workflow does, as GitHub runs a pull request's own code, from a fork with
-# none of the project's secrets, and Divlab reads its result.
+# The project's own tests, on every member's pull request that changes a module's code (decision
+# 0010). Divlab never runs a project's code: this workflow does, as GitHub runs a pull request's
+# own code, from a fork with none of the project's secrets, and Divlab reads its result.
 on:
   pull_request:
+    paths: ["modules/*/src/**"]
 
 # The workflow's own token may read the project's code, and nothing more.
 permissions:

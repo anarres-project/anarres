@@ -8071,6 +8071,15 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     return;
   }
   if (role === "coding" && !failed(signal) && !signal.partial) {
+    const code = writeScope("coding", signal.module);
+    if (!files.some((file2) => file2.path.startsWith(code))) {
+      await pullRequests.refuse(
+        project2,
+        pullRequest,
+        `Coding work that says it passed changes the module's code, in ${code}, and this changes none: the project's tests run only on code`
+      );
+      return;
+    }
     const check = await pullRequests.check(project2, head);
     if (check.state === "running") return;
     if (check.state === "failed") {

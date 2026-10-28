@@ -220,6 +220,19 @@ governance scenarios run alone.
 
 ---
 
+## 2026-10-28: The project's checks only on code
+
+- Bernard: the checks run only on pull requests changing a module's code, so other work does not
+  wake Divlab a second time; Coding work that says it passed must change code, or is refused.
+- RED: refuses Coding work that says it passed but changes none of the module's code ->
+  `expected [ [ '7' ], [] ] to deeply equal [ [], …(1) ]`. GREEN, once two older tests' Coding
+  work was given code and the scenarios' Coding work changes the module's code (the refusal set
+  aside meanwhile; 10 scenarios had failed). Gate 665 and 116.
+- RED: the checks workflow runs only on pull requests changing a module's code, its path filter
+  tied to core's Coding scope -> no filter. GREEN (46).
+
+---
+
 ## 2026-10-27: The lease check run by hand in the sandbox
 
 - The 23:00 full sandbox run (604aab8) passed: 98 of 98.

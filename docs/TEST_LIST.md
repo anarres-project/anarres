@@ -547,6 +547,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         container image, on every pull request, as GitHub runs a pull request's own code (no
         secrets; its token reads the code only); the command reaches the shell as a variable,
         never as workflow syntax; one line, as each is passed on as a single output;
+  - [x] the checks run only on pull requests that change a module's code (Bernard, 2026-10-28),
+        and Coding work that says it passed but changes none is refused, saying so; the
+        scenarios' Coding work changes the module's code, as a member's does;
   - [ ] a push by the task's holder to their pull request for it renews the lease, draft or not;
   - [ ] the sandbox shows it: a project whose tests pass or fail on cue.
 - [ ] Test work is accepted when the project's report shows the new tests running and failing.
