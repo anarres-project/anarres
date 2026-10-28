@@ -259,6 +259,16 @@ governance scenarios run alone.
   toolchain.
 - The scenario passes in-process and, run locally, in the sandbox (a repository of its own,
   declaring none), and loses `@wip`.
+- Decision 0011 (Bernard): Test work's new tests, those main does not have by name, must every one
+  run and fail on an assertion; the verdict rule is Coding's. Work adding no test is refused too
+  (it follows: "every new test fails" would hold of none). Divlab records the tests each piece of
+  Test work added, so no run on main is needed.
+- Core reads a JUnit report as data, test by test (each RED shown, then GREEN): a passing case by
+  class and name; failed; errored; skipped; an element named like a built-in property changes
+  nothing (RED: a plain object found `constructor` there; now a Map); not well-formed XML; a
+  document type; over 2 MB; no class (named by its name); no name; a name with a control
+  character. Parsed by `sax` 1.6.1, chosen for having no dependencies of its own (fast-xml-parser
+  now has six), in strict mode. Core stays at 100% branch coverage.
 
 ---
 

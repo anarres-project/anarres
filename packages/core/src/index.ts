@@ -23,6 +23,7 @@ export {
   readRoutingRecord,
   routingRecord,
 } from "./routing-record.ts";
+export { readTestReport, type TestOutcome, type TestReport } from "./test-report.ts";
 export { readToolchain, type Toolchain } from "./toolchain.ts";
 export {
   memberFor,

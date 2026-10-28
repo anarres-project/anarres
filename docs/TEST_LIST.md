@@ -557,8 +557,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         cannot be held on cue, so those two scenarios stay in-process.
 - [ ] Test work is accepted when the project's report shows the new tests running and failing
       (decision 0011, Bernard, 2026-10-28):
-  - [ ] the report is read as data: test cases by name, each passed, failed (an assertion) or
-        errored (did not run); bounded in size, never followed or run;
+  - [x] the report is read as data (core's `readTestReport`, with `sax` 1.6.1, no dependencies of
+        its own): each test case by class and name, passed, failed (an assertion), errored or
+        skipped (did not run); unreadable when not well-formed XML, when it declares a document
+        type, over 2 MB, with a nameless case, or a name that is not plain text;
   - [ ] Test work that says it passed is merged only when every new test (one main does not
         have, by name) fails; any that errors or passes, or none at all, is refused, naming them;
   - [ ] Divlab records the names of the tests each piece of Test work added, and the module's
