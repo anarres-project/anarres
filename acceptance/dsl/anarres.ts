@@ -31,6 +31,24 @@ export class Anarres {
     await this.driver.createProject(this.project, this.modules);
   }
 
+  /** What whoever started a project that declares no toolchain was told. */
+  private notStarted = "";
+
+  async projectWithoutToolchain(module: string): Promise<void> {
+    this.project = `${this.project}-no-toolchain`;
+    this.modules.push(this.aliases.of(module));
+    this.notStarted = await this.driver.startProjectWithoutToolchain(this.project, this.modules);
+  }
+
+  async projectNotStartedForWantOfToolchain(module: string) {
+    assert.match(
+      this.notStarted,
+      /declares no toolchain/,
+      "expected whoever started the project to be told it declares no toolchain",
+    );
+    await this.noTaskIsReady(module);
+  }
+
   /** A project of its own, whose main branch was left unprotected: a misconfiguration. */
   async projectLeftUnprotected(module: string): Promise<void> {
     this.project = `${this.project}-unprotected`;

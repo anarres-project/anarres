@@ -216,7 +216,7 @@ Two choices here avoid merge conflicts by design. Every role writes only to its 
 
 ### Any language
 
-Hosted projects can be written in any language (Python, Java, C++, Rust and so on). Anarres itself never builds or runs a project's code. `anarres.yaml` declares the project's **toolchain**: the dev container image members work in, the command that runs the tests, and where the test report is written. The project's own CI workflow runs that command. Divlab only reads the outcome: the CI check result and a test report in **JUnit XML**, a format almost every test framework can produce. Divlab's routing, validation and metrics are therefore the same whatever language a project uses.
+Hosted projects can be written in any language (Python, Java, C++, Rust and so on). Anarres itself never builds or runs a project's code. `anarres.yaml` declares the project's **toolchain**: the dev container image members work in, the command that runs the tests, and where the test report is written. Divlab starts no project that declares none. The project's own CI workflow runs that command. Divlab only reads the outcome: the CI check result and a test report in **JUnit XML**, a format almost every test framework can produce. Divlab's routing, validation and metrics are therefore the same whatever language a project uses.
 
 ---
 

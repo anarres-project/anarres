@@ -557,7 +557,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         cannot be held on cue, so those two scenarios stay in-process.
 - [ ] Test work is accepted when the project's report shows the new tests running and failing.
 - [ ] Test counts for metrics come from the project's JUnit XML report, whatever the language.
-- [ ] A project without a declared toolchain cannot be started.
+- [x] A project without a declared toolchain cannot be started: Divlab reads `anarres.yaml` on
+      main as data (an image, and a one-line test command, both text) and refuses to set up a
+      project that declares none, protecting and posting nothing, and saying why (in-process and
+      in the sandbox). The report path joins the toolchain with Test work's check.
 
 ## 5. The member's side (CLI and plugin)
 

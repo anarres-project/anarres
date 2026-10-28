@@ -143,7 +143,10 @@ export class SandboxDriver implements Driver {
     this.expectedFor(project).ready += modules.length;
   }
 
-  private async makeProject(project: string, options: { unprotected?: boolean }): Promise<void> {
+  private async makeProject(
+    project: string,
+    options: { unprotected?: boolean; withoutToolchain?: boolean },
+  ): Promise<void> {
     await this.github.call("POST", `orgs/${this.org}/repos`, {
       name: project,
       private: false,
@@ -170,12 +173,12 @@ export class SandboxDriver implements Driver {
         content: Buffer.from(templateWorkflow(CHECKS_WORKFLOW)).toString("base64"),
       },
     );
-    await this.github.call("PUT", `repos/${this.org}/${project}/contents/anarres.yaml`, {
-      message: "Declare the sandbox project's toolchain",
-      content: Buffer.from(SANDBOX_TOOLCHAIN).toString("base64"),
-    });
-    // Set up as a project is, once the workflows are in: from now on only Divlab changes main.
-    if (!options.unprotected) await setUpProject(project, this.asDivlab);
+    if (!options.withoutToolchain) {
+      await this.github.call("PUT", `repos/${this.org}/${project}/contents/anarres.yaml`, {
+        message: "Declare the sandbox project's toolchain",
+        content: Buffer.from(SANDBOX_TOOLCHAIN).toString("base64"),
+      });
+    }
     run.expected.set(project, {
       ready: 0,
       claimed: 0,
@@ -184,6 +187,21 @@ export class SandboxDriver implements Driver {
       notAccepted: 0,
       claimedWithoutClaim: 0,
     });
+    // Set up as a project is, once the workflows are in: from now on only Divlab changes main.
+    if (!options.unprotected) await setUpProject(project, this.asDivlab);
+  }
+
+  /** A repository of the scenario's own, declaring no toolchain, which Divlab sets up as usual. */
+  async startProjectWithoutToolchain(project: string, modules: string[]): Promise<string> {
+    this.projectOfScenario = project;
+    try {
+      await this.makeProject(project, { withoutToolchain: true });
+    } catch (error) {
+      return error instanceof Error ? error.message : String(error);
+    }
+    for (const module of modules) await startModule(project, module, this.asDivlab);
+    this.expectedFor(project).ready += modules.length;
+    return "";
   }
 
   /** The member submits the work and Divlab merges it: accepted work has been merged. */

@@ -888,6 +888,8 @@ export interface ProjectRepositories {
   mainIsProtected(project: string): Promise<boolean>;
   /** Divlab's checks, and nothing else, may act on members' pull requests. */
   allowDivlabChecks(project: string): Promise<void>;
+  /** The toolchain the project declares on main, if it declares one (decision 0010). */
+  toolchain(project: string): Promise<{ image: string; test: string } | undefined>;
 }
 
 /** A project's repository has been created, and Divlab prepares it. */
@@ -895,6 +897,12 @@ export async function setUpProject(
   project: string,
   repositories: ProjectRepositories,
 ): Promise<void> {
+  // Its own tests run in the toolchain it declares: without one, none of its work could be checked.
+  if ((await repositories.toolchain(project)) === undefined) {
+    throw new Error(
+      `The project ${project} cannot be started: it declares no toolchain (the image its tests run in, and the command that runs them) in anarres.yaml`,
+    );
+  }
   await repositories.protectMain(project);
   await repositories.allowDivlabChecks(project);
 }

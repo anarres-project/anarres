@@ -63,6 +63,18 @@ export class InProcessDriver implements Driver {
     for (const module of modules) await startModule(project, module, this.github);
   }
 
+  async startProjectWithoutToolchain(project: string, modules: string[]): Promise<string> {
+    this.github.repositories.set(project, modules);
+    this.github.declareNoToolchain(project);
+    try {
+      await setUpProject(project, this.github);
+    } catch (error) {
+      return error instanceof Error ? error.message : String(error);
+    }
+    for (const module of modules) await startModule(project, module, this.github);
+    return "";
+  }
+
   /** The member submits the work and Divlab merges it: accepted work has been merged. */
   async acceptWork(work: AcceptedWork): Promise<void> {
     await this.submitWork(work);

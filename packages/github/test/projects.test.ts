@@ -296,3 +296,31 @@ describe("a member's claim, from their CLI", () => {
     expect(comments).toEqual([{ body: "/claim" }]);
   });
 });
+
+describe("a project's declared toolchain", () => {
+  it("is read from anarres.yaml on the project's main branch", async () => {
+    const declared = "toolchain:\n  image: node:24\n  test: npm test\n";
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (method === "GET" && path === "repos/commons/ledger/contents/anarres.yaml") {
+          return { status: 200, data: { content: Buffer.from(declared).toString("base64") } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.toolchain("ledger")).toEqual({ image: "node:24", test: "npm test" });
+  });
+  it("is none when the project has no anarres.yaml", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => ({
+        status: 404,
+        data: { message: `not answered: ${method} ${path}` } as T,
+      }),
+    });
+    expect(await adapter.toolchain("ledger")).toBeUndefined();
+  });
+});

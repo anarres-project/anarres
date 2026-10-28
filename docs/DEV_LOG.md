@@ -242,6 +242,26 @@ governance scenarios run alone.
 
 ---
 
+## 2026-10-28: No toolchain, no project
+
+- Scenario (`@wip`, not yet right): "A project that declares no toolchain is not started".
+- RED: does not set up a project that declares no toolchain, and says so, protecting nothing ->
+  `promise resolved "undefined" instead of rejecting` (the old set-up fakes given a toolchain
+  first, as a step of its own). GREEN (653): the set-up port gains `toolchain`.
+- Core reads the declaration as data, test by test: the image and the command (RED: `readToolchain
+  is not a function`, then `expected undefined to deeply equal …`); none when the file declares
+  none (RED: a TypeError); none when the command is not one line; none when either is not text
+  (RED: `expected { image: 24, test: 'npm test' } to be undefined`; I first wrote that test's
+  second case and the code together, so set the code aside and watched it red); none for an empty
+  file; none for a file that is not YAML. Core stays at 100% branch coverage.
+- RED: the adapter reads anarres.yaml on main -> `adapter.toolchain is not a function`, then
+  `expected undefined to deeply equal …`. GREEN (660). Passed first time, kept: no file, no
+  toolchain.
+- The scenario passes in-process and, run locally, in the sandbox (a repository of its own,
+  declaring none), and loses `@wip`.
+
+---
+
 ## 2026-10-27: The lease check run by hand in the sandbox
 
 - The 23:00 full sandbox run (604aab8) passed: 98 of 98.

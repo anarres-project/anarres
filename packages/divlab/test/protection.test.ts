@@ -11,6 +11,7 @@ function project(protectedMain: boolean, alertOpen = false) {
   const repositories: ProjectRepositories = {
     protectMain: untouched,
     allowDivlabChecks: untouched,
+    toolchain: untouched,
     mainIsProtected: async () => protectedMain,
   };
   const board: TaskBoard = {

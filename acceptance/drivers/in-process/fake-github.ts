@@ -268,6 +268,17 @@ export class FakeGitHub
     return String(this.pullRequests.length);
   }
 
+  /** Projects whose repository declares no toolchain: every other declares one. */
+  private readonly withoutToolchain = new Set<string>();
+
+  declareNoToolchain(project: string): void {
+    this.withoutToolchain.add(project);
+  }
+
+  async toolchain(project: string) {
+    return this.withoutToolchain.has(project) ? undefined : { image: "node:24", test: "npm test" };
+  }
+
   /** The project's open pull requests whose head is the commit. */
   async openAt(project: string, commit: string): Promise<string[]> {
     return this.pullRequests.flatMap(({ project: of }, index) => {

@@ -1,3 +1,4 @@
+import { readToolchain, type Toolchain } from "@anarres/core";
 import type {
   ChangeNotByDivlab,
   ClaimedTask,
@@ -552,6 +553,12 @@ export class GitHubAdapter
   }
 
   /** A file's text on main, or undefined if there is no such file. */
+  /** The toolchain anarres.yaml declares on the project's main branch, read as data. */
+  async toolchain(project: string): Promise<Toolchain | undefined> {
+    const text = await this.fileText(project, "anarres.yaml");
+    return text === undefined ? undefined : readToolchain(text);
+  }
+
   private async fileText(project: string, path: string): Promise<string | undefined> {
     const { status, data } = await this.request<{ content: string }>(
       "GET",

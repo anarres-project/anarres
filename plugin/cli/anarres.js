@@ -7266,7 +7266,7 @@ var require_public_api = __commonJS({
       }
       return doc;
     }
-    function parse2(src, reviver, options) {
+    function parse3(src, reviver, options) {
       let _reviver = void 0;
       if (typeof reviver === "function") {
         _reviver = reviver;
@@ -7307,7 +7307,7 @@ var require_public_api = __commonJS({
         return value.toString(options);
       return new Document.Document(value, _replacer, options).toString(options);
     }
-    exports.parse = parse2;
+    exports.parse = parse3;
     exports.parseAllDocuments = parseAllDocuments;
     exports.parseDocument = parseDocument;
     exports.stringify = stringify;
@@ -7613,6 +7613,23 @@ function unreadableWork(work) {
   return void 0;
 }
 var isObject = (value) => typeof value === "object" && value !== null;
+
+// ../core/src/toolchain.ts
+var import_yaml2 = __toESM(require_dist(), 1);
+function readToolchain(text) {
+  let declared;
+  try {
+    declared = (0, import_yaml2.parse)(text);
+  } catch {
+    return void 0;
+  }
+  const toolchain = declared?.toolchain;
+  if (toolchain === void 0) return void 0;
+  const { image, test } = toolchain;
+  if (typeof image !== "string" || typeof test !== "string") return void 0;
+  if (test.includes("\n")) return void 0;
+  return { image, test };
+}
 
 // ../divlab/src/event.ts
 var CLAIM = "/claim";
@@ -8373,6 +8390,11 @@ var GitHubAdapter = class {
     return "created";
   }
   /** A file's text on main, or undefined if there is no such file. */
+  /** The toolchain anarres.yaml declares on the project's main branch, read as data. */
+  async toolchain(project) {
+    const text = await this.fileText(project, "anarres.yaml");
+    return text === void 0 ? void 0 : readToolchain(text);
+  }
   async fileText(project, path) {
     const { status, data } = await this.request(
       "GET",

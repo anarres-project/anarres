@@ -72,6 +72,11 @@ export interface Driver {
     modules: string[],
     options?: { unprotected?: boolean },
   ): Promise<void>;
+  /**
+   * A project whose repository declares no toolchain is set up: what whoever started it is told,
+   * or nothing if it was set up all the same.
+   */
+  startProjectWithoutToolchain(project: string, modules: string[]): Promise<string>;
   /** Divlab merges the member's work but stops before it records and routes it. */
   interruptAfterMerging(work: AcceptedWork): Promise<void>;
   /** Divlab merges the member's work and records its decision, but stops before acting on it. */

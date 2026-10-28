@@ -494,3 +494,17 @@ When(
     return this.anarres.testsFinish({ role, module }, true);
   },
 );
+
+When(
+  "a project with a module {string} is started without declaring its toolchain",
+  function (this: AnarresWorld, module: string) {
+    return this.anarres.projectWithoutToolchain(module);
+  },
+);
+
+Then(
+  "the project is not started, and whoever started it is told it declares no toolchain, so no task for {string} is ready",
+  function (this: AnarresWorld, module: string) {
+    return this.anarres.projectNotStartedForWantOfToolchain(module);
+  },
+);
