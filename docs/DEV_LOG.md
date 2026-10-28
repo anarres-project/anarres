@@ -301,6 +301,8 @@ governance scenarios run alone.
   The gate never loads a bundle, so it passed. Now the added line names its import apart, and
   each bundle step checks its bundle parses (`node --check`): RED with the old line (the bundle
   step stops on the SyntaxError), GREEN with the new; the CLI runs again.
+- Pushed at once, at Bernard's word, rather than waiting the hour: the 7287478 sandbox run passed
+  all 82 scenarios in 41 minutes. Test work's own check is shown against real GitHub.
 
 ---
 

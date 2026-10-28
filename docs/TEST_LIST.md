@@ -576,8 +576,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         fail;
   - [x] the checks run on Test work too (`modules/*/tests/` joins the paths), and Test work
         reporting a failure or blocked, or partial, needs no check;
-  - [ ] the sandbox shows it: its toolchain runs a script at the project's root writing a JUnit
-        report, a failing case for each test file unless it says it passes on purpose.
+  - [x] the sandbox shows it (7287478: 82 of 82): its toolchain runs a script at the project's
+        root writing a JUnit report, a failing case for each test file unless it says it passes
+        on purpose.
 - [ ] Test counts for metrics come from the project's JUnit XML report, whatever the language.
 - [x] A project without a declared toolchain cannot be started: Divlab reads `anarres.yaml` on
       main as data (an image, and a one-line test command, both text) and refuses to set up a
