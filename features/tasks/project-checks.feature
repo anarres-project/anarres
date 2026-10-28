@@ -3,15 +3,13 @@ Feature: Coding work passes the project's own tests
   only when the project's own check has passed on it. Divlab never runs a project's code: the
   project's own check does, and Divlab reads its result (decision 0010).
 
-  # Not in the sandbox yet: its projects have no checks workflow (test list, section 4).
-  @sandbox-wip
   Scenario: Coding work whose tests fail is not merged, and the member is told why
     Given a project with a module "parser"
     When a member submits Coding work on "parser" whose tests fail
     Then Divlab has not merged the member's Coding work on "parser"
     And the member is told the project's tests failed on their work
 
-  # Not in the sandbox yet: its projects have no checks workflow (test list, section 4).
+  # Not in the sandbox: GitHub runs the project's tests at once, and nothing holds them on cue.
   @sandbox-wip
   Scenario: Coding work is not merged while the project's tests are still running
     Given a project with a module "parser"
@@ -19,7 +17,8 @@ Feature: Coding work passes the project's own tests
     Then Divlab has not merged the member's Coding work on "parser"
     And the member has been told nothing about their work yet
 
-  # Not in the sandbox yet: its projects have no checks workflow (test list, section 4).
+  # Not in the sandbox: GitHub runs the project's tests at once, and nothing holds them on cue.
+  # Every Coding work merged in the sandbox is merged once its tests pass.
   @sandbox-wip
   Scenario: Coding work is merged once the project's tests pass on it
     Given a project with a module "parser"

@@ -551,7 +551,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         and Coding work that says it passed but changes none is refused, saying so; the
         scenarios' Coding work changes the module's code, as a member's does;
   - [ ] a push by the task's holder to their pull request for it renews the lease, draft or not;
-  - [ ] the sandbox shows it: a project whose tests pass or fail on cue.
+  - [ ] the sandbox shows it: its projects get the template's checks workflow and a toolchain
+        whose tests fail only on work made to fail; "still running" cannot be held on cue, so
+        those two scenarios stay in-process.
 - [ ] Test work is accepted when the project's report shows the new tests running and failing.
 - [ ] Test counts for metrics come from the project's JUnit XML report, whatever the language.
 - [ ] A project without a declared toolchain cannot be started.

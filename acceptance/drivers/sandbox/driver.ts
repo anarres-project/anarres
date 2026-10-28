@@ -44,6 +44,7 @@ import type {
 } from "../driver.ts";
 import { HarnessNotYetBuilt } from "../errors.ts";
 import {
+  FAILS_ON_PURPOSE,
   feedbackSignalFile,
   inScenarioWords,
   otherFiles,
@@ -159,6 +160,20 @@ export class SandboxDriver implements Driver {
         },
       );
     }
+    // The project's own checks, as the template has them, and a toolchain whose tests fail only
+    // on work a scenario makes fail on purpose (decision 0010).
+    await this.github.call(
+      "PUT",
+      `repos/${this.org}/${project}/contents/.github/workflows/${CHECKS_WORKFLOW}`,
+      {
+        message: "Install the project's checks from the project template",
+        content: Buffer.from(templateWorkflow(CHECKS_WORKFLOW)).toString("base64"),
+      },
+    );
+    await this.github.call("PUT", `repos/${this.org}/${project}/contents/anarres.yaml`, {
+      message: "Declare the sandbox project's toolchain",
+      content: Buffer.from(SANDBOX_TOOLCHAIN).toString("base64"),
+    });
     // Set up as a project is, once the workflows are in: from now on only Divlab changes main.
     if (!options.unprotected) await setUpProject(project, this.asDivlab);
     run.expected.set(project, {
@@ -1564,7 +1579,21 @@ const TEMPLATE_WORKFLOWS = [
   "divlab-pull-request.yml",
   "divlab-claim.yml",
   "divlab-leases.yml",
+  "divlab-checks.yml",
 ];
+
+/** The project's own checks workflow: the project's, not Divlab's, so installed as it is. */
+const CHECKS_WORKFLOW = "checks.yml";
+
+/**
+ * A sandbox project's toolchain: a small image, and tests that fail only on work carrying the
+ * marker a scenario puts in work it makes fail. One line, as the checks workflow passes it on.
+ */
+const SANDBOX_TOOLCHAIN = `# The sandbox project's toolchain (decision 0010).
+toolchain:
+  image: debian:stable-slim
+  test: "! grep -rqs '${FAILS_ON_PURPOSE}' modules"
+`;
 
 /** Where Divlab's pull request workflow lives in a project repository. */
 const DIVLAB_PULL_REQUEST_WORKFLOW = ".github/workflows/divlab-pull-request.yml";
@@ -1580,11 +1609,12 @@ type ActionsPolicy = {
  * One of the project template's workflows, using Divlab as it is at the commit under test (decision 0004):
  * CI's commit, or locally the checked-out one, which must have been pushed.
  */
+/** One of the project template's workflows, as the template has it. */
+const templateWorkflow = (name: string) =>
+  readFileSync(new URL(`../../../template/.github/workflows/${name}`, import.meta.url), "utf8");
+
 function divlabWorkflow(name: string): string {
-  const template = readFileSync(
-    new URL(`../../../template/.github/workflows/${name}`, import.meta.url),
-    "utf8",
-  );
+  const template = templateWorkflow(name);
   const divlab = "anarres-project/anarres/packages/divlab@main";
   if (!template.includes(divlab))
     throw new Error(`The template's ${name} no longer uses ${divlab}`);
