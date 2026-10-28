@@ -579,7 +579,14 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the sandbox shows it (7287478: 82 of 82): its toolchain runs a script at the project's
         root writing a JUnit report, a failing case for each test file unless it says it passes
         on purpose.
-- [ ] Test counts for metrics come from the project's JUnit XML report, whatever the language.
+- [ ] Test counts for metrics come from the project's JUnit XML report, whatever the language
+      (decision 0012, Bernard, 2026-10-28):
+  - [ ] n_test, n_pass and n_fail from a report: errored counts as failing, skipped is not
+        counted, so n_pass + n_fail = n_test;
+  - [ ] the event recording each merge of Coding or Test work carries the counts from its report,
+        programme-wide; the adapter reads them back validated;
+  - [ ] the sandbox shows it;
+  - [ ] per module counts, once a report reliably says which module a test belongs to.
 - [x] A project without a declared toolchain cannot be started: Divlab reads `anarres.yaml` on
       main as data (an image, and a one-line test command, both text) and refuses to set up a
       project that declares none, protecting and posting nothing, and saying why (in-process and
