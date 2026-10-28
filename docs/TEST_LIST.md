@@ -555,7 +555,19 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the sandbox shows it (ee92e77: 80 of 80): its projects get the template's checks
         workflow and a toolchain whose tests fail only on work made to fail; "still running"
         cannot be held on cue, so those two scenarios stay in-process.
-- [ ] Test work is accepted when the project's report shows the new tests running and failing.
+- [ ] Test work is accepted when the project's report shows the new tests running and failing
+      (decision 0011, Bernard, 2026-10-28):
+  - [ ] the report is read as data: test cases by name, each passed, failed (an assertion) or
+        errored (did not run); bounded in size, never followed or run;
+  - [ ] Test work that says it passed is merged only when every new test (one main does not
+        have, by name) fails; any that errors or passes, or none at all, is refused, naming them;
+  - [ ] Divlab records the names of the tests each piece of Test work added, and the module's
+        tests on main are those recorded for it;
+  - [ ] the toolchain names its report, and the checks workflow uploads it as the run's
+        artefact; Divlab finds and downloads it, refusing one over a size limit;
+  - [ ] the checks run on Test work too (`modules/*/tests/` joins the paths), and Test work
+        reporting a failure or blocked, or partial, needs no check;
+  - [ ] the sandbox shows it: a toolchain that writes a JUnit report whose tests fail on cue.
 - [ ] Test counts for metrics come from the project's JUnit XML report, whatever the language.
 - [x] A project without a declared toolchain cannot be started: Divlab reads `anarres.yaml` on
       main as data (an image, and a one-line test command, both text) and refuses to set up a
