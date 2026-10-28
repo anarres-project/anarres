@@ -236,6 +236,9 @@ governance scenarios run alone.
   `expected [] to deeply equal [ { project: 'ledger', …(2) } ]`. GREEN (651). RED: and when its
   check failed, a fix to follow -> the same failure. GREEN (652). REFACTOR: drafts and checked
   work share `recordActivity`.
+- The ee92e77 sandbox run passed all 80 scenarios in 38 minutes: Coding work whose tests fail is
+  refused with the project's check, and all other Coding work there was merged once its check
+  passed.
 
 ---
 

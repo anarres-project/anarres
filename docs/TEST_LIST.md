@@ -552,9 +552,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         scenarios' Coding work changes the module's code, as a member's does;
   - [x] a push by the task's holder to their pull request for it renews the lease, draft or not:
         Coding work waiting on its check, or whose check failed, is recorded as activity;
-  - [ ] the sandbox shows it: its projects get the template's checks workflow and a toolchain
-        whose tests fail only on work made to fail; "still running" cannot be held on cue, so
-        those two scenarios stay in-process.
+  - [x] the sandbox shows it (ee92e77: 80 of 80): its projects get the template's checks
+        workflow and a toolchain whose tests fail only on work made to fail; "still running"
+        cannot be held on cue, so those two scenarios stay in-process.
 - [ ] Test work is accepted when the project's report shows the new tests running and failing.
 - [ ] Test counts for metrics come from the project's JUnit XML report, whatever the language.
 - [ ] A project without a declared toolchain cannot be started.
