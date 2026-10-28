@@ -5,6 +5,7 @@ describe("the Programme Architect's modules.yaml (decision 0013)", () => {
   it("lists the project's modules by name", () => {
     expect(readModules("modules:\n  - name: parser\n  - name: lexer\n")).toEqual({
       modules: ["parser", "lexer"],
+      contracts: [],
     });
   });
   it("is unreadable when it names a module in more than a plain name", () => {
@@ -31,5 +32,67 @@ describe("the Programme Architect's modules.yaml (decision 0013)", () => {
     expect(readModules("modules:\n  - name: programme\n")).toEqual({
       unreadable: "modules.yaml names a module programme, the name of the whole programme",
     });
+  });
+});
+
+describe("the contracts in modules.yaml (decision 0014)", () => {
+  it("says which module provides each contract and which use it", () => {
+    const text = [
+      "modules:",
+      "  - name: lexer",
+      "    provides: [tokens]",
+      "  - name: parser",
+      "    uses: [tokens]",
+      "",
+    ].join("\n");
+    expect(readModules(text)).toEqual({
+      modules: ["lexer", "parser"],
+      contracts: [{ name: "tokens", providedBy: "lexer", usedBy: ["parser"] }],
+    });
+  });
+  it("is unreadable when a module uses a contract no module provides", () => {
+    expect(readModules("modules:\n  - name: parser\n    uses: [tokens]\n")).toEqual({
+      unreadable: "modules.yaml has a module use a contract no module provides: tokens",
+    });
+  });
+  it("is unreadable when two modules provide one contract", () => {
+    const text = [
+      "modules:",
+      "  - name: lexer",
+      "    provides: [tokens]",
+      "  - name: parser",
+      "    provides: [tokens]",
+      "",
+    ].join("\n");
+    expect(readModules(text)).toEqual({
+      unreadable: "modules.yaml has more than one module provide a contract: tokens",
+    });
+  });
+  it("is unreadable when a module uses a contract it provides", () => {
+    const text = "modules:\n  - name: lexer\n    provides: [tokens]\n    uses: [tokens]\n";
+    expect(readModules(text)).toEqual({
+      unreadable: "modules.yaml has a module use a contract it provides: tokens",
+    });
+  });
+  it("is unreadable when it names a contract in more than a plain name", () => {
+    for (const text of [
+      "modules:\n  - name: lexer\n    provides: [\"tokens [see](https://example.test)\"]\n",
+      "modules:\n  - name: lexer\n    uses: [\"../tokens\"]\n",
+    ]) {
+      expect(readModules(text)).toEqual({
+        unreadable: "modules.yaml names a contract in more than a plain name",
+      });
+    }
+  });
+  it("is unreadable when it gives a module's contracts other than as a list of names", () => {
+    for (const text of [
+      "modules:\n  - name: lexer\n    provides: tokens\n",
+      "modules:\n  - name: lexer\n    uses: {tokens: true}\n",
+      "modules:\n  - name: lexer\n    provides: [[tokens]]\n",
+    ]) {
+      expect(readModules(text)).toEqual({
+        unreadable: "modules.yaml gives a module's contracts other than as a list of names",
+      });
+    }
   });
 });
