@@ -8966,8 +8966,9 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
 // ../core/src/access.ts
+var PROGRAMME = "programme";
 var WRITE_SCOPES = {
-  "programme-architect": () => "programme/",
+  "programme-architect": () => `${PROGRAMME}/`,
   architecture: (module) => `modules/${module}/architecture/`,
   specification: (module) => `modules/${module}/specifications/`,
   test: (module) => `modules/${module}/tests/`,

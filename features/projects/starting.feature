@@ -1,6 +1,11 @@
-Feature: A new project starts with a task for each module
-  So that all work is done for a task a member holds, a project's modules start with their first
-  task ready: Architecture, the first role in a module's pipeline (decision 0013).
+Feature: A new project starts with its Programme Architect's task, and each module with its own
+  So that all work is done for a task a member holds, a project starts with one task: the
+  Programme Architect's, who decides its modules in modules.yaml. Each module then starts with
+  its first task ready: Architecture, the first role in a module's pipeline (decision 0013).
+
+  Scenario: A new project starts with a Programme Architect task for the programme
+    Given a new project is started
+    Then the only task ready is a Programme Architect task for the programme
 
   Scenario: A new project has an Architecture task ready for its module
     Given a project with a module "parser"

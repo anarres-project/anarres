@@ -344,6 +344,12 @@ governance scenarios run alone.
   each work's task for its own role (`heldAs`): they had shown a Specification task for Coding,
   Test and Research work alike, an inconsistency the new check exposed (the rule set aside while
   they were fixed). The scenario loses `@wip`.
+- Scenario (`@wip`, `NotYetImplemented`): "A new project starts with a Programme Architect task
+  for the programme", in a project of its own (the programme is one per project, so unaliased).
+  RED: starting a project posts one ready task, the Programme Architect's, for the programme ->
+  `startProject is not a function`, then `expected [] to deeply equal …`. GREEN (696): core's
+  `PROGRAMME`, from which the Programme Architect's place `programme/` is made too. The scenario
+  passes in-process and, run locally, in the sandbox.
 
 ---
 

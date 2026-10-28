@@ -32,6 +32,7 @@ import {
   setUpProject,
   signalOf,
   startModule,
+  startProject,
 } from "@anarres/divlab";
 import { GitHubAdapter, requestGitHub } from "@anarres/github";
 import type {
@@ -197,6 +198,14 @@ export class SandboxDriver implements Driver {
   }
 
   /** A repository of the scenario's own, declaring no toolchain, which Divlab sets up as usual. */
+  /** A repository of the scenario's own, set up and started as Divlab's App would. */
+  async startProject(project: string): Promise<void> {
+    this.projectOfScenario = project;
+    await this.makeProject(project, {});
+    await startProject(project, this.asDivlab);
+    this.expectedFor(project).ready += 1;
+  }
+
   async testCounts(project: string): Promise<{ total: number; passed: number; failed: number }[]> {
     return (await this.divlab.read(project)).flatMap((event) =>
       "aboutToMerge" in event && event.aboutToMerge.tests ? [event.aboutToMerge.tests] : [],

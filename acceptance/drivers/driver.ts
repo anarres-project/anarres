@@ -76,6 +76,8 @@ export interface Driver {
     modules: string[],
     options?: { unprotected?: boolean },
   ): Promise<void>;
+  /** A new project is set up and started, as whoever starts a project does (decision 0013). */
+  startProject(project: string): Promise<void>;
   /**
    * A project whose repository declares no toolchain is set up: what whoever started it is told,
    * or nothing if it was set up all the same.

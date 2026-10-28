@@ -50,6 +50,22 @@ export class Anarres {
   }
 
   /** A project of its own, whose main branch was left unprotected: a misconfiguration. */
+  /** A new project of its own, started as whoever starts a project starts it. */
+  async newProjectStarted(): Promise<void> {
+    this.project = `${this.project}-new`;
+    await this.driver.startProject(this.project);
+  }
+
+  /** The programme is one per project, so it keeps its own name: no alias. */
+  async onlyTaskReadyForTheProgramme(role: string) {
+    const ready = await this.driver.readyTasks(this.project);
+    assert.deepEqual(
+      ready.map(roleAndModule),
+      [{ role, module: "programme" }],
+      `expected the only ready task to be a ${role} task for the programme`,
+    );
+  }
+
   /** A project of its own, so its counts are its scenario's alone. */
   async projectOfItsOwn(module: string): Promise<void> {
     this.project = `${this.project}-own`;

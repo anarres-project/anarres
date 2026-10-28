@@ -8963,8 +8963,9 @@ var require_sax = __commonJS({
 import { readFileSync } from "node:fs";
 
 // ../core/src/access.ts
+var PROGRAMME = "programme";
 var WRITE_SCOPES = {
-  "programme-architect": () => "programme/",
+  "programme-architect": () => `${PROGRAMME}/`,
   architecture: (module) => `modules/${module}/architecture/`,
   specification: (module) => `modules/${module}/specifications/`,
   test: (module) => `modules/${module}/tests/`,

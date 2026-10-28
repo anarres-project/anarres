@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type PostedTask, startModule, type TaskBoard } from "../src/index.ts";
+import { type PostedTask, startModule, startProject, type TaskBoard } from "../src/index.ts";
 
 const untouched = async () => {
   throw new Error("Divlab should not have acted");
@@ -37,5 +37,15 @@ describe("starting a module", () => {
     const { posted, board } = boardKeepingPosts();
     await startModule("ledger", "parser", board);
     expect(posted).toEqual([{ project: "ledger", role: "architecture", module: "parser" }]);
+  });
+});
+
+describe("starting a project", () => {
+  it("posts one ready task, the Programme Architect's, for the programme", async () => {
+    const { posted, board } = boardKeepingPosts();
+    await startProject("ledger", board);
+    expect(posted).toEqual([
+      { project: "ledger", role: "programme-architect", module: "programme" },
+    ]);
   });
 });

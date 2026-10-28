@@ -522,7 +522,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         Specification as built on 2026-10-27 (core's `FIRST_ROLE`, stated once);
   - [x] work's role and module must be its task's, or it is refused, saying so: a module the
         project does not have has no task;
-  - [ ] a project starts with one Programme Architect task;
+  - [x] a project starts with one Programme Architect task, for the programme (core's
+        `PROGRAMME`, whose place `programme/` is the Programme Architect's); in-process and, run
+        locally, in the sandbox;
   - [ ] the Programme Architect's `programme/modules.yaml` is read as data: modules with plain
         names (requirements, dependencies and size kept for later); unreadable refuses the work;
   - [ ] merging Programme Architect work starts each module its `modules.yaml` lists that has not

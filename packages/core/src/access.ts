@@ -4,8 +4,11 @@ import type { Role } from "./roles.ts";
  * Where each role's work may write, for the module named in its task: the access matrix's write
  * scopes (concept §6), defined here and nowhere else.
  */
+/** The whole of a project, as the Programme Architect's tasks name it: one per project. */
+export const PROGRAMME = "programme";
+
 const WRITE_SCOPES: Record<Role, (module: string) => string> = {
-  "programme-architect": () => "programme/",
+  "programme-architect": () => `${PROGRAMME}/`,
   architecture: (module) => `modules/${module}/architecture/`,
   specification: (module) => `modules/${module}/specifications/`,
   test: (module) => `modules/${module}/tests/`,

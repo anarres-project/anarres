@@ -23,6 +23,7 @@ import {
   routingDecisions,
   setUpProject,
   startModule,
+  startProject,
 } from "@anarres/divlab";
 import type {
   AcceptedWork,
@@ -61,6 +62,12 @@ export class InProcessDriver implements Driver {
     this.github.repositories.set(project, modules);
     if (!options.unprotected) await setUpProject(project, this.github);
     for (const module of modules) await startModule(project, module, this.github);
+  }
+
+  async startProject(project: string): Promise<void> {
+    this.github.repositories.set(project, []);
+    await setUpProject(project, this.github);
+    await startProject(project, this.github);
   }
 
   async startProjectWithoutToolchain(project: string, modules: string[]): Promise<string> {

@@ -557,3 +557,14 @@ Then(
     return this.anarres.memberIsToldWhy("is not for the module and role its task is for");
   },
 );
+
+Given("a new project is started", function (this: AnarresWorld) {
+  return this.anarres.newProjectStarted();
+});
+
+Then(
+  "the only task ready is a(n) {role} task for the programme",
+  function (this: AnarresWorld, role: string) {
+    return this.anarres.onlyTaskReadyForTheProgramme(role);
+  },
+);

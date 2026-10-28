@@ -8,6 +8,7 @@ import {
   memberFor,
   outsideScope,
   type Part,
+  PROGRAMME,
   ROLE_NAMES,
   type Role,
   type RoutingRecord,
@@ -988,6 +989,12 @@ export async function setUpProject(
   }
   await repositories.protectMain(project);
   await repositories.allowDivlabChecks(project);
+}
+
+/** A project begins: Divlab posts its first task. */
+export async function startProject(project: string, board: TaskBoard): Promise<void> {
+  // The Programme Architect decides the project's modules, in modules.yaml (decision 0013).
+  await board.post({ project, role: "programme-architect", module: PROGRAMME });
 }
 
 /** A module begins: Divlab posts its first task. */
