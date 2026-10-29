@@ -59,3 +59,12 @@ Feature: Work whose inputs changed after its task was posted is revised
     And the Programme Architect's work was revised since, changing the requirement slice for "parser"
     When Alice submits Test work on "parser" with a fail verdict, reporting an upstream ambiguity
     Then the only task ready for "parser" is a Specification task
+
+  Scenario: Work reporting a contract that does not work goes to the Programme Architect, though the contract was revised since
+    Given a new project is started
+    And a member's Programme Architect work for the programme was accepted, listing the modules "parser", "lexer" and "ledger", with a contract "tokens" that "lexer" provides and "parser" uses, and a contract "entries" that "ledger" provides
+    And a member's Specification work on "parser" was accepted with a pass verdict
+    And Alice has claimed the Test task for "parser"
+    And the Programme Architect's work was revised since, changing the contract "tokens"
+    When Alice submits Test work on "parser" with a fail verdict, reporting an interface impediment
+    Then the only task ready for "parser" is a Programme Architect task

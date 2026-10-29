@@ -555,6 +555,15 @@ governance scenarios run alone.
             received staleRevision, rule inputs_changed
   GREEN:    the same (243 passed): partial and failed work, in their old order, then stale.
   REFACTOR: none. A revised contract with a failure routed above Architecture is on the test list.
+- A revised contract and failed work together, by the same principle. Acceptance: scenario
+  "Work reporting a contract that does not work goes to the Programme Architect, though the
+  contract was revised since", red as not yet right (an Architecture task).
+  RED:      sends failed work to a role above Architecture its failure names, though a contract
+            was revised -> received role "architecture", staleRevision
+  GREEN:    the same (244 passed): `failedAboveArchitecture`, judged by routing's precedence.
+  REFACTOR: none.
+  Triangulation: "sends failed work back to Architecture when a contract was revised and its
+  failure names a role below" passed first time, as it should; kept, as it pins the comparison.
 
 ---
 

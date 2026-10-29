@@ -66,8 +66,9 @@ makes open work stale is the one that calls for revision tasks.
 Decided 2026-10-29 (Bernard: upstream wins). Failed work goes where the routing table sends it,
 always its own role or one upstream, and part-done work stays a continuation for its own role,
 which reads the work done too. Both tasks are pinned at the new commit, so read the new inputs;
-the record of the work says which inputs changed. A revised contract still comes first: it sends
-the module to Architecture, ahead of any role a failure names below it.
+the record of the work says which inputs changed. A revised contract sends the module to
+Architecture, ahead of any role a failure names at Architecture or below it; a failure whose fix
+falls to the Programme Architect or Research goes there instead.
 
 ## What this does not decide
 

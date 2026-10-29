@@ -9252,7 +9252,9 @@ var NO_RULE_COVERS_IT = {
 };
 var failed = (work) => work.verdict === "fail" || work.verdict === "blocked";
 function rule(work) {
-  if (work.contractsRevised?.length) return reviseArchitecture(work, work.contractsRevised);
+  if (work.contractsRevised?.length && !failedAboveArchitecture(work)) {
+    return reviseArchitecture(work, work.contractsRevised);
+  }
   if (work.partial) return continuation(work);
   if (failed(work)) return revise(work);
   if (work.inputsChanged?.length) return reviseWithNewInputs(work, work.inputsChanged);
@@ -9359,6 +9361,10 @@ var FAILURE_ROUTES = [
   }))
 ];
 var PRECEDENCE = ["research", "programme-architect", ...MODULE_PIPELINE];
+function failedAboveArchitecture(work) {
+  const owner2 = failed(work) ? failureRoute(work)?.to : void 0;
+  return owner2 !== void 0 && PRECEDENCE.indexOf(owner2) < PRECEDENCE.indexOf("architecture");
+}
 function failureRoute(work) {
   const routes = FAILURE_ROUTES.filter((route2) => route2.from === work.fromRole);
   const matching = routes.filter(

@@ -685,6 +685,38 @@ describe("routing work whose inputs changed since its task was posted (decision 
     });
   });
 
+  it("sends failed work to a role above Architecture its failure names, though a contract was revised", () => {
+    expect(
+      route({
+        fromRole: "test",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "interface_impediment" }],
+        feedbackSignal: FEEDBACK,
+        contractsRevised: ["tokens"],
+      }),
+    ).toEqual({
+      tasks: [{ role: "programme-architect", module: "parser", feedbackSignal: FEEDBACK }],
+    });
+  });
+
+  it("sends failed work back to Architecture when a contract was revised and its failure names a role below", () => {
+    expect(
+      route({
+        fromRole: "coding",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "test_failures" }],
+        feedbackSignal: FEEDBACK,
+        contractsRevised: ["tokens"],
+      }),
+    ).toEqual({
+      tasks: [
+        { role: "architecture", module: "parser", feedbackSignal: FEEDBACK, staleRevision: true },
+      ],
+    });
+  });
+
   it("sends each module the Programme Architect's revised contracts name back to Architecture", () => {
     expect(
       rule({

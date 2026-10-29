@@ -608,9 +608,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         continuation wins, the most upstream (Bernard, 2026-10-29; decision 0015, question 5).
         Scenario "Work that failed after its requirement slice changed goes where its failure
         says";
-  - [ ] a revised contract and failed work together: a failure routed above Architecture (to the
-        Programme Architect, or Research) should win by the same principle; the contract rule
-        wins now;
+  - [x] a revised contract and failed work together: a failure routed above Architecture (to the
+        Programme Architect, or Research) wins by the same principle; one routed to Architecture
+        or below gives way to the contract's Architecture revision. Scenario "Work reporting a
+        contract that does not work goes to the Programme Architect, though the contract was
+        revised since";
   - [ ] GitHub's comparison lists at most 300 changed files: more than that, and some inputs may
         go unseen; treat a comparison that may be cut short as changing everything?
   - [ ] the sandbox shows it;

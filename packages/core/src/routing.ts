@@ -83,7 +83,9 @@ export const failed = (work: Pick<AcceptedWork, "verdict">) =>
   work.verdict === "fail" || work.verdict === "blocked";
 
 export function rule(work: AcceptedWork): Ruling {
-  if (work.contractsRevised?.length) return reviseArchitecture(work, work.contractsRevised);
+  if (work.contractsRevised?.length && !failedAboveArchitecture(work)) {
+    return reviseArchitecture(work, work.contractsRevised);
+  }
   if (work.partial) return continuation(work);
   if (failed(work)) return revise(work);
   // Failed or part-done work goes where those rules send it, the most upstream (decision 0015).
@@ -235,6 +237,12 @@ const FAILURE_ROUTES: readonly FailureRoute[] = [
  * any other fix, then the most upstream role.
  */
 const PRECEDENCE: readonly Role[] = ["research", "programme-architect", ...MODULE_PIPELINE];
+
+/** Failed work whose fix falls to a role above Architecture, which wins over a revised contract. */
+function failedAboveArchitecture(work: AcceptedWork): boolean {
+  const owner = failed(work) ? failureRoute(work)?.to : undefined;
+  return owner !== undefined && PRECEDENCE.indexOf(owner) < PRECEDENCE.indexOf("architecture");
+}
 
 /** The rule that decides who can fix what a failed piece of work reports, if any covers it. */
 function failureRoute(work: AcceptedWork): FailureRoute | undefined {
