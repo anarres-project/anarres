@@ -180,6 +180,7 @@ export class Anarres {
       impediments?: string[];
       modulesListed?: string[];
       contracts?: Contract[];
+      slicesChanged?: string[];
     },
     named?: string,
   ) {
@@ -215,6 +216,16 @@ export class Anarres {
       contracts: (this.programme.contracts ?? []).map((one) =>
         one.name === contract ? { ...one, usedBy: [...one.usedBy, module] } : one,
       ),
+    });
+  }
+
+  /** Programme Architect work is accepted, changing the module's requirement slice. */
+  async programmeRevisedChangingSliceFor(module: string) {
+    await this.memberHasWorkAccepted({
+      role: "Programme Architect",
+      module: "programme",
+      verdict: "pass",
+      slicesChanged: [module],
     });
   }
 
@@ -955,14 +966,20 @@ export class Anarres {
   /** Modules are aliased; the programme, one per project, keeps its own name. */
   private aliased<T extends Work>(work: T): T {
     const module = work.module === PROGRAMME ? PROGRAMME : this.aliases.of(work.module);
-    const { modulesListed: listed, contracts } = work as {
+    const {
+      modulesListed: listed,
+      contracts,
+      slicesChanged: slices,
+    } = work as {
       modulesListed?: string[];
       contracts?: Contract[];
+      slicesChanged?: string[];
     };
     return {
       ...work,
       module,
       ...(listed === undefined ? {} : { modulesListed: listed.map((m) => this.aliases.of(m)) }),
+      ...(slices === undefined ? {} : { slicesChanged: slices.map((m) => this.aliases.of(m)) }),
       ...(contracts === undefined
         ? {}
         : {

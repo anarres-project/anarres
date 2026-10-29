@@ -100,3 +100,13 @@ const contractPlaces = (contracts: readonly string[]) =>
 export function writeScope(role: Role, module: string): string {
   return WRITE_SCOPES[role](module);
 }
+
+/** The task's inputs among the paths changed since it was posted (decision 0015). */
+export function changedInputs(
+  role: Role,
+  module: string,
+  task: ReadingTask,
+  changed: readonly string[],
+): string[] {
+  return changed.filter((path) => mayRead(role, module, path, task));
+}

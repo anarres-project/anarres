@@ -613,3 +613,10 @@ Given(
     return this.anarres.programmeRevisedSoThatUses(module, contract);
   },
 );
+
+Given(
+  "the Programme Architect's work was revised since, changing the requirement slice for {string}",
+  function (this: AnarresWorld, module: string) {
+    return this.anarres.programmeRevisedChangingSliceFor(module);
+  },
+);

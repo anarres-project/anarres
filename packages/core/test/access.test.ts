@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { mayRead, outsideScope, type Role, readScope, writeScope } from "../src/index.ts";
+import {
+  changedInputs,
+  mayRead,
+  outsideScope,
+  type Role,
+  readScope,
+  writeScope,
+} from "../src/index.ts";
 
 describe("what a role's work may change (concept §6)", () => {
   it("does not let Coding change its module's tests", () => {
@@ -164,5 +171,14 @@ describe("the contracts a role's work reads (decision 0014)", () => {
         }),
       ),
     ).toEqual([false, false, false, false]);
+  });
+});
+
+describe("the inputs that changed since a task was posted (decision 0015)", () => {
+  it("are the changed paths its role reads for the task", () => {
+    const changed = ["programme/slices/parser/requirements.md", "programme/slices/ledger/a.md"];
+    expect(changedInputs("test", "parser", {}, changed)).toEqual([
+      "programme/slices/parser/requirements.md",
+    ]);
   });
 });

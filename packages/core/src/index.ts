@@ -1,4 +1,11 @@
-export { mayRead, outsideScope, PROGRAMME, readScope, writeScope } from "./access.ts";
+export {
+  changedInputs,
+  mayRead,
+  outsideScope,
+  PROGRAMME,
+  readScope,
+  writeScope,
+} from "./access.ts";
 export { mayTake, type Part } from "./eligibility.ts";
 export {
   type FeedbackSignal,

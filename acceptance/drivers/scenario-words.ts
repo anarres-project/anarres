@@ -60,6 +60,11 @@ export function otherFiles(work: AcceptedWork) {
       : [
           { path: "programme/modules.yaml", text: modulesYaml(work.modulesListed, work.contracts) },
         ]),
+    // The Programme Architect's work may change modules' requirement slices.
+    ...(work.slicesChanged ?? []).map((module) => ({
+      path: `programme/slices/${module}/slice.md`,
+      text: `# Requirements for ${module}, revised by ${work.feedbackSignal}\n`,
+    })),
     ...(work.contracts ?? []).map((contract) => ({
       path: `programme/contracts/${contract.name}/contract.md`,
       text: `# Contract ${contract.name}\n`,

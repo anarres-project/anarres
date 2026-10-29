@@ -30,6 +30,8 @@ export type AcceptedWork = {
   modulesListed?: string[];
   /** The contracts the Programme Architect's modules.yaml says each module provides and uses. */
   contracts?: Contract[];
+  /** The modules whose requirement slice the Programme Architect's work changes. */
+  slicesChanged?: string[];
   /** The project's tests are still running on the member's work. */
   testsRunning?: boolean;
   /** The new tests in the member's Test work pass before any code exists: they test nothing. */
