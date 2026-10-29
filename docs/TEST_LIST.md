@@ -130,7 +130,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
             to check main), keeping it with what the run records; read again if the run finds
             another event recorded since; only Divlab's own run keeps it (`oneRun`), never a
             watcher such as the sandbox driver;
-      - [ ] measured again in the sandbox, after this;
+      - [x] measured again in the sandbox (a7e72fa: 87 of 87 in 42 minutes; 50 runs sampled,
+            about 12.8 requests a run, from 15: a sixth fewer). Listing the log's trees is still
+            the most (18%), then writing events (17%), issues (9.5%), the ruleset check (8%);
+      - [ ] the next cuts, if the sandbox comes near the allowance again: the ruleset check on
+            every run (one request; only on runs that could have changed it?), and the log's
+            two tree listings per read;
     - [ ] the artefact downloads of Test and Coding work count too, and are not yet tallied;
   - [ ] GitHub's reading of the allowance used jumps between readings (2,141 then 726 a minute
         later, same window, 2026-10-22): find out why before relying on it more;

@@ -432,6 +432,8 @@ governance scenarios run alone.
   (the three tests build one run's adapter, an option not yet there, still green); RED: an
   adapter that is not one run's reads from GitHub each time -> 250, not 251; GREEN, `oneRun`,
   which Divlab's action sets. Gate 748 and 123.
+- The a7e72fa sandbox run passed all 87 scenarios in 42 minutes, inside the App's allowance.
+  Sampled again: about 12.8 requests a Divlab run, from 15.
 
 ---
 
