@@ -84,9 +84,10 @@ export const failed = (work: Pick<AcceptedWork, "verdict">) =>
 
 export function rule(work: AcceptedWork): Ruling {
   if (work.contractsRevised?.length) return reviseArchitecture(work, work.contractsRevised);
-  if (work.inputsChanged?.length) return reviseWithNewInputs(work, work.inputsChanged);
   if (work.partial) return continuation(work);
   if (failed(work)) return revise(work);
+  // Failed or part-done work goes where those rules send it, the most upstream (decision 0015).
+  if (work.inputsChanged?.length) return reviseWithNewInputs(work, work.inputsChanged);
   if (work.fromRole === "research") return returnResearch(work);
   if (work.modulesToStart !== undefined) return startModules(work, work.modulesToStart);
   return advance(work);

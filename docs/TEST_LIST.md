@@ -604,8 +604,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] Architecture's and Specification's contracts count among their inputs: a revised
         contract sends their work back to Architecture (the contract rule, below), judged from
         `modules.yaml` both on main and at the pinned commit, so no separate stale rule is needed;
-  - [ ] stale work that also failed, or was handed over partial: which rule wins (stale is
-        checked first now);
+  - [x] stale work that also failed, or was handed over partial: the failure's route or the
+        continuation wins, the most upstream (Bernard, 2026-10-29; decision 0015, question 5).
+        Scenario "Work that failed after its requirement slice changed goes where its failure
+        says";
+  - [ ] a revised contract and failed work together: a failure routed above Architecture (to the
+        Programme Architect, or Research) should win by the same principle; the contract rule
+        wins now;
   - [ ] GitHub's comparison lists at most 300 changed files: more than that, and some inputs may
         go unseen; treat a comparison that may be cut short as changing everything?
   - [ ] the sandbox shows it;

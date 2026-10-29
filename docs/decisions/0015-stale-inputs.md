@@ -61,6 +61,14 @@ makes open work stale is the one that calls for revision tasks.
   judged from the merge's own files, so no extra request.
 - (b) Leave it to its own slice, as decision 0014 did, and build only 1 to 3 now.
 
+### 5. Stale work that also failed, or was handed over part done
+
+Decided 2026-10-29 (Bernard: upstream wins). Failed work goes where the routing table sends it,
+always its own role or one upstream, and part-done work stays a continuation for its own role,
+which reads the work done too. Both tasks are pinned at the new commit, so read the new inputs;
+the record of the work says which inputs changed. A revised contract still comes first: it sends
+the module to Architecture, ahead of any role a failure names below it.
+
 ## What this does not decide
 
 - Changes a PDC coordinator makes to governance, and work reaching main without Divlab: neither

@@ -146,6 +146,25 @@ When(
 );
 
 When(
+  "{word} submits {role} work on {string} with a {verdict} verdict, reporting {impediment}",
+  function (
+    this: AnarresWorld,
+    member: string,
+    role: string,
+    module: string,
+    verdict: string,
+    impediment: string,
+  ) {
+    return this.anarres.namedMemberSubmitsWork(member, {
+      role,
+      module,
+      verdict,
+      impediments: [impediment],
+    });
+  },
+);
+
+When(
   "{word} submits {role} work on {string} for its finished task, with a {verdict} verdict",
   function (this: AnarresWorld, member: string, role: string, module: string, verdict: string) {
     return this.anarres.namedMemberSubmitsWork(member, {

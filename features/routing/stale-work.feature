@@ -51,3 +51,11 @@ Feature: Work whose inputs changed after its task was posted is revised
     And a member's Security & Quality work on "parser" was accepted with a pass verdict
     When the Programme Architect's work is revised, changing the contract "tokens" so that "parser" no longer uses it
     Then the only task ready for "parser" is an Architecture task
+
+  Scenario: Work that failed after its requirement slice changed goes where its failure says
+    Given a project with a module "parser"
+    And a member's Specification work on "parser" was accepted with a pass verdict
+    And Alice has claimed the Test task for "parser"
+    And the Programme Architect's work was revised since, changing the requirement slice for "parser"
+    When Alice submits Test work on "parser" with a fail verdict, reporting an upstream ambiguity
+    Then the only task ready for "parser" is a Specification task

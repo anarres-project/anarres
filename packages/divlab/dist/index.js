@@ -9253,9 +9253,9 @@ var NO_RULE_COVERS_IT = {
 var failed = (work) => work.verdict === "fail" || work.verdict === "blocked";
 function rule(work) {
   if (work.contractsRevised?.length) return reviseArchitecture(work, work.contractsRevised);
-  if (work.inputsChanged?.length) return reviseWithNewInputs(work, work.inputsChanged);
   if (work.partial) return continuation(work);
   if (failed(work)) return revise(work);
+  if (work.inputsChanged?.length) return reviseWithNewInputs(work, work.inputsChanged);
   if (work.fromRole === "research") return returnResearch(work);
   if (work.modulesToStart !== void 0) return startModules(work, work.modulesToStart);
   return advance(work);

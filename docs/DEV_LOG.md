@@ -544,6 +544,17 @@ governance scenarios run alone.
             when the work changes both it and a contract.
   REFACTOR: `contractsListed`, the contracts a listing names or none, used for both reads.
   Gate 769 and 131.
+- Stale work that also failed, or was handed over part done (Bernard: the most upstream wins;
+  decision 0015, question 5). Acceptance: scenario "Work that failed after its requirement slice
+  changed goes where its failure says", red as not yet right (a Test task, not Specification).
+  RED:      sends failed work where its failure says, as the most upstream role wins -> received
+            role "test", staleRevision
+  GREEN:    the same (242 passed): failure is checked before the stale rule.
+  REFACTOR: none.
+  RED:      posts part-done work again as a continuation, which reads the work done too ->
+            received staleRevision, rule inputs_changed
+  GREEN:    the same (243 passed): partial and failed work, in their old order, then stale.
+  REFACTOR: none. A revised contract with a failure routed above Architecture is on the test list.
 
 ---
 

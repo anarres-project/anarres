@@ -616,6 +616,41 @@ describe("routing work whose inputs changed since its task was posted (decision 
     });
   });
 
+  it("sends failed work where its failure says, as the most upstream role wins", () => {
+    expect(
+      rule({
+        fromRole: "test",
+        module: "parser",
+        verdict: "fail",
+        impediments: [{ type: "upstream_ambiguity" }],
+        feedbackSignal: FEEDBACK,
+        inputsChanged: ["programme/slices/parser/requirements.md"],
+      }),
+    ).toEqual({
+      decision: { tasks: [{ role: "specification", module: "parser", feedbackSignal: FEEDBACK }] },
+      reason: { rule: "reported", impediment: "upstream_ambiguity" },
+    });
+  });
+
+  it("posts part-done work again as a continuation, which reads the work done too", () => {
+    expect(
+      rule({
+        fromRole: "test",
+        module: "parser",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        partial: true,
+        inputsChanged: ["programme/slices/parser/requirements.md"],
+      }),
+    ).toEqual({
+      decision: {
+        tasks: [{ role: "test", module: "parser", feedbackSignal: FEEDBACK, continuation: true }],
+      },
+      reason: { rule: "partial" },
+    });
+  });
+
   it("moves on as usual when none of its inputs changed", () => {
     expect(
       route({
