@@ -19,3 +19,12 @@ Feature: A member preparing a task has its role's inputs, and no others
     And Alice has claimed the Test task for "parser"
     When Alice prepares the Test task for "parser"
     Then Alice has the architecture and the specification of "parser" to read, and nothing of "ledger"
+
+  Scenario: A member preparing a task has its module's contracts as they were when the task was posted
+    Given a new project is started
+    And a member's Programme Architect work for the programme was accepted, listing the modules "parser", "lexer" and "ledger", with a contract "tokens" that "lexer" provides and "parser" uses, and a contract "entries" that "ledger" provides
+    And Alice is an established member
+    And Alice has claimed the Architecture task for "parser"
+    And the Programme Architect's work was revised since, so that "parser" uses the contract "entries" too
+    When Alice prepares the Architecture task for "parser"
+    Then Alice has the contract "tokens" to read, and not the contract "entries"

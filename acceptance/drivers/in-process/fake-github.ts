@@ -198,10 +198,15 @@ export class FakeGitHub
   /** Main's commits, oldest first, as GitHub records who made each. */
   private readonly mainCommits = new Map<string, MainCommit[]>();
 
+  /** Main's files as each commit left them. */
+  private readonly filesAtCommit = new Map<string, Map<string, string>>();
+
   private commitTo(project: string, by: Omit<MainCommit, "sha">): void {
     const commits = this.mainCommits.get(project) ?? [];
-    commits.push({ sha: `${project}-commit-${commits.length + 1}`, ...by });
+    const sha = `${project}-commit-${commits.length + 1}`;
+    commits.push({ sha, ...by });
     this.mainCommits.set(project, commits);
+    this.filesAtCommit.set(sha, new Map(this.files.get(project)));
   }
 
   async head(project: string): Promise<string> {
@@ -436,17 +441,14 @@ export class FakeGitHub
     return pullRequest;
   }
 
-  /**
-   * The project's modules.yaml at a commit. The fake keeps main's files as they are now, not each
-   * commit's: scenarios do not change modules.yaml after a task is pinned.
-   */
-  modulesAt(project: string, _commit: string): string | undefined {
-    return this.files.get(project)?.get(MODULES_FILE);
+  /** The project's modules.yaml as the commit left it. */
+  modulesAt(_project: string, commit: string): string | undefined {
+    return this.filesAtCommit.get(commit)?.get(MODULES_FILE);
   }
 
-  /** The paths of the files on a project's main branch. */
-  filesOnMain(project: string): string[] {
-    return [...(this.files.get(project)?.keys() ?? [])];
+  /** The paths of the files on a project's main branch as the commit left them. */
+  filesAt(_project: string, commit: string): string[] {
+    return [...(this.filesAtCommit.get(commit)?.keys() ?? [])];
   }
 
   async feedbackSignals(project: string): Promise<string[]> {

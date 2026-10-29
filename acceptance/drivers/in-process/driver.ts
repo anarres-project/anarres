@@ -456,11 +456,11 @@ export class InProcessDriver implements Driver {
       (path, text) => folder.push({ path, text }),
     );
     this.preparedHere.add(`${member} ${task.project}#${id}`);
-    // The files on main the sparse checkout of the role's read scope would fetch.
+    // The files at the pinned commit the sparse checkout of the role's read scope would fetch.
     this.fetched.set(
       `${member} ${task.project}#${id}`,
       this.github
-        .filesOnMain(task.project)
+        .filesAt(task.project, plan.commit)
         .filter((path) => plan.paths.some((place) => path.startsWith(place))),
     );
     this.folders.set(`${member} ${task.project}#${id}`, folder);

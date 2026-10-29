@@ -606,3 +606,10 @@ Given(
     });
   },
 );
+
+Given(
+  "the Programme Architect's work was revised since, so that {string} uses the contract {string} too",
+  function (this: AnarresWorld, module: string, contract: string) {
+    return this.anarres.programmeRevisedSoThatUses(module, contract);
+  },
+);

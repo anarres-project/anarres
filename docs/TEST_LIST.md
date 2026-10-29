@@ -687,8 +687,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           contracts and no other's (in-process);
     - [x] the sandbox shows it (805efa3: the scenario passed; 86 of 87, the other failing on a
           Divlab run that waited too long, below);
-    - [ ] `modules.yaml` changed after a task was pinned: the in-process fake keeps only main's
-          files now, so no scenario shows the pinned version being read;
+    - [x] `modules.yaml` changed after a task was pinned: the member's prepared task still has
+          its module's contracts as they were when the task was posted (the in-process fake keeps
+          each commit's files now; checked it fails if the latest is read). Whether a member
+          should be told their task's inputs have changed since is the staleness item (section 4);
   - [ ] what a Research task reads, as its question names it;
   - [x] Divlab posts each task with the commit its inputs are pinned at, the merge that decided
         it, in the issue's words and its decision block; read back only if it is a commit name;

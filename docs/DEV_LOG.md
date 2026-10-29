@@ -444,6 +444,11 @@ governance scenarios run alone.
   fetched beyond contracts); then not yet right, the Then failing: the scenarios' Architecture
   and Specification work wrote no artefacts to fetch. Green once they do, with no change to the
   system; checked it fails if preparing fetches every file. Gate 124.
+- Scenario: "A member preparing a task has its module's contracts as they were when the task was
+  posted", the Programme Architect's work revised after the task was claimed. Not yet right: the
+  member had the newer contract too, since the in-process fake kept only main's files as they
+  are now. Green once the fake keeps each commit's files (a harness change; the CLI already
+  reads at the pinned commit); checked it fails if the latest `modules.yaml` is read. Gate 125.
 
 ---
 

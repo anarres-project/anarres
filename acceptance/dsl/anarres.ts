@@ -183,6 +183,7 @@ export class Anarres {
     },
     named?: string,
   ) {
+    if (work.modulesListed !== undefined) this.programme = work;
     const member = await this.holderOf(work, named);
     // Every piece of work has a feedback signal of its own.
     this.signalsWritten += 1;
@@ -194,6 +195,26 @@ export class Anarres {
       project: this.project,
       member,
       feedbackSignal,
+    });
+  }
+
+  /** The Programme Architect's last accepted work listing the modules, in the scenario's words. */
+  private programme: { modulesListed?: string[]; contracts?: Contract[] } | undefined;
+
+  /**
+   * Programme Architect work is accepted again, listing the modules and contracts as the last
+   * did, except that the module also uses the contract.
+   */
+  async programmeRevisedSoThatUses(module: string, contract: string) {
+    assert.ok(this.programme !== undefined, "expected Programme Architect work listing modules");
+    await this.memberHasWorkAccepted({
+      role: "Programme Architect",
+      module: "programme",
+      verdict: "pass",
+      modulesListed: this.programme.modulesListed ?? [],
+      contracts: (this.programme.contracts ?? []).map((one) =>
+        one.name === contract ? { ...one, usedBy: [...one.usedBy, module] } : one,
+      ),
     });
   }
 
