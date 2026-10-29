@@ -194,9 +194,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [x] Coding reporting an upstream ambiguity → Specification (Bernard, 2026-10-21; the AutoPM has
       no such row, CSD's interface specifications route a specification ambiguity there). If the
       ambiguity lies further up, Specification fails upward in turn.
-- [ ] Revisit (Bernard, 2026-10-12): a Reviewer or Security & Quality fail reporting an
+- [x] Revisit (Bernard, 2026-10-12): a Reviewer or Security & Quality fail reporting an
       architecture impediment goes to Coding, as the AutoPM table reads; Architecture may suit
-      better.
+      better. Decided 2026-10-29 (Bernard): Architecture. Rows added to "An architecture
+      impediment goes back to Architecture"; concept §9 lists the difference.
 - [x] A revision task carries the feedback signal that triggered it; a task for the next role
       carries none (only revision tasks receive feedback, concept §8).
 - [x] An interface impediment goes to the Programme Architect, never to another module, whichever

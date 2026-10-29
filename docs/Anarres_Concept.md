@@ -296,6 +296,9 @@ The March AutoPM spec had a Claude session apply a fixed routing table. A fixed 
   - Coding's `upstream_ambiguity` → Specification (the AutoPM table has no such row; CSD's
     interface specifications send a specification ambiguity there). If the ambiguity lies further
     up, Specification fails upward in turn
+  - Reviewer's and Security & Quality's `architecture_impediment` → Architecture (the AutoPM
+    table sends every failed review to Coding, which cannot change the architecture; Bernard,
+    2026-10-29)
   - when a failure reports several problems, one revision task goes to the most upstream role that
     owns one, except that a `knowledge_gap` goes to Research first: what is learnt may change any
     other fix. The Research task belongs to the module that reported the gap

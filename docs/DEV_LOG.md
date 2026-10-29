@@ -636,6 +636,14 @@ governance scenarios run alone.
   RED:      keeps that the task follows research -> received no `afterResearch`
   GREEN:    the same (777 passed): the task's folder record keeps it, for the hook.
   REFACTOR: none. Concept §6 updated.
+- A Reviewer or Security & Quality fail reporting an architecture impediment goes to
+  Architecture (Bernard, revisited). Acceptance: two rows of "An architecture impediment goes back
+  to Architecture", red as not yet right; "A failed review or security check goes to Coding" now
+  reports an implementation impediment, as the architecture one no longer goes there.
+  RED:      sends reviewer / security-and-quality reporting an architecture impediment to
+            Architecture -> 2 failed (one test, two rows)
+  GREEN:    the same (779 passed): two rows in the AutoPM table, in core.
+  REFACTOR: none. Concept §9 lists the difference from the AutoPM table.
 
 ---
 

@@ -38,6 +38,13 @@ Feature: Divlab sends failed work back to the role that can fix it
       | Specification |
       | Coding        |
 
+    # A review or security check finding the architecture at fault (Bernard, 2026-10-29).
+    @in-process-only
+    Examples:
+      | role               |
+      | Reviewer           |
+      | Security & Quality |
+
   Scenario: Failing tests send the code back to Coding
     Given a project with a module "parser"
     When a member's Coding work on "parser" is accepted with a fail verdict, reporting test failures
@@ -58,9 +65,9 @@ Feature: Divlab sends failed work back to the role that can fix it
       | role               |
       | Security & Quality |
 
-  Scenario Outline: A failed review or security check goes to Coding whatever else it reports
+  Scenario Outline: A failed review or security check goes to Coding
     Given a project with a module "parser"
-    When a member's <role> work on "parser" is accepted with a fail verdict, reporting an architecture impediment
+    When a member's <role> work on "parser" is accepted with a fail verdict, reporting an implementation impediment
     Then the only task ready for "parser" is a Coding task
 
     Examples:

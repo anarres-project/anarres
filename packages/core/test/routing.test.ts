@@ -239,6 +239,21 @@ describe("routing accepted work", () => {
     });
   });
 
+  it.each(["reviewer", "security-and-quality"])(
+    "sends %s reporting an architecture impediment to Architecture (Bernard, 2026-10-29)",
+    (fromRole) => {
+      expect(
+        route({
+          fromRole,
+          module: "parser",
+          verdict: "fail",
+          impediments: [{ type: "architecture_impediment" }],
+          feedbackSignal: FEEDBACK,
+        }),
+      ).toEqual({ tasks: [{ role: "architecture", module: "parser", feedbackSignal: FEEDBACK }] });
+    },
+  );
+
   it("sends a failed Security & Quality check back to Coding", () => {
     expect(
       route({

@@ -240,6 +240,9 @@ const FAILURE_ROUTES: readonly FailureRoute[] = [
   { from: "coding", reporting: "test_failures", to: "coding" },
   { from: "coding", reporting: "architecture_impediment", to: "architecture" },
   { from: "reviewer", reporting: "scope_gap", to: "programme-architect" },
+  // A review or security check finding the architecture at fault (Bernard, 2026-10-29).
+  { from: "reviewer", reporting: "architecture_impediment", to: "architecture" },
+  { from: "security-and-quality", reporting: "architecture_impediment", to: "architecture" },
   { from: "reviewer", to: "coding" },
   { from: "security-and-quality", to: "coding" },
   ...MODULE_PIPELINE.map((from) => ({
