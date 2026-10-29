@@ -581,6 +581,8 @@ governance scenarios run alone.
             whether they did -> received a Specification task
   GREEN:    the same (213 passed): each of the module's contracts counts as revised.
   REFACTOR: none. The in-process fake lists a comparison as GitHub does, too many from 300.
+- The f12fb4f sandbox run, with the 90-minute limit: 93 of 93 in 58 minutes, the stale-work and
+  revised-contract scenarios among them.
 
 ---
 

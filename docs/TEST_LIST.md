@@ -494,8 +494,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       (Bernard, 2026-10-29).
 - [ ] b1898b1, near the end of a slow run: "Divlab neither merged nor refused" a Reviewer task's
       pull request while its Divlab run sat in progress for 6 minutes, and "Divlab did not act
-      on the claim" of the next. See whether they recur with the longer limit; if so, whether
-      the driver's waits are too short for GitHub when it is slow.
+      on the claim" of the next. Not seen in f12fb4f's run (93 of 93, 58 minutes); if they
+      recur, see whether the driver's waits are too short for GitHub when it is slow.
 - [x] The sandbox run polls less: merges and finished runs every 5 seconds, decisions every 3
       (2026-10-24, from about 3,100 requests a run): c5666a4's full run took 2,466 (640, 577,
       599 and 650 across its four workers), and passed.
