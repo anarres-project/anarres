@@ -146,9 +146,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         check runs, but cannot yet be relied on. GitHub documents no such jumps (looked,
         2026-10-29): an installation's allowance is one pool for all its tokens, and GitHub
         advises reading each answer's `x-ratelimit-*` headers rather than asking `rate_limit`.
-        Next: Divlab's tally keeps the last answer's headers (used, reset, and the resource
-        counted), printed instead of a `rate_limit` reading, so readings come from the requests
-        themselves and can be compared run by run;
+    - [x] each Divlab run prints its allowance by its own last answer's headers (used, limit,
+          reset and the resource counted) beside the `rate_limit` reading, so the two can be
+          compared run by run; an answer without the headers, such as a failing gateway's page,
+          leaves the last reading as it was;
+    - [ ] compare them across a sandbox run's Divlab runs, then rely on one (or say why not);
   - [x] appending an event costs one request once the log has been read, not a listing plus a
         write; a number another run took since is found and skipped; a write GitHub fails is
         not retried, so an event GitHub saved anyway is not recorded twice;

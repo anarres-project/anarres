@@ -19,7 +19,7 @@ export async function requestGitHub<T>(
    * rather stop than wait out a spent hourly allowance says so.
    */
   options: { repeatable?: boolean; waitForAllowance?: boolean } = {},
-): Promise<{ status: number; data: T }> {
+): Promise<{ status: number; data: T; allowance?: Allowance }> {
   const repeatable = options.repeatable ?? (method === "GET" || method === "DELETE");
   for (let attempt = 1; ; attempt++) {
     let response: Response;
@@ -52,7 +52,8 @@ export async function requestGitHub<T>(
       response.status === 429 ||
       ruleTimedOut({ status: response.status, message });
     if (wait === undefined || (!undone && !repeatable) || attempt === ATTEMPTS) {
-      return { status: response.status, data };
+      const allowance = allowanceIn(response.headers);
+      return { status: response.status, data, ...(allowance === undefined ? {} : { allowance }) };
     }
     // Said in the run's log, so a run that waits a long time says why; on standard error, apart
     // from what a command prints.
@@ -61,6 +62,19 @@ export async function requestGitHub<T>(
     );
     await pause(wait);
   }
+}
+
+/** The hourly allowance an answer's headers say is used, and of which resource (REST's is core). */
+export type Allowance = { resource: string; used: number; limit: number; reset: number };
+
+function allowanceIn(headers: Headers): Allowance | undefined {
+  if (!headers.has("x-ratelimit-used")) return undefined;
+  return {
+    resource: headers.get("x-ratelimit-resource") ?? "",
+    used: Number(headers.get("x-ratelimit-used")),
+    limit: Number(headers.get("x-ratelimit-limit")),
+    reset: Number(headers.get("x-ratelimit-reset")),
+  };
 }
 
 /** GitHub answers in JSON, except a failing gateway, which may send a page of HTML. */

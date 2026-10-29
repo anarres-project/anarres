@@ -52,4 +52,31 @@ describe("asking GitHub", () => {
     await vi.runAllTimersAsync();
     expect((await asked).status).toBe(201);
   });
+
+  it("gives the allowance GitHub's answer says is used, of which resource, and when it resets", async () => {
+    answering(
+      new Response("{}", {
+        status: 200,
+        headers: {
+          "x-ratelimit-resource": "core",
+          "x-ratelimit-used": "126",
+          "x-ratelimit-limit": "5000",
+          "x-ratelimit-reset": "1793350800",
+        },
+      }),
+    );
+    const answer = await requestGitHub("t0k3n", "GET", "repos/commons/ledger/issues/7");
+    expect(answer.allowance).toEqual({
+      resource: "core",
+      used: 126,
+      limit: 5000,
+      reset: 1793350800,
+    });
+  });
+
+  it("gives no allowance for an answer that does not say, such as a failing gateway's page", async () => {
+    answering(new Response("<html>Bad gateway</html>", { status: 502 }));
+    const answer = await requestGitHub("t0k3n", "POST", "repos/commons/ledger/issues", {});
+    expect(answer.allowance).toBeUndefined();
+  });
 });

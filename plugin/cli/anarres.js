@@ -10225,13 +10225,23 @@ async function requestGitHub(token, method, path, body, options = {}) {
     );
     const undone = response.status === 403 || response.status === 429 || ruleTimedOut({ status: response.status, message });
     if (wait === void 0 || !undone && !repeatable || attempt === ATTEMPTS) {
-      return { status: response.status, data };
+      const allowance = allowanceIn(response.headers);
+      return { status: response.status, data, ...allowance === void 0 ? {} : { allowance } };
     }
     console.error(
       `GitHub answered ${method} ${path} with ${response.status} (${message}): asking again in ${wait / 1e3} s`
     );
     await pause(wait);
   }
+}
+function allowanceIn(headers) {
+  if (!headers.has("x-ratelimit-used")) return void 0;
+  return {
+    resource: headers.get("x-ratelimit-resource") ?? "",
+    used: Number(headers.get("x-ratelimit-used")),
+    limit: Number(headers.get("x-ratelimit-limit")),
+    reset: Number(headers.get("x-ratelimit-reset"))
+  };
 }
 function parsed(text) {
   try {

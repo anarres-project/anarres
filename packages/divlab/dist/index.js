@@ -10921,13 +10921,23 @@ async function requestGitHub(token2, method, path, body, options = {}) {
     );
     const undone = response.status === 403 || response.status === 429 || ruleTimedOut({ status: response.status, message });
     if (wait === void 0 || !undone && !repeatable || attempt === ATTEMPTS) {
-      return { status: response.status, data };
+      const allowance = allowanceIn(response.headers);
+      return { status: response.status, data, ...allowance === void 0 ? {} : { allowance } };
     }
     console.error(
       `GitHub answered ${method} ${path} with ${response.status} (${message}): asking again in ${wait / 1e3} s`
     );
     await pause(wait);
   }
+}
+function allowanceIn(headers) {
+  if (!headers.has("x-ratelimit-used")) return void 0;
+  return {
+    resource: headers.get("x-ratelimit-resource") ?? "",
+    used: Number(headers.get("x-ratelimit-used")),
+    limit: Number(headers.get("x-ratelimit-limit")),
+    reset: Number(headers.get("x-ratelimit-reset"))
+  };
 }
 function parsed(text) {
   try {
@@ -11663,14 +11673,22 @@ function summary(tally) {
 }
 function countingRequests(request) {
   const tally = /* @__PURE__ */ new Map();
+  let last;
   return {
-    request: (token2, method, path, body, options) => {
+    lastAllowance: () => last,
+    request: async (token2, method, path, body, options) => {
       const kind = kindOf(method, path);
       tally.set(kind, (tally.get(kind) ?? 0) + 1);
-      return request(token2, method, path, body, options);
+      const answer = await request(token2, method, path, body, options);
+      last = answer.allowance ?? last;
+      return answer;
     },
     tally
   };
+}
+function allowanceSaid({ resource, used, limit, reset }) {
+  const resets = new Date(reset * 1e3).toISOString().slice(11, 16);
+  return `${resource} ${used} of ${limit} used (resets ${resets} UTC)`;
 }
 
 // src/action.ts
@@ -11691,9 +11709,13 @@ var github = new GitHubAdapter({
 var sayRequests = async () => {
   for (const line of summary(counted.tally)) console.log(line);
   try {
-    const { used, limit, reset } = await github.allowance();
-    const resets = new Date(reset * 1e3).toISOString().slice(11, 16);
-    console.log(`The App's allowance: ${used} of ${limit} used (resets ${resets} UTC)`);
+    const last = counted.lastAllowance();
+    if (last !== void 0)
+      console.log(`The App's allowance, by its last answer: ${allowanceSaid(last)}`);
+    const read = await github.allowance();
+    console.log(
+      `The App's allowance, as rate_limit reads it: ${allowanceSaid({ resource: "core", ...read })}`
+    );
   } catch {
   }
 };

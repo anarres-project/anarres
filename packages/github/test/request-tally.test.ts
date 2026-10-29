@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countingRequests, GitHubAdapter, kindOf, summary } from "../src/index.ts";
+import { allowanceSaid, countingRequests, GitHubAdapter, kindOf, summary } from "../src/index.ts";
 
 describe("the kind of request a sandbox run makes", () => {
   it("is its method and what it asks for in the repository, without the repository's name", () => {
@@ -56,6 +56,38 @@ describe("counting a run's requests to GitHub", () => {
   });
 });
 
+describe("the allowance a run's requests were counted against", () => {
+  it("is what GitHub's last answer said, read from the requests themselves", async () => {
+    const answers = [
+      { resource: "core", used: 125, limit: 5000, reset: 1_793_052_000 },
+      { resource: "core", used: 126, limit: 5000, reset: 1_793_052_000 },
+    ];
+    const counted = countingRequests(async <T>() => {
+      const allowance = answers.shift();
+      return { status: 200, data: {} as T, ...(allowance === undefined ? {} : { allowance }) };
+    });
+    await counted.request("t", "GET", "repos/commons/ledger/issues/4");
+    await counted.request("t", "GET", "repos/commons/ledger/issues/5");
+    expect(counted.lastAllowance()).toEqual({
+      resource: "core",
+      used: 126,
+      limit: 5000,
+      reset: 1_793_052_000,
+    });
+  });
+
+  it("stays the last that said, when a later answer does not", async () => {
+    const answers = [{ resource: "core", used: 125, limit: 5000, reset: 1_793_052_000 }];
+    const counted = countingRequests(async <T>() => {
+      const allowance = answers.shift();
+      return { status: 200, data: {} as T, ...(allowance === undefined ? {} : { allowance }) };
+    });
+    await counted.request("t", "GET", "repos/commons/ledger/issues/4");
+    await counted.request("t", "GET", "repos/commons/ledger/issues/5");
+    expect(counted.lastAllowance()?.used).toBe(125);
+  });
+});
+
 describe("the allowance a run has used", () => {
   it("is GitHub's reading of the token's hourly allowance, which reading does not use up", async () => {
     const adapter = new GitHubAdapter({
@@ -70,5 +102,18 @@ describe("the allowance a run has used", () => {
       },
     });
     expect(await adapter.allowance()).toEqual({ used: 4210, limit: 5000, reset: 1_793_052_000 });
+  });
+});
+
+describe("an allowance, as a run's log says it", () => {
+  it("names the resource, how much is used of how much, and when it resets in UTC", () => {
+    expect(
+      allowanceSaid({
+        resource: "core",
+        used: 126,
+        limit: 5000,
+        reset: Date.UTC(2026, 9, 29, 9, 31) / 1000,
+      }),
+    ).toBe("core 126 of 5000 used (resets 09:31 UTC)");
   });
 });

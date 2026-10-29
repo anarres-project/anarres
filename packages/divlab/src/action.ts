@@ -1,5 +1,11 @@
 import { readFileSync } from "node:fs";
-import { countingRequests, GitHubAdapter, requestGitHub, summary } from "@anarres/github";
+import {
+  allowanceSaid,
+  countingRequests,
+  GitHubAdapter,
+  requestGitHub,
+  summary,
+} from "@anarres/github";
 import { whatToActOn } from "./event.ts";
 import {
   checkMain,
@@ -37,9 +43,15 @@ const github = new GitHubAdapter({
 const sayRequests = async () => {
   for (const line of summary(counted.tally)) console.log(line);
   try {
-    const { used, limit, reset } = await github.allowance();
-    const resets = new Date(reset * 1000).toISOString().slice(11, 16);
-    console.log(`The App's allowance: ${used} of ${limit} used (resets ${resets} UTC)`);
+    // By the run's own last answer, and as rate_limit reads it: the two are compared run by run,
+    // as readings have jumped (TEST_LIST, section 0).
+    const last = counted.lastAllowance();
+    if (last !== undefined)
+      console.log(`The App's allowance, by its last answer: ${allowanceSaid(last)}`);
+    const read = await github.allowance();
+    console.log(
+      `The App's allowance, as rate_limit reads it: ${allowanceSaid({ resource: "core", ...read })}`,
+    );
   } catch {
     // Saying how much is left must never fail a run.
   }

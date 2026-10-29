@@ -594,6 +594,25 @@ governance scenarios run alone.
             out -> expected 409 to be 201
   GREEN:    the same (205 passed): `ruleTimedOut`, a refusal undone, as a rate limit is.
   REFACTOR: the request layer reads GitHub's message once.
+- Allowance readings that jump (test list, section 0). GitHub documents no such jumps (an
+  installation's allowance is one pool) and advises reading each answer's headers instead of
+  `rate_limit`; so each Divlab run now prints both, to compare.
+  RED:      gives the allowance GitHub's answer says is used, of which resource, and when it
+            resets -> expected undefined to deeply equal { resource: 'core', used: 126, … }
+  GREEN:    the same (206 passed).
+  RED:      the allowance a run's requests were counted against is what GitHub's last answer
+            said -> TypeError: counted.lastAllowance is not a function; with a stub, expected
+            undefined to deeply equal { … used: 126 … }
+  GREEN:    the same (207 passed).
+  REFACTOR: the counting wrapper keeps the request's type.
+  RED:      gives no allowance for an answer that does not say, such as a failing gateway's page
+            -> expected { resource: '', used: +0, … } to be undefined
+  GREEN:    the same (208 passed).
+  RED:      stays the last that said, when a later answer does not -> expected undefined to be 125
+  GREEN:    the same (209 passed).
+  RED:      an allowance, as a run's log says it -> TypeError: allowanceSaid is not a function;
+            with a stub, expected '' to be 'core 126 of 5000 used (resets 09:31 UTC)'
+  GREEN:    the same; Divlab's entry point prints both readings with it. Gate 784 and 134.
 
 ---
 
