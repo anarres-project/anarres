@@ -9021,7 +9021,9 @@ function readScope(role, module, task = {}) {
     ...task.continuation || task.staleRevision ? [writeScope(role, module)] : []
   ];
 }
-var contractPlaces = (contracts) => contracts.map((contract) => `${PROGRAMME}/contracts/${contract}/`);
+var CONTRACTS = `${PROGRAMME}/contracts/`;
+var contractPlace = (contract) => `${CONTRACTS}${contract}/`;
+var contractPlaces = (contracts) => contracts.map(contractPlace);
 function writeScope(role, module) {
   return WRITE_SCOPES[role](module);
 }
@@ -10654,6 +10656,9 @@ var GitHubAdapter = class {
   /** The project's modules.yaml as it was at a commit, if it had one then (decision 0014). */
   async modulesAt(project, commit) {
     return this.fileText(project, `${MODULES_FILE}?ref=${encodeURIComponent(commit)}`);
+  }
+  async modulesOnMain(project) {
+    return this.modulesAt(project, "main");
   }
   async fileText(project, path) {
     const { status, data } = await this.request(

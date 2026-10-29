@@ -441,6 +441,11 @@ export class FakeGitHub
     return pullRequest;
   }
 
+  /** The project's modules.yaml on main now. */
+  async modulesOnMain(project: string): Promise<string | undefined> {
+    return this.files.get(project)?.get(MODULES_FILE);
+  }
+
   /** The project's modules.yaml as the commit left it. */
   modulesAt(_project: string, commit: string): string | undefined {
     return this.filesAtCommit.get(commit)?.get(MODULES_FILE);

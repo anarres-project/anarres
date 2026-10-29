@@ -15,6 +15,8 @@ export type AcceptedWork = {
   modulesToStart?: string[];
   /** The task's inputs that changed after it was posted (decision 0015). */
   inputsChanged?: string[];
+  /** The contracts the module provides or uses revised after the task was posted (0015). */
+  contractsRevised?: string[];
 };
 
 export type Task = {
@@ -58,7 +60,8 @@ export type Reason =
   | { rule: "research_returned" }
   | { rule: "no_matching_rule" }
   | { rule: "re_run_limit"; role: Role }
-  | { rule: "inputs_changed"; inputs: string[] };
+  | { rule: "inputs_changed"; inputs: string[] }
+  | { rule: "contract_revised"; contracts: string[] };
 
 /** A routing decision and the reason for it. */
 export type Ruling = { decision: RoutingDecision; reason: Reason };
@@ -77,6 +80,7 @@ export const failed = (work: Pick<AcceptedWork, "verdict">) =>
   work.verdict === "fail" || work.verdict === "blocked";
 
 export function rule(work: AcceptedWork): Ruling {
+  if (work.contractsRevised?.length) return reviseArchitecture(work, work.contractsRevised);
   if (work.inputsChanged?.length) return reviseWithNewInputs(work, work.inputsChanged);
   if (work.partial) return continuation(work);
   if (failed(work)) return revise(work);
@@ -111,6 +115,20 @@ function reviseWithNewInputs(work: AcceptedWork, inputs: string[]): Ruling {
     staleRevision: true,
   };
   return { decision: { tasks: [task] }, reason: { rule: "inputs_changed", inputs } };
+}
+
+/**
+ * A revised contract sends each module providing or using it back to Architecture, the first role
+ * that reads contracts, ahead of any other revision (decision 0015).
+ */
+function reviseArchitecture(work: AcceptedWork, contracts: string[]): Ruling {
+  const task: Task = {
+    role: "architecture",
+    module: work.module,
+    feedbackSignal: work.feedbackSignal,
+    staleRevision: true,
+  };
+  return { decision: { tasks: [task] }, reason: { rule: "contract_revised", contracts } };
 }
 
 /** A revision task for the role that can fix what failed work reports. */

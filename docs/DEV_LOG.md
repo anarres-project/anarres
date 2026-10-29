@@ -484,6 +484,16 @@ governance scenarios run alone.
   (201). The scenario then passed in-process: `preparation` already gave the whole task to
   `readScope`; a test of it passed first time, kept as a regression. RED: the folder's record
   keeps it for the hook -> missing. GREEN (102). `@wip` removed.
+- Scenario (`@wip`, not yet right): "A revised contract sends a module whose task was open back to
+  Architecture" -> Coding was ready.
+- RED: core sends the module back to Architecture when a contract it provides or uses was
+  revised -> Coding. GREEN (238). RED: a module's contracts revised since a commit are those
+  with a file changed in their folder -> `[]` (first `is not a function`). GREEN (239); the
+  contract folder's path is stated once now (`contractPlace`, `CONTRACTS`).
+- RED: Divlab sends a module back to Architecture when a contract it uses was revised -> a Test
+  task. GREEN (445 with core): it reads main's `modules.yaml` only when a contract changed. RED:
+  the adapter's `modulesOnMain` -> undefined (first `is not a function`). GREEN. `@wip`
+  removed; checked the scenario fails without the rule. Gate 762 and 128.
 
 ---
 

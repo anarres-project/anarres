@@ -67,7 +67,9 @@ export function otherFiles(work: AcceptedWork) {
     })),
     ...(work.contracts ?? []).map((contract) => ({
       path: `programme/contracts/${contract.name}/contract.md`,
-      text: `# Contract ${contract.name}\n`,
+      text: work.contractsRevised?.includes(contract.name)
+        ? `# Contract ${contract.name}, revised by ${work.feedbackSignal}\n`
+        : `# Contract ${contract.name}\n`,
     })),
     // Architecture and Specification work write the module's architecture and specification.
     ...(work.role === "Architecture" || work.role === "Specification"

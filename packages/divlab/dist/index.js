@@ -9018,7 +9018,9 @@ function readScope(role, module, task = {}) {
     ...task.continuation || task.staleRevision ? [writeScope(role, module)] : []
   ];
 }
-var contractPlaces = (contracts) => contracts.map((contract) => `${PROGRAMME}/contracts/${contract}/`);
+var CONTRACTS = `${PROGRAMME}/contracts/`;
+var contractPlace = (contract) => `${CONTRACTS}${contract}/`;
+var contractPlaces = (contracts) => contracts.map(contractPlace);
 function writeScope(role, module) {
   return WRITE_SCOPES[role](module);
 }
@@ -9225,6 +9227,14 @@ function readModules(text) {
   return { modules: names, contracts };
 }
 var repeated = (names) => names.find((name, i2) => names.indexOf(name) !== i2);
+function contractsOfModule(contracts, module) {
+  return contracts.filter((contract) => contract.providedBy === module || contract.usedBy.includes(module)).map((contract) => contract.name);
+}
+function contractsRevised(contracts, module, changed) {
+  return contractsOfModule(contracts, module).filter(
+    (contract) => changed.some((path) => path.startsWith(contractPlace(contract)))
+  );
+}
 
 // ../core/src/routing.ts
 var MODULE_PIPELINE = [
@@ -9242,6 +9252,7 @@ var NO_RULE_COVERS_IT = {
 };
 var failed = (work) => work.verdict === "fail" || work.verdict === "blocked";
 function rule(work) {
+  if (work.contractsRevised?.length) return reviseArchitecture(work, work.contractsRevised);
   if (work.inputsChanged?.length) return reviseWithNewInputs(work, work.inputsChanged);
   if (work.partial) return continuation(work);
   if (failed(work)) return revise(work);
@@ -9266,6 +9277,15 @@ function reviseWithNewInputs(work, inputs) {
     staleRevision: true
   };
   return { decision: { tasks: [task] }, reason: { rule: "inputs_changed", inputs } };
+}
+function reviseArchitecture(work, contracts) {
+  const task = {
+    role: "architecture",
+    module: work.module,
+    feedbackSignal: work.feedbackSignal,
+    staleRevision: true
+  };
+  return { decision: { tasks: [task] }, reason: { rule: "contract_revised", contracts } };
 }
 function revise(work) {
   const matched = failureRoute(work);
@@ -9964,6 +9984,12 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     const changed = await pullRequests.changedOnMainSince(project2, pinned);
     const inputsChanged = changedInputs(role, signal.module, {}, changed);
     if (inputsChanged.length > 0) work = { ...work, inputsChanged };
+    if (changed.some((path) => path.startsWith(CONTRACTS))) {
+      const listed = readModules(await pullRequests.modulesOnMain(project2) ?? "");
+      const contracts = "unreadable" in listed ? [] : listed.contracts;
+      const revised = contractsRevised(contracts, signal.module, changed);
+      if (revised.length > 0) work = { ...work, contractsRevised: revised };
+    }
   }
   await log.append({
     project: project2,
@@ -11270,6 +11296,9 @@ var GitHubAdapter = class {
   /** The project's modules.yaml as it was at a commit, if it had one then (decision 0014). */
   async modulesAt(project2, commit) {
     return this.fileText(project2, `${MODULES_FILE}?ref=${encodeURIComponent(commit)}`);
+  }
+  async modulesOnMain(project2) {
+    return this.modulesAt(project2, "main");
   }
   async fileText(project2, path) {
     const { status, data } = await this.request(

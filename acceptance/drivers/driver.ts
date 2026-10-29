@@ -32,6 +32,8 @@ export type AcceptedWork = {
   contracts?: Contract[];
   /** The modules whose requirement slice the Programme Architect's work changes. */
   slicesChanged?: string[];
+  /** The contracts whose text the Programme Architect's work revises. */
+  contractsRevised?: string[];
   /** The project's tests are still running on the member's work. */
   testsRunning?: boolean;
   /** The new tests in the member's Test work pass before any code exists: they test nothing. */

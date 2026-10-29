@@ -1,4 +1,5 @@
 export {
+  CONTRACTS,
   changedInputs,
   mayRead,
   outsideScope,
@@ -18,6 +19,7 @@ export { LEASE_HOURS, leaseHasRunOut, leaseRunsOutAt } from "./leases.ts";
 export {
   type Contract,
   contractsOfModule,
+  contractsRevised,
   MODULES_FILE,
   type Modules,
   readModules,

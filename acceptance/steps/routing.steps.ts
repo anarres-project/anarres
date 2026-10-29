@@ -620,3 +620,10 @@ Given(
     return this.anarres.programmeRevisedChangingSliceFor(module);
   },
 );
+
+Given(
+  "the Programme Architect's work was revised since, changing the contract {string}",
+  function (this: AnarresWorld, contract: string) {
+    return this.anarres.programmeRevisedChangingContract(contract);
+  },
+);

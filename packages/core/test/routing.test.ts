@@ -628,4 +628,25 @@ describe("routing work whose inputs changed since its task was posted (decision 
       }),
     ).toEqual({ tasks: [{ role: "coding", module: "parser" }] });
   });
+
+  it("sends the module back to Architecture when a contract it provides or uses was revised", () => {
+    expect(
+      rule({
+        fromRole: "test",
+        module: "parser",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        inputsChanged: [],
+        contractsRevised: ["tokens"],
+      }),
+    ).toEqual({
+      decision: {
+        tasks: [
+          { role: "architecture", module: "parser", feedbackSignal: FEEDBACK, staleRevision: true },
+        ],
+      },
+      reason: { rule: "contract_revised", contracts: ["tokens"] },
+    });
+  });
 });

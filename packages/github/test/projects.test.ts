@@ -360,3 +360,23 @@ describe("a project's modules.yaml at a commit (decision 0014)", () => {
     expect(await adapter.modulesAt("ledger", SHA)).toBeUndefined();
   });
 });
+
+describe("a project's modules.yaml on main (decision 0015)", () => {
+  it("is read as main has it now", async () => {
+    const listed = "modules:\n  - name: parser\n";
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/contents/programme/modules.yaml?ref=main"
+        ) {
+          return { status: 200, data: { content: Buffer.from(listed).toString("base64") } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.modulesOnMain("ledger")).toBe(listed);
+  });
+});

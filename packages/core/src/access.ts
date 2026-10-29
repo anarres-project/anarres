@@ -99,8 +99,10 @@ export type ReadingTask = {
 };
 
 /** Each contract is a folder of its own (decision 0014). */
-const contractPlaces = (contracts: readonly string[]) =>
-  contracts.map((contract) => `${PROGRAMME}/contracts/${contract}/`);
+export const CONTRACTS = `${PROGRAMME}/contracts/`;
+export const contractPlace = (contract: string) => `${CONTRACTS}${contract}/`;
+
+const contractPlaces = (contracts: readonly string[]) => contracts.map(contractPlace);
 
 /** The place a role's work writes, for the module named in its task. */
 export function writeScope(role: Role, module: string): string {

@@ -602,6 +602,10 @@ export class GitHubAdapter
     return this.fileText(project, `${MODULES_FILE}?ref=${encodeURIComponent(commit)}`);
   }
 
+  async modulesOnMain(project: string): Promise<string | undefined> {
+    return this.modulesAt(project, "main");
+  }
+
   private async fileText(project: string, path: string): Promise<string | undefined> {
     const { status, data } = await this.request<{ content: string }>(
       "GET",

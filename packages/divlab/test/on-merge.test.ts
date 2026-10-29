@@ -534,6 +534,7 @@ describe("acting on a pull request", () => {
     openAt: async () => [],
     // Nothing on main changed since any task's inputs were pinned.
     changedOnMainSince: async () => [],
+    modulesOnMain: async () => undefined,
     // The project's tests on Test work: its new test ran and failed, as it should.
     testReport: async () => ({
       state: "finished",
@@ -1883,6 +1884,51 @@ describe("acting on a pull request", () => {
     );
     expect(posted.map(({ role, module }) => ({ role, module }))).toEqual([
       { role: "specification", module: "parser" },
+    ]);
+  });
+
+  it("sends a module back to Architecture when a contract it uses was revised since (0015)", async () => {
+    const posted: PostedTask[] = [];
+    const postedAtPinned: EventLog = {
+      ...log,
+      read: async () => [
+        {
+          project: "ledger",
+          mergedAs: "p1nned",
+          work: {
+            fromRole: "architecture",
+            module: "parser",
+            verdict: "pass",
+            impediments: [],
+            feedbackSignal: "feedback/FB-0.md",
+          },
+          decision: { tasks: [{ role: "specification", module: "parser" }] },
+          reason: { rule: "passed" },
+        },
+      ],
+    };
+    const contractRevised: PullRequests = {
+      ...submitting(),
+      changedOnMainSince: async () => ["programme/contracts/tokens/contract.md"],
+      modulesOnMain: async () =>
+        [
+          "modules:",
+          "  - name: lexer",
+          "    provides: [tokens]",
+          "  - name: parser",
+          "    uses: [tokens]",
+        ].join("\n"),
+    };
+    await onPullRequest(
+      "ledger",
+      "7",
+      contractRevised,
+      { ...held, post: async (task) => void posted.push(task) },
+      postedAtPinned,
+      clock,
+    );
+    expect(posted.map(({ role, module }) => ({ role, module }))).toEqual([
+      { role: "architecture", module: "parser" },
     ]);
   });
 });

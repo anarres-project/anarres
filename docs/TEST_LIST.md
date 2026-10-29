@@ -602,7 +602,15 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] the sandbox shows it;
   - [ ] a revised contract: each module providing or using it gets an Architecture revision, at
         once if it has no task open, else in place of its open task's next one; where a stale
-        revision would also be posted, the most upstream role wins;
+        revision would also be posted, the most upstream role wins:
+    - [x] a module with a task open: when its work is merged, a contract it provides or uses
+          (main's `modules.yaml`, read only when a contract folder changed) revised since the
+          task's pinned commit sends it back to Architecture, ahead of a stale revision (core's
+          `contractsRevised`, rule `contract_revised`). Scenario "A revised contract sends a
+          module whose task was open back to Architecture";
+    - [ ] a module with no task open (done, or waiting on PDC coordinators): its Architecture
+          revision is posted when the revised contract is merged;
+    - [ ] a module the revision stops listing as a user of the contract;
   - [ ] an acceptance scenario for each, in-process, then in the sandbox.
 
 ## 4a. Any language (hosted projects)

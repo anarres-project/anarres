@@ -1,5 +1,7 @@
 import {
+  CONTRACTS,
   changedInputs,
+  contractsRevised,
   type FeedbackSignal,
   FIRST_ROLE,
   failed,
@@ -487,6 +489,8 @@ export interface PullRequests {
   openAt(project: string, commit: string): Promise<string[]>;
   /** The paths changed on main since the commit (decision 0015). */
   changedOnMainSince(project: string, commit: string): Promise<string[]>;
+  /** The project's modules.yaml on main, if it has one. */
+  modulesOnMain(project: string): Promise<string | undefined>;
   /** The test report the project's check wrote on the commit, once it has finished (0011). */
   testReport(
     project: string,
@@ -609,7 +613,11 @@ const recordActing = ({ project, work }: RoutingEvent, log: EventLog) =>
 async function acceptSignal(
   project: string,
   path: string,
-  signal: FeedbackSignal & { modulesToStart?: string[]; inputsChanged?: string[] },
+  signal: FeedbackSignal & {
+    modulesToStart?: string[];
+    inputsChanged?: string[];
+    contractsRevised?: string[];
+  },
   board: TaskBoard,
   log: EventLog,
   clock: Clock,
@@ -899,7 +907,11 @@ export async function onPullRequest(
     tests = testCounts(run.report);
   }
   // The programme's Programme Architect work starts the modules its modules.yaml lists (0013).
-  let work: FeedbackSignal & { modulesToStart?: string[]; inputsChanged?: string[] } = signal;
+  let work: FeedbackSignal & {
+    modulesToStart?: string[];
+    inputsChanged?: string[];
+    contractsRevised?: string[];
+  } = signal;
   const listing = files.find((file) => file.path === MODULES_FILE);
   if (role === "programme-architect" && signal.module === PROGRAMME && listing) {
     const listed = readModules(listing.text);
@@ -920,6 +932,14 @@ export async function onPullRequest(
     const changed = await pullRequests.changedOnMainSince(project, pinned);
     const inputsChanged = changedInputs(role, signal.module, {}, changed);
     if (inputsChanged.length > 0) work = { ...work, inputsChanged };
+    // A revised contract sends the module back to Architecture: which module provides and uses
+    // it, main's modules.yaml says, read only when a contract changed.
+    if (changed.some((path) => path.startsWith(CONTRACTS))) {
+      const listed = readModules((await pullRequests.modulesOnMain(project)) ?? "");
+      const contracts = "unreadable" in listed ? [] : listed.contracts;
+      const revised = contractsRevised(contracts, signal.module, changed);
+      if (revised.length > 0) work = { ...work, contractsRevised: revised };
+    }
   }
   await log.append({
     project,

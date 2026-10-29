@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contractsOfModule, readModules } from "../src/index.ts";
+import { contractsOfModule, contractsRevised, readModules } from "../src/index.ts";
 
 describe("the Programme Architect's modules.yaml (decision 0013)", () => {
   it("lists the project's modules by name", () => {
@@ -105,5 +105,17 @@ describe("a module's contracts (decision 0014)", () => {
       { name: "entries", providedBy: "ledger", usedBy: [] },
     ];
     expect(contractsOfModule(contracts, "parser")).toEqual(["tokens", "syntax-tree"]);
+  });
+});
+
+describe("a module's contracts revised since a commit (decision 0015)", () => {
+  it("are those it provides or uses with a file changed in their folder", () => {
+    const contracts = [
+      { name: "tokens", providedBy: "lexer", usedBy: ["parser"] },
+      { name: "syntax-tree", providedBy: "parser", usedBy: [] },
+      { name: "entries", providedBy: "ledger", usedBy: [] },
+    ];
+    const changed = ["programme/contracts/tokens/contract.md", "programme/contracts/entries/a.md"];
+    expect(contractsRevised(contracts, "parser", changed)).toEqual(["tokens"]);
   });
 });

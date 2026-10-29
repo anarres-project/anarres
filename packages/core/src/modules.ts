@@ -1,5 +1,5 @@
 import { parse } from "yaml";
-import { PROGRAMME } from "./access.ts";
+import { contractPlace, PROGRAMME } from "./access.ts";
 import { isPlainName } from "./feedback-signal.ts";
 
 /** Where the Programme Architect keeps the project's modules (concept §5, decision 0013). */
@@ -87,4 +87,15 @@ export function contractsOfModule(contracts: readonly Contract[], module: string
   return contracts
     .filter((contract) => contract.providedBy === module || contract.usedBy.includes(module))
     .map((contract) => contract.name);
+}
+
+/** The module's contracts revised among the changed paths (decision 0015). */
+export function contractsRevised(
+  contracts: readonly Contract[],
+  module: string,
+  changed: readonly string[],
+): string[] {
+  return contractsOfModule(contracts, module).filter((contract) =>
+    changed.some((path) => path.startsWith(contractPlace(contract))),
+  );
 }

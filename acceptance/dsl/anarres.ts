@@ -181,6 +181,7 @@ export class Anarres {
       modulesListed?: string[];
       contracts?: Contract[];
       slicesChanged?: string[];
+      contractsRevised?: string[];
     },
     named?: string,
   ) {
@@ -216,6 +217,22 @@ export class Anarres {
       contracts: (this.programme.contracts ?? []).map((one) =>
         one.name === contract ? { ...one, usedBy: [...one.usedBy, module] } : one,
       ),
+    });
+  }
+
+  /**
+   * Programme Architect work is accepted again, listing the modules and contracts as the last
+   * did, with the contract's text revised.
+   */
+  async programmeRevisedChangingContract(contract: string) {
+    assert.ok(this.programme !== undefined, "expected Programme Architect work listing modules");
+    await this.memberHasWorkAccepted({
+      role: "Programme Architect",
+      module: "programme",
+      verdict: "pass",
+      modulesListed: this.programme.modulesListed ?? [],
+      contracts: this.programme.contracts ?? [],
+      contractsRevised: [contract],
     });
   }
 
@@ -971,16 +988,21 @@ export class Anarres {
       modulesListed: listed,
       contracts,
       slicesChanged: slices,
+      contractsRevised: revised,
     } = work as {
       modulesListed?: string[];
       contracts?: Contract[];
       slicesChanged?: string[];
+      contractsRevised?: string[];
     };
     return {
       ...work,
       module,
       ...(listed === undefined ? {} : { modulesListed: listed.map((m) => this.aliases.of(m)) }),
       ...(slices === undefined ? {} : { slicesChanged: slices.map((m) => this.aliases.of(m)) }),
+      ...(revised === undefined
+        ? {}
+        : { contractsRevised: revised.map((c) => this.aliases.of(c)) }),
       ...(contracts === undefined
         ? {}
         : {
