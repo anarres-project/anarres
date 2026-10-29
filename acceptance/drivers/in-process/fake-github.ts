@@ -24,7 +24,7 @@ import { FAILS_ON_PURPOSE, PASSES_ON_PURPOSE } from "../scenario-words.ts";
 export const DIVLAB_ACCOUNT = "divlab[bot]";
 
 /** A task as posted, with the identifier GitHub would give its issue, and who holds it. */
-type OpenTask = PostedTask & { id: string; claimedBy?: string };
+type OpenTask = PostedTask & { id: string; claimedBy?: string; posted: string };
 
 /** An in-memory stand-in for the GitHub repositories and issues Divlab works with. */
 export class FakeGitHub
@@ -50,7 +50,11 @@ export class FakeGitHub
       this.decisions.push({ project: task.project, feedbackSignal: task.decidedOn });
     }
     this.issuesOpened += 1;
-    this.openTasks.push({ ...task, id: String(this.issuesOpened) });
+    this.openTasks.push({
+      ...task,
+      id: String(this.issuesOpened),
+      posted: postedAt(this.issuesOpened),
+    });
   }
 
   async alertCoordinators(alert: CoordinatorAlert): Promise<void> {
@@ -605,3 +609,10 @@ export class FakeGitHub
 export class Interrupted extends Error {
   override name = "Interrupted";
 }
+
+/**
+ * When GitHub would say the fake's nth issue was opened: one second after the last, as GitHub
+ * gives it (UTC, to the second), so the fake needs no clock.
+ */
+const postedAt = (n: number): string =>
+  new Date(Date.UTC(2026, 9, 29, 9, 0, n)).toISOString().replace(".000Z", "Z");

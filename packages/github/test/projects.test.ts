@@ -69,7 +69,7 @@ describe("the projects where a member's work has been merged", () => {
 });
 
 describe("a project's ready tasks", () => {
-  it("are its open issues labelled ready, each with the role and module it is for", async () => {
+  it("are its open issues labelled ready, each with the role and module it is for, whether its work is under way, and when it was posted", async () => {
     const adapter = new GitHubAdapter({
       owner: "commons",
       token: "test",
@@ -84,7 +84,17 @@ describe("a project's ready tasks", () => {
             {
               number: 4,
               state: "open",
+              created_at: "2026-10-29T09:00:00Z",
               labels: ["role:test", "module:lexer", "state:ready"].map((name) => ({ name })),
+            },
+            {
+              number: 6,
+              state: "open",
+              created_at: "2026-10-29T10:00:00Z",
+              body: "Feedback signal: feedback/FB-7.md\n\nDecided by …",
+              labels: ["role:specification", "module:parser", "state:ready"].map((name) => ({
+                name,
+              })),
             },
             {
               number: 5,
@@ -98,7 +108,14 @@ describe("a project's ready tasks", () => {
       },
     });
     expect(await adapter.readyTasks("ledger")).toEqual([
-      { id: "4", role: "test", module: "lexer" },
+      { id: "4", role: "test", module: "lexer", underWay: false, posted: "2026-10-29T09:00:00Z" },
+      {
+        id: "6",
+        role: "specification",
+        module: "parser",
+        underWay: true,
+        posted: "2026-10-29T10:00:00Z",
+      },
     ]);
   });
 

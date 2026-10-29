@@ -9225,6 +9225,14 @@ function contractsOfModule(contracts, module) {
   return contracts.filter((contract) => contract.providedBy === module || contract.usedBy.includes(module)).map((contract) => contract.name);
 }
 
+// ../core/src/offers.ts
+function rankOffers(tasks) {
+  return [...tasks].sort(
+    (a, b) => Number(b.underWay) - Number(a.underWay) || a.posted.localeCompare(b.posted)
+  );
+}
+var underWay = (task) => task.feedbackSignal !== void 0;
+
 // ../core/src/routing.ts
 var MODULE_PIPELINE = [
   "architecture",
@@ -9967,6 +9975,7 @@ function taskFromIssue(issue) {
   const researchFor = labelled(RESEARCH_FOR);
   const claimant = issue.assignees?.[0]?.login;
   const inputsAt = pinnedCommit(issue.body ?? "");
+  const feedbackSignal = issue.body?.match(/^Feedback signal: (\S+)$/m)?.[1];
   const claimed = issue.labels.some(({ name }) => name === CLAIMED);
   return {
     role,
@@ -9975,6 +9984,7 @@ function taskFromIssue(issue) {
     ...issue.labels.some(({ name }) => name === INPUTS_CHANGED) ? { staleRevision: true } : {},
     ...issue.labels.some(({ name }) => name === AFTER_RESEARCH) ? { afterResearch: true } : {},
     ...inputsAt === void 0 ? {} : { inputsAt },
+    ...feedbackSignal === void 0 ? {} : { feedbackSignal },
     ...researchFor === void 0 ? {} : { researchFor },
     // Assigning is open to anyone who triages: only Divlab's claimed label makes a task held.
     ...claimed ? { claimed: true } : {},
@@ -10391,14 +10401,27 @@ var GitHubAdapter = class {
       { repeatable: true }
     );
   }
-  /** The project's tasks ready to claim, each read as Divlab reads a task: as data. */
+  /**
+   * The project's tasks ready to claim, each read as Divlab reads a task: as data. Its work is
+   * under way when Divlab posted it for a feedback signal: a revision, a continuation or research.
+   */
   async readyTasks(project) {
     const issues = await this.everyPage(
       `${this.repo(project)}/issues?labels=${encodeURIComponent(READY)}&state=open`
     );
     return issues.flatMap((issue) => {
       const task = isTask(issue) ? taskFromIssue(issue) : void 0;
-      return task ? [{ id: String(issue.number), role: task.role, module: task.module }] : [];
+      if (task === void 0) return [];
+      const { role, module } = task;
+      return [
+        {
+          id: String(issue.number),
+          role,
+          module,
+          underWay: underWay(task),
+          posted: issue.created_at
+        }
+      ];
     });
   }
   /** The project's tasks its issues show as claimed, whoever marked them, each read as data. */
@@ -10974,11 +10997,24 @@ async function askForWork(member, projects) {
     const mayTake2 = eligibility(governance, await projects.log(project));
     for (const task of await projects.readyTasks(project)) {
       if (isRole(task.role) && isPlainName(task.module) && mayTake2(member, { role: task.role, module: task.module }) === "allowed") {
-        offers.push({ project, task: task.id, role: task.role, module: task.module });
+        const { underWay: underWay2, posted } = task;
+        offers.push({
+          project,
+          task: task.id,
+          role: task.role,
+          module: task.module,
+          underWay: underWay2,
+          posted
+        });
       }
     }
   }
-  return offers;
+  return rankOffers(offers).map(({ project, task, role, module }) => ({
+    project,
+    task,
+    role,
+    module
+  }));
 }
 function describeOffers(offers) {
   if (offers.length === 0) return "No tasks you may take are ready just now.";

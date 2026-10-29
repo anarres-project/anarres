@@ -618,7 +618,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         `modulesToStart`, read back validated); a module it leaves out goes on;
   - [x] the sandbox shows it (44cb30a: 86 of 86).
 - [x] Coding work that changes tests is rejected (a case of the write scopes).
-- [ ] Work based on inputs that have since changed is flagged as stale.
+- [x] Work based on inputs that have since changed is flagged as stale.
   Decision 0015 (Bernard, 2026-10-29):
   - [x] core judges a task's work stale from its read scope and the paths changed since its
         pinned commit (`changedInputs`: any file in its read scope changed);
@@ -654,7 +654,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         role", in-process only;
   - [x] the sandbox shows it (4787128: 97 of 98; the research brief scenario then passed alone,
         once the driver looked for briefs in the prepared task's folder);
-  - [ ] a revised contract: each module providing or using it gets an Architecture revision, at
+  - [x] a revised contract: each module providing or using it gets an Architecture revision, at
         once if it has no task open, else in place of its open task's next one; where a stale
         revision would also be posted, the most upstream role wins:
     - [x] a module with a task open: when its work is merged, a contract it provides or uses
@@ -676,7 +676,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           which the work replaces, counts too (read only when the work changes both it and a
           contract). Scenario "A revised contract sends a module that is done, and that it no
           longer serves, back to Architecture at once";
-  - [ ] an acceptance scenario for each, in-process, then in the sandbox.
+  - [x] an acceptance scenario for each, in-process, then in the sandbox (9316522: 98 of 98; the
+        one beyond 300 changed files is in-process only, as the sandbox cannot cheaply make
+        so many).
 
 ## 4a. Any language (hosted projects)
 
@@ -782,7 +784,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         task), waiting up to a minute and a half, from what Divlab sets on the task, never the
         text of replies;
   - [x] preparing the claimed task (`anarres prepare`, the next item);
-  - [ ] offers are ranked by priority and size (concept §8).
+  - [x] offers are ranked (concept §8; Bernard, 2026-10-29: work under way first): work Divlab
+        posted for a feedback signal (a revision, a continuation, research) ahead of a module's
+        next task, then the longest waiting, by when GitHub says the issue was opened, across
+        projects (core's `rankOffers` and `underWay`). Scenario "A member is offered work already
+        under way first, then the longest waiting";
+  - [ ] size joins the ranking once tasks carry a size estimate (concept §4: `modules.yaml`'s
+        estimate per module; Divlab would put it on each task);
 - [ ] Preparing a task fetches only the files the role may read, at the pinned versions.
   - [x] core holds the access matrix's read scopes beside its write scopes, once: each module
         role reads its own module's places and its requirement slice (`programme/slices/<m>/`),
@@ -807,7 +815,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           its module's contracts as they were when the task was posted (the in-process fake keeps
           each commit's files now; checked it fails if the latest is read). Whether a member
           should be told their task's inputs have changed since is the staleness item (section 4);
-  - [ ] what a Research task reads, as its question names it;
+  - [ ] what a Research task reads (Bernard, 2026-10-29: the question and briefs): the feedback
+        signal that reported the knowledge gap, and its module's `research-briefs/<m>/`, nothing of
+        the module's code or artefacts; the question is data and never widens the read scope;
   - [x] Divlab posts each task with the commit its inputs are pinned at, the merge that decided
         it, in the issue's words and its decision block; read back only if it is a commit name;
   - [ ] a task decided by work Divlab did not merge (none yet: only merged work is routed) has no

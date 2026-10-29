@@ -24,6 +24,7 @@ export {
   type Modules,
   readModules,
 } from "./modules.ts";
+export { type Rankable, rankOffers, underWay } from "./offers.ts";
 export { isRole, ROLE_NAMES, type Role } from "./roles.ts";
 export {
   type AcceptedWork,

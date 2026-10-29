@@ -10,6 +10,18 @@ Feature: A member finds work
     Then Alice is offered the Test task for "lexer"
     And Alice is not offered the Reviewer task for "parser"
 
+  Scenario: A member is offered work already under way first, then the longest waiting
+    Given a project with modules "parser", "lexer" and "tokens"
+    And a member's Specification work on "lexer" was accepted with a pass verdict
+    And a member's Specification work on "tokens" was accepted with a pass verdict
+    And a member's Test work on "parser" was accepted with a fail verdict, reporting an upstream ambiguity
+    When Alice asks for work
+    Then Alice is offered these tasks, in this order:
+      | role          | module |
+      | Specification | parser |
+      | Test          | lexer  |
+      | Test          | tokens |
+
   Scenario: A member's work submitted through the plugin is merged
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict

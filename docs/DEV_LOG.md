@@ -691,6 +691,27 @@ governance scenarios run alone.
   prepared task, and briefs are fetched to `research-briefs/`. It lists both now; run alone
   against the sandbox, the scenario passed. Harness only.
 - The 9316522 sandbox run passed: 98 of 98, in 61 minutes.
+- Offers are ranked (Bernard: work under way first; Research reads the question and its briefs,
+  next). Acceptance: scenario "A member is offered work already under way first, then the
+  longest waiting", red as not yet right (offered in the order the projects listed them).
+  RED:      puts work already under way ahead of work not yet begun -> expected [ 'begun',
+            'under way' ] to deeply equal [ 'under way', 'begun' ] (the empty stub was written in
+            the same step as the test, not after seeing it fail for want of the name: a slip)
+  GREEN:    the same (251 passed).
+  RED:      puts, of tasks alike in that, the one posted longest ago first -> expected [ 'later',
+            'earlier' ] to deeply equal [ 'earlier', 'later' ]
+  GREEN:    the same (252 passed): core's `rankOffers`.
+  RED:      a project's ready tasks, each … whether its work is under way, and when it was posted
+            -> expected [ …(2) ] to deeply equal [ …(2) ] (no `underWay`, no `posted`)
+  GREEN:    the same (212 passed): the adapter reads the issue's feedback signal line, as Divlab
+            writes it, and GitHub's `created_at`.
+  RED:      offers them in core's order, across projects -> expected [ 'ledger#4', 'atlas#9',
+            'atlas#12' ] to deeply equal [ 'atlas#12', 'atlas#9', 'ledger#4' ]
+  GREEN:    the same (105 passed). The fake GitHub gives each issue a posting time rising with
+            its number, so needs no clock; the scenario passed, and loses `@wip`.
+  REFACTOR: what "under way" means moved to core (`underWay`), used by the adapter and the
+            in-process driver alike; its core test passed first time, as a refactor's should.
+            Concept §8 updated. Gate 803 and 138.
 
 ---
 

@@ -109,6 +109,7 @@ export function taskFromIssue(issue: ListedIssue):
       continuation?: true;
       staleRevision?: true;
       afterResearch?: true;
+      feedbackSignal?: string;
     }
   | undefined {
   const labelled = (prefix: string) =>
@@ -120,6 +121,7 @@ export function taskFromIssue(issue: ListedIssue):
   const researchFor = labelled(RESEARCH_FOR);
   const claimant = issue.assignees?.[0]?.login;
   const inputsAt = pinnedCommit(issue.body ?? "");
+  const feedbackSignal = issue.body?.match(/^Feedback signal: (\S+)$/m)?.[1];
   const claimed = issue.labels.some(({ name }) => name === CLAIMED);
   return {
     role,
@@ -134,6 +136,7 @@ export function taskFromIssue(issue: ListedIssue):
       ? { afterResearch: true as const }
       : {}),
     ...(inputsAt === undefined ? {} : { inputsAt }),
+    ...(feedbackSignal === undefined ? {} : { feedbackSignal }),
     ...(researchFor === undefined ? {} : { researchFor }),
     // Assigning is open to anyone who triages: only Divlab's claimed label makes a task held.
     ...(claimed ? { claimed: true as const } : {}),

@@ -6,6 +6,7 @@ import {
   TEST_REPORT_TOO_LARGE,
   type TestReport,
   type Toolchain,
+  underWay,
 } from "@anarres/core";
 import type {
   ChangedOnMain,
@@ -246,14 +247,27 @@ export class GitHubAdapter
     );
   }
 
-  /** The project's tasks ready to claim, each read as Divlab reads a task: as data. */
-  async readyTasks(project: string): Promise<{ id: string; role: string; module: string }[]> {
-    const issues = await this.everyPage<ListedIssue & { number: number }>(
+  /**
+   * The project's tasks ready to claim, each read as Divlab reads a task: as data. Its work is
+   * under way when Divlab posted it for a feedback signal: a revision, a continuation or research.
+   */
+  async readyTasks(project: string): Promise<ReadyTask[]> {
+    const issues = await this.everyPage<ListedIssue & { number: number; created_at: string }>(
       `${this.repo(project)}/issues?labels=${encodeURIComponent(READY)}&state=open`,
     );
     return issues.flatMap((issue) => {
       const task = isTask(issue) ? taskFromIssue(issue) : undefined;
-      return task ? [{ id: String(issue.number), role: task.role, module: task.module }] : [];
+      if (task === undefined) return [];
+      const { role, module } = task;
+      return [
+        {
+          id: String(issue.number),
+          role,
+          module,
+          underWay: underWay(task),
+          posted: issue.created_at,
+        },
+      ];
     });
   }
 
@@ -967,6 +981,15 @@ export class GitHubAdapter
 }
 
 /** One request to GitHub, answered with its status and parsed body. */
+/** A task ready to claim, as a member is offered it. */
+export type ReadyTask = {
+  id: string;
+  role: string;
+  module: string;
+  underWay: boolean;
+  posted: string;
+};
+
 export type Request = typeof requestGitHub;
 
 const EVENT_FILE = /^\d{6}\.json$/;

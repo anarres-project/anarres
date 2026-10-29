@@ -744,6 +744,18 @@ export class Anarres {
     );
   }
 
+  /** The member was offered exactly these tasks, in this order. */
+  async memberIsOfferedInOrder(member: string, tasks: Work[]) {
+    const offered = (this.offers.get(member) ?? []).map((t) => ({
+      role: t.role,
+      module: t.module,
+    }));
+    assert.deepStrictEqual(
+      offered,
+      tasks.map((task) => ({ role: task.role, module: this.aliases.of(task.module) })),
+    );
+  }
+
   async memberIsNotOffered(member: string, task: Work) {
     const offered = this.offers.get(member) ?? [];
     assert.ok(

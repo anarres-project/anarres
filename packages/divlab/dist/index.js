@@ -9239,6 +9239,9 @@ function contractsRevised(contracts, module, changed) {
   );
 }
 
+// ../core/src/offers.ts
+var underWay = (task) => task.feedbackSignal !== void 0;
+
 // ../core/src/routing.ts
 var MODULE_PIPELINE = [
   "architecture",
@@ -10674,6 +10677,7 @@ function taskFromIssue(issue) {
   const researchFor = labelled(RESEARCH_FOR);
   const claimant = issue.assignees?.[0]?.login;
   const inputsAt = pinnedCommit2(issue.body ?? "");
+  const feedbackSignal = issue.body?.match(/^Feedback signal: (\S+)$/m)?.[1];
   const claimed = issue.labels.some(({ name }) => name === CLAIMED);
   return {
     role,
@@ -10682,6 +10686,7 @@ function taskFromIssue(issue) {
     ...issue.labels.some(({ name }) => name === INPUTS_CHANGED) ? { staleRevision: true } : {},
     ...issue.labels.some(({ name }) => name === AFTER_RESEARCH) ? { afterResearch: true } : {},
     ...inputsAt === void 0 ? {} : { inputsAt },
+    ...feedbackSignal === void 0 ? {} : { feedbackSignal },
     ...researchFor === void 0 ? {} : { researchFor },
     // Assigning is open to anyone who triages: only Divlab's claimed label makes a task held.
     ...claimed ? { claimed: true } : {},
@@ -11098,14 +11103,27 @@ var GitHubAdapter = class {
       { repeatable: true }
     );
   }
-  /** The project's tasks ready to claim, each read as Divlab reads a task: as data. */
+  /**
+   * The project's tasks ready to claim, each read as Divlab reads a task: as data. Its work is
+   * under way when Divlab posted it for a feedback signal: a revision, a continuation or research.
+   */
   async readyTasks(project2) {
     const issues = await this.everyPage(
       `${this.repo(project2)}/issues?labels=${encodeURIComponent(READY)}&state=open`
     );
     return issues.flatMap((issue) => {
       const task = isTask(issue) ? taskFromIssue(issue) : void 0;
-      return task ? [{ id: String(issue.number), role: task.role, module: task.module }] : [];
+      if (task === void 0) return [];
+      const { role, module } = task;
+      return [
+        {
+          id: String(issue.number),
+          role,
+          module,
+          underWay: underWay(task),
+          posted: issue.created_at
+        }
+      ];
     });
   }
   /** The project's tasks its issues show as claimed, whoever marked them, each read as data. */

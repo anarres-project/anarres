@@ -9,7 +9,7 @@ import {
   submit,
   taskFolder,
 } from "@anarres/cli";
-import { TRUST_LEVELS, trustAllows, trustLevelOf } from "@anarres/core";
+import { TRUST_LEVELS, trustAllows, trustLevelOf, underWay } from "@anarres/core";
 import {
   CLAIM,
   checkMain,
@@ -397,7 +397,13 @@ export class InProcessDriver implements Driver {
     const offers = await askForWork(member, {
       names: async () => [...this.github.repositories.keys()],
       readyTasks: async (project) =>
-        this.github.readyTasks(project).map(({ id, role, module }) => ({ id, role, module })),
+        this.github.readyTasks(project).map((task) => ({
+          id: task.id,
+          role: task.role,
+          module: task.module,
+          underWay: underWay(task),
+          posted: task.posted,
+        })),
       log: (project) => this.github.read(project),
       governanceFile: () => this.github.governanceFile(),
     });

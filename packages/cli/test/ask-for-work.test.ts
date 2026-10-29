@@ -1,12 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { askForWork, type Projects } from "../src/index.ts";
 
-/** Anarres's projects as a member's CLI finds them, with the ready tasks each has. */
-const projects = (
-  ready: Record<string, { id: string; role: string; module: string }[]>,
-): Projects => ({
+type Ready = { id: string; role: string; module: string; underWay?: boolean; posted?: string };
+
+/**
+ * Anarres's projects as a member's CLI finds them, with the ready tasks each has: unless a test
+ * says otherwise, none under way, all posted at once.
+ */
+const projects = (ready: Record<string, Ready[]>): Projects => ({
   names: async () => Object.keys(ready),
-  readyTasks: async (project) => ready[project] ?? [],
+  readyTasks: async (project) =>
+    (ready[project] ?? []).map((task) => ({
+      underWay: false,
+      posted: "2026-10-29T09:00:00Z",
+      ...task,
+    })),
   log: async () => [],
   governanceFile: async () => ({ members: {} }),
 });
@@ -21,6 +29,30 @@ describe("asking for work", () => {
       }),
     );
     expect(offered).toEqual([{ project: "ledger", task: "4", role: "test", module: "lexer" }]);
+  });
+
+  it("offers them in core's order, across projects: work under way first, then the longest waiting", async () => {
+    const offered = await askForWork(
+      "alice",
+      projects({
+        ledger: [{ id: "4", role: "test", module: "lexer", posted: "2026-10-29T09:00:00Z" }],
+        atlas: [
+          { id: "9", role: "test", module: "parser", posted: "2026-10-29T08:00:00Z" },
+          {
+            id: "12",
+            role: "coding",
+            module: "tokens",
+            underWay: true,
+            posted: "2026-10-29T10:00:00Z",
+          },
+        ],
+      }),
+    );
+    expect(offered.map(({ project, task }) => `${project}#${task}`)).toEqual([
+      "atlas#12",
+      "atlas#9",
+      "ledger#4",
+    ]);
   });
 });
 

@@ -5,8 +5,10 @@ import {
   leaseRunsOutAt,
   mayRead,
   outsideScope,
+  type Rankable,
   ROLE_NAMES,
   type Role,
+  rankOffers,
   readFeedbackSignal,
   readModules,
   readScope,
@@ -17,7 +19,7 @@ import { eligibility, type LogEvent, leasesFrom, routingDecisions } from "@anarr
 export interface Projects {
   names(): Promise<string[]>;
   /** The project's tasks anyone eligible may claim. */
-  readyTasks(project: string): Promise<{ id: string; role: string; module: string }[]>;
+  readyTasks(project: string): Promise<({ id: string; role: string; module: string } & Rankable)[]>;
   /** The project's event log: who has done what, for the conflict-of-interest rules. */
   log(project: string): Promise<LogEvent[]>;
   /** The governance file: members' trust levels and linked accounts. */
@@ -30,7 +32,7 @@ export type Offer = { project: string; task: string; role: Role; module: string 
 /** The member asks for work: the ready tasks across Anarres's projects they may take. */
 export async function askForWork(member: string, projects: Projects): Promise<Offer[]> {
   const governance = await projects.governanceFile();
-  const offers: Offer[] = [];
+  const offers: (Offer & Rankable)[] = [];
   for (const project of await projects.names()) {
     const mayTake = eligibility(governance, await projects.log(project));
     for (const task of await projects.readyTasks(project)) {
@@ -40,11 +42,24 @@ export async function askForWork(member: string, projects: Projects): Promise<Of
         isPlainName(task.module) &&
         mayTake(member, { role: task.role, module: task.module }) === "allowed"
       ) {
-        offers.push({ project, task: task.id, role: task.role, module: task.module });
+        const { underWay, posted } = task;
+        offers.push({
+          project,
+          task: task.id,
+          role: task.role,
+          module: task.module,
+          underWay,
+          posted,
+        });
       }
     }
   }
-  return offers;
+  return rankOffers(offers).map(({ project, task, role, module }) => ({
+    project,
+    task,
+    role,
+    module,
+  }));
 }
 
 /** The offers as the member sees them, one to a line. */

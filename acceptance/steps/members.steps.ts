@@ -1,4 +1,4 @@
-import { Given, Then, When } from "@cucumber/cucumber";
+import { type DataTable, Given, Then, When } from "@cucumber/cucumber";
 import type { AnarresWorld } from "../support/world.ts";
 
 When("{word} asks for work", function (this: AnarresWorld, member: string) {
@@ -130,5 +130,15 @@ Then(
   "{word} has the research brief of {string} to read",
   function (this: AnarresWorld, member: string, module: string) {
     return this.anarres.memberHasWorkOf(member, module, ["research brief"]);
+  },
+);
+
+Then(
+  "{word} is offered these tasks, in this order:",
+  function (this: AnarresWorld, member: string, tasks: DataTable) {
+    return this.anarres.memberIsOfferedInOrder(
+      member,
+      tasks.hashes().map((row) => ({ role: row.role ?? "", module: row.module ?? "" })),
+    );
   },
 );
