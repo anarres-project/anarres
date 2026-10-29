@@ -472,6 +472,10 @@ governance scenarios run alone.
   each commit's files with main's.
 - The scenario passed; `@wip` removed; checked it fails if nothing is found changed. Gate 754
   and 126.
+- The 6bf8438 sandbox run: 87 of 89. The new pinned-contracts scenario's second Programme
+  Architect work had merge conflicts (the sandbox branched work from the fork's main as forked;
+  it now syncs the fork first, as the plugin does), and a finished task was looked for before
+  GitHub's list showed it closed (now asked again). Both the harness's.
 
 ---
 

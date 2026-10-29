@@ -482,6 +482,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] the same repository's next run had a log write refused because main's rule "did not run
         because of a timeout" (409): a refusal GitHub may lift if asked again, unlike a rule
         refusing the change.
+- [x] The sandbox branched each member's work from their fork's main as it was when forked, so
+      work changing a file merged since conflicted (6bf8438: the second Programme Architect work
+      rewriting `modules.yaml`): the fork is brought up to the project's main first, as the
+      plugin does. And a finished task was looked for once, though GitHub's lists lag behind a
+      task just closed (6bf8438: "No Test task … is done"): asked again until they catch up.
 - [x] The sandbox run polls less: merges and finished runs every 5 seconds, decisions every 3
       (2026-10-24, from about 3,100 requests a run): c5666a4's full run took 2,466 (640, 577,
       599 and 650 across its four workers), and passed.

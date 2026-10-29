@@ -309,6 +309,20 @@ export class SandboxDriver implements Driver {
     if (reference.status !== 200) {
       throw new Error(`GitHub GET repos/${fork}/git/ref/heads/main answered ${reference.status}`);
     }
+    // The member's fork is brought up to the project's main first, as the plugin does: work
+    // branched from an older main would conflict with what was merged since.
+    const synced = await this.members.request<{ message?: string }>(
+      "POST",
+      `repos/${fork}/merge-upstream`,
+      { branch: "main" },
+      { repeatable: true },
+    );
+    if (synced.status !== 200) {
+      throw new Error(
+        `GitHub could not bring ${fork} up to date: ${synced.status} ${messageOf(synced.data)}`,
+      );
+    }
+    reference = await this.mainOf(fork);
     const main = reference.data.object;
     const branch = `work/${work.feedbackSignal}`;
     // The branch is the scenario's own, so if asking again finds it there, the first ask made it.
@@ -698,24 +712,25 @@ export class SandboxDriver implements Driver {
     task: { project: string; role: string; module: string },
     member: string,
   ): Promise<void> {
-    const labels = `role:${roleId(task.role)},module:${task.module}`;
-    const [issue] = await this.github.call<Issue[]>(
-      "GET",
-      `repos/${this.org}/${task.project}/issues?labels=${encodeURIComponent(labels)}&state=closed&per_page=100`,
-    );
-    if (!issue) throw new Error(`No ${task.role} task for ${task.module} is done`);
-    await this.claimIssue(task.project, issue, member);
+    await this.claimIssue(task.project, await this.finishedTask(task), member);
   }
 
-  /** The role's task on the module that is already done: closed, as its issue stays. */
+  /**
+   * The role's task on the module that is already done: closed, as its issue stays. GitHub's
+   * lists lag behind a task just closed, so it is asked again until they catch up.
+   */
   private async finishedTask(task: { project: string; role: string; module: string }) {
     const labels = `role:${roleId(task.role)},module:${task.module}`;
-    const [issue] = await this.github.call<Issue[]>(
-      "GET",
-      `repos/${this.org}/${task.project}/issues?labels=${encodeURIComponent(labels)}&state=closed&per_page=100`,
-    );
-    if (!issue) throw new Error(`No ${task.role} task for ${task.module} is done`);
-    return issue;
+    const deadline = Date.now() + LISTS_CATCH_UP_LIMIT;
+    for (;;) {
+      const [issue] = await this.github.call<Issue[]>(
+        "GET",
+        `repos/${this.org}/${task.project}/issues?labels=${encodeURIComponent(labels)}&state=closed&per_page=100`,
+      );
+      if (issue) return issue;
+      if (Date.now() > deadline) throw new Error(`No ${task.role} task for ${task.module} is done`);
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+    }
   }
 
   /** The member comments to claim an issue that is not an open task, and waits for the reply. */
