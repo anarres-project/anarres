@@ -532,6 +532,8 @@ describe("acting on a pull request", () => {
       url: "https://github.com/commons/ledger/actions/runs/1",
     }),
     openAt: async () => [],
+    // Nothing on main changed since any task's inputs were pinned.
+    changedOnMainSince: async () => [],
     // The project's tests on Test work: its new test ran and failed, as it should.
     testReport: async () => ({
       state: "finished",
@@ -1842,6 +1844,45 @@ describe("acting on a pull request", () => {
         },
       },
       "merged 7",
+    ]);
+  });
+
+  it("gives work whose inputs changed since its task was posted back to its role (0015)", async () => {
+    const posted: PostedTask[] = [];
+    // Divlab's record of the decision that posted the task, and the commit its merge made.
+    const postedAtPinned: EventLog = {
+      ...log,
+      read: async () => [
+        {
+          project: "ledger",
+          mergedAs: "p1nned",
+          work: {
+            fromRole: "architecture",
+            module: "parser",
+            verdict: "pass",
+            impediments: [],
+            feedbackSignal: "feedback/FB-0.md",
+          },
+          decision: { tasks: [{ role: "specification", module: "parser" }] },
+          reason: { rule: "passed" },
+        },
+      ],
+    };
+    const sliceChanged: PullRequests = {
+      ...submitting(),
+      changedOnMainSince: async (_project, commit) =>
+        commit === "p1nned" ? ["programme/slices/parser/requirements.md"] : [],
+    };
+    await onPullRequest(
+      "ledger",
+      "7",
+      sliceChanged,
+      { ...held, post: async (task) => void posted.push(task) },
+      postedAtPinned,
+      clock,
+    );
+    expect(posted.map(({ role, module }) => ({ role, module }))).toEqual([
+      { role: "specification", module: "parser" },
     ]);
   });
 });

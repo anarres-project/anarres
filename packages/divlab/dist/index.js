@@ -8980,8 +8980,50 @@ function outsideScope(role, module, paths) {
   return paths.filter((path) => !isPlainPath(path) || path !== signal && !path.startsWith(scope));
 }
 var isPlainPath = (path) => !path.includes("\\") && path.split("/").every((part) => part !== "" && part !== "." && part !== "..");
+function mayRead(role, module, path, task = {}) {
+  return isPlainPath(path) && readScope(role, module, task).some((scope) => path.startsWith(scope));
+}
+var READ_SCOPES = {
+  "programme-architect": () => ["requirements/"],
+  architecture: (module, contracts) => [
+    `programme/slices/${module}/`,
+    ...contractPlaces(contracts)
+  ],
+  specification: (module, contracts) => [
+    `programme/slices/${module}/`,
+    `modules/${module}/architecture/`,
+    ...contractPlaces(contracts)
+  ],
+  test: (module) => [
+    `programme/slices/${module}/`,
+    `modules/${module}/architecture/`,
+    `modules/${module}/specifications/`
+  ],
+  coding: (module) => [`modules/${module}/specifications/`, `modules/${module}/tests/`],
+  reviewer: (module) => [
+    `programme/slices/${module}/`,
+    `modules/${module}/specifications/`,
+    `modules/${module}/src/`
+  ],
+  "security-and-quality": (module) => [
+    `programme/slices/${module}/`,
+    `modules/${module}/architecture/`,
+    `modules/${module}/src/`
+  ],
+  research: () => []
+};
+function readScope(role, module, task = {}) {
+  return [
+    ...READ_SCOPES[role](module, task.contracts ?? []),
+    ...task.continuation ? [writeScope(role, module)] : []
+  ];
+}
+var contractPlaces = (contracts) => contracts.map((contract) => `${PROGRAMME}/contracts/${contract}/`);
 function writeScope(role, module) {
   return WRITE_SCOPES[role](module);
+}
+function changedInputs(role, module, task, changed) {
+  return changed.filter((path) => mayRead(role, module, path, task));
 }
 
 // ../core/src/roles.ts
@@ -9200,6 +9242,7 @@ var NO_RULE_COVERS_IT = {
 };
 var failed = (work) => work.verdict === "fail" || work.verdict === "blocked";
 function rule(work) {
+  if (work.inputsChanged?.length) return reviseWithNewInputs(work, work.inputsChanged);
   if (work.partial) return continuation(work);
   if (failed(work)) return revise(work);
   if (work.fromRole === "research") return returnResearch(work);
@@ -9214,6 +9257,14 @@ function continuation(work) {
     continuation: true
   };
   return { decision: { tasks: [task] }, reason: { rule: "partial" } };
+}
+function reviseWithNewInputs(work, inputs) {
+  const task = {
+    role: work.fromRole,
+    module: work.module,
+    feedbackSignal: work.feedbackSignal
+  };
+  return { decision: { tasks: [task] }, reason: { rule: "inputs_changed", inputs } };
 }
 function revise(work) {
   const matched = failureRoute(work);
@@ -9907,6 +9958,12 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     const started = modulesStarted(events);
     work = { ...signal, modulesToStart: listed.modules.filter((module) => !started.has(module)) };
   }
+  const pinned = pinnedCommit(events, role, signal.module);
+  if (pinned !== void 0) {
+    const changed = await pullRequests.changedOnMainSince(project2, pinned);
+    const inputsChanged = changedInputs(role, signal.module, {}, changed);
+    if (inputsChanged.length > 0) work = { ...work, inputsChanged };
+  }
   await log.append({
     project: project2,
     decidedAt: clock().toISOString(),
@@ -9926,6 +9983,9 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     mergedAs
   });
 }
+var pinnedCommit = (events, role, module) => routingDecisions(events).filter(
+  (event) => "tasks" in event.decision && event.decision.tasks.some((task) => task.role === role && task.module === module)
+).at(-1)?.mergedAs;
 var modulesStarted = (events) => new Set(routingDecisions(events).flatMap((event) => event.work.modulesToStart ?? []));
 async function checkMain(project2, repository, board, log, clock, divlab) {
   const events = await log.read(project2);
@@ -10491,7 +10551,7 @@ function taskFromIssue(issue) {
   if (!isRole(role) || module === void 0) return void 0;
   const researchFor = labelled(RESEARCH_FOR);
   const claimant = issue.assignees?.[0]?.login;
-  const inputsAt = pinnedCommit(issue.body ?? "");
+  const inputsAt = pinnedCommit2(issue.body ?? "");
   const claimed = issue.labels.some(({ name }) => name === CLAIMED);
   return {
     role,
@@ -10702,7 +10762,7 @@ function issueForUnprotectedMain() {
 var UNPROTECTED_MAIN = "unprotected-main";
 var CHANGE_NOT_BY_DIVLAB = "change-not-by-divlab";
 var CLAIMED_WITHOUT_CLAIM = "claimed-without-claim";
-function pinnedCommit(body) {
+function pinnedCommit2(body) {
   const json = body.match(/```json\n([\s\S]*)\n```$/)?.[1];
   let inputsAt;
   try {
@@ -11336,6 +11396,13 @@ var GitHubAdapter = class {
         return commits.map(mainCommit);
       }
     }
+  }
+  async changedOnMainSince(project2, commit) {
+    const { files } = await this.call(
+      "GET",
+      `${this.repo(project2)}/compare/${commit}...main?per_page=100&page=1`
+    );
+    return files.map((file) => file.filename);
   }
   async mergeCommitOf(project2, pullRequest) {
     const { merge_commit_sha } = await this.call(

@@ -10782,6 +10782,13 @@ var GitHubAdapter = class {
       }
     }
   }
+  async changedOnMainSince(project, commit) {
+    const { files } = await this.call(
+      "GET",
+      `${this.repo(project)}/compare/${commit}...main?per_page=100&page=1`
+    );
+    return files.map((file) => file.filename);
+  }
   async mergeCommitOf(project, pullRequest) {
     const { merge_commit_sha } = await this.call(
       "GET",

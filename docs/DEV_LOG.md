@@ -457,6 +457,21 @@ governance scenarios run alone.
 - Decision 0015 (Bernard): work whose inputs changed since its task was posted is merged, and
   revised by the same role at the new commit; a revised contract sends each module it affects
   back to Architecture. Concept §5 and §8 updated.
+- Scenario (`@wip`, not yet right): "Work whose requirement slice changed after its task was
+  posted goes back to its role" -> a Coding task was ready, not a Test task.
+- RED: the inputs that changed since a task was posted are the changed paths its role reads ->
+  `[]`. GREEN (234), through `mayRead`.
+- RED: posts a revision for the same role, saying which inputs changed -> Coding, rule `passed`.
+  GREEN (235). RED: moves on as usual when none of its inputs changed -> a Test revision. GREEN
+  (236).
+- RED: Divlab gives work whose inputs changed since its task was posted back to its role -> a Test
+  task, not Specification. GREEN (205 in Divlab). The pinned commit comes from Divlab's own log,
+  not the issue's text, which anyone who triages can edit.
+- RED: the paths changed on main since a commit are the files GitHub compares -> `[]` (first
+  `is not a function`, then the stub). GREEN (200 in the GitHub package). The fake compares
+  each commit's files with main's.
+- The scenario passed; `@wip` removed; checked it fails if nothing is found changed. Gate 754
+  and 126.
 
 ---
 

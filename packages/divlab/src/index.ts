@@ -1,4 +1,5 @@
 import {
+  changedInputs,
   type FeedbackSignal,
   FIRST_ROLE,
   failed,
@@ -482,6 +483,8 @@ export interface PullRequests {
   ): Promise<{ state: "passed" | "failed" | "running"; url: string }>;
   /** The project's open pull requests whose head is the commit. */
   openAt(project: string, commit: string): Promise<string[]>;
+  /** The paths changed on main since the commit (decision 0015). */
+  changedOnMainSince(project: string, commit: string): Promise<string[]>;
   /** The test report the project's check wrote on the commit, once it has finished (0011). */
   testReport(
     project: string,
@@ -604,7 +607,7 @@ const recordActing = ({ project, work }: RoutingEvent, log: EventLog) =>
 async function acceptSignal(
   project: string,
   path: string,
-  signal: FeedbackSignal & { modulesToStart?: string[] },
+  signal: FeedbackSignal & { modulesToStart?: string[]; inputsChanged?: string[] },
   board: TaskBoard,
   log: EventLog,
   clock: Clock,
@@ -894,7 +897,7 @@ export async function onPullRequest(
     tests = testCounts(run.report);
   }
   // The programme's Programme Architect work starts the modules its modules.yaml lists (0013).
-  let work: FeedbackSignal & { modulesToStart?: string[] } = signal;
+  let work: FeedbackSignal & { modulesToStart?: string[]; inputsChanged?: string[] } = signal;
   const listing = files.find((file) => file.path === MODULES_FILE);
   if (role === "programme-architect" && signal.module === PROGRAMME && listing) {
     const listed = readModules(listing.text);
@@ -908,6 +911,13 @@ export async function onPullRequest(
     }
     const started = modulesStarted(events);
     work = { ...signal, modulesToStart: listed.modules.filter((module) => !started.has(module)) };
+  }
+  // Work whose inputs changed after its task was posted goes back to its role (decision 0015).
+  const pinned = pinnedCommit(events, role, signal.module);
+  if (pinned !== undefined) {
+    const changed = await pullRequests.changedOnMainSince(project, pinned);
+    const inputsChanged = changedInputs(role, signal.module, {}, changed);
+    if (inputsChanged.length > 0) work = { ...work, inputsChanged };
   }
   await log.append({
     project,
@@ -928,6 +938,20 @@ export async function onPullRequest(
     mergedAs,
   });
 }
+
+/**
+ * The commit a task's inputs are pinned at, from Divlab's own record rather than the task's issue,
+ * whose text others can edit: the merge of the latest decision that posted a task for the role and
+ * module, as a module has one such task open at a time.
+ */
+const pinnedCommit = (events: LogEvent[], role: Role, module: string) =>
+  routingDecisions(events)
+    .filter(
+      (event) =>
+        "tasks" in event.decision &&
+        event.decision.tasks.some((task) => task.role === role && task.module === module),
+    )
+    .at(-1)?.mergedAs;
 
 /** The modules earlier modules.yaml started, as Divlab's routing records say. */
 const modulesStarted = (events: LogEvent[]) =>

@@ -758,6 +758,14 @@ export class GitHubAdapter
     }
   }
 
+  async changedOnMainSince(project: string, commit: string): Promise<string[]> {
+    const { files } = await this.call<{ files: { filename: string }[] }>(
+      "GET",
+      `${this.repo(project)}/compare/${commit}...main?per_page=100&page=1`,
+    );
+    return files.map((file) => file.filename);
+  }
+
   async mergeCommitOf(project: string, pullRequest: string): Promise<string> {
     const { merge_commit_sha } = await this.call<{ merge_commit_sha: string }>(
       "GET",

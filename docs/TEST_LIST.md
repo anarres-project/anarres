@@ -572,13 +572,27 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [x] Coding work that changes tests is rejected (a case of the write scopes).
 - [ ] Work based on inputs that have since changed is flagged as stale.
   Decision 0015 (Bernard, 2026-10-29):
-  - [ ] core judges a task's work stale from its read scope and the paths changed since its
-        pinned commit (any file in its read scope changed);
-  - [ ] Divlab, validating a module role's work, compares the task's pinned commit with main (one
-        request) and has core judge the changed paths;
-  - [ ] stale work is merged, recorded as stale with the inputs that changed, and the next task
-        is a revision for the same role and module, pinned to the new commit, reading its role's
-        own place (as a continuation does);
+  - [x] core judges a task's work stale from its read scope and the paths changed since its
+        pinned commit (`changedInputs`: any file in its read scope changed);
+  - [x] Divlab, validating a module role's work, compares the task's pinned commit with main (one
+        request, the adapter's `changedOnMainSince`) and has core judge the changed paths. The
+        pinned commit comes from Divlab's own record (the merge of the latest decision posting a
+        task for that role and module), not the issue, whose text others can edit; a task no
+        decision posted has none, and is not judged;
+  - [x] stale work is merged, and the next task is a revision for the same role and module,
+        pinned to the new commit; the routing record's reason names the inputs that changed
+        (`inputs_changed`). Scenario "Work whose requirement slice changed after its task was
+        posted goes back to its role", in-process;
+  - [ ] the revision reads its role's own place, so whoever takes it starts from the work done
+        (as a continuation does, decision 0008);
+  - [ ] Architecture's and Specification's contracts count among their inputs: judged with the
+        task's contracts, from `modules.yaml` at the pinned commit (until then, a revised contract
+        is caught by the next item);
+  - [ ] stale work that also failed, or was handed over partial: which rule wins (stale is
+        checked first now);
+  - [ ] GitHub's comparison lists at most 300 changed files: more than that, and some inputs may
+        go unseen; treat a comparison that may be cut short as changing everything?
+  - [ ] the sandbox shows it;
   - [ ] a revised contract: each module providing or using it gets an Architecture revision, at
         once if it has no task open, else in place of its open task's next one; where a stale
         revision would also be posted, the most upstream role wins;

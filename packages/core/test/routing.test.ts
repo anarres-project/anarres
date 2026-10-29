@@ -596,3 +596,34 @@ describe("routing partial work (decision 0008)", () => {
     });
   });
 });
+
+describe("routing work whose inputs changed since its task was posted (decision 0015)", () => {
+  it("posts a revision for the same role, saying which inputs changed", () => {
+    expect(
+      rule({
+        fromRole: "test",
+        module: "parser",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        inputsChanged: ["programme/slices/parser/requirements.md"],
+      }),
+    ).toEqual({
+      decision: { tasks: [{ role: "test", module: "parser", feedbackSignal: FEEDBACK }] },
+      reason: { rule: "inputs_changed", inputs: ["programme/slices/parser/requirements.md"] },
+    });
+  });
+
+  it("moves on as usual when none of its inputs changed", () => {
+    expect(
+      route({
+        fromRole: "test",
+        module: "parser",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        inputsChanged: [],
+      }),
+    ).toEqual({ tasks: [{ role: "coding", module: "parser" }] });
+  });
+});

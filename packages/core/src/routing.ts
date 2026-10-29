@@ -13,6 +13,8 @@ export type AcceptedWork = {
   partial?: true;
   /** For the programme's Programme Architect work: the modules its modules.yaml starts (0013). */
   modulesToStart?: string[];
+  /** The task's inputs that changed after it was posted (decision 0015). */
+  inputsChanged?: string[];
 };
 
 export type Task = {
@@ -53,7 +55,8 @@ export type Reason =
   | { rule: "failed" }
   | { rule: "research_returned" }
   | { rule: "no_matching_rule" }
-  | { rule: "re_run_limit"; role: Role };
+  | { rule: "re_run_limit"; role: Role }
+  | { rule: "inputs_changed"; inputs: string[] };
 
 /** A routing decision and the reason for it. */
 export type Ruling = { decision: RoutingDecision; reason: Reason };
@@ -72,6 +75,7 @@ export const failed = (work: Pick<AcceptedWork, "verdict">) =>
   work.verdict === "fail" || work.verdict === "blocked";
 
 export function rule(work: AcceptedWork): Ruling {
+  if (work.inputsChanged?.length) return reviseWithNewInputs(work, work.inputsChanged);
   if (work.partial) return continuation(work);
   if (failed(work)) return revise(work);
   if (work.fromRole === "research") return returnResearch(work);
@@ -91,6 +95,19 @@ function continuation(work: AcceptedWork): Ruling {
     continuation: true,
   };
   return { decision: { tasks: [task] }, reason: { rule: "partial" } };
+}
+
+/**
+ * Work whose inputs changed after its task was posted is revised by the same role, with the new
+ * inputs, instead of moving on (decision 0015).
+ */
+function reviseWithNewInputs(work: AcceptedWork, inputs: string[]): Ruling {
+  const task: Task = {
+    role: work.fromRole as Role,
+    module: work.module,
+    feedbackSignal: work.feedbackSignal,
+  };
+  return { decision: { tasks: [task] }, reason: { rule: "inputs_changed", inputs } };
 }
 
 /** A revision task for the role that can fix what failed work reports. */

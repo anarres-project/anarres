@@ -105,3 +105,25 @@ describe("the commit main is at", () => {
     expect((await adapter.commitsSince("ledger", "b2")).map((c) => c.sha)).toEqual(["c3"]);
   });
 });
+
+describe("the paths changed on main since a commit (decision 0015)", () => {
+  it("are the files GitHub compares as changed between the commit and main", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/compare/p1nned...main?per_page=100&page=1"
+        ) {
+          const files = [{ filename: "programme/slices/parser/requirements.md" }];
+          return { status: 200, data: { commits: [], total_commits: 1, files } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.changedOnMainSince("ledger", "p1nned")).toEqual([
+      "programme/slices/parser/requirements.md",
+    ]);
+  });
+});

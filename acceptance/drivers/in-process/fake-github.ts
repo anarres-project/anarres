@@ -446,6 +446,15 @@ export class FakeGitHub
     return this.filesAtCommit.get(commit)?.get(MODULES_FILE);
   }
 
+  /** The paths whose text differs between the commit and main now, added or removed too. */
+  async changedOnMainSince(project: string, commit: string): Promise<string[]> {
+    const then = this.filesAtCommit.get(commit) ?? new Map<string, string>();
+    const now = this.files.get(project) ?? new Map<string, string>();
+    return [...new Set([...then.keys(), ...now.keys()])].filter(
+      (path) => then.get(path) !== now.get(path),
+    );
+  }
+
   /** The paths of the files on a project's main branch as the commit left them. */
   filesAt(_project: string, commit: string): string[] {
     return [...(this.filesAtCommit.get(commit)?.keys() ?? [])];
