@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { whatToActOn } from "../src/event.ts";
+import { checksProtection, type Run, whatToActOn } from "../src/event.ts";
 
 describe("what Divlab acts on, from the event that started its run", () => {
   it("acts on a merge when something is pushed to main", () => {
@@ -121,5 +121,18 @@ describe("what Divlab acts on, from the event that started its run", () => {
 
   it("refuses to act on an event it was not made for", () => {
     expect(() => whatToActOn("discussion", {})).toThrow("Divlab does not act on discussion events");
+  });
+});
+
+describe("which runs check that main is still protected (Bernard, 2026-10-29)", () => {
+  it.each<[string, Run, boolean]>([
+    ["the hourly lease check", { leases: true }, true],
+    ["a pull request's run, which may merge it", { pullRequest: "7" }, true],
+    ["a finished check's run, which may merge its work", { checked: "c0ffee" }, true],
+    ["a claim's run", { claim: { task: "4", member: "alice" } }, false],
+    ["a release's run", { release: { task: "4", member: "alice" } }, false],
+    ["a push's run", { merge: true }, false],
+  ])("%s: %s", (_what, run, checks) => {
+    expect(checksProtection(run)).toBe(checks);
   });
 });

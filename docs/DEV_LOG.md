@@ -662,6 +662,13 @@ governance scenarios run alone.
             the repository only in part" guarded the root listing, which is gone; deleted with
             it, and the fake's answers for the old listings. 212 passed.
   REFACTOR: `wholeTree` removed, unused. Listing trees was 18% of a run's requests.
+- Main's protection is checked on the hourly lease check and on runs that may merge work
+  (Bernard), not on every run: about 8% of a run's requests on the rest.
+  RED:      which runs check that main is still protected -> missing `checksProtection`; with a
+            stub, 3 of 6 rows expected false to be true
+  GREEN:    the same (219 passed): `checksProtection(run)`, used by the Action and, as it mirrors
+            the Action, the in-process driver. Decision 0006 updated.
+  REFACTOR: none.
 
 ---
 

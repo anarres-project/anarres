@@ -43,7 +43,9 @@ is finished by the next, from the records, never from Git history.
 merging is handled as decision 0005 says: recorded once, PDC coordinators alerted, never routed.
 
 **Divlab checks its own protection.** An organisation owner can still switch a ruleset off, so on
-each run Divlab confirms that the project's main branch is protected as this decision requires,
+the hourly lease check and on each run that may merge work (Bernard, 2026-10-29: not on every
+run, to spare the App's allowance; noticed within the hour) Divlab confirms that the project's
+main branch is protected as this decision requires,
 and alerts PDC coordinators if it is not (decision 0005, option 2, now chosen). It reads the rules
 GitHub applies to main, which needs no more than the App already has, and alerts once: the open
 alert is its record, and closing it re-arms the check. It cannot see who else may bypass those

@@ -75,3 +75,11 @@ export function whatToActOn(name: string, event: unknown): Run {
   }
   throw new Error(`Divlab does not act on ${name} events`);
 }
+
+/**
+ * Whether the run checks that main is still protected: the hourly lease check, and each run that
+ * may merge work, so an unprotected main is noticed within the hour (Bernard, 2026-10-29). Main's
+ * commits are checked on every run.
+ */
+export const checksProtection = (run: Run): boolean =>
+  "leases" in run || "pullRequest" in run || "checked" in run;

@@ -14,12 +14,14 @@ import {
   CLAIM,
   checkMain,
   checkProtection,
+  checksProtection,
   onChecked,
   onClaim,
   onLeaseCheck,
   onMerge,
   onPullRequest,
   onRelease,
+  type Run,
   routingDecisions,
   setUpProject,
   startModule,
@@ -94,9 +96,12 @@ export class InProcessDriver implements Driver {
     }
   }
 
-  /** What every Divlab run ends with, as the Action does: main's protection, and its changes. */
-  private async afterRun(project: string): Promise<void> {
-    await checkProtection(project, this.github, this.github);
+  /**
+   * What every Divlab run ends with, as the Action does: main's changes, and for some runs its
+   * protection. The run's kind is all that is read of `run`.
+   */
+  private async afterRun(project: string, run: Run): Promise<void> {
+    if (checksProtection(run)) await checkProtection(project, this.github, this.github);
     await checkMain(project, this.github, this.github, this.github, this.clock, DIVLAB_ACCOUNT);
   }
 
@@ -114,7 +119,7 @@ export class InProcessDriver implements Driver {
     const { path, text } = feedbackSignalFile(work);
     this.github.mergeFile(work.project, path, text);
     await onMerge(work.project, this.github, this.github, this.github, this.clock);
-    await this.afterRun(work.project);
+    await this.afterRun(work.project, { merge: true });
   }
 
   async unmergedWorkAlerts(project: string): Promise<string[]> {
@@ -145,7 +150,7 @@ export class InProcessDriver implements Driver {
 
   async divlabActsAgain(project: string): Promise<void> {
     await onMerge(project, this.github, this.github, this.github, this.clock);
-    await this.afterRun(project);
+    await this.afterRun(project, { merge: true });
   }
 
   async pullRequestChecks(project: string): Promise<string[]> {
@@ -202,7 +207,7 @@ export class InProcessDriver implements Driver {
       this.github,
       this.clock,
     );
-    await this.afterRun(work.project);
+    await this.afterRun(work.project, { pullRequest: "" });
   }
 
   /** All the pull requests are opened first; then Divlab takes each in turn, as queued runs do. */
@@ -221,7 +226,7 @@ export class InProcessDriver implements Driver {
     });
     for (const { project, pullRequest } of opened) {
       await onPullRequest(project, pullRequest, this.github, this.github, this.github, this.clock);
-      await this.afterRun(project);
+      await this.afterRun(project, { pullRequest: "" });
     }
   }
 
@@ -285,7 +290,7 @@ export class InProcessDriver implements Driver {
         this.github.comment(where, issue, member, CLAIM, this.clock().toISOString()),
     });
     await onClaim(project, { task: id, member }, this.github, this.github, this.clock, this.github);
-    await this.afterRun(project);
+    await this.afterRun(project, { claim: { task: "", member: "" } });
   }
 
   /** Every member comments first; then Divlab takes `heardFirst`'s run, then the others in turn. */
@@ -306,7 +311,7 @@ export class InProcessDriver implements Driver {
         this.clock,
         this.github,
       );
-      await this.afterRun(task.project);
+      await this.afterRun(task.project, { claim: { task: "", member: "" } });
     }
   }
 
@@ -525,7 +530,7 @@ export class InProcessDriver implements Driver {
 
   async divlabChecksLeases(project: string): Promise<void> {
     await onLeaseCheck(project, this.github, this.github, this.clock);
-    await this.afterRun(project);
+    await this.afterRun(project, { leases: true });
   }
 
   /** The member's plugin submits through the CLI; the fake GitHub plays the member's fork. */
@@ -553,7 +558,7 @@ export class InProcessDriver implements Driver {
             this.github,
             this.clock,
           );
-          await this.afterRun(project);
+          await this.afterRun(project, { pullRequest: "" });
           return pullRequest;
         },
       },
@@ -578,7 +583,7 @@ export class InProcessDriver implements Driver {
       this.github,
       this.clock,
     );
-    await this.afterRun(work.project);
+    await this.afterRun(work.project, { pullRequest: "" });
   }
 
   /** The checks workflow's completion starts Divlab's run for the commit, as on GitHub. */
@@ -586,7 +591,7 @@ export class InProcessDriver implements Driver {
     const pullRequest = this.github.pullRequestFor(work.project, work.feedbackSignal);
     const commit = this.github.finishTests(pullRequest, passed);
     await onChecked(work.project, commit, this.github, this.github, this.github, this.clock);
-    await this.afterRun(work.project);
+    await this.afterRun(work.project, { checked: "" });
   }
 
   /** The push to the draft's branch starts Divlab's pull request run again, as on GitHub. */
@@ -600,7 +605,7 @@ export class InProcessDriver implements Driver {
       this.github,
       this.clock,
     );
-    await this.afterRun(work.project);
+    await this.afterRun(work.project, { pullRequest: "" });
   }
 
   /** The member comments to give the task back, and the comment's run wakes Divlab. */
@@ -608,7 +613,7 @@ export class InProcessDriver implements Driver {
     const id = this.openTaskId(task);
     this.github.comment(task.project, id, member, "/release", this.clock().toISOString());
     await onRelease(task.project, { task: id, member }, this.github, this.github, this.clock);
-    await this.afterRun(task.project);
+    await this.afterRun(task.project, { release: { task: "", member: "" } });
   }
 
   async claimedTasks(project: string): Promise<ClaimedTask[]> {

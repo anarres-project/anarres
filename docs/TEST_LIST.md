@@ -140,6 +140,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
             the most (18%), then writing events (17%), issues (9.5%), the ruleset check (8%);
       - [x] the log's two tree listings per read are one: `git/trees/main:events` (GitHub takes a
             branch and a path, and answers 404 for no such folder; tried 2026-10-29);
+      - [x] the ruleset check: on the hourly lease check and on each run that may merge work (a
+            pull request's, a finished check's), not on claims, releases or pushes (Bernard,
+            2026-10-29; decision 0006 updated). Main's commits are still checked on every run;
       - [ ] the next cuts, now that the sandbox has gone past the allowance: the ruleset check on
             every run (one request; only on runs that could have changed it?), and the log's
             two tree listings per read;

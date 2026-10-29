@@ -9575,6 +9575,7 @@ function whatToActOn(name, event) {
   }
   throw new Error(`Divlab does not act on ${name} events`);
 }
+var checksProtection = (run) => "leases" in run || "pullRequest" in run || "checked" in run;
 
 // src/index.ts
 var parts = (events) => [
@@ -11760,7 +11761,7 @@ try {
   } else {
     await onMerge(project, github, github, github, clock);
   }
-  await checkProtection(project, github, github);
+  if (checksProtection(run)) await checkProtection(project, github, github);
   const app = process.env.INPUT_APP;
   if (!app) throw new Error("Divlab needs its App's name (the app input) to check main's changes");
   await checkMain(project, github, github, github, clock, `${app}[bot]`);

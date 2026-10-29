@@ -6,7 +6,7 @@ import {
   requestGitHub,
   summary,
 } from "@anarres/github";
-import { whatToActOn } from "./event.ts";
+import { checksProtection, whatToActOn } from "./event.ts";
 import {
   checkMain,
   checkProtection,
@@ -79,7 +79,7 @@ try {
   } else {
     await onMerge(project, github, github, github, clock);
   }
-  await checkProtection(project, github, github);
+  if (checksProtection(run)) await checkProtection(project, github, github);
   // Every run looks at main's changes since the last look: Divlab's own carry its App's name.
   const app = process.env.INPUT_APP;
   if (!app) throw new Error("Divlab needs its App's name (the app input) to check main's changes");
