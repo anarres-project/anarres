@@ -449,7 +449,7 @@ export class FakeGitHub
   }
 
   /** The project's modules.yaml as the commit left it. */
-  modulesAt(_project: string, commit: string): string | undefined {
+  async modulesAt(_project: string, commit: string): Promise<string | undefined> {
     return this.filesAtCommit.get(commit)?.get(MODULES_FILE);
   }
 

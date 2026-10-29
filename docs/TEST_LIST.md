@@ -601,9 +601,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         (as a continuation does, decision 0008), and says so apart from a continuation: core's
         `staleRevision`, an `inputs-changed` label read back, kept in the task's folder record
         for the hook. Scenario "A member taking the revision has the work already done to read";
-  - [ ] Architecture's and Specification's contracts count among their inputs: judged with the
-        task's contracts, from `modules.yaml` at the pinned commit (until then, a revised contract
-        is caught by the next item);
+  - [x] Architecture's and Specification's contracts count among their inputs: a revised
+        contract sends their work back to Architecture (the contract rule, below), judged from
+        `modules.yaml` both on main and at the pinned commit, so no separate stale rule is needed;
   - [ ] stale work that also failed, or was handed over partial: which rule wins (stale is
         checked first now);
   - [ ] GitHub's comparison lists at most 300 changed files: more than that, and some inputs may
@@ -623,7 +623,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           leaves `modules.yaml` alone, so Divlab reads it from main then (found once the fake
           listed a pull request's files as GitHub does: only those differing from main's).
           Scenario "A revised contract sends a module that is done back to Architecture at once";
-    - [ ] a module the revision stops listing as a user of the contract;
+    - [x] a module with a task open that the revision stops listing as a provider or user of
+          the contract: `modules.yaml` at the task's pinned commit counts too (Divlab asks for it
+          only when a contract changed), and each revised contract is named once. Scenario "A
+          revised contract sends a module it no longer serves back to Architecture";
+    - [ ] a module with no task open that the revision stops listing: the revision posted at
+          once reads only the new `modules.yaml`, so it is missed (compare with the previous
+          listing on main);
   - [ ] an acceptance scenario for each, in-process, then in the sandbox.
 
 ## 4a. Any language (hosted projects)

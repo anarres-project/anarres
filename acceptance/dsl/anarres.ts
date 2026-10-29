@@ -236,6 +236,26 @@ export class Anarres {
     });
   }
 
+  /**
+   * Programme Architect work is accepted again, listing the modules and contracts as the last
+   * did, with the contract's text revised and the module no longer among its users.
+   */
+  async programmeRevisedSoThatNoLongerUses(contract: string, module: string) {
+    assert.ok(this.programme !== undefined, "expected Programme Architect work listing modules");
+    await this.memberHasWorkAccepted({
+      role: "Programme Architect",
+      module: "programme",
+      verdict: "pass",
+      modulesListed: this.programme.modulesListed ?? [],
+      contracts: (this.programme.contracts ?? []).map((one) =>
+        one.name === contract
+          ? { ...one, usedBy: one.usedBy.filter((user) => user !== module) }
+          : one,
+      ),
+      contractsRevised: [contract],
+    });
+  }
+
   /** Programme Architect work is accepted, changing the module's requirement slice. */
   async programmeRevisedChangingSliceFor(module: string) {
     await this.memberHasWorkAccepted({

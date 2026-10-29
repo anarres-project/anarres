@@ -518,6 +518,22 @@ governance scenarios run alone.
   scenarios of decision 0015 each go through several merges. The limit is now 90 minutes, a
   margin over a full run's 60 or so (Bernard, 2026-10-29), and a run spends about 3,000 of the
   hourly allowance.
+- A revised contract that stops listing a module with a task open sends it back to Architecture
+  too. Acceptance: scenario "A revised contract sends a module it no longer serves back to
+  Architecture", red as not yet right (the Test work moved on to Coding).
+  RED:      sends a module back to Architecture when a revised contract no longer lists it ->
+            expected [ { role: 'test', … } ] to deeply equal [ { role: 'architecture', … } ]
+  GREEN:    the same (209 passed): Divlab reads `modules.yaml` at the pinned commit as well as
+            on main, only when a contract changed (`PullRequests.modulesAt`; the fake's became
+            asynchronous to match).
+  REFACTOR: the test's listing helper simplified.
+  RED:      names a revised contract once in its record, though modules.yaml lists it on main
+            and at the pinned commit -> received "tokens" twice
+  GREEN:    the same (210 passed).
+  REFACTOR: none.
+  This also covers Architecture's and Specification's contracts as their inputs: the contract
+  rule sends their work back to Architecture. A module with no task open that the revision
+  stops listing is still missed: on the test list. Gate 768 and 130.
 
 ---
 

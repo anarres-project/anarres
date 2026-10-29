@@ -439,7 +439,9 @@ export class InProcessDriver implements Driver {
     const id = this.openTaskId(task);
     const held = await this.github.task(task.project, id);
     const modules =
-      held?.inputsAt === undefined ? undefined : this.github.modulesAt(task.project, held.inputsAt);
+      held?.inputsAt === undefined
+        ? undefined
+        : await this.github.modulesAt(task.project, held.inputsAt);
     const plan = preparation("anarres-project", task.project, held, member, modules);
     if ("refused" in plan) throw new Error(plan.refused);
     if (held === undefined) throw new Error(`No task ${id} in ${task.project}`);

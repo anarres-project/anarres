@@ -628,6 +628,13 @@ Given(
   },
 );
 
+Given(
+  "the Programme Architect's work was revised since, changing the contract {string} so that {string} no longer uses it",
+  function (this: AnarresWorld, contract: string, module: string) {
+    return this.anarres.programmeRevisedSoThatNoLongerUses(contract, module);
+  },
+);
+
 When(
   "the Programme Architect's work is revised, changing the contract {string}",
   function (this: AnarresWorld, contract: string) {

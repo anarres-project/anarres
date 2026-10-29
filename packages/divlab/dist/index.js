@@ -10009,9 +10009,14 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     const inputsChanged = changedInputs(role, signal.module, {}, changed);
     if (inputsChanged.length > 0) work = { ...work, inputsChanged };
     if (changed.some((path) => path.startsWith(CONTRACTS))) {
-      const listed = readModules(await pullRequests.modulesOnMain(project2) ?? "");
-      const contracts = "unreadable" in listed ? [] : listed.contracts;
-      const revised = contractsRevised(contracts, signal.module, changed);
+      const contracts = [
+        await pullRequests.modulesOnMain(project2),
+        await pullRequests.modulesAt(project2, pinned)
+      ].flatMap((text) => {
+        const listed = readModules(text ?? "");
+        return "unreadable" in listed ? [] : listed.contracts;
+      });
+      const revised = [...new Set(contractsRevised(contracts, signal.module, changed))];
       if (revised.length > 0) work = { ...work, contractsRevised: revised };
     }
   }

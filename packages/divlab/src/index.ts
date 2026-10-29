@@ -491,6 +491,8 @@ export interface PullRequests {
   changedOnMainSince(project: string, commit: string): Promise<string[]>;
   /** The project's modules.yaml on main, if it has one. */
   modulesOnMain(project: string): Promise<string | undefined>;
+  /** The project's modules.yaml at the commit, if it had one. */
+  modulesAt(project: string, commit: string): Promise<string | undefined>;
   /** The test report the project's check wrote on the commit, once it has finished (0011). */
   testReport(
     project: string,
@@ -950,11 +952,17 @@ export async function onPullRequest(
     const inputsChanged = changedInputs(role, signal.module, {}, changed);
     if (inputsChanged.length > 0) work = { ...work, inputsChanged };
     // A revised contract sends the module back to Architecture: which module provides and uses
-    // it, main's modules.yaml says, read only when a contract changed.
+    // it, modules.yaml says, on main and at the pinned commit, so a module the revision stops
+    // listing goes back too. Read only when a contract changed.
     if (changed.some((path) => path.startsWith(CONTRACTS))) {
-      const listed = readModules((await pullRequests.modulesOnMain(project)) ?? "");
-      const contracts = "unreadable" in listed ? [] : listed.contracts;
-      const revised = contractsRevised(contracts, signal.module, changed);
+      const contracts = [
+        await pullRequests.modulesOnMain(project),
+        await pullRequests.modulesAt(project, pinned),
+      ].flatMap((text) => {
+        const listed = readModules(text ?? "");
+        return "unreadable" in listed ? [] : listed.contracts;
+      });
+      const revised = [...new Set(contractsRevised(contracts, signal.module, changed))];
       if (revised.length > 0) work = { ...work, contractsRevised: revised };
     }
   }

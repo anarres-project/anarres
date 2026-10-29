@@ -535,6 +535,7 @@ describe("acting on a pull request", () => {
     // Nothing on main changed since any task's inputs were pinned.
     changedOnMainSince: async () => [],
     modulesOnMain: async () => undefined,
+    modulesAt: async () => undefined,
     // The project's tests on Test work: its new test ran and failed, as it should.
     testReport: async () => ({
       state: "finished",
@@ -2049,6 +2050,91 @@ describe("acting on a pull request", () => {
     );
     expect(posted.map(({ role, module }) => ({ role, module }))).toEqual([
       { role: "architecture", module: "parser" },
+    ]);
+  });
+
+  it("sends a module back to Architecture when a revised contract no longer lists it (0015)", async () => {
+    const posted: PostedTask[] = [];
+    const postedAtPinned: EventLog = {
+      ...log,
+      read: async () => [
+        {
+          project: "ledger",
+          mergedAs: "p1nned",
+          work: {
+            fromRole: "architecture",
+            module: "parser",
+            verdict: "pass",
+            impediments: [],
+            feedbackSignal: "feedback/FB-0.md",
+          },
+          decision: { tasks: [{ role: "specification", module: "parser" }] },
+          reason: { rule: "passed" },
+        },
+      ],
+    };
+    const listing = (parser: string[]) =>
+      ["modules:", "  - name: lexer", "    provides: [tokens]", "  - name: parser", ...parser].join(
+        "\n",
+      );
+    const noLongerUsed: PullRequests = {
+      ...submitting(),
+      changedOnMainSince: async () => ["programme/contracts/tokens/contract.md"],
+      modulesOnMain: async () => listing([]),
+      modulesAt: async (_project, commit) =>
+        commit === "p1nned" ? listing(["    uses: [tokens]"]) : undefined,
+    };
+    await onPullRequest(
+      "ledger",
+      "7",
+      noLongerUsed,
+      { ...held, post: async (task) => void posted.push(task) },
+      postedAtPinned,
+      clock,
+    );
+    expect(posted.map(({ role, module }) => ({ role, module }))).toEqual([
+      { role: "architecture", module: "parser" },
+    ]);
+  });
+
+  it("names a revised contract once in its record, though modules.yaml lists it on main and at the pinned commit (0015)", async () => {
+    const appended: LogEvent[] = [];
+    const postedAtPinned: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          mergedAs: "p1nned",
+          work: {
+            fromRole: "architecture",
+            module: "parser",
+            verdict: "pass",
+            impediments: [],
+            feedbackSignal: "feedback/FB-0.md",
+          },
+          decision: { tasks: [{ role: "specification", module: "parser" }] },
+          reason: { rule: "passed" },
+        },
+      ],
+      append: async (event) => void appended.push(event),
+    };
+    const listing =
+      "modules:\n  - name: lexer\n    provides: [tokens]\n  - name: parser\n    uses: [tokens]";
+    const contractRevised: PullRequests = {
+      ...submitting(),
+      changedOnMainSince: async () => ["programme/contracts/tokens/contract.md"],
+      modulesOnMain: async () => listing,
+      modulesAt: async () => listing,
+    };
+    await onPullRequest(
+      "ledger",
+      "7",
+      contractRevised,
+      { ...held, post: async () => {} },
+      postedAtPinned,
+      clock,
+    );
+    expect(appended.flatMap((event) => ("reason" in event ? [event.reason] : []))).toEqual([
+      { rule: "contract_revised", contracts: ["tokens"] },
     ]);
   });
 });
