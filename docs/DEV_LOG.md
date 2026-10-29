@@ -654,6 +654,14 @@ governance scenarios run alone.
 - The sandbox's check of the App's allowance retired: the job mints no App token, scenarios check
   only the sandbox's own allowance, and `shortfall` names no other (its test for the App's
   wording deleted with the behaviour). Divlab's runs say what they cost the App.
+- Cutting Divlab's requests (Bernard): the log is listed in one request, not two. GitHub takes
+  `git/trees/main:events` (tried on this repository: a folder listed; 404 for none).
+  RED:      is listed in one request, naming the events folder on main, and read in another ->
+            expected 3 to be 2
+  GREEN:    the same (213 passed, one failing): "is never taken to be empty, when GitHub lists
+            the repository only in part" guarded the root listing, which is gone; deleted with
+            it, and the fake's answers for the old listings. 212 passed.
+  REFACTOR: `wholeTree` removed, unused. Listing trees was 18% of a run's requests.
 
 ---
 

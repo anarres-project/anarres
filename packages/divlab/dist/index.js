@@ -11608,23 +11608,19 @@ var GitHubAdapter = class {
     await this.comment(project2, pullRequest, commentForRefusal(reason));
   }
   /**
-   * The event files, oldest first. Listed from main's Git tree: GitHub's contents listing stops at
-   * 1,000 files, which would leave a busy project's log read in part.
+   * The event files, oldest first. Listed from the Git tree of `events/` on main, named as
+   * `main:events` in one request: GitHub's contents listing stops at 1,000 files, which would
+   * leave a busy project's log read in part. No such folder (404) is a log with no events yet.
    */
   async eventFiles(project2) {
-    const root = await this.wholeTree(project2, "main");
-    const events = root.find((entry) => entry.path === "events" && entry.type === "tree");
-    if (!events) return [];
-    const tree = await this.wholeTree(project2, events.sha);
-    return tree.filter((entry) => EVENT_FILE.test(entry.path)).map((entry) => ({ name: entry.path, sha: entry.sha })).sort((a, b) => a.name.localeCompare(b.name));
-  }
-  /** A Git tree's entries, all of them: decisions must never rest on part of the log. */
-  async wholeTree(project2, tree) {
-    const listed = await this.call("GET", `${this.repo(project2)}/git/trees/${tree}`);
-    if (listed.truncated) {
-      throw new GitHubError("GET", `tree ${tree}`, 200, "GitHub listed the tree in part");
+    const where = `${this.repo(project2)}/git/trees/main:events`;
+    const { status, data } = await this.request("GET", where);
+    if (status === 404) return [];
+    if (status !== 200) throw new GitHubError("GET", where, status, data);
+    if (data.truncated) {
+      throw new GitHubError("GET", "tree main:events", 200, "GitHub listed the tree in part");
     }
-    return listed.tree;
+    return data.tree.filter((entry) => EVENT_FILE.test(entry.path)).map((entry) => ({ name: entry.path, sha: entry.sha })).sort((a, b) => a.name.localeCompare(b.name));
   }
   async openIssue(project2, issue, attempt = 1) {
     const where = `${this.repo(project2)}/issues`;

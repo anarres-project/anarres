@@ -138,6 +138,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       - [x] measured again in the sandbox (a7e72fa: 87 of 87 in 42 minutes; 50 runs sampled,
             about 12.8 requests a run, from 15: a sixth fewer). Listing the log's trees is still
             the most (18%), then writing events (17%), issues (9.5%), the ruleset check (8%);
+      - [x] the log's two tree listings per read are one: `git/trees/main:events` (GitHub takes a
+            branch and a path, and answers 404 for no such folder; tried 2026-10-29);
       - [ ] the next cuts, now that the sandbox has gone past the allowance: the ruleset check on
             every run (one request; only on runs that could have changed it?), and the log's
             two tree listings per read;
