@@ -9,3 +9,13 @@ Feature: Work whose inputs changed after its task was posted is revised
     And the Programme Architect's work was revised since, changing the requirement slice for "parser"
     When Alice submits Test work on "parser" with a pass verdict
     Then the only task ready for "parser" is a Test task
+
+  Scenario: A member taking the revision has the work already done to read
+    Given a project with a module "parser"
+    And a member's Specification work on "parser" was accepted with a pass verdict
+    And Alice has claimed the Test task for "parser"
+    And the Programme Architect's work was revised since, changing the requirement slice for "parser"
+    And Alice's Test work on "parser" was accepted with a pass verdict
+    And Bob has claimed the Test task for "parser"
+    When Bob prepares the Test task for "parser"
+    Then Bob has the tests of "parser" to read

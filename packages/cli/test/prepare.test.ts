@@ -27,6 +27,19 @@ describe("preparing a task the member holds (concept §8)", () => {
     });
   });
 
+  it("also fetches its role's own place for a revision of work whose inputs changed (0015)", () => {
+    const task = {
+      role: "test" as const,
+      module: "parser",
+      claimedBy: "alice",
+      inputsAt: SHA,
+      staleRevision: true as const,
+    };
+    expect(preparation("anarres-project", "ledger", task, "alice")).toMatchObject({
+      paths: expect.arrayContaining(["modules/parser/tests/"]),
+    });
+  });
+
   it("fetches the contracts the task's module provides and uses, as modules.yaml says at that commit", () => {
     const task = {
       role: "architecture" as const,

@@ -598,7 +598,7 @@ describe("routing partial work (decision 0008)", () => {
 });
 
 describe("routing work whose inputs changed since its task was posted (decision 0015)", () => {
-  it("posts a revision for the same role, saying which inputs changed", () => {
+  it("posts a revision for the same role, reading the work done, saying which inputs changed", () => {
     expect(
       rule({
         fromRole: "test",
@@ -609,7 +609,9 @@ describe("routing work whose inputs changed since its task was posted (decision 
         inputsChanged: ["programme/slices/parser/requirements.md"],
       }),
     ).toEqual({
-      decision: { tasks: [{ role: "test", module: "parser", feedbackSignal: FEEDBACK }] },
+      decision: {
+        tasks: [{ role: "test", module: "parser", feedbackSignal: FEEDBACK, staleRevision: true }],
+      },
       reason: { rule: "inputs_changed", inputs: ["programme/slices/parser/requirements.md"] },
     });
   });

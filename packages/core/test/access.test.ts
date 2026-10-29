@@ -174,6 +174,15 @@ describe("the contracts a role's work reads (decision 0014)", () => {
   });
 });
 
+describe("what a revision of work whose inputs changed may read (decision 0015)", () => {
+  it("is its role's inputs and its role's own place, where the work already done is", () => {
+    expect(readScope("test", "parser", { staleRevision: true })).toEqual([
+      ...readScope("test", "parser"),
+      "modules/parser/tests/",
+    ]);
+  });
+});
+
 describe("the inputs that changed since a task was posted (decision 0015)", () => {
   it("are the changed paths its role reads for the task", () => {
     const changed = ["programme/slices/parser/requirements.md", "programme/slices/ledger/a.md"];

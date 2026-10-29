@@ -588,8 +588,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         pinned to the new commit; the routing record's reason names the inputs that changed
         (`inputs_changed`). Scenario "Work whose requirement slice changed after its task was
         posted goes back to its role", in-process;
-  - [ ] the revision reads its role's own place, so whoever takes it starts from the work done
-        (as a continuation does, decision 0008);
+  - [x] the revision reads its role's own place, so whoever takes it starts from the work done
+        (as a continuation does, decision 0008), and says so apart from a continuation: core's
+        `staleRevision`, an `inputs-changed` label read back, kept in the task's folder record
+        for the hook. Scenario "A member taking the revision has the work already done to read";
   - [ ] Architecture's and Specification's contracts count among their inputs: judged with the
         task's contracts, from `modules.yaml` at the pinned commit (until then, a revised contract
         is caught by the next item);

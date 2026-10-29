@@ -118,3 +118,10 @@ Then(
     );
   },
 );
+
+Then(
+  "{word} has the tests of {string} to read",
+  function (this: AnarresWorld, member: string, module: string) {
+    return this.anarres.memberHasWorkOf(member, module, ["tests"]);
+  },
+);

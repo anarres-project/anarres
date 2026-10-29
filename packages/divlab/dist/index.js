@@ -9015,7 +9015,7 @@ var READ_SCOPES = {
 function readScope(role, module, task = {}) {
   return [
     ...READ_SCOPES[role](module, task.contracts ?? []),
-    ...task.continuation ? [writeScope(role, module)] : []
+    ...task.continuation || task.staleRevision ? [writeScope(role, module)] : []
   ];
 }
 var contractPlaces = (contracts) => contracts.map((contract) => `${PROGRAMME}/contracts/${contract}/`);
@@ -9262,7 +9262,8 @@ function reviseWithNewInputs(work, inputs) {
   const task = {
     role: work.fromRole,
     module: work.module,
-    feedbackSignal: work.feedbackSignal
+    feedbackSignal: work.feedbackSignal,
+    staleRevision: true
   };
   return { decision: { tasks: [task] }, reason: { rule: "inputs_changed", inputs } };
 }
@@ -10518,6 +10519,7 @@ function unzipSync(data, opts) {
 // ../github/src/representation.ts
 var READY = "state:ready";
 var CONTINUATION = "continuation";
+var INPUTS_CHANGED = "inputs-changed";
 var CLAIMED = "state:claimed";
 function issueForTask(task, repository) {
   return {
@@ -10527,7 +10529,8 @@ function issueForTask(task, repository) {
       `module:${task.module}`,
       READY,
       ...task.researchFor === void 0 ? [] : [`${RESEARCH_FOR}${task.researchFor}`],
-      ...task.continuation ? [CONTINUATION] : []
+      ...task.continuation ? [CONTINUATION] : [],
+      ...task.staleRevision ? [INPUTS_CHANGED] : []
     ],
     body: [
       ...task.feedbackSignal === void 0 ? [] : [`Feedback signal: ${task.feedbackSignal}`, ""],
@@ -10557,6 +10560,7 @@ function taskFromIssue(issue) {
     role,
     module,
     ...issue.labels.some(({ name }) => name === CONTINUATION) ? { continuation: true } : {},
+    ...issue.labels.some(({ name }) => name === INPUTS_CHANGED) ? { staleRevision: true } : {},
     ...inputsAt === void 0 ? {} : { inputsAt },
     ...researchFor === void 0 ? {} : { researchFor },
     // Assigning is open to anyone who triages: only Divlab's claimed label makes a task held.

@@ -59,6 +59,8 @@ export type PostedTask = {
   inputsAt?: string;
   /** A continuation of partial work, which also reads its role's own place (decision 0008). */
   continuation?: true;
+  /** A revision of work whose inputs changed, which reads the work done too (decision 0015). */
+  staleRevision?: true;
 };
 
 /** A module Divlab marks done, and the feedback signal whose routing decision finished it. */

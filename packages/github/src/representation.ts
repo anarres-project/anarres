@@ -30,6 +30,8 @@ import type {
 export const READY = "state:ready";
 /** The label of a task that continues partial work (decision 0008). */
 const CONTINUATION = "continuation";
+/** The label of a task revising work whose inputs changed after it was posted (decision 0015). */
+const INPUTS_CHANGED = "inputs-changed";
 /** The label of a task a member holds. */
 export const CLAIMED = "state:claimed";
 
@@ -45,6 +47,7 @@ export function issueForTask(task: PostedTask, repository?: string): NewIssue {
       READY,
       ...(task.researchFor === undefined ? [] : [`${RESEARCH_FOR}${task.researchFor}`]),
       ...(task.continuation ? [CONTINUATION] : []),
+      ...(task.staleRevision ? [INPUTS_CHANGED] : []),
     ],
     body: [
       ...(task.feedbackSignal === undefined ? [] : [`Feedback signal: ${task.feedbackSignal}`, ""]),
@@ -101,6 +104,7 @@ export function taskFromIssue(issue: ListedIssue):
       claimed?: true;
       inputsAt?: string;
       continuation?: true;
+      staleRevision?: true;
     }
   | undefined {
   const labelled = (prefix: string) =>
@@ -118,6 +122,9 @@ export function taskFromIssue(issue: ListedIssue):
     module,
     ...(issue.labels.some(({ name }) => name === CONTINUATION)
       ? { continuation: true as const }
+      : {}),
+    ...(issue.labels.some(({ name }) => name === INPUTS_CHANGED)
+      ? { staleRevision: true as const }
       : {}),
     ...(inputsAt === undefined ? {} : { inputsAt }),
     ...(researchFor === undefined ? {} : { researchFor }),

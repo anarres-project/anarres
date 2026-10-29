@@ -476,6 +476,14 @@ governance scenarios run alone.
   Architect work had merge conflicts (the sandbox branched work from the fork's main as forked;
   it now syncs the fork first, as the plugin does), and a finished task was looked for before
   GitHub's list showed it closed (now asked again). Both the harness's.
+- Scenario (`@wip`, not yet right): "A member taking the revision has the work already done to
+  read" -> Bob had no tests of the module to read.
+- RED: a revision of work whose inputs changed reads its role's own place too -> no
+  `modules/parser/tests/`. GREEN (237). RED: the revision task carries `staleRevision` -> missing.
+  GREEN. RED: the issue marks it (`inputs-changed`) and reads it back -> label missing. GREEN
+  (201). The scenario then passed in-process: `preparation` already gave the whole task to
+  `readScope`; a test of it passed first time, kept as a regression. RED: the folder's record
+  keeps it for the hook -> missing. GREEN (102). `@wip` removed.
 
 ---
 

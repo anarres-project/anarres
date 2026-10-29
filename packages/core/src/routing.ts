@@ -26,6 +26,8 @@ export type Task = {
   researchFor?: string;
   /** A continuation of partial work, which also reads its role's own place (decision 0008). */
   continuation?: true;
+  /** A revision of work whose inputs changed, which reads the work done too (decision 0015). */
+  staleRevision?: true;
 };
 
 const MODULE_PIPELINE = [
@@ -106,6 +108,7 @@ function reviseWithNewInputs(work: AcceptedWork, inputs: string[]): Ruling {
     role: work.fromRole as Role,
     module: work.module,
     feedbackSignal: work.feedbackSignal,
+    staleRevision: true,
   };
   return { decision: { tasks: [task] }, reason: { rule: "inputs_changed", inputs } };
 }

@@ -169,6 +169,20 @@ describe("a task as a GitHub issue", () => {
     );
   });
 
+  it("marks a revision of work whose inputs changed, and reads it back (decision 0015)", () => {
+    const issue = issueForTask({
+      project: "ledger",
+      role: "test",
+      module: "parser",
+      decidedOn: "feedback/T-0141.md",
+      staleRevision: true,
+    });
+    expect(issue.labels).toContain("inputs-changed");
+    expect(taskFromIssue({ labels: issue.labels.map((name) => ({ name })) })?.staleRevision).toBe(
+      true,
+    );
+  });
+
   it("reads back from a Research task which role it is for", () => {
     const issue = issueForTask({
       project: "ledger",

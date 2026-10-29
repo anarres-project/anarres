@@ -79,18 +79,24 @@ const READ_SCOPES: Record<Role, (module: string, contracts: readonly string[]) =
 
 /** The places a role's work may read, for the module named in its task, a continuation or not. */
 export function readScope(role: Role, module: string, task: ReadingTask = {}): string[] {
-  // A continuation of partial work reads its role's own place too (decision 0008).
+  // A continuation of partial work reads its role's own place too (decision 0008), as does a
+  // revision of work whose inputs changed (decision 0015): the work already done is there.
   return [
     ...READ_SCOPES[role](module, task.contracts ?? []),
-    ...(task.continuation ? [writeScope(role, module)] : []),
+    ...(task.continuation || task.staleRevision ? [writeScope(role, module)] : []),
   ];
 }
 
 /**
  * What a task's reading depends on besides its role and module: whether it continues partial
- * work, and the contracts its module provides and uses (decision 0014).
+ * work, or revises work whose inputs changed (decision 0015), and the contracts its module
+ * provides and uses (decision 0014).
  */
-export type ReadingTask = { continuation?: boolean; contracts?: readonly string[] };
+export type ReadingTask = {
+  continuation?: boolean;
+  staleRevision?: boolean;
+  contracts?: readonly string[];
+};
 
 /** Each contract is a folder of its own (decision 0014). */
 const contractPlaces = (contracts: readonly string[]) =>

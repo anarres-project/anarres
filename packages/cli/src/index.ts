@@ -96,7 +96,14 @@ export function preparation(
   owner: string,
   project: string,
   task:
-    | { role: Role; module: string; claimedBy?: string; inputsAt?: string; continuation?: true }
+    | {
+        role: Role;
+        module: string;
+        claimedBy?: string;
+        inputsAt?: string;
+        continuation?: true;
+        staleRevision?: true;
+      }
     | undefined,
   member: string,
   modulesFile?: string,
@@ -234,8 +241,8 @@ export const TASK_RECORD = ".anarres-task.json";
 
 /** The record prepare leaves in a task's folder. */
 export function taskRecord(task: Partial<RecordedTask>): string {
-  const { role, module, continuation, contracts } = task;
-  return JSON.stringify({ role, module, continuation, contracts });
+  const { role, module, continuation, staleRevision, contracts } = task;
+  return JSON.stringify({ role, module, continuation, staleRevision, contracts });
 }
 
 /** A task as its folder's record gives it: what the hook judges its session's files by. */
@@ -243,6 +250,8 @@ export type RecordedTask = {
   role: Role;
   module: string;
   continuation?: true;
+  /** A revision of work whose inputs changed, which reads the work done (decision 0015). */
+  staleRevision?: true;
   /** The contracts prepare fetched for the task's module (decision 0014). */
   contracts?: string[];
 };
@@ -264,6 +273,7 @@ export function taskOfRecord(text: string): RecordedTask | undefined {
     role,
     module,
     ...(record.continuation === true ? { continuation: true as const } : {}),
+    ...(record.staleRevision === true ? { staleRevision: true as const } : {}),
     ...(contracts === undefined ? {} : { contracts: contracts as string[] }),
   };
 }
