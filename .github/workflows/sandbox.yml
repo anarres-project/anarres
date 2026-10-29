@@ -2,7 +2,7 @@ name: Sandbox acceptance
 
 # The acceptance scenarios against real repositories in the GitHub sandbox organisation.
 # Slower than the gate, so not part of it: runs on main and on demand. A push that changes only
-# documents is skipped: the run reads none of them, and each run spends about 2,000 of the
+# documents is skipped: the run reads none of them, and each run spends about 3,000 of the
 # hourly allowance of GitHub requests (SANDBOX.md).
 on:
   push:
@@ -26,8 +26,8 @@ jobs:
     # The token is only available to workflows on main (environment protection).
     environment: sandbox
     # Each merge waits for a real Divlab run in the sandbox: about 11 minutes in four workers.
-    # A safety margin, not a budget: a full run takes about 40 minutes (Bernard, 2026-10-27).
-    timeout-minutes: 60
+    # A safety margin, not a budget: a full run takes about 60 minutes (Bernard, 2026-10-29).
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

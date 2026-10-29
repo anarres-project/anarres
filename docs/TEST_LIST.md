@@ -489,6 +489,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       task just closed (6bf8438: "No Test task … is done"): asked again until they catch up.
       Once forks were synced, work replacing a file main already had (a second `modules.yaml`)
       was refused for want of the file's version (53140ea, 90 of 91): it is given now.
+- [x] The sandbox job's 60-minute limit was passed (b1898b1, cancelled with scenarios still
+      running) once decision 0015's multi-merge scenarios were added: the limit is 90 minutes
+      (Bernard, 2026-10-29).
+- [ ] b1898b1, near the end of a slow run: "Divlab neither merged nor refused" a Reviewer task's
+      pull request while its Divlab run sat in progress for 6 minutes, and "Divlab did not act
+      on the claim" of the next. See whether they recur with the longer limit; if so, whether
+      the driver's waits are too short for GitHub when it is slow.
 - [x] The sandbox run polls less: merges and finished runs every 5 seconds, decisions every 3
       (2026-10-24, from about 3,100 requests a run): c5666a4's full run took 2,466 (640, 577,
       599 and 650 across its four workers), and passed.

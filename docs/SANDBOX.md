@@ -143,8 +143,10 @@ the sandbox and tags the rest of its table `@in-process-only` (Bernard, 2026-10-
 pure routing in `packages/core`, checked in full by unit tests and in-process; one row shows each
 rule working against GitHub. So does escalation's count starting again once the role's work
 passes: the fourth re-run going to a PDC coordinator shows escalation against GitHub. The job's
-limit is 60 minutes, a margin over a full run's 40 or so, not a budget. Running every row cost the sandbox more Divlab runs than its time
-limit and the App's share of GitHub's limits allow, once each piece of work needed a claim first.
+limit is 90 minutes, a margin over a full run's 60 or so, not a budget (Bernard, 2026-10-29: the
+scenarios of decision 0015, each going through several merges, took a run past the earlier 60).
+Running every row cost the sandbox more Divlab runs than its time limit and the App's share of
+GitHub's limits allow, once each piece of work needed a claim first.
 
 ## Scenarios not yet run in the sandbox
 

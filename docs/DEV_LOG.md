@@ -513,6 +513,11 @@ governance scenarios run alone.
   passing. The one failure was the harness's: with forks synced, the second Programme Architect
   work replaced a `modules.yaml` the branch already had, and GitHub wants the replaced file's
   version for that; the driver now gives it.
+- The b1898b1 sandbox run was cancelled at the job's 60-minute limit, still passing steadily
+  (two failures near the end, both while GitHub was slow to start Divlab's runs). The
+  scenarios of decision 0015 each go through several merges. The limit is now 90 minutes, a
+  margin over a full run's 60 or so (Bernard, 2026-10-29), and a run spends about 3,000 of the
+  hourly allowance.
 
 ---
 
