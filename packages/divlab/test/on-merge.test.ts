@@ -2073,6 +2073,84 @@ describe("acting on a pull request", () => {
     ]);
   });
 
+  it("gives work back to its role when too much changed on main to tell whether its inputs did (0015)", async () => {
+    const posted: PostedTask[] = [];
+    const postedAtPinned: EventLog = {
+      ...log,
+      read: async () => [
+        {
+          project: "ledger",
+          mergedAs: "p1nned",
+          work: {
+            fromRole: "architecture",
+            module: "parser",
+            verdict: "pass",
+            impediments: [],
+            feedbackSignal: "feedback/FB-0.md",
+          },
+          decision: { tasks: [{ role: "specification", module: "parser" }] },
+          reason: { rule: "passed" },
+        },
+      ],
+    };
+    const tooMuchChanged: PullRequests = {
+      ...submitting(),
+      changedOnMainSince: async () => ({ tooMany: true }),
+    };
+    await onPullRequest(
+      "ledger",
+      "7",
+      tooMuchChanged,
+      { ...held, post: async (task) => void posted.push(task) },
+      postedAtPinned,
+      clock,
+    );
+    expect(posted.map(({ role, module }) => ({ role, module }))).toEqual([
+      { role: "specification", module: "parser" },
+    ]);
+  });
+
+  it("sends a module with contracts back to Architecture when too much changed to tell whether they did (0015)", async () => {
+    const posted: PostedTask[] = [];
+    const postedAtPinned: EventLog = {
+      ...log,
+      read: async () => [
+        {
+          project: "ledger",
+          mergedAs: "p1nned",
+          work: {
+            fromRole: "architecture",
+            module: "parser",
+            verdict: "pass",
+            impediments: [],
+            feedbackSignal: "feedback/FB-0.md",
+          },
+          decision: { tasks: [{ role: "specification", module: "parser" }] },
+          reason: { rule: "passed" },
+        },
+      ],
+    };
+    const listing =
+      "modules:\n  - name: lexer\n    provides: [tokens]\n  - name: parser\n    uses: [tokens]";
+    const tooMuchChanged: PullRequests = {
+      ...submitting(),
+      changedOnMainSince: async () => ({ tooMany: true }),
+      modulesOnMain: async () => listing,
+      modulesAt: async () => listing,
+    };
+    await onPullRequest(
+      "ledger",
+      "7",
+      tooMuchChanged,
+      { ...held, post: async (task) => void posted.push(task) },
+      postedAtPinned,
+      clock,
+    );
+    expect(posted.map(({ role, module }) => ({ role, module }))).toEqual([
+      { role: "architecture", module: "parser" },
+    ]);
+  });
+
   it("sends a module back to Architecture when a contract it uses was revised since (0015)", async () => {
     const posted: PostedTask[] = [];
     const postedAtPinned: EventLog = {

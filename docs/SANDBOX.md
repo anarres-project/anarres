@@ -148,6 +148,11 @@ scenarios of decision 0015, each going through several merges, took a run past t
 Running every row cost the sandbox more Divlab runs than its time limit and the App's share of
 GitHub's limits allow, once each piece of work needed a claim first.
 
+"Work whose inputs cannot be checked, as too much changed since its task was posted, goes back to
+its role" is in-process only too: it needs more than 300 files changed, the most GitHub lists of a
+comparison, which would cost the sandbox over 300 writes. The adapter's unit tests check how it
+reads GitHub's answer.
+
 ## Scenarios not yet run in the sandbox
 
 A scenario that passes in-process but cannot yet run against the sandbox is tagged

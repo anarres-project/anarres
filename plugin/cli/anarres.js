@@ -10254,6 +10254,7 @@ var mainCommit = (listed) => ({
 });
 var GOVERNANCE_REPOSITORY = "anarres-project/anarres";
 var GOVERNANCE_FILE = "governance/members.json";
+var COMPARED_FILES = 300;
 var WRITE_ATTEMPTS = 3;
 var CHECKS_WORKFLOW = ".github/workflows/checks.yml";
 var NO_TEST_REPORT = { unreadable: "the project's checks left no test report" };
@@ -10790,11 +10791,13 @@ var GitHubAdapter = class {
       }
     }
   }
+  /** GitHub lists at most 300 files of a comparison: as many as that may be cut short. */
   async changedOnMainSince(project, commit) {
     const { files } = await this.call(
       "GET",
       `${this.repo(project)}/compare/${commit}...main?per_page=100&page=1`
     );
+    if (files.length >= COMPARED_FILES) return { tooMany: true };
     return files.map((file) => file.filename);
   }
   async mergeCommitOf(project, pullRequest) {

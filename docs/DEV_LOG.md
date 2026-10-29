@@ -564,6 +564,23 @@ governance scenarios run alone.
   REFACTOR: none.
   Triangulation: "sends failed work back to Architecture when a contract was revised and its
   failure names a role below" passed first time, as it should; kept, as it pins the comparison.
+- More changed than GitHub's comparison lists (Bernard: treat as stale; decision 0015, question
+  6). Acceptance: scenario "Work whose inputs cannot be checked, as too much changed since its
+  task was posted, goes back to its role" (in-process only), red as not yet right (Coding).
+  RED:      the paths changed on main since a commit are too many to list when GitHub lists 300
+            -> expected [ …(300) ] to deeply equal { tooMany: true }
+  GREEN:    the same (203 passed): `ChangedOnMain`, declared beside Divlab's `PullRequests`.
+  RED:      posts a revision for the same role when too much changed to tell whether its inputs
+            did -> received role "coding", rule "passed"
+  GREEN:    the same (246 passed): core's `inputsUnchecked`, rule `inputs_unchecked`.
+  REFACTOR: `staleRevision`, the task both stale rules post.
+  RED:      gives work back to its role when too much changed on main to tell whether its inputs
+            did -> TypeError: changed.filter is not a function (Divlab could not read the answer)
+  GREEN:    the same (212 passed).
+  RED:      sends a module with contracts back to Architecture when too much changed to tell
+            whether they did -> received a Specification task
+  GREEN:    the same (213 passed): each of the module's contracts counts as revised.
+  REFACTOR: none. The in-process fake lists a comparison as GitHub does, too many from 300.
 
 ---
 

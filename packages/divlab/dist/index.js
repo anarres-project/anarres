@@ -9257,7 +9257,14 @@ function rule(work) {
   }
   if (work.partial) return continuation(work);
   if (failed(work)) return revise(work);
-  if (work.inputsChanged?.length) return reviseWithNewInputs(work, work.inputsChanged);
+  if (work.inputsChanged?.length) {
+    return {
+      decision: staleRevision(work),
+      reason: { rule: "inputs_changed", inputs: work.inputsChanged }
+    };
+  }
+  if (work.inputsUnchecked)
+    return { decision: staleRevision(work), reason: { rule: "inputs_unchecked" } };
   if (work.fromRole === "research") return returnResearch(work);
   if (work.modulesToStart !== void 0) return startModules(work, work.modulesToStart);
   return advance(work);
@@ -9271,14 +9278,14 @@ function continuation(work) {
   };
   return { decision: { tasks: [task] }, reason: { rule: "partial" } };
 }
-function reviseWithNewInputs(work, inputs) {
+function staleRevision(work) {
   const task = {
     role: work.fromRole,
     module: work.module,
     feedbackSignal: work.feedbackSignal,
     staleRevision: true
   };
-  return { decision: { tasks: [task] }, reason: { rule: "inputs_changed", inputs } };
+  return { tasks: [task] };
 }
 function reviseArchitecture(work, contracts) {
   const task = {
@@ -10012,15 +10019,22 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
   }
   const pinned = pinnedCommit(events, role, signal.module);
   if (pinned !== void 0) {
-    const changed = await pullRequests.changedOnMainSince(project2, pinned);
+    const compared = await pullRequests.changedOnMainSince(project2, pinned);
+    const unchecked = "tooMany" in compared;
+    if (unchecked) work = { ...work, inputsUnchecked: true };
+    const changed = unchecked ? [] : compared;
     const inputsChanged = changedInputs(role, signal.module, {}, changed);
     if (inputsChanged.length > 0) work = { ...work, inputsChanged };
-    if (changed.some((path) => path.startsWith(CONTRACTS))) {
+    if (unchecked || changed.some((path) => path.startsWith(CONTRACTS))) {
       const contracts = [
         await pullRequests.modulesOnMain(project2),
         await pullRequests.modulesAt(project2, pinned)
       ].flatMap(contractsListed);
-      const revised = [...new Set(contractsRevised(contracts, signal.module, changed))];
+      const revised = [
+        ...new Set(
+          unchecked ? contractsOfModule(contracts, signal.module) : contractsRevised(contracts, signal.module, changed)
+        )
+      ];
       if (revised.length > 0) work = { ...work, contractsRevised: revised };
     }
   }
@@ -10936,6 +10950,7 @@ var mainCommit = (listed) => ({
 });
 var GOVERNANCE_REPOSITORY = "anarres-project/anarres";
 var GOVERNANCE_FILE = "governance/members.json";
+var COMPARED_FILES = 300;
 var WRITE_ATTEMPTS = 3;
 var CHECKS_WORKFLOW = ".github/workflows/checks.yml";
 var NO_TEST_REPORT = { unreadable: "the project's checks left no test report" };
@@ -11472,11 +11487,13 @@ var GitHubAdapter = class {
       }
     }
   }
+  /** GitHub lists at most 300 files of a comparison: as many as that may be cut short. */
   async changedOnMainSince(project2, commit) {
     const { files } = await this.call(
       "GET",
       `${this.repo(project2)}/compare/${commit}...main?per_page=100&page=1`
     );
+    if (files.length >= COMPARED_FILES) return { tooMany: true };
     return files.map((file) => file.filename);
   }
   async mergeCommitOf(project2, pullRequest) {

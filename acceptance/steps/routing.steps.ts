@@ -641,6 +641,13 @@ Given(
 );
 
 Given(
+  "the Programme Architect's work was revised since, changing the requirement slices of a great many other modules",
+  function (this: AnarresWorld) {
+    return this.anarres.programmeRevisedChangingManySlices();
+  },
+);
+
+Given(
   "the Programme Architect's work was revised since, changing the contract {string}",
   function (this: AnarresWorld, contract: string) {
     return this.anarres.programmeRevisedChangingContract(contract);

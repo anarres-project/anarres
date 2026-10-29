@@ -256,6 +256,19 @@ export class Anarres {
     });
   }
 
+  /**
+   * Programme Architect work is accepted, changing the requirement slices of more modules than
+   * GitHub's comparison of two commits lists the files of.
+   */
+  async programmeRevisedChangingManySlices() {
+    await this.memberHasWorkAccepted({
+      role: "Programme Architect",
+      module: "programme",
+      verdict: "pass",
+      slicesChanged: Array.from({ length: 301 }, (_, i) => `other-${i + 1}`),
+    });
+  }
+
   /** Programme Architect work is accepted, changing the module's requirement slice. */
   async programmeRevisedChangingSliceFor(module: string) {
     await this.memberHasWorkAccepted({

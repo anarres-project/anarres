@@ -126,4 +126,24 @@ describe("the paths changed on main since a commit (decision 0015)", () => {
       "programme/slices/parser/requirements.md",
     ]);
   });
+
+  it("are too many to list when GitHub lists the most files a comparison shows, 300", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/compare/p1nned...main?per_page=100&page=1"
+        ) {
+          const files = Array.from({ length: 300 }, (_, i) => ({
+            filename: `programme/slices/m${i}/slice.md`,
+          }));
+          return { status: 200, data: { commits: [], total_commits: 1, files } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.changedOnMainSince("ledger", "p1nned")).toEqual({ tooMany: true });
+  });
 });

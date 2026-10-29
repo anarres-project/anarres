@@ -1,6 +1,7 @@
 import {
   CONTRACTS,
   changedInputs,
+  contractsOfModule,
   contractsRevised,
   type FeedbackSignal,
   FIRST_ROLE,
@@ -463,6 +464,9 @@ export type ChangeNotByDivlab = {
 };
 
 /** Members' pull requests: what each would change, read as data, and merging it. */
+/** The paths changed on main since a commit, or more than GitHub lists (decision 0015). */
+export type ChangedOnMain = string[] | { tooMany: true };
+
 export interface PullRequests {
   /**
    * The pull request as it is now: the commit it is at, whether its member marked it a draft (work
@@ -487,8 +491,8 @@ export interface PullRequests {
   ): Promise<{ state: "passed" | "failed" | "running"; url: string }>;
   /** The project's open pull requests whose head is the commit. */
   openAt(project: string, commit: string): Promise<string[]>;
-  /** The paths changed on main since the commit (decision 0015). */
-  changedOnMainSince(project: string, commit: string): Promise<string[]>;
+  /** The paths changed on main since the commit, or too many to list (decision 0015). */
+  changedOnMainSince(project: string, commit: string): Promise<ChangedOnMain>;
   /** The project's modules.yaml on main, if it has one. */
   modulesOnMain(project: string): Promise<string | undefined>;
   /** The project's modules.yaml at the commit, if it had one. */
@@ -954,18 +958,29 @@ export async function onPullRequest(
   // Work whose inputs changed after its task was posted goes back to its role (decision 0015).
   const pinned = pinnedCommit(events, role, signal.module);
   if (pinned !== undefined) {
-    const changed = await pullRequests.changedOnMainSince(project, pinned);
+    const compared = await pullRequests.changedOnMainSince(project, pinned);
+    // Too much changed to tell whether the inputs did: counted as stale, and each of the module's
+    // contracts as revised (Bernard, 2026-10-29).
+    const unchecked = "tooMany" in compared;
+    if (unchecked) work = { ...work, inputsUnchecked: true };
+    const changed = unchecked ? [] : compared;
     const inputsChanged = changedInputs(role, signal.module, {}, changed);
     if (inputsChanged.length > 0) work = { ...work, inputsChanged };
     // A revised contract sends the module back to Architecture: which module provides and uses
     // it, modules.yaml says, on main and at the pinned commit, so a module the revision stops
-    // listing goes back too. Read only when a contract changed.
-    if (changed.some((path) => path.startsWith(CONTRACTS))) {
+    // listing goes back too. Read only when a contract changed, or may have.
+    if (unchecked || changed.some((path) => path.startsWith(CONTRACTS))) {
       const contracts = [
         await pullRequests.modulesOnMain(project),
         await pullRequests.modulesAt(project, pinned),
       ].flatMap(contractsListed);
-      const revised = [...new Set(contractsRevised(contracts, signal.module, changed))];
+      const revised = [
+        ...new Set(
+          unchecked
+            ? contractsOfModule(contracts, signal.module)
+            : contractsRevised(contracts, signal.module, changed),
+        ),
+      ];
       if (revised.length > 0) work = { ...work, contractsRevised: revised };
     }
   }
@@ -1030,6 +1045,7 @@ function hasTaskOpen(events: LogEvent[], module: string): boolean {
 type RoutedWork = FeedbackSignal & {
   modulesToStart?: string[];
   inputsChanged?: string[];
+  inputsUnchecked?: true;
   contractsRevised?: string[];
   contractRevision?: { contracts: string[]; modules: string[] };
 };

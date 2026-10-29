@@ -613,8 +613,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         or below gives way to the contract's Architecture revision. Scenario "Work reporting a
         contract that does not work goes to the Programme Architect, though the contract was
         revised since";
-  - [ ] GitHub's comparison lists at most 300 changed files: more than that, and some inputs may
-        go unseen; treat a comparison that may be cut short as changing everything?
+  - [x] GitHub's comparison lists at most 300 changed files: one listing that many may be cut
+        short, so the work counts as stale and the module's contracts as revised (Bernard,
+        2026-10-29; decision 0015, question 6; rule `inputs_unchecked`). Scenario "Work whose
+        inputs cannot be checked, as too much changed since its task was posted, goes back to its
+        role", in-process only;
   - [ ] the sandbox shows it;
   - [ ] a revised contract: each module providing or using it gets an Architecture revision, at
         once if it has no task open, else in place of its open task's next one; where a stale

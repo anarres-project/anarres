@@ -68,3 +68,14 @@ Feature: Work whose inputs changed after its task was posted is revised
     And the Programme Architect's work was revised since, changing the contract "tokens"
     When Alice submits Test work on "parser" with a fail verdict, reporting an interface impediment
     Then the only task ready for "parser" is a Programme Architect task
+
+  # In-process only: the sandbox would write over 300 files for it. That GitHub lists at most 300
+  # files of a comparison is checked against its answer in the GitHub adapter's unit tests.
+  @in-process-only
+  Scenario: Work whose inputs cannot be checked, as too much changed since its task was posted, goes back to its role
+    Given a project with a module "parser"
+    And a member's Specification work on "parser" was accepted with a pass verdict
+    And Alice has claimed the Test task for "parser"
+    And the Programme Architect's work was revised since, changing the requirement slices of a great many other modules
+    When Alice submits Test work on "parser" with a pass verdict
+    Then the only task ready for "parser" is a Test task

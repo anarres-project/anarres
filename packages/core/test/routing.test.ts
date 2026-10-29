@@ -651,6 +651,24 @@ describe("routing work whose inputs changed since its task was posted (decision 
     });
   });
 
+  it("posts a revision for the same role when too much changed to tell whether its inputs did", () => {
+    expect(
+      rule({
+        fromRole: "test",
+        module: "parser",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        inputsUnchecked: true,
+      }),
+    ).toEqual({
+      decision: {
+        tasks: [{ role: "test", module: "parser", feedbackSignal: FEEDBACK, staleRevision: true }],
+      },
+      reason: { rule: "inputs_unchecked" },
+    });
+  });
+
   it("moves on as usual when none of its inputs changed", () => {
     expect(
       route({

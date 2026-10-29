@@ -70,6 +70,13 @@ the record of the work says which inputs changed. A revised contract sends the m
 Architecture, ahead of any role a failure names at Architecture or below it; a failure whose fix
 falls to the Programme Architect or Research goes there instead.
 
+### 6. More changed than GitHub's comparison lists
+
+Decided 2026-10-29 (Bernard: treat as stale). GitHub lists at most 300 files of a comparison, so
+when it lists that many Divlab cannot tell whether the task's inputs changed. The work counts as
+stale (rule `inputs_unchecked`), and each contract its module provides or uses as revised, so a
+module with contracts goes back to Architecture. Rare, safe, and recorded as such.
+
 ## What this does not decide
 
 - Changes a PDC coordinator makes to governance, and work reaching main without Divlab: neither

@@ -8,6 +8,7 @@ import {
   type Toolchain,
 } from "@anarres/core";
 import type {
+  ChangedOnMain,
   ChangeNotByDivlab,
   ClaimedTask,
   ClaimedWithoutClaim,
@@ -83,6 +84,9 @@ const mainCommit = (listed: ListedCommit): MainCommit => ({
 /** Where PDC coordinators keep members' trust levels and linked accounts (decision 0007). */
 const GOVERNANCE_REPOSITORY = "anarres-project/anarres";
 const GOVERNANCE_FILE = "governance/members.json";
+
+/** The most files GitHub lists of a comparison of two commits. */
+const COMPARED_FILES = 300;
 
 /** How many times to ask for a write GitHub's server failed without carrying out, a merge included. */
 const WRITE_ATTEMPTS = 3;
@@ -762,11 +766,13 @@ export class GitHubAdapter
     }
   }
 
-  async changedOnMainSince(project: string, commit: string): Promise<string[]> {
+  /** GitHub lists at most 300 files of a comparison: as many as that may be cut short. */
+  async changedOnMainSince(project: string, commit: string): Promise<ChangedOnMain> {
     const { files } = await this.call<{ files: { filename: string }[] }>(
       "GET",
       `${this.repo(project)}/compare/${commit}...main?per_page=100&page=1`,
     );
+    if (files.length >= COMPARED_FILES) return { tooMany: true };
     return files.map((file) => file.filename);
   }
 

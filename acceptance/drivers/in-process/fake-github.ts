@@ -1,5 +1,6 @@
 import { MODULES_FILE } from "@anarres/core";
 import type {
+  ChangedOnMain,
   ChangeNotByDivlab,
   ClaimedTask,
   ClaimedWithoutClaim,
@@ -453,13 +454,17 @@ export class FakeGitHub
     return this.filesAtCommit.get(commit)?.get(MODULES_FILE);
   }
 
-  /** The paths whose text differs between the commit and main now, added or removed too. */
-  async changedOnMainSince(project: string, commit: string): Promise<string[]> {
+  /**
+   * The paths whose text differs between the commit and main now, added or removed too; too many
+   * to list from 300, the most GitHub lists of a comparison.
+   */
+  async changedOnMainSince(project: string, commit: string): Promise<ChangedOnMain> {
     const then = this.filesAtCommit.get(commit) ?? new Map<string, string>();
     const now = this.files.get(project) ?? new Map<string, string>();
-    return [...new Set([...then.keys(), ...now.keys()])].filter(
+    const changed = [...new Set([...then.keys(), ...now.keys()])].filter(
       (path) => then.get(path) !== now.get(path),
     );
+    return changed.length >= 300 ? { tooMany: true } : changed;
   }
 
   /** The paths of the files on a project's main branch as the commit left them. */

@@ -15,6 +15,8 @@ export type AcceptedWork = {
   modulesToStart?: string[];
   /** The task's inputs that changed after it was posted (decision 0015). */
   inputsChanged?: string[];
+  /** Too much changed on main since the task was posted to tell whether its inputs did (0015). */
+  inputsUnchecked?: true;
   /** The contracts the module provides or uses revised after the task was posted (0015). */
   contractsRevised?: string[];
   /** For the Programme Architect's work: its revised contracts, and the modules they send back
@@ -64,6 +66,7 @@ export type Reason =
   | { rule: "no_matching_rule" }
   | { rule: "re_run_limit"; role: Role }
   | { rule: "inputs_changed"; inputs: string[] }
+  | { rule: "inputs_unchecked" }
   | { rule: "contract_revised"; contracts: string[] };
 
 /** A routing decision and the reason for it. */
@@ -89,7 +92,14 @@ export function rule(work: AcceptedWork): Ruling {
   if (work.partial) return continuation(work);
   if (failed(work)) return revise(work);
   // Failed or part-done work goes where those rules send it, the most upstream (decision 0015).
-  if (work.inputsChanged?.length) return reviseWithNewInputs(work, work.inputsChanged);
+  if (work.inputsChanged?.length) {
+    return {
+      decision: staleRevision(work),
+      reason: { rule: "inputs_changed", inputs: work.inputsChanged },
+    };
+  }
+  if (work.inputsUnchecked)
+    return { decision: staleRevision(work), reason: { rule: "inputs_unchecked" } };
   if (work.fromRole === "research") return returnResearch(work);
   if (work.modulesToStart !== undefined) return startModules(work, work.modulesToStart);
   return advance(work);
@@ -110,17 +120,17 @@ function continuation(work: AcceptedWork): Ruling {
 }
 
 /**
- * Work whose inputs changed after its task was posted is revised by the same role, with the new
- * inputs, instead of moving on (decision 0015).
+ * Work whose inputs changed after its task was posted, or may have, is revised by the same role,
+ * with the new inputs, instead of moving on (decision 0015).
  */
-function reviseWithNewInputs(work: AcceptedWork, inputs: string[]): Ruling {
+function staleRevision(work: AcceptedWork): RoutingDecision {
   const task: Task = {
     role: work.fromRole as Role,
     module: work.module,
     feedbackSignal: work.feedbackSignal,
     staleRevision: true,
   };
-  return { decision: { tasks: [task] }, reason: { rule: "inputs_changed", inputs } };
+  return { tasks: [task] };
 }
 
 /**
