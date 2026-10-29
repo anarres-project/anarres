@@ -677,6 +677,12 @@ governance scenarios run alone.
   GREEN:    the same (786 passed).
   REFACTOR: none. "records how far it checked when it found a change Divlab did not make" passed
   first time, as it should; kept, since without it no test fails if that half is dropped (tried).
+- The 85c7bae sandbox run: 17 of 98, failing from the first scenario with "Divlab's run … did
+  not finish", while Divlab's runs all succeeded. The sandbox driver took Divlab's record of how
+  far it checked main as the end of a run, and since 0ea73f5 Divlab writes it only now and then:
+  my change, its effect on the harness missed. The in-process driver knows when a run ends, so
+  the gate could not show it. The driver now waits, once the decision is recorded, until GitHub
+  shows none of Divlab's runs in the project still going. Harness only; no production change.
 
 ---
 

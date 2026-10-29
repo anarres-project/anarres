@@ -579,16 +579,20 @@ export class SandboxDriver implements Driver {
   }
 
   /**
-   * Waits for Divlab's run on the work to finish, not just decide: every run ends by checking
-   * main and recording how far it checked, so that record after the decision marks the end. A
-   * step that changes the project while Divlab is still writing would race it.
+   * Waits for Divlab's run on the work to finish, not just decide: once the decision is recorded,
+   * the run has ended when GitHub shows none of Divlab's runs in the project still going. Divlab
+   * records how far it checked main only now and then, so that record cannot mark the end. A step
+   * that changes the project while Divlab is still writing would race it.
    */
   private async runFinished(project: string, path: string): Promise<void> {
-    const deadline = Date.now() + 60_000;
+    const repository = `repos/${this.org}/${project}`;
+    const deadline = Date.now() + 120_000;
     for (;;) {
-      const events = await this.divlab.read(project);
-      const decided = events.findIndex((e) => signalOf(e) === path && "work" in e);
-      if (events.slice(decided + 1).some((e) => "mainChecked" in e)) return;
+      const { workflow_runs: runs } = await this.github.call<{ workflow_runs: WorkflowRun[] }>(
+        "GET",
+        `${repository}/actions/runs?per_page=10`,
+      );
+      if (runs.every((r) => r.status === "completed")) return;
       if (Date.now() > deadline) {
         throw new Error(`Divlab's run on ${path} in ${project} did not finish`);
       }
