@@ -740,6 +740,10 @@ governance scenarios run alone.
   GREEN:    the same (107 passed); prepare writes it, in the CLI and the sandbox driver. The
             scenario passed and loses `@wip`.
   REFACTOR: none. Concept §6 updated. Gate 814 and 139.
+- The 26382fc sandbox run passed: 99 of 99, in 60 minutes.
+- A task decided by work Divlab did not merge would have no pinned commit; the CLI already
+  refuses to prepare a task without one, saying why (`prepare.test.ts`, "has no pinned
+  inputs"), so the item is ticked with no new code.
 
 ---
 

@@ -824,8 +824,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] the sandbox shows it (one file fetched by the sparse checkout's pattern);
   - [x] Divlab posts each task with the commit its inputs are pinned at, the merge that decided
         it, in the issue's words and its decision block; read back only if it is a commit name;
-  - [ ] a task decided by work Divlab did not merge (none yet: only merged work is routed) has no
-        pinned commit; the CLI must refuse to prepare one;
+  - [x] a task decided by work Divlab did not merge (none yet: only merged work is routed) has no
+        pinned commit; the CLI refuses to prepare one (its test for a task with no pinned inputs);
   - [x] the CLI's `prepare` fetches those places at that commit, and nothing else: for a task the
         member holds, with a pinned commit (else it says why not), a sparse checkout of exactly
         the role's read scope, by git commands run without a shell (tried by hand against this
