@@ -690,6 +690,7 @@ governance scenarios run alone.
   research brief to read", was the sandbox driver's: it listed only the `modules/` folder of the
   prepared task, and briefs are fetched to `research-briefs/`. It lists both now; run alone
   against the sandbox, the scenario passed. Harness only.
+- The 9316522 sandbox run passed: 98 of 98, in 61 minutes.
 
 ---
 
