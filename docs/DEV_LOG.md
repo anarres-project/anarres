@@ -449,6 +449,14 @@ governance scenarios run alone.
   member had the newer contract too, since the in-process fake kept only main's files as they
   are now. Green once the fake keeps each commit's files (a harness change; the CLI already
   reads at the pinned commit); checked it fails if the latest `modules.yaml` is read. Gate 125.
+- The 72fc6cb sandbox run: Divlab Sandbox's token was minted from the key, and each scenario
+  checked the App's allowance; 85 of 87 passed. Both failures were in one worker's repository,
+  GitHub's doing (a merge answered with a server error, then "already in progress"; a rule that
+  timed out), now on the test list. The App's readings disagree between runs, so the check cannot
+  yet be relied on.
+- Decision 0015 (Bernard): work whose inputs changed since its task was posted is merged, and
+  revised by the same role at the new commit; a revised contract sends each module it affects
+  back to Architecture. Concept §5 and §8 updated.
 
 ---
 

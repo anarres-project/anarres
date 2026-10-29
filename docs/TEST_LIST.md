@@ -140,7 +140,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
             two tree listings per read;
     - [ ] the artefact downloads of Test and Coding work count too, and are not yet tallied;
   - [ ] GitHub's reading of the allowance used jumps between readings (2,141 then 726 a minute
-        later, same window, 2026-10-22): find out why before relying on it more;
+        later, same window, 2026-10-22): find out why before relying on it more. The App's too:
+        in 72fc6cb's sandbox run, Divlab runs minutes apart read 2,146 used (resetting 09:31) and
+        15 (resetting 09:37), and the sandbox's own check of the App read 73 at most; so the
+        check runs, but cannot yet be relied on;
   - [x] appending an event costs one request once the log has been read, not a listing plus a
         write; a number another run took since is found and skipped; a write GitHub fails is
         not retried, so an event GitHub saved anyway is not recorded twice;
@@ -472,6 +475,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [ ] An intermittent sandbox failure confined to one worker's repository (d5b1284: pull
       requests never decided; 04d85ac: "too many files changed", then no tasks): not reproduced
       on demand. A failed worker now keeps its repositories: inspect them when it recurs.
+  - [ ] 72fc6cb (85 of 87): GitHub answered Divlab's merge with a server error, then "Merge
+        already in progress" to each retry, and the pull request stayed unmerged; Divlab's run
+        failed, having recorded that it was about to merge. Divlab should find out whether the
+        merge landed rather than fail, and finish it from its record if not;
+  - [ ] the same repository's next run had a log write refused because main's rule "did not run
+        because of a timeout" (409): a refusal GitHub may lift if asked again, unlike a rule
+        refusing the change.
 - [x] The sandbox run polls less: merges and finished runs every 5 seconds, decisions every 3
       (2026-10-24, from about 3,100 requests a run): c5666a4's full run took 2,466 (640, 577,
       599 and 650 across its four workers), and passed.
@@ -561,6 +571,18 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the sandbox shows it (44cb30a: 86 of 86).
 - [x] Coding work that changes tests is rejected (a case of the write scopes).
 - [ ] Work based on inputs that have since changed is flagged as stale.
+  Decision 0015 (Bernard, 2026-10-29):
+  - [ ] core judges a task's work stale from its read scope and the paths changed since its
+        pinned commit (any file in its read scope changed);
+  - [ ] Divlab, validating a module role's work, compares the task's pinned commit with main (one
+        request) and has core judge the changed paths;
+  - [ ] stale work is merged, recorded as stale with the inputs that changed, and the next task
+        is a revision for the same role and module, pinned to the new commit, reading its role's
+        own place (as a continuation does);
+  - [ ] a revised contract: each module providing or using it gets an Architecture revision, at
+        once if it has no task open, else in place of its open task's next one; where a stale
+        revision would also be posted, the most upstream role wins;
+  - [ ] an acceptance scenario for each, in-process, then in the sandbox.
 
 ## 4a. Any language (hosted projects)
 
