@@ -56,6 +56,22 @@ describe("counting a run's requests to GitHub", () => {
   });
 });
 
+describe("counting a run's downloads from GitHub", () => {
+  it("tallies each download it passes on with the run's requests, as GitHub counts it too", async () => {
+    const counted = countingRequests(
+      async <T>() => ({ status: 200, data: {} as T }),
+      async () => new Uint8Array([1]),
+    );
+    await counted.download("t", "repos/commons/ledger/actions/artifacts/77/zip");
+    await counted.request("t", "GET", "repos/commons/ledger/issues/4");
+    expect(summary(counted.tally)).toEqual([
+      "2 requests to GitHub",
+      "  1 GET actions/artifacts/{n}/zip",
+      "  1 GET issues/{n}",
+    ]);
+  });
+});
+
 describe("the allowance a run's requests were counted against", () => {
   it("is what GitHub's last answer said, read from the requests themselves", async () => {
     const answers = [

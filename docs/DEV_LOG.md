@@ -613,6 +613,11 @@ governance scenarios run alone.
   RED:      an allowance, as a run's log says it -> TypeError: allowanceSaid is not a function;
             with a stub, expected '' to be 'core 126 of 5000 used (resets 09:31 UTC)'
   GREEN:    the same; Divlab's entry point prints both readings with it. Gate 784 and 134.
+- A Divlab run's tally counts its downloads of test reports too, as GitHub counts them.
+  RED:      tallies each download it passes on with the run's requests -> TypeError:
+            counted.download is not a function
+  GREEN:    the same (211 passed); Divlab's entry point downloads through it.
+  REFACTOR: one `count` for requests and downloads.
 
 ---
 

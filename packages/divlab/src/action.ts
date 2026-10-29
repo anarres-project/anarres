@@ -38,6 +38,7 @@ const github = new GitHubAdapter({
   token,
   governance: process.env.INPUT_GOVERNANCE ?? "",
   request: counted.request,
+  download: counted.download,
   oneRun: true,
 });
 const sayRequests = async () => {

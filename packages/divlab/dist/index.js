@@ -11671,14 +11671,21 @@ function summary(tally) {
     ...kinds.map(([kind, count]) => `${String(count).padStart(width)} ${kind}`)
   ];
 }
-function countingRequests(request) {
+function countingRequests(request, download = downloadGitHub) {
   const tally = /* @__PURE__ */ new Map();
   let last;
+  const count = (method, path) => {
+    const kind = kindOf(method, path);
+    tally.set(kind, (tally.get(kind) ?? 0) + 1);
+  };
   return {
     lastAllowance: () => last,
+    download: (token2, path) => {
+      count("GET", path);
+      return download(token2, path);
+    },
     request: async (token2, method, path, body, options) => {
-      const kind = kindOf(method, path);
-      tally.set(kind, (tally.get(kind) ?? 0) + 1);
+      count(method, path);
       const answer = await request(token2, method, path, body, options);
       last = answer.allowance ?? last;
       return answer;
@@ -11704,6 +11711,7 @@ var github = new GitHubAdapter({
   token,
   governance: process.env.INPUT_GOVERNANCE ?? "",
   request: counted.request,
+  download: counted.download,
   oneRun: true
 });
 var sayRequests = async () => {

@@ -1,4 +1,4 @@
-import type { Allowance, requestGitHub } from "./request.ts";
+import { type Allowance, type Download, downloadGitHub, type requestGitHub } from "./request.ts";
 
 /** What a request to GitHub asks for, without the names of the repository, issues, runs or files. */
 export function kindOf(method: string, path: string): string {
@@ -19,16 +19,31 @@ export function summary(tally: Map<string, number>): string[] {
   ];
 }
 
-/** Passes each request on, counting it by kind: how a run says what it asked GitHub for. */
-export function countingRequests(request: typeof requestGitHub): {
+/**
+ * Passes each request and download on, counting it by kind: how a run says what it asked GitHub
+ * for. A download counts against the allowance too.
+ */
+export function countingRequests(
+  request: typeof requestGitHub,
+  download: Download = downloadGitHub,
+): {
   request: typeof requestGitHub;
+  download: Download;
   tally: Map<string, number>;
   lastAllowance: () => Allowance | undefined;
 } {
   const tally = new Map<string, number>();
   let last: Allowance | undefined;
+  const count = (method: string, path: string) => {
+    const kind = kindOf(method, path);
+    tally.set(kind, (tally.get(kind) ?? 0) + 1);
+  };
   return {
     lastAllowance: () => last,
+    download: (token, path) => {
+      count("GET", path);
+      return download(token, path);
+    },
     request: async <T>(
       token: string,
       method: string,
@@ -36,8 +51,7 @@ export function countingRequests(request: typeof requestGitHub): {
       body?: unknown,
       options?: Parameters<typeof requestGitHub>[4],
     ) => {
-      const kind = kindOf(method, path);
-      tally.set(kind, (tally.get(kind) ?? 0) + 1);
+      count(method, path);
       const answer = await request<T>(token, method, path, body, options);
       last = answer.allowance ?? last;
       return answer;

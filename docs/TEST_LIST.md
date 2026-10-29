@@ -138,7 +138,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       - [ ] the next cuts, if the sandbox comes near the allowance again: the ruleset check on
             every run (one request; only on runs that could have changed it?), and the log's
             two tree listings per read;
-    - [ ] the artefact downloads of Test and Coding work count too, and are not yet tallied;
+    - [x] the artefact downloads of Test and Coding work count too: tallied with the run's
+          requests (`GET actions/artifacts/{n}/zip`);
   - [ ] GitHub's reading of the allowance used jumps between readings (2,141 then 726 a minute
         later, same window, 2026-10-22): find out why before relying on it more. The App's too:
         in 72fc6cb's sandbox run, Divlab runs minutes apart read 2,146 used (resetting 09:31) and
