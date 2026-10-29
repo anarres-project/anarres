@@ -121,8 +121,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         same way. Measure, then reduce (Bernard, 2026-10-28):
     - [x] each Divlab run says how many requests it made, by kind (the sandbox driver's tally,
           moved to the GitHub package), and how much of the App's allowance is used;
-    - [ ] the sandbox run checks the App's allowance before each scenario: needs a token of the
-          App's, whose key lives only in the sandbox organisation's secrets (Bernard to decide);
+    - [x] the sandbox run checks the App's allowance before each scenario, and prints it at the
+          end, with a token the sandbox job mints that reads metadata only (Bernard, 2026-10-29:
+          the key in this repository's `sandbox` environment too); a scenario that would start
+          without room fails at once, saying it is the App's allowance;
     - [ ] the requests a Divlab run makes, cut where the numbers show the cost. Sampled
           (4bc633c, 51 runs): 10 to 25 requests a run, about 15; listing the log's Git trees
           25%, writing events 15%, reading their text 12%, issues 8%, the ruleset check 6.5%:

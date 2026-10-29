@@ -434,6 +434,11 @@ governance scenarios run alone.
   which Divlab's action sets. Gate 748 and 123.
 - The a7e72fa sandbox run passed all 87 scenarios in 42 minutes, inside the App's allowance.
   Sampled again: about 12.8 requests a Divlab run, from 15.
+- Bernard: the sandbox App's key goes into this repository's `sandbox` environment too, so the
+  sandbox run can check the App's allowance. RED: names whose allowance it is, Divlab's App's ->
+  `Received: "GitHub's hourly allowance has 100 requests left…"`. GREEN (3). Each scenario now
+  checks both allowances before it starts, and the run prints both at its end; the job mints the
+  App's token reading metadata only. Gate 123 scenarios.
 
 ---
 

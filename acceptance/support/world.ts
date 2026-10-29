@@ -62,7 +62,8 @@ BeforeAll(async () => {
   await SandboxDriver.sweep();
 });
 
-// Each scenario starts only if GitHub's allowance has room for it, however many the run has.
+// Each scenario starts only if GitHub's allowance, and Divlab's App's, has room for it, however
+// many the run has.
 Before(async () => {
   if (!sandbox) return;
   await SandboxDriver.checkAllowance();
@@ -96,8 +97,9 @@ AfterAll(async () => {
   } else {
     await SandboxDriver.disposeRun();
   }
-  // What the run cost, so its budget can be watched (the driver's requests; Divlab's runs act as
-  // its App, which has an allowance of its own).
+  // What the run cost, so its budget can be watched: the driver's requests, and the two
+  // allowances (Divlab's runs act as its App, which has one of its own).
   console.log(SandboxDriver.requestsMade().join("\n"));
   await SandboxDriver.allowance();
+  await SandboxDriver.appAllowance();
 });

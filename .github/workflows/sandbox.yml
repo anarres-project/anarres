@@ -38,8 +38,19 @@ jobs:
       # Scenarios that pass in-process but cannot run in the sandbox yet, listed so none is forgotten.
       - name: Scenarios not yet run in the sandbox
         run: grep -rn -B1 -A1 "@sandbox-wip" features || echo "None"
+      # A token of Divlab Sandbox, the sandbox's App, so each scenario can check the App's hourly
+      # allowance too before it starts. It reads metadata only, and is revoked when the job ends.
+      - name: Divlab Sandbox's token, for its allowance
+        id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.DIVLAB_SANDBOX_APP_CLIENT_ID }}
+          private-key: ${{ secrets.DIVLAB_SANDBOX_APP_PRIVATE_KEY }}
+          owner: ${{ vars.ANARRES_SANDBOX_ORG }}
+          permission-metadata: read
       - run: npm run test:acceptance:sandbox
         env:
+          ANARRES_SANDBOX_APP_TOKEN: ${{ steps.app.outputs.token }}
           ANARRES_SANDBOX_ORG: ${{ vars.ANARRES_SANDBOX_ORG }}
           ANARRES_SANDBOX_TOKEN: ${{ secrets.ANARRES_SANDBOX_TOKEN }}
           ANARRES_SANDBOX_MEMBERS_ORG: ${{ vars.ANARRES_SANDBOX_MEMBERS_ORG }}

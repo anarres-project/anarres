@@ -165,9 +165,11 @@ The test list (`docs/TEST_LIST.md`) tracks each of these.
 GitHub allows 5,000 REST requests an hour, counted per person, not per token: the sandbox's two
 tokens share it with anything else acting as the same person (the `gh` command, other scripts). A
 full run makes about 1,800 REST requests and 200 GraphQL ones (2026-10-22); Divlab's own runs act
-as its App, which has an allowance of its own. Each run prints what it asked of GitHub, by kind,
-and the allowance at its start and end. A scenario does not start when GitHub reports too little
-left for one (200 requests): it fails at once, saying when the allowance resets. So a run of one
+as its App, which has an allowance of its own, shared by every Divlab run in the sandbox. Each run
+prints what it asked of GitHub, by kind, and both allowances at its start and end. A scenario does
+not start when GitHub reports too little left of either for one (200 requests): it fails at once,
+saying which, and when it resets. Run on a machine of one's own, without a token of the App's,
+only the first is checked. So a run of one
 scenario needs little, and a full run whose allowance runs out partway fails its remaining
 scenarios at once rather than stalling. Keep anything that polls GitHub as the
 same person, such as watching a CI run, gentle while a run is going.

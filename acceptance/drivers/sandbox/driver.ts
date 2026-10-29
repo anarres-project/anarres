@@ -82,6 +82,22 @@ function sandboxSettings() {
   return { org, token, membersOrg, membersToken, secondMemberToken, thirdMemberToken };
 }
 
+type Allowance = { used: number; limit: number; reset: number };
+
+/** What `rate_limit` says of the token's REST allowance, printed with its GraphQL one. */
+async function allowanceOf(token: string, whose: string): Promise<Allowance> {
+  const { data } = await requestGitHub<{
+    resources: Record<"core" | "graphql", Allowance>;
+  }>(token, "GET", "rate_limit");
+  const { core, graphql } = data.resources;
+  const resets = new Date(core.reset * 1000).toISOString().slice(11, 16);
+  console.log(
+    `${whose}: REST ${core.used} of ${core.limit} used (resets ${resets} UTC); ` +
+      `GraphQL ${graphql.used} of ${graphql.limit}`,
+  );
+  return core;
+}
+
 type Issue = {
   number: number;
   labels: { name: string }[];
@@ -1535,23 +1551,27 @@ export class SandboxDriver implements Driver {
    * token: the sandbox's two tokens, and anything else acting as the same person, share it.
    * Asking costs nothing.
    */
-  static async allowance(): Promise<{ used: number; limit: number; reset: number }> {
-    const { token } = sandboxSettings();
-    const { data } = await requestGitHub<{
-      resources: Record<"core" | "graphql", { used: number; limit: number; reset: number }>;
-    }>(token, "GET", "rate_limit");
-    const { core, graphql } = data.resources;
-    const resets = new Date(core.reset * 1000).toISOString().slice(11, 16);
-    console.log(
-      `GitHub allowance: REST ${core.used} of ${core.limit} used (resets ${resets} UTC); ` +
-        `GraphQL ${graphql.used} of ${graphql.limit}`,
-    );
-    return core;
+  static async allowance(): Promise<Allowance> {
+    return allowanceOf(sandboxSettings().token, "GitHub allowance");
   }
 
-  /** Stops the run before it starts if GitHub's allowance has no room for it. */
+  /**
+   * How much of Divlab's App's hourly allowance in the sandbox is used: every Divlab run there
+   * shares it. Known only where the run has a token of the App's (the sandbox job mints one,
+   * able to read nothing but metadata); a run on a machine of one's own goes without.
+   */
+  static async appAllowance(): Promise<Allowance | undefined> {
+    const token = process.env.ANARRES_SANDBOX_APP_TOKEN;
+    return token ? allowanceOf(token, "Divlab's App's allowance") : undefined;
+  }
+
+  /** Stops the scenario before it starts if either allowance has no room for it. */
   static async checkAllowance(): Promise<void> {
-    const why = shortfall(await SandboxDriver.allowance(), REQUESTS_A_SCENARIO_NEEDS, Date.now());
+    const [mine, app] = [await SandboxDriver.allowance(), await SandboxDriver.appAllowance()];
+    const now = Date.now();
+    const why =
+      shortfall(mine, REQUESTS_A_SCENARIO_NEEDS, now) ??
+      (app && shortfall(app, REQUESTS_A_SCENARIO_NEEDS, now, "Divlab's App's"));
     if (why) throw new Error(why);
   }
 

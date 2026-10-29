@@ -7,13 +7,14 @@ export function shortfall(
   allowance: { used: number; limit: number; reset: number },
   needed: number,
   now: number,
+  whose = "GitHub's",
 ): string | undefined {
   const left = allowance.limit - allowance.used;
   if (left >= needed) return undefined;
   const resets = new Date(allowance.reset * 1000);
   const minutes = Math.ceil((resets.getTime() - now) / 60_000);
   return (
-    `GitHub's hourly allowance has ${left} requests left, and a scenario needs about ${needed}: ` +
+    `${whose} hourly allowance has ${left} requests left, and a scenario needs about ${needed}: ` +
     `it resets at ${resets.toISOString().slice(11, 16)} UTC, in ${minutes} minutes`
   );
 }
