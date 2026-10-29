@@ -143,7 +143,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         later, same window, 2026-10-22): find out why before relying on it more. The App's too:
         in 72fc6cb's sandbox run, Divlab runs minutes apart read 2,146 used (resetting 09:31) and
         15 (resetting 09:37), and the sandbox's own check of the App read 73 at most; so the
-        check runs, but cannot yet be relied on;
+        check runs, but cannot yet be relied on. GitHub documents no such jumps (looked,
+        2026-10-29): an installation's allowance is one pool for all its tokens, and GitHub
+        advises reading each answer's `x-ratelimit-*` headers rather than asking `rate_limit`.
+        Next: Divlab's tally keeps the last answer's headers (used, reset, and the resource
+        counted), printed instead of a `rate_limit` reading, so readings come from the requests
+        themselves and can be compared run by run;
   - [x] appending an event costs one request once the log has been read, not a listing plus a
         write; a number another run took since is found and skipped; a write GitHub fails is
         not retried, so an event GitHub saved anyway is not recorded twice;
