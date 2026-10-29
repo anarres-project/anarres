@@ -32,6 +32,8 @@ export const READY = "state:ready";
 const CONTINUATION = "continuation";
 /** The label of a task revising work whose inputs changed after it was posted (decision 0015). */
 const INPUTS_CHANGED = "inputs-changed";
+/** The label of a revision after research, which reads the module's research briefs. */
+const AFTER_RESEARCH = "after-research";
 /** The label of a task a member holds. */
 export const CLAIMED = "state:claimed";
 
@@ -48,6 +50,7 @@ export function issueForTask(task: PostedTask, repository?: string): NewIssue {
       ...(task.researchFor === undefined ? [] : [`${RESEARCH_FOR}${task.researchFor}`]),
       ...(task.continuation ? [CONTINUATION] : []),
       ...(task.staleRevision ? [INPUTS_CHANGED] : []),
+      ...(task.afterResearch ? [AFTER_RESEARCH] : []),
     ],
     body: [
       ...(task.feedbackSignal === undefined ? [] : [`Feedback signal: ${task.feedbackSignal}`, ""]),
@@ -105,6 +108,7 @@ export function taskFromIssue(issue: ListedIssue):
       inputsAt?: string;
       continuation?: true;
       staleRevision?: true;
+      afterResearch?: true;
     }
   | undefined {
   const labelled = (prefix: string) =>
@@ -125,6 +129,9 @@ export function taskFromIssue(issue: ListedIssue):
       : {}),
     ...(issue.labels.some(({ name }) => name === INPUTS_CHANGED)
       ? { staleRevision: true as const }
+      : {}),
+    ...(issue.labels.some(({ name }) => name === AFTER_RESEARCH)
+      ? { afterResearch: true as const }
       : {}),
     ...(inputsAt === undefined ? {} : { inputsAt }),
     ...(researchFor === undefined ? {} : { researchFor }),

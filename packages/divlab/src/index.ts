@@ -64,6 +64,8 @@ export type PostedTask = {
   continuation?: true;
   /** A revision of work whose inputs changed, which reads the work done too (decision 0015). */
   staleRevision?: true;
+  /** A revision after research, which reads the module's research briefs too. */
+  afterResearch?: true;
 };
 
 /** A module Divlab marks done, and the feedback signal whose routing decision finished it. */

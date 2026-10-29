@@ -146,8 +146,10 @@ Read and write scopes follow the CSD access control matrix, extended for modules
 | Reviewer | Module | requirement slice, specifications, `src/` | `modules/<m>/reviews/` |
 | Security & Quality | Module | requirement slice, architecture, `src/` | `modules/<m>/reviews/` |
 | Integration Spec / Test | Programme | requirements, contracts | `integration/` |
-| Research | Any | whatever the research question names | `research-briefs/` |
+| Research | Any | whatever the research question names | `research-briefs/<m>/` |
 | Governance | Programme | **everything** | `governance/` |
+
+When Research passes, the revision task for the role that reported the gap also reads its module's `research-briefs/<m>/` (Bernard, 2026-10-29).
 
 Every role also writes one feedback signal per task to `feedback/`. Only Divlab and PDC coordinators read feedback signals. Agents receive the relevant feedback as an input to a revision task, never by browsing.
 
@@ -203,7 +205,7 @@ proj-<name>/
 │   ├── src/
 │   └── reviews/
 ├── integration/
-├── research-briefs/
+├── research-briefs/<m>/    Research's briefs, one folder per module
 ├── feedback/               One file per signal: FB-<task-id>.md
 ├── events/                 Append-only event log: one JSON file per event
 ├── governance/

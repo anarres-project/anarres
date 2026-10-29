@@ -618,6 +618,24 @@ governance scenarios run alone.
             counted.download is not a function
   GREEN:    the same (211 passed); Divlab's entry point downloads through it.
   REFACTOR: one `count` for requests and downloads.
+- The revision after research reads the research brief (Bernard: the module's brief folder).
+  Acceptance: scenario "A member taking the revision after research has the research brief to
+  read", red as not yet right (no brief fetched); Research work in the scenarios now writes one.
+  RED:      lets Research write a brief for its task's module only -> expected [] to deeply equal
+            [ …(2) ] (the access table's row for Research changed with it, for that reason)
+  GREEN:    the same (773 passed): Research writes `research-briefs/<m>/`.
+  RED:      what a revision after research may read -> expected [ …(2) ] to deeply equal [ …(3) ]
+  GREEN:    the same (248 passed): core's `afterResearch`.
+  RED:      sends research that passes back to the role that reported the gap, to read its brief
+            -> received no `afterResearch` (two tests pinned the old task; one change for both)
+  GREEN:    the same (774 passed).
+  RED:      marks a revision after research, and reads it back -> expected undefined to be true
+  GREEN:    the same (775 passed): the `after-research` label.
+  The CLI's "fetches the module's research briefs for a revision after research" passed first
+  time: preparation hands the task to core's read scope. Kept as a regression test.
+  RED:      keeps that the task follows research -> received no `afterResearch`
+  GREEN:    the same (777 passed): the task's folder record keeps it, for the hook.
+  REFACTOR: none. Concept §6 updated.
 
 ---
 

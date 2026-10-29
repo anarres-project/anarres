@@ -28,3 +28,11 @@ Feature: A member preparing a task has its role's inputs, and no others
     And the Programme Architect's work was revised since, so that "parser" uses the contract "entries" too
     When Alice prepares the Architecture task for "parser"
     Then Alice has the contract "tokens" to read, and not the contract "entries"
+
+  Scenario: A member taking the revision after research has the research brief to read
+    Given a project with a module "parser"
+    And a member's Coding work on "parser" was accepted with a fail verdict, reporting a knowledge gap
+    And a member's Research work on "parser" was accepted with a pass verdict
+    And Bob has claimed the Coding task for "parser"
+    When Bob prepares the Coding task for "parser"
+    Then Bob has the research brief of "parser" to read

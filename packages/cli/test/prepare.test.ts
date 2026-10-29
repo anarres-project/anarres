@@ -40,6 +40,19 @@ describe("preparing a task the member holds (concept §8)", () => {
     });
   });
 
+  it("fetches the module's research briefs for a revision after research", () => {
+    const task = {
+      role: "coding" as const,
+      module: "parser",
+      claimedBy: "alice",
+      inputsAt: SHA,
+      afterResearch: true as const,
+    };
+    expect(preparation("anarres-project", "ledger", task, "alice")).toMatchObject({
+      paths: expect.arrayContaining(["research-briefs/parser/"]),
+    });
+  });
+
   it("fetches the contracts the task's module provides and uses, as modules.yaml says at that commit", () => {
     const task = {
       role: "architecture" as const,

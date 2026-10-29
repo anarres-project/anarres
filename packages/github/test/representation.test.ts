@@ -183,6 +183,19 @@ describe("a task as a GitHub issue", () => {
     );
   });
 
+  it("marks a revision after research, and reads it back", () => {
+    const issue = issueForTask({
+      project: "ledger",
+      role: "coding",
+      module: "parser",
+      decidedOn: "feedback/R-0007.md",
+      afterResearch: true,
+    });
+    expect(taskFromIssue({ labels: issue.labels.map((name) => ({ name })) })?.afterResearch).toBe(
+      true,
+    );
+  });
+
   it("reads back from a Research task which role it is for", () => {
     const issue = issueForTask({
       project: "ledger",

@@ -35,6 +35,8 @@ export type Task = {
   continuation?: true;
   /** A revision of work whose inputs changed, which reads the work done too (decision 0015). */
   staleRevision?: true;
+  /** A revision after research, which reads the module's research briefs too. */
+  afterResearch?: true;
 };
 
 const MODULE_PIPELINE = [
@@ -162,13 +164,23 @@ function revise(work: AcceptedWork): Ruling {
   };
 }
 
-/** Research that passes goes back, as a revision task, to the role that reported the gap. */
+/**
+ * Research that passes goes back, as a revision task, to the role that reported the gap, which
+ * reads the module's research briefs (Bernard, 2026-10-29).
+ */
 function returnResearch(work: AcceptedWork): Ruling {
   const reporter = MODULE_PIPELINE.find((role) => role === work.researchFor);
   if (!reporter) return NO_RULE_COVERS_IT;
   return {
     decision: {
-      tasks: [{ role: reporter, module: work.module, feedbackSignal: work.feedbackSignal }],
+      tasks: [
+        {
+          role: reporter,
+          module: work.module,
+          feedbackSignal: work.feedbackSignal,
+          afterResearch: true,
+        },
+      ],
     },
     reason: { rule: "research_returned" },
   };

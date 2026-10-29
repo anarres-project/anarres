@@ -15,7 +15,8 @@ const WRITE_SCOPES: Record<Role, (module: string) => string> = {
   coding: (module) => `modules/${module}/src/`,
   reviewer: (module) => `modules/${module}/reviews/`,
   "security-and-quality": (module) => `modules/${module}/reviews/`,
-  research: () => "research-briefs/",
+  // Research's brief is for the module its task names (Bernard, 2026-10-29).
+  research: (module) => `research-briefs/${module}/`,
 };
 
 /**
@@ -84,17 +85,20 @@ export function readScope(role: Role, module: string, task: ReadingTask = {}): s
   return [
     ...READ_SCOPES[role](module, task.contracts ?? []),
     ...(task.continuation || task.staleRevision ? [writeScope(role, module)] : []),
+    // A revision after research reads the module's research briefs (Bernard, 2026-10-29).
+    ...(task.afterResearch ? [writeScope("research", module)] : []),
   ];
 }
 
 /**
  * What a task's reading depends on besides its role and module: whether it continues partial
- * work, or revises work whose inputs changed (decision 0015), and the contracts its module
+ * work, revises work whose inputs changed (decision 0015) or follows research, and the contracts its module
  * provides and uses (decision 0014).
  */
 export type ReadingTask = {
   continuation?: boolean;
   staleRevision?: boolean;
+  afterResearch?: boolean;
   contracts?: readonly string[];
 };
 

@@ -37,12 +37,22 @@ describe("what a role's work may change (concept §6)", () => {
     ["coding", "modules/parser/src/lexer.ts"],
     ["reviewer", "modules/parser/reviews/review-1.md"],
     ["security-and-quality", "modules/parser/reviews/security-1.md"],
-    ["research", "research-briefs/tokenisers.md"],
+    ["research", "research-briefs/parser/tokenisers.md"],
   ])("lets %s write %s, and nothing in another role's place", (role, inScope) => {
     expect(outsideScope(role, "parser", [inScope])).toEqual([]);
     expect(outsideScope(role, "parser", ["modules/parser/elsewhere/x.md"])).toEqual([
       "modules/parser/elsewhere/x.md",
     ]);
+  });
+
+  it("lets Research write a brief for its task's module only (Bernard, 2026-10-29)", () => {
+    expect(
+      outsideScope("research", "parser", [
+        "research-briefs/parser/tokenisers.md",
+        "research-briefs/ledger/rounding.md",
+        "research-briefs/loose.md",
+      ]),
+    ).toEqual(["research-briefs/ledger/rounding.md", "research-briefs/loose.md"]);
   });
 
   it("does not let a module's work change another module", () => {
@@ -188,6 +198,15 @@ describe("the inputs that changed since a task was posted (decision 0015)", () =
     const changed = ["programme/slices/parser/requirements.md", "programme/slices/ledger/a.md"];
     expect(changedInputs("test", "parser", {}, changed)).toEqual([
       "programme/slices/parser/requirements.md",
+    ]);
+  });
+});
+
+describe("what a revision after research may read (Bernard, 2026-10-29)", () => {
+  it("is its role's inputs and the module's research briefs, and no other module's", () => {
+    expect(readScope("coding", "parser", { afterResearch: true })).toEqual([
+      ...readScope("coding", "parser"),
+      "research-briefs/parser/",
     ]);
   });
 });

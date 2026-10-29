@@ -207,8 +207,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       feedback signal (Bernard, 2026-10-12). Research naming no such role alerts a PDC coordinator.
 - [x] Research *fail* or *blocked* alerts a PDC coordinator, who decides what to do with the
       question (Bernard, 2026-10-12; no AutoPM row). Pinned by a test.
-- [ ] The revision task after research lists the research brief among its inputs (needs input
-      artefacts on tasks).
+- [x] The revision task after research reads the research brief: Research writes to
+      `research-briefs/<m>/` for its task's module, and the revision after it reads that folder
+      (Bernard, 2026-10-29; core's `afterResearch`, an `after-research` label read back, kept in
+      the task's folder record for the hook). Scenario "A member taking the revision after
+      research has the research brief to read".
 - [x] Security & Quality *pass* or *conditional pass* marks the module done, posting no task
       (AutoPM: "pipeline complete", "complete with caveats"; the caveats belong in the event
       record).

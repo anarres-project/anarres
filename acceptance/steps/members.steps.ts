@@ -125,3 +125,10 @@ Then(
     return this.anarres.memberHasWorkOf(member, module, ["tests"]);
   },
 );
+
+Then(
+  "{word} has the research brief of {string} to read",
+  function (this: AnarresWorld, member: string, module: string) {
+    return this.anarres.memberHasWorkOf(member, module, ["research brief"]);
+  },
+);

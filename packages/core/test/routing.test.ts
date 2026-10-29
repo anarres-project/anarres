@@ -391,7 +391,7 @@ describe("routing accepted work", () => {
     });
   });
 
-  it("sends research that passes back to the role that reported the gap", () => {
+  it("sends research that passes back to the role that reported the gap, to read its brief", () => {
     expect(
       route({
         fromRole: "research",
@@ -401,7 +401,9 @@ describe("routing accepted work", () => {
         feedbackSignal: FEEDBACK,
         researchFor: "test",
       }),
-    ).toStrictEqual({ tasks: [{ role: "test", module: "parser", feedbackSignal: FEEDBACK }] });
+    ).toStrictEqual({
+      tasks: [{ role: "test", module: "parser", feedbackSignal: FEEDBACK, afterResearch: true }],
+    });
   });
 
   it("sends research for Coding that passes back to Coding", () => {
@@ -414,7 +416,9 @@ describe("routing accepted work", () => {
         feedbackSignal: FEEDBACK,
         researchFor: "coding",
       }),
-    ).toStrictEqual({ tasks: [{ role: "coding", module: "parser", feedbackSignal: FEEDBACK }] });
+    ).toStrictEqual({
+      tasks: [{ role: "coding", module: "parser", feedbackSignal: FEEDBACK, afterResearch: true }],
+    });
   });
 
   it("alerts a PDC coordinator when research that passes names no role it was for", () => {

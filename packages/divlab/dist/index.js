@@ -8972,7 +8972,8 @@ var WRITE_SCOPES = {
   coding: (module) => `modules/${module}/src/`,
   reviewer: (module) => `modules/${module}/reviews/`,
   "security-and-quality": (module) => `modules/${module}/reviews/`,
-  research: () => "research-briefs/"
+  // Research's brief is for the module its task names (Bernard, 2026-10-29).
+  research: (module) => `research-briefs/${module}/`
 };
 function outsideScope(role, module, paths) {
   const signal = paths.find((path) => path.startsWith("feedback/"));
@@ -9015,7 +9016,9 @@ var READ_SCOPES = {
 function readScope(role, module, task = {}) {
   return [
     ...READ_SCOPES[role](module, task.contracts ?? []),
-    ...task.continuation || task.staleRevision ? [writeScope(role, module)] : []
+    ...task.continuation || task.staleRevision ? [writeScope(role, module)] : [],
+    // A revision after research reads the module's research briefs (Bernard, 2026-10-29).
+    ...task.afterResearch ? [writeScope("research", module)] : []
   ];
 }
 var CONTRACTS = `${PROGRAMME}/contracts/`;
@@ -9311,7 +9314,14 @@ function returnResearch(work) {
   if (!reporter) return NO_RULE_COVERS_IT;
   return {
     decision: {
-      tasks: [{ role: reporter, module: work.module, feedbackSignal: work.feedbackSignal }]
+      tasks: [
+        {
+          role: reporter,
+          module: work.module,
+          feedbackSignal: work.feedbackSignal,
+          afterResearch: true
+        }
+      ]
     },
     reason: { rule: "research_returned" }
   };
@@ -10620,6 +10630,7 @@ function retryAfter(answer, now, { waitForAllowance = true } = {}) {
 var READY = "state:ready";
 var CONTINUATION = "continuation";
 var INPUTS_CHANGED = "inputs-changed";
+var AFTER_RESEARCH = "after-research";
 var CLAIMED = "state:claimed";
 function issueForTask(task, repository) {
   return {
@@ -10630,7 +10641,8 @@ function issueForTask(task, repository) {
       READY,
       ...task.researchFor === void 0 ? [] : [`${RESEARCH_FOR}${task.researchFor}`],
       ...task.continuation ? [CONTINUATION] : [],
-      ...task.staleRevision ? [INPUTS_CHANGED] : []
+      ...task.staleRevision ? [INPUTS_CHANGED] : [],
+      ...task.afterResearch ? [AFTER_RESEARCH] : []
     ],
     body: [
       ...task.feedbackSignal === void 0 ? [] : [`Feedback signal: ${task.feedbackSignal}`, ""],
@@ -10661,6 +10673,7 @@ function taskFromIssue(issue) {
     module,
     ...issue.labels.some(({ name }) => name === CONTINUATION) ? { continuation: true } : {},
     ...issue.labels.some(({ name }) => name === INPUTS_CHANGED) ? { staleRevision: true } : {},
+    ...issue.labels.some(({ name }) => name === AFTER_RESEARCH) ? { afterResearch: true } : {},
     ...inputsAt === void 0 ? {} : { inputsAt },
     ...researchFor === void 0 ? {} : { researchFor },
     // Assigning is open to anyone who triages: only Divlab's claimed label makes a task held.

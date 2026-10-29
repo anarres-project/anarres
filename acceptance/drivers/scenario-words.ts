@@ -71,6 +71,10 @@ export function otherFiles(work: AcceptedWork) {
         ? `# Contract ${contract.name}, revised by ${work.feedbackSignal}\n`
         : `# Contract ${contract.name}\n`,
     })),
+    // Research work writes a brief for the module it was asked about.
+    ...(work.role === "Research"
+      ? [{ path: `research-briefs/${work.module}/${work.feedbackSignal}.md`, text: "# Brief\n" }]
+      : []),
     // Architecture and Specification work write the module's architecture and specification.
     ...(work.role === "Architecture" || work.role === "Specification"
       ? [
@@ -105,6 +109,9 @@ const MODULE_WORK: Record<string, string> = {
 export function moduleWorkIn(paths: readonly string[]): { module: string; kind: string }[] {
   return paths.flatMap((path) => {
     const [top, module, folder] = path.split("/");
+    if (top === "research-briefs" && module !== undefined && folder !== undefined) {
+      return [{ module, kind: "research brief" }];
+    }
     const kind = folder === undefined ? undefined : MODULE_WORK[folder];
     return top === "modules" && module !== undefined && kind !== undefined
       ? [{ module, kind }]
