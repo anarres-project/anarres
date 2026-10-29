@@ -9257,7 +9257,7 @@ function rule(work) {
   if (work.partial) return continuation(work);
   if (failed(work)) return revise(work);
   if (work.fromRole === "research") return returnResearch(work);
-  if (work.modulesToStart !== void 0) return startModules(work.modulesToStart);
+  if (work.modulesToStart !== void 0) return startModules(work, work.modulesToStart);
   return advance(work);
 }
 function continuation(work) {
@@ -9307,10 +9307,20 @@ function returnResearch(work) {
     reason: { rule: "research_returned" }
   };
 }
-function startModules(modules) {
+function startModules(work, modules) {
+  const revision = work.contractRevision;
+  const tasks = [
+    ...modules.map((module) => ({ role: FIRST_ROLE, module })),
+    ...(revision?.modules ?? []).map((module) => ({
+      role: "architecture",
+      module,
+      feedbackSignal: work.feedbackSignal,
+      staleRevision: true
+    }))
+  ];
   return {
-    decision: { tasks: modules.map((module) => ({ role: FIRST_ROLE, module })) },
-    reason: { rule: "modules_listed" }
+    decision: { tasks },
+    reason: revision ? { rule: "contract_revised", contracts: revision.contracts } : { rule: "modules_listed" }
   };
 }
 function advance(work) {
@@ -9965,9 +9975,10 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     tests = testCounts(run.report);
   }
   let work = signal;
-  const listing = files.find((file2) => file2.path === MODULES_FILE);
-  if (role === "programme-architect" && signal.module === PROGRAMME && listing) {
-    const listed = readModules(listing.text);
+  const programmeWork = role === "programme-architect" && signal.module === PROGRAMME;
+  const listing = files.find((file2) => file2.path === MODULES_FILE)?.text ?? (programmeWork && files.some((file2) => file2.path.startsWith(CONTRACTS)) ? await pullRequests.modulesOnMain(project2) : void 0);
+  if (programmeWork && listing !== void 0) {
+    const listed = readModules(listing);
     if ("unreadable" in listed) {
       await pullRequests.refuse(
         project2,
@@ -9978,6 +9989,19 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     }
     const started = modulesStarted(events);
     work = { ...signal, modulesToStart: listed.modules.filter((module) => !started.has(module)) };
+    const revised = [
+      ...new Set(
+        files.filter((file2) => file2.path.startsWith(CONTRACTS)).map((file2) => file2.path.slice(CONTRACTS.length).split("/")[0] ?? "")
+      )
+    ];
+    const toRevise = [
+      ...new Set(
+        listed.contracts.filter((contract) => revised.includes(contract.name)).flatMap((contract) => [contract.providedBy, ...contract.usedBy])
+      )
+    ].filter((module) => started.has(module) && !hasTaskOpen(events, module));
+    if (toRevise.length > 0) {
+      work = { ...work, contractRevision: { contracts: revised, modules: toRevise } };
+    }
   }
   const pinned = pinnedCommit(events, role, signal.module);
   if (pinned !== void 0) {
@@ -10013,6 +10037,11 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
 var pinnedCommit = (events, role, module) => routingDecisions(events).filter(
   (event) => "tasks" in event.decision && event.decision.tasks.some((task) => task.role === role && task.module === module)
 ).at(-1)?.mergedAs;
+function hasTaskOpen(events, module) {
+  const postsFor = (event) => "tasks" in event.decision && event.decision.tasks.some((task) => task.module === module);
+  const latest = routingDecisions(events).filter((event) => event.work.module === module || postsFor(event)).at(-1);
+  return latest !== void 0 && postsFor(latest);
+}
 var modulesStarted = (events) => new Set(routingDecisions(events).flatMap((event) => event.work.modulesToStart ?? []));
 async function checkMain(project2, repository, board, log, clock, divlab) {
   const events = await log.read(project2);

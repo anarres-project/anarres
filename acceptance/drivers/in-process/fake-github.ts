@@ -378,8 +378,10 @@ export class FakeGitHub
     return { head: `head-of-${number}`, draft, author };
   }
 
-  async changedFiles(_project: string, pullRequest: string) {
-    return this.opened(pullRequest).files;
+  /** As GitHub lists them: the pull request's files that differ from main's. */
+  async changedFiles(project: string, pullRequest: string) {
+    const main = this.files.get(project);
+    return this.opened(pullRequest).files.filter(({ path, text }) => main?.get(path) !== text);
   }
 
   /** The next merge succeeds, and then Divlab's run stops dead, as if its runner were lost. */

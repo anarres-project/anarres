@@ -613,11 +613,7 @@ const recordActing = ({ project, work }: RoutingEvent, log: EventLog) =>
 async function acceptSignal(
   project: string,
   path: string,
-  signal: FeedbackSignal & {
-    modulesToStart?: string[];
-    inputsChanged?: string[];
-    contractsRevised?: string[];
-  },
+  signal: RoutedWork,
   board: TaskBoard,
   log: EventLog,
   clock: Clock,
@@ -907,14 +903,16 @@ export async function onPullRequest(
     tests = testCounts(run.report);
   }
   // The programme's Programme Architect work starts the modules its modules.yaml lists (0013).
-  let work: FeedbackSignal & {
-    modulesToStart?: string[];
-    inputsChanged?: string[];
-    contractsRevised?: string[];
-  } = signal;
-  const listing = files.find((file) => file.path === MODULES_FILE);
-  if (role === "programme-architect" && signal.module === PROGRAMME && listing) {
-    const listed = readModules(listing.text);
+  let work: RoutedWork = signal;
+  // Work revising only a contract leaves modules.yaml as main has it, so it is read from there.
+  const programmeWork = role === "programme-architect" && signal.module === PROGRAMME;
+  const listing =
+    files.find((file) => file.path === MODULES_FILE)?.text ??
+    (programmeWork && files.some((file) => file.path.startsWith(CONTRACTS))
+      ? await pullRequests.modulesOnMain(project)
+      : undefined);
+  if (programmeWork && listing !== undefined) {
+    const listed = readModules(listing);
     if ("unreadable" in listed) {
       await pullRequests.refuse(
         project,
@@ -925,6 +923,25 @@ export async function onPullRequest(
     }
     const started = modulesStarted(events);
     work = { ...signal, modulesToStart: listed.modules.filter((module) => !started.has(module)) };
+    // A revised contract sends each module providing or using it back to Architecture: now, if
+    // it has no task open; otherwise when that task's work is merged (decision 0015).
+    const revised = [
+      ...new Set(
+        files
+          .filter((file) => file.path.startsWith(CONTRACTS))
+          .map((file) => file.path.slice(CONTRACTS.length).split("/")[0] ?? ""),
+      ),
+    ];
+    const toRevise = [
+      ...new Set(
+        listed.contracts
+          .filter((contract) => revised.includes(contract.name))
+          .flatMap((contract) => [contract.providedBy, ...contract.usedBy]),
+      ),
+    ].filter((module) => started.has(module) && !hasTaskOpen(events, module));
+    if (toRevise.length > 0) {
+      work = { ...work, contractRevision: { contracts: revised, modules: toRevise } };
+    }
   }
   // Work whose inputs changed after its task was posted goes back to its role (decision 0015).
   const pinned = pinnedCommit(events, role, signal.module);
@@ -974,6 +991,31 @@ const pinnedCommit = (events: LogEvent[], role: Role, module: string) =>
         event.decision.tasks.some((task) => task.role === role && task.module === module),
     )
     .at(-1)?.mergedAs;
+
+/**
+ * Whether a module has a task open, as Divlab's routing records say: the latest decision about it
+ * posted one, rather than finishing the module or alerting PDC coordinators.
+ */
+function hasTaskOpen(events: LogEvent[], module: string): boolean {
+  const postsFor = (event: RoutingEvent) =>
+    "tasks" in event.decision && event.decision.tasks.some((task) => task.module === module);
+  const latest = routingDecisions(events)
+    .filter((event) => event.work.module === module || postsFor(event))
+    .at(-1);
+  return latest !== undefined && postsFor(latest);
+}
+
+/**
+ * A feedback signal with what Divlab found on validating it: the modules a Programme Architect's
+ * modules.yaml starts (0013) or sends back, and the inputs and contracts revised since its task
+ * was posted (0015).
+ */
+type RoutedWork = FeedbackSignal & {
+  modulesToStart?: string[];
+  inputsChanged?: string[];
+  contractsRevised?: string[];
+  contractRevision?: { contracts: string[]; modules: string[] };
+};
 
 /** The modules earlier modules.yaml started, as Divlab's routing records say. */
 const modulesStarted = (events: LogEvent[]) =>

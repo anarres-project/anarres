@@ -649,4 +649,44 @@ describe("routing work whose inputs changed since its task was posted (decision 
       reason: { rule: "contract_revised", contracts: ["tokens"] },
     });
   });
+
+  it("sends each module the Programme Architect's revised contracts name back to Architecture", () => {
+    expect(
+      rule({
+        fromRole: "programme-architect",
+        module: "programme",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        modulesToStart: [],
+        contractRevision: { contracts: ["tokens"], modules: ["parser"] },
+      }),
+    ).toEqual({
+      decision: {
+        tasks: [
+          { role: "architecture", module: "parser", feedbackSignal: FEEDBACK, staleRevision: true },
+        ],
+      },
+      reason: { rule: "contract_revised", contracts: ["tokens"] },
+    });
+  });
+
+  it("still starts the modules the same work lists anew, beside those it sends back", () => {
+    expect(
+      route({
+        fromRole: "programme-architect",
+        module: "programme",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        modulesToStart: ["ledger"],
+        contractRevision: { contracts: ["tokens"], modules: ["parser"] },
+      }),
+    ).toEqual({
+      tasks: [
+        { role: "architecture", module: "ledger" },
+        { role: "architecture", module: "parser", feedbackSignal: FEEDBACK, staleRevision: true },
+      ],
+    });
+  });
 });

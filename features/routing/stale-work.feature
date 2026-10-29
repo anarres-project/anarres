@@ -28,3 +28,10 @@ Feature: Work whose inputs changed after its task was posted is revised
     And the Programme Architect's work was revised since, changing the contract "tokens"
     When Alice submits Test work on "parser" with a pass verdict
     Then the only task ready for "parser" is an Architecture task
+
+  Scenario: A revised contract sends a module that is done back to Architecture at once
+    Given a new project is started
+    And a member's Programme Architect work for the programme was accepted, listing the modules "parser", "lexer" and "ledger", with a contract "tokens" that "lexer" provides and "parser" uses, and a contract "entries" that "ledger" provides
+    And a member's Security & Quality work on "parser" was accepted with a pass verdict
+    When the Programme Architect's work is revised, changing the contract "tokens"
+    Then the only task ready for "parser" is an Architecture task

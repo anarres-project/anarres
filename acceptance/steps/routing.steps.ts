@@ -627,3 +627,10 @@ Given(
     return this.anarres.programmeRevisedChangingContract(contract);
   },
 );
+
+When(
+  "the Programme Architect's work is revised, changing the contract {string}",
+  function (this: AnarresWorld, contract: string) {
+    return this.anarres.programmeRevisedChangingContract(contract);
+  },
+);

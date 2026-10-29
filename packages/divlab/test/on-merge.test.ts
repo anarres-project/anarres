@@ -1376,6 +1376,126 @@ describe("acting on a pull request", () => {
     ]);
   });
 
+  it("sends a module with no task open back to Architecture when its contract is revised (0015)", async () => {
+    const posted: PostedTask[] = [];
+    const revising = [
+      {
+        path: "feedback/FB-12.md",
+        text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: programme-architect\n  module: programme\n  verdict: pass\n---\n',
+      },
+      {
+        path: "programme/modules.yaml",
+        text: "modules:\n  - name: lexer\n    provides: [tokens]\n  - name: parser\n    uses: [tokens]\n",
+      },
+      { path: "programme/contracts/tokens/contract.md", text: "# Tokens, revised\n" },
+    ];
+    const programmeHeld: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "programme-architect", module: "programme", claimedBy: "alice" }),
+      close: async () => {},
+      post: async (task) => {
+        posted.push(task);
+      },
+    };
+    const work = (fromRole: string, module: string) => ({
+      fromRole,
+      module,
+      verdict: "pass",
+      impediments: [],
+      feedbackSignal: `feedback/${module}-${fromRole}.md`,
+    });
+    // Both modules started; lexer has a task open, and parser is done.
+    const earlier: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          work: {
+            ...work("programme-architect", "programme"),
+            modulesToStart: ["lexer", "parser"],
+          },
+          decision: {
+            tasks: [
+              { role: "architecture", module: "lexer" },
+              { role: "architecture", module: "parser" },
+            ],
+          },
+          reason: { rule: "modules_listed" },
+        },
+        {
+          project: "ledger",
+          work: work("security-and-quality", "parser"),
+          decision: { moduleDone: true },
+          reason: { rule: "pipeline_complete" },
+        },
+      ],
+      append: async () => {},
+    };
+    await onPullRequest("ledger", "7", submitting([], revising), programmeHeld, earlier, clock);
+    expect(posted.map(({ role, module }) => ({ role, module }))).toEqual([
+      { role: "architecture", module: "parser" },
+    ]);
+  });
+
+  it("reads main's modules.yaml for a revised contract when the work leaves the file as it is", async () => {
+    const posted: PostedTask[] = [];
+    const revisingOnlyTheContract = [
+      {
+        path: "feedback/FB-12.md",
+        text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: programme-architect\n  module: programme\n  verdict: pass\n---\n',
+      },
+      { path: "programme/contracts/tokens/contract.md", text: "# Tokens, revised\n" },
+    ];
+    const listedOnMain: PullRequests = {
+      ...submitting([], revisingOnlyTheContract),
+      modulesOnMain: async () =>
+        "modules:\n  - name: lexer\n    provides: [tokens]\n  - name: parser\n    uses: [tokens]\n",
+    };
+    const programmeHeld: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "programme-architect", module: "programme", claimedBy: "alice" }),
+      close: async () => {},
+      post: async (task) => {
+        posted.push(task);
+      },
+    };
+    const work = (fromRole: string, module: string) => ({
+      fromRole,
+      module,
+      verdict: "pass",
+      impediments: [],
+      feedbackSignal: `feedback/${module}-${fromRole}.md`,
+    });
+    const earlier: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          work: {
+            ...work("programme-architect", "programme"),
+            modulesToStart: ["lexer", "parser"],
+          },
+          decision: {
+            tasks: [
+              { role: "architecture", module: "lexer" },
+              { role: "architecture", module: "parser" },
+            ],
+          },
+          reason: { rule: "modules_listed" },
+        },
+        {
+          project: "ledger",
+          work: work("security-and-quality", "parser"),
+          decision: { moduleDone: true },
+          reason: { rule: "pipeline_complete" },
+        },
+      ],
+      append: async () => {},
+    };
+    await onPullRequest("ledger", "7", listedOnMain, programmeHeld, earlier, clock);
+    expect(posted.map(({ role, module }) => ({ role, module }))).toEqual([
+      { role: "architecture", module: "parser" },
+    ]);
+  });
+
   it("refuses the Programme Architect's work when its modules.yaml cannot be read, saying why", async () => {
     const [merged, refusals]: string[][] = [[], []];
     const architecting = [

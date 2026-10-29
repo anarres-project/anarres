@@ -608,8 +608,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           task's pinned commit sends it back to Architecture, ahead of a stale revision (core's
           `contractsRevised`, rule `contract_revised`). Scenario "A revised contract sends a
           module whose task was open back to Architecture";
-    - [ ] a module with no task open (done, or waiting on PDC coordinators): its Architecture
-          revision is posted when the revised contract is merged;
+    - [x] a module with no task open (done, or waiting on PDC coordinators, as Divlab's records
+          say): its Architecture revision is posted when the revised contract is merged, beside
+          any module the same work starts (`contractRevision`). Work revising only a contract
+          leaves `modules.yaml` alone, so Divlab reads it from main then (found once the fake
+          listed a pull request's files as GitHub does: only those differing from main's).
+          Scenario "A revised contract sends a module that is done back to Architecture at once";
     - [ ] a module the revision stops listing as a user of the contract;
   - [ ] an acceptance scenario for each, in-process, then in the sandbox.
 

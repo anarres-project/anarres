@@ -17,6 +17,9 @@ export type AcceptedWork = {
   inputsChanged?: string[];
   /** The contracts the module provides or uses revised after the task was posted (0015). */
   contractsRevised?: string[];
+  /** For the Programme Architect's work: its revised contracts, and the modules they send back
+   * to Architecture now (0015). */
+  contractRevision?: { contracts: string[]; modules: string[] };
 };
 
 export type Task = {
@@ -85,7 +88,7 @@ export function rule(work: AcceptedWork): Ruling {
   if (work.partial) return continuation(work);
   if (failed(work)) return revise(work);
   if (work.fromRole === "research") return returnResearch(work);
-  if (work.modulesToStart !== undefined) return startModules(work.modulesToStart);
+  if (work.modulesToStart !== undefined) return startModules(work, work.modulesToStart);
   return advance(work);
 }
 
@@ -159,11 +162,26 @@ function returnResearch(work: AcceptedWork): Ruling {
 }
 
 /** A task for the next role in the module pipeline; past its end, the module is done. */
-/** Each module the Programme Architect's modules.yaml starts begins with its first task. */
-function startModules(modules: string[]): Ruling {
+/**
+ * Each module the Programme Architect's modules.yaml starts begins with its first task; each its
+ * revised contracts send back goes to Architecture (decision 0015).
+ */
+function startModules(work: AcceptedWork, modules: string[]): Ruling {
+  const revision = work.contractRevision;
+  const tasks: Task[] = [
+    ...modules.map((module) => ({ role: FIRST_ROLE, module })),
+    ...(revision?.modules ?? []).map((module) => ({
+      role: "architecture" as const,
+      module,
+      feedbackSignal: work.feedbackSignal,
+      staleRevision: true as const,
+    })),
+  ];
   return {
-    decision: { tasks: modules.map((module) => ({ role: FIRST_ROLE, module })) },
-    reason: { rule: "modules_listed" },
+    decision: { tasks },
+    reason: revision
+      ? { rule: "contract_revised", contracts: revision.contracts }
+      : { rule: "modules_listed" },
   };
 }
 

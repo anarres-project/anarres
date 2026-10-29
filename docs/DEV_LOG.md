@@ -494,6 +494,21 @@ governance scenarios run alone.
   task. GREEN (445 with core): it reads main's `modules.yaml` only when a contract changed. RED:
   the adapter's `modulesOnMain` -> undefined (first `is not a function`). GREEN. `@wip`
   removed; checked the scenario fails without the rule. Gate 762 and 128.
+- Scenario (`@wip`, not yet right): "A revised contract sends a module that is done back to
+  Architecture at once" -> no task ready.
+- RED: core sends each module the Programme Architect's revised contracts name back to
+  Architecture -> it sent the programme itself back. GREEN (240). RED: and still starts the
+  modules the same work lists anew -> the new module was not started. GREEN (241).
+- RED: Divlab sends a module with no task open back to Architecture when its contract is
+  revised -> nothing posted. GREEN (207). REFACTOR: the routed work's type named once
+  (`RoutedWork`).
+- The scenario passed; with the fake then listing a pull request's files as GitHub does (only
+  those differing from main's), it failed again: work revising only a contract leaves
+  `modules.yaml` out of its files, and Divlab looked for none. RED: reads main's modules.yaml
+  then -> the programme advanced. GREEN (208).
+- Core's branch coverage fell to 99%: two fallbacks no test needed. REFACTOR: a Programme
+  Architect's revision is one field (`contractRevision`), routed with the modules it starts.
+  `@wip` removed; checked the scenario fails without the revision. Gate 766 and 129.
 
 ---
 
