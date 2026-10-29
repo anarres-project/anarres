@@ -934,9 +934,15 @@ export async function onPullRequest(
           .map((file) => file.path.slice(CONTRACTS.length).split("/")[0] ?? ""),
       ),
     ];
+    // A module the revision stops listing with a contract is affected too: main's listing,
+    // which the work replaces, says so, read only when a contract changed.
+    const before =
+      revised.length > 0 && files.some((file) => file.path === MODULES_FILE)
+        ? contractsListed(await pullRequests.modulesOnMain(project))
+        : [];
     const toRevise = [
       ...new Set(
-        listed.contracts
+        [...listed.contracts, ...before]
           .filter((contract) => revised.includes(contract.name))
           .flatMap((contract) => [contract.providedBy, ...contract.usedBy]),
       ),
@@ -958,10 +964,7 @@ export async function onPullRequest(
       const contracts = [
         await pullRequests.modulesOnMain(project),
         await pullRequests.modulesAt(project, pinned),
-      ].flatMap((text) => {
-        const listed = readModules(text ?? "");
-        return "unreadable" in listed ? [] : listed.contracts;
-      });
+      ].flatMap(contractsListed);
       const revised = [...new Set(contractsRevised(contracts, signal.module, changed))];
       if (revised.length > 0) work = { ...work, contractsRevised: revised };
     }
@@ -991,6 +994,12 @@ export async function onPullRequest(
  * whose text others can edit: the merge of the latest decision that posted a task for the role and
  * module, as a module has one such task open at a time.
  */
+/** The contracts a modules.yaml lists: none if there is none, or it cannot be read. */
+const contractsListed = (text: string | undefined) => {
+  const listed = readModules(text ?? "");
+  return "unreadable" in listed ? [] : listed.contracts;
+};
+
 const pinnedCommit = (events: LogEvent[], role: Role, module: string) =>
   routingDecisions(events)
     .filter(

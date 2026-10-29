@@ -534,6 +534,16 @@ governance scenarios run alone.
   This also covers Architecture's and Specification's contracts as their inputs: the contract
   rule sends their work back to Architecture. A module with no task open that the revision
   stops listing is still missed: on the test list. Gate 768 and 130.
+- A module with no task open that the revision stops listing with a revised contract is sent
+  back to Architecture at once. Acceptance: scenario "A revised contract sends a module that is
+  done, and that it no longer serves, back to Architecture at once", red as not yet right (no
+  task posted).
+  RED:      sends a module with no task open back to Architecture when the revision stops
+            listing it with the contract -> expected [] to deeply equal [ { role: 'architecture', … } ]
+  GREEN:    the same (211 passed): main's `modules.yaml`, which the work replaces, is read too
+            when the work changes both it and a contract.
+  REFACTOR: `contractsListed`, the contracts a listing names or none, used for both reads.
+  Gate 769 and 131.
 
 ---
 

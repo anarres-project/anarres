@@ -9994,9 +9994,10 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
         files.filter((file2) => file2.path.startsWith(CONTRACTS)).map((file2) => file2.path.slice(CONTRACTS.length).split("/")[0] ?? "")
       )
     ];
+    const before = revised.length > 0 && files.some((file2) => file2.path === MODULES_FILE) ? contractsListed(await pullRequests.modulesOnMain(project2)) : [];
     const toRevise = [
       ...new Set(
-        listed.contracts.filter((contract) => revised.includes(contract.name)).flatMap((contract) => [contract.providedBy, ...contract.usedBy])
+        [...listed.contracts, ...before].filter((contract) => revised.includes(contract.name)).flatMap((contract) => [contract.providedBy, ...contract.usedBy])
       )
     ].filter((module) => started.has(module) && !hasTaskOpen(events, module));
     if (toRevise.length > 0) {
@@ -10012,10 +10013,7 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
       const contracts = [
         await pullRequests.modulesOnMain(project2),
         await pullRequests.modulesAt(project2, pinned)
-      ].flatMap((text) => {
-        const listed = readModules(text ?? "");
-        return "unreadable" in listed ? [] : listed.contracts;
-      });
+      ].flatMap(contractsListed);
       const revised = [...new Set(contractsRevised(contracts, signal.module, changed))];
       if (revised.length > 0) work = { ...work, contractsRevised: revised };
     }
@@ -10039,6 +10037,10 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     mergedAs
   });
 }
+var contractsListed = (text) => {
+  const listed = readModules(text ?? "");
+  return "unreadable" in listed ? [] : listed.contracts;
+};
 var pinnedCommit = (events, role, module) => routingDecisions(events).filter(
   (event) => "tasks" in event.decision && event.decision.tasks.some((task) => task.role === role && task.module === module)
 ).at(-1)?.mergedAs;

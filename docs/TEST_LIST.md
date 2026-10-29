@@ -627,9 +627,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           the contract: `modules.yaml` at the task's pinned commit counts too (Divlab asks for it
           only when a contract changed), and each revised contract is named once. Scenario "A
           revised contract sends a module it no longer serves back to Architecture";
-    - [ ] a module with no task open that the revision stops listing: the revision posted at
-          once reads only the new `modules.yaml`, so it is missed (compare with the previous
-          listing on main);
+    - [x] a module with no task open that the revision stops listing: main's `modules.yaml`,
+          which the work replaces, counts too (read only when the work changes both it and a
+          contract). Scenario "A revised contract sends a module that is done, and that it no
+          longer serves, back to Architecture at once";
   - [ ] an acceptance scenario for each, in-process, then in the sandbox.
 
 ## 4a. Any language (hosted projects)
