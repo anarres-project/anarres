@@ -142,3 +142,10 @@ Then(
     );
   },
 );
+
+Then(
+  "{word} has the knowledge gap the {role} work on {string} reported to read, and none of the module's work",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.memberHasKnowledgeGapToRead(member, { role, module });
+  },
+);

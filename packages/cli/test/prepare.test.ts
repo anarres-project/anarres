@@ -53,6 +53,19 @@ describe("preparing a task the member holds (concept §8)", () => {
     });
   });
 
+  it("fetches a Research task's question, the feedback signal that reported the knowledge gap, and its module's briefs", () => {
+    const task = {
+      role: "research" as const,
+      module: "parser",
+      claimedBy: "alice",
+      inputsAt: SHA,
+      feedbackSignal: "feedback/fb-7.md",
+    };
+    expect(preparation("anarres-project", "ledger", task, "alice")).toMatchObject({
+      paths: ["research-briefs/parser/", "feedback/fb-7.md"],
+    });
+  });
+
   it("fetches the contracts the task's module provides and uses, as modules.yaml says at that commit", () => {
     const task = {
       role: "architecture" as const,

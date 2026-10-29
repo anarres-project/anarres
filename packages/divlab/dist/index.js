@@ -8962,6 +8962,66 @@ var require_sax = __commonJS({
 // src/action.ts
 import { readFileSync } from "node:fs";
 
+// ../core/src/feedback-signal.ts
+var import_yaml = __toESM(require_dist(), 1);
+var PLAIN_NAME = /^(?=.{1,40}$)[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
+var isPlainName = (name) => PLAIN_NAME.test(name);
+function readFeedbackSignal(text) {
+  const lines = text.split(/\r?\n/);
+  if (lines[0] !== "---") return { unreadable: "it has no feedback signal header" };
+  const end = lines.indexOf("---", 1);
+  if (end === -1) return { unreadable: "its header never ends" };
+  const frontMatter = lines.slice(1, end).join("\n");
+  let parsed2;
+  try {
+    parsed2 = (0, import_yaml.parse)(frontMatter);
+  } catch {
+    return { unreadable: "its header is not valid YAML" };
+  }
+  const header = parsed2?.feedback_signal;
+  if (typeof header !== "object" || header === null) {
+    return { unreadable: "its header has no feedback signal" };
+  }
+  for (const field of ["from_role", "module", "verdict"]) {
+    if (typeof header[field] !== "string") {
+      return { unreadable: `its feedback signal does not give its ${field}` };
+    }
+  }
+  for (const field of ["from_role", "module", "verdict"]) {
+    if (!isPlainName(header[field])) {
+      return { unreadable: `its feedback signal's ${field} is not a plain name` };
+    }
+  }
+  const impediments = header.impediments ?? [];
+  if (!Array.isArray(impediments) || !impediments.every((impediment) => typeof impediment?.type === "string")) {
+    return { unreadable: "its feedback signal's impediments do not each give a type" };
+  }
+  if (!impediments.every((impediment) => isPlainName(impediment.type))) {
+    return { unreadable: "its feedback signal's impediments are not each a plain name" };
+  }
+  const task = header.task_id;
+  if (task !== void 0 && typeof task !== "string" && !Number.isInteger(task)) {
+    return {
+      unreadable: "its feedback signal does not give its task_id as text or a whole number"
+    };
+  }
+  return {
+    fromRole: header.from_role,
+    module: header.module,
+    verdict: header.verdict,
+    impediments: impediments.map((impediment) => ({
+      type: impediment.type
+    })),
+    ...task === void 0 ? {} : { task: String(task) },
+    ...header.status === "partial" ? { partial: true } : {}
+  };
+}
+function readSignalFile(path) {
+  if (!SIGNAL_FILE.test(path)) return { unreadable: "its file name is not a plain name" };
+  return { path };
+}
+var SIGNAL_FILE = /^feedback\/[A-Za-z0-9-]+\.md$/;
+
 // ../core/src/access.ts
 var PROGRAMME = "programme";
 var WRITE_SCOPES = {
@@ -8982,8 +9042,9 @@ function outsideScope(role, module, paths) {
 }
 var isPlainPath = (path) => !path.includes("\\") && path.split("/").every((part) => part !== "" && part !== "." && part !== "..");
 function mayRead(role, module, path, task = {}) {
-  return isPlainPath(path) && readScope(role, module, task).some((scope) => path.startsWith(scope));
+  return isPlainPath(path) && readScope(role, module, task).some((scope) => within(path, scope));
 }
+var within = (path, scope) => scope.endsWith("/") ? path.startsWith(scope) : path === scope;
 var READ_SCOPES = {
   "programme-architect": () => ["requirements/"],
   architecture: (module, contracts) => [
@@ -9011,16 +9072,23 @@ var READ_SCOPES = {
     `modules/${module}/architecture/`,
     `modules/${module}/src/`
   ],
-  research: () => []
+  // Research reads its module's briefs, not the module's work (Bernard, 2026-10-29).
+  research: (module) => [writeScope("research", module)]
 };
 function readScope(role, module, task = {}) {
   return [
     ...READ_SCOPES[role](module, task.contracts ?? []),
     ...task.continuation || task.staleRevision ? [writeScope(role, module)] : [],
     // A revision after research reads the module's research briefs (Bernard, 2026-10-29).
-    ...task.afterResearch ? [writeScope("research", module)] : []
+    ...task.afterResearch ? [writeScope("research", module)] : [],
+    // Research reads the feedback signal that reported the gap: its question (Bernard, 2026-10-29).
+    ...role === "research" && isQuestion(task.question) ? [task.question] : []
   ];
 }
+var isQuestion = (path) => {
+  const name = path?.match(/^feedback\/([^/]+)\.md$/)?.[1];
+  return name !== void 0 && isPlainName(name);
+};
 var CONTRACTS = `${PROGRAMME}/contracts/`;
 var contractPlace = (contract) => `${CONTRACTS}${contract}/`;
 var contractPlaces = (contracts) => contracts.map(contractPlace);
@@ -9093,66 +9161,6 @@ function mayTake(task, history, level) {
     refused: `a member takes only one role in a module, and you have worked on it as ${ROLE_NAMES[other.role]}`
   };
 }
-
-// ../core/src/feedback-signal.ts
-var import_yaml = __toESM(require_dist(), 1);
-var PLAIN_NAME = /^(?=.{1,40}$)[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
-var isPlainName = (name) => PLAIN_NAME.test(name);
-function readFeedbackSignal(text) {
-  const lines = text.split(/\r?\n/);
-  if (lines[0] !== "---") return { unreadable: "it has no feedback signal header" };
-  const end = lines.indexOf("---", 1);
-  if (end === -1) return { unreadable: "its header never ends" };
-  const frontMatter = lines.slice(1, end).join("\n");
-  let parsed2;
-  try {
-    parsed2 = (0, import_yaml.parse)(frontMatter);
-  } catch {
-    return { unreadable: "its header is not valid YAML" };
-  }
-  const header = parsed2?.feedback_signal;
-  if (typeof header !== "object" || header === null) {
-    return { unreadable: "its header has no feedback signal" };
-  }
-  for (const field of ["from_role", "module", "verdict"]) {
-    if (typeof header[field] !== "string") {
-      return { unreadable: `its feedback signal does not give its ${field}` };
-    }
-  }
-  for (const field of ["from_role", "module", "verdict"]) {
-    if (!isPlainName(header[field])) {
-      return { unreadable: `its feedback signal's ${field} is not a plain name` };
-    }
-  }
-  const impediments = header.impediments ?? [];
-  if (!Array.isArray(impediments) || !impediments.every((impediment) => typeof impediment?.type === "string")) {
-    return { unreadable: "its feedback signal's impediments do not each give a type" };
-  }
-  if (!impediments.every((impediment) => isPlainName(impediment.type))) {
-    return { unreadable: "its feedback signal's impediments are not each a plain name" };
-  }
-  const task = header.task_id;
-  if (task !== void 0 && typeof task !== "string" && !Number.isInteger(task)) {
-    return {
-      unreadable: "its feedback signal does not give its task_id as text or a whole number"
-    };
-  }
-  return {
-    fromRole: header.from_role,
-    module: header.module,
-    verdict: header.verdict,
-    impediments: impediments.map((impediment) => ({
-      type: impediment.type
-    })),
-    ...task === void 0 ? {} : { task: String(task) },
-    ...header.status === "partial" ? { partial: true } : {}
-  };
-}
-function readSignalFile(path) {
-  if (!SIGNAL_FILE.test(path)) return { unreadable: "its file name is not a plain name" };
-  return { path };
-}
-var SIGNAL_FILE = /^feedback\/[A-Za-z0-9-]+\.md$/;
 
 // ../core/src/leases.ts
 var LEASE_HOURS = 24;

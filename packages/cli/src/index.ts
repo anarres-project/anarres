@@ -119,6 +119,7 @@ export function preparation(
         continuation?: true;
         staleRevision?: true;
         afterResearch?: true;
+        feedbackSignal?: string;
       }
     | undefined,
   member: string,
@@ -138,7 +139,12 @@ export function preparation(
   return {
     repository: `${owner}/${project}`,
     commit: task.inputsAt,
-    paths: readScope(task.role, task.module, { ...task, contracts }),
+    paths: readScope(task.role, task.module, {
+      ...task,
+      contracts,
+      // Core reads a Research task's question only if it is a feedback signal's plain path.
+      ...(task.feedbackSignal === undefined ? {} : { question: task.feedbackSignal }),
+    }),
     contracts,
   };
 }
@@ -257,8 +263,16 @@ export const TASK_RECORD = ".anarres-task.json";
 
 /** The record prepare leaves in a task's folder. */
 export function taskRecord(task: Partial<RecordedTask>): string {
-  const { role, module, continuation, staleRevision, afterResearch, contracts } = task;
-  return JSON.stringify({ role, module, continuation, staleRevision, afterResearch, contracts });
+  const { role, module, continuation, staleRevision, afterResearch, contracts, question } = task;
+  return JSON.stringify({
+    role,
+    module,
+    continuation,
+    staleRevision,
+    afterResearch,
+    contracts,
+    question,
+  });
 }
 
 /** A task as its folder's record gives it: what the hook judges its session's files by. */
@@ -272,6 +286,8 @@ export type RecordedTask = {
   afterResearch?: true;
   /** The contracts prepare fetched for the task's module (decision 0014). */
   contracts?: string[];
+  /** A Research task's question, which core reads only if it is a feedback signal's plain path. */
+  question?: string;
 };
 
 /** The task a folder's record names, read as data: its role and module, if they are plain. */
@@ -294,6 +310,7 @@ export function taskOfRecord(text: string): RecordedTask | undefined {
     ...(record.staleRevision === true ? { staleRevision: true as const } : {}),
     ...(record.afterResearch === true ? { afterResearch: true as const } : {}),
     ...(contracts === undefined ? {} : { contracts: contracts as string[] }),
+    ...(typeof record.question === "string" ? { question: record.question } : {}),
   };
 }
 

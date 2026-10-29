@@ -1157,7 +1157,12 @@ export class SandboxDriver implements Driver {
     const folder = taskFolder({ project: task.project, task: id });
     const into = join(this.machine, folder);
     for (const step of gitSteps(plan, into)) execFileSync("git", step, { stdio: "pipe" });
-    writeFileSync(join(into, TASK_RECORD), taskRecord({ ...held, contracts: plan.contracts }));
+    // A Research task's question is its feedback signal: the hook lets the session read it.
+    const question = held?.feedbackSignal === undefined ? {} : { question: held.feedbackSignal };
+    writeFileSync(
+      join(into, TASK_RECORD),
+      taskRecord({ ...held, contracts: plan.contracts, ...question }),
+    );
     if (held !== undefined) {
       await restoreDraft(
         { project: task.project, task: id },
@@ -1220,6 +1225,14 @@ export class SandboxDriver implements Driver {
     const folder = taskFolder({ project: task.project, task: id });
     const contracts = join(this.machine, folder, "programme", "contracts");
     return existsSync(contracts) ? readdirSync(contracts) : [];
+  }
+
+  /** Just prepared, the task's folder holds only what was fetched: its signals are those. */
+  async feedbackSignalsFetched(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<string[]> {
+    return this.workInFolder(task, member);
   }
 
   async workInFolder(task: { project: string; role: string; module: string }, member: string) {

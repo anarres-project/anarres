@@ -36,3 +36,10 @@ Feature: A member preparing a task has its role's inputs, and no others
     And Bob has claimed the Coding task for "parser"
     When Bob prepares the Coding task for "parser"
     Then Bob has the research brief of "parser" to read
+
+  Scenario: A member preparing a Research task has the knowledge gap to read, and none of the module's work
+    Given a project with a module "parser"
+    And a member's Coding work on "parser" was accepted with a fail verdict, reporting a knowledge gap
+    And Bob has claimed the Research task for "parser"
+    When Bob prepares the Research task for "parser"
+    Then Bob has the knowledge gap the Coding work on "parser" reported to read, and none of the module's work

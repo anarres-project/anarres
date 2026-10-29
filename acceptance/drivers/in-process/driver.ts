@@ -502,6 +502,14 @@ export class InProcessDriver implements Driver {
     ];
   }
 
+  async feedbackSignalsFetched(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<string[]> {
+    const fetched = this.fetched.get(`${member} ${task.project}#${this.openTaskId(task)}`) ?? [];
+    return fetched.filter((path) => path.startsWith("feedback/")).map(signalName);
+  }
+
   async workInFolder(task: { project: string; role: string; module: string }, member: string) {
     const files = this.folders.get(`${member} ${task.project}#${this.openTaskId(task)}`) ?? [];
     return files

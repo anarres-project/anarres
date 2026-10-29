@@ -890,6 +890,28 @@ export class Anarres {
     );
   }
 
+  /**
+   * The member's prepared task fetched the feedback signal of the work that reported the gap, and
+   * none of its module's work.
+   */
+  async memberHasKnowledgeGapToRead(member: string, reporting: Work) {
+    const work = this.lastPrepared.get(member);
+    assert.ok(work !== undefined, `expected ${member} to have prepared a task`);
+    const signal = this.feedbackSignals.get(workOn(this.aliased(reporting)));
+    const signals = await this.driver.feedbackSignalsFetched(work, this.member(member));
+    assert.ok(
+      signal !== undefined && signals.includes(signal),
+      `expected ${member} to have the ${reporting.role} work's feedback signal to read; fetched ${JSON.stringify(signals)}`,
+    );
+    const fetched = await this.driver.moduleWorkFetched(work, this.member(member));
+    assert.ok(
+      !fetched.some(
+        (one) => one.module === this.aliases.of(reporting.module) && one.kind !== "research brief",
+      ),
+      `expected ${member} to have none of ${reporting.module}'s work; fetched ${JSON.stringify(fetched)}`,
+    );
+  }
+
   async memberIsToldNoLongerHeld(member: string, task: Work) {
     const told = this.resumed.get(`${member} ${workOn(this.aliased(task))}`);
     assert.ok(

@@ -1,3 +1,4 @@
+import { isPlainName } from "./feedback-signal.ts";
 import type { Role } from "./roles.ts";
 
 /**
@@ -39,8 +40,12 @@ const isPlainPath = (path: string) =>
 
 /** Whether a role's work may read a path in the project, for the module named in its task. */
 export function mayRead(role: Role, module: string, path: string, task: ReadingTask = {}): boolean {
-  return isPlainPath(path) && readScope(role, module, task).some((scope) => path.startsWith(scope));
+  return isPlainPath(path) && readScope(role, module, task).some((scope) => within(path, scope));
 }
+
+/** A scope ending in a slash is a folder, read whole; any other is one file. */
+const within = (path: string, scope: string) =>
+  scope.endsWith("/") ? path.startsWith(scope) : path === scope;
 
 /**
  * What each role's work may read, for the module named in its task: the access matrix's read
@@ -75,7 +80,8 @@ const READ_SCOPES: Record<Role, (module: string, contracts: readonly string[]) =
     `modules/${module}/architecture/`,
     `modules/${module}/src/`,
   ],
-  research: () => [],
+  // Research reads its module's briefs, not the module's work (Bernard, 2026-10-29).
+  research: (module) => [writeScope("research", module)],
 };
 
 /** The places a role's work may read, for the module named in its task, a continuation or not. */
@@ -87,8 +93,19 @@ export function readScope(role: Role, module: string, task: ReadingTask = {}): s
     ...(task.continuation || task.staleRevision ? [writeScope(role, module)] : []),
     // A revision after research reads the module's research briefs (Bernard, 2026-10-29).
     ...(task.afterResearch ? [writeScope("research", module)] : []),
+    // Research reads the feedback signal that reported the gap: its question (Bernard, 2026-10-29).
+    ...(role === "research" && isQuestion(task.question) ? [task.question] : []),
   ];
 }
+
+/**
+ * A question is a feedback signal's plain path, `feedback/<name>.md`, and nothing else: it comes
+ * from the task's issue, so it never widens what Research reads.
+ */
+const isQuestion = (path: string | undefined): path is string => {
+  const name = path?.match(/^feedback\/([^/]+)\.md$/)?.[1];
+  return name !== undefined && isPlainName(name);
+};
 
 /**
  * What a task's reading depends on besides its role and module: whether it continues partial
@@ -100,6 +117,8 @@ export type ReadingTask = {
   staleRevision?: boolean;
   afterResearch?: boolean;
   contracts?: readonly string[];
+  /** For Research: the feedback signal that reported the knowledge gap, its question. */
+  question?: string;
 };
 
 /** Each contract is a folder of its own (decision 0014). */

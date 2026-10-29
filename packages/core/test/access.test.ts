@@ -210,3 +210,45 @@ describe("what a revision after research may read (Bernard, 2026-10-29)", () => 
     ]);
   });
 });
+
+describe("what a Research task may read (Bernard, 2026-10-29: the question and briefs)", () => {
+  it("is its module's research briefs, and nothing of the module's work", () => {
+    expect(readScope("research", "parser")).toEqual(["research-briefs/parser/"]);
+  });
+
+  it("is also the feedback signal that reported the knowledge gap, its question, and no other", () => {
+    const task = { question: "feedback/fb-7.md" };
+    expect(
+      ["feedback/fb-7.md", "feedback/fb-3.md"].map((path) =>
+        mayRead("research", "parser", path, task),
+      ),
+    ).toEqual([true, false]);
+  });
+
+  it.each([
+    ["a folder of the module's work", "modules/parser/src/"],
+    ["a file outside the feedback signals", "modules/parser/src/lexer.ts"],
+    ["a path that climbs out", "feedback/../modules/parser/src/lexer.ts"],
+    ["the feedback folder whole", "feedback/"],
+    ["a signal in a folder of its own", "feedback/old/fb-7.md"],
+  ])(
+    "widens nothing when the question is not a feedback signal's plain path: %s",
+    (_what, question) => {
+      expect(readScope("research", "parser", { question })).toEqual(
+        readScope("research", "parser"),
+      );
+    },
+  );
+
+  it("is the question's own file, not one whose name only begins with it", () => {
+    expect(
+      mayRead("research", "parser", "feedback/fb-7.md.old", { question: "feedback/fb-7.md" }),
+    ).toBe(false);
+  });
+
+  it("is Research's alone: no other role reads a question", () => {
+    expect(mayRead("coding", "parser", "feedback/fb-7.md", { question: "feedback/fb-7.md" })).toBe(
+      false,
+    );
+  });
+});

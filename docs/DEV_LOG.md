@@ -712,6 +712,34 @@ governance scenarios run alone.
   REFACTOR: what "under way" means moved to core (`underWay`), used by the adapter and the
             in-process driver alike; its core test passed first time, as a refactor's should.
             Concept §8 updated. Gate 803 and 138.
+- What a Research task reads (Bernard: the question and briefs). Acceptance: scenario "A member
+  preparing a Research task has the knowledge gap to read, and none of the module's work", red
+  as not yet right (no feedback signal fetched); the drivers can now say which signals a prepared
+  task fetched.
+  RED:      what a Research task may read is its module's research briefs -> expected [] to
+            deeply equal [ 'research-briefs/parser/' ]
+  GREEN:    the same (254 passed).
+  RED:      is also the feedback signal that reported the knowledge gap, and no other ->
+            expected [ false, false ] to deeply equal [ true, false ]
+  GREEN:    the same (255 passed): the reading task's `question`.
+  RED:      is Research's alone -> expected true to be false
+  GREEN:    the same (256 passed).
+  RED:      widens nothing when the question is not a feedback signal's plain path (five rows:
+            a folder, another file, a climb, the feedback folder, a nested signal) -> 5 failed.
+            Its examples' names were made plain first (`fb-7`, as Divlab accepts only plainly
+            named signals), a test-only change, still passing.
+  GREEN:    the same (261 passed): core reads a question only as `feedback/<plain>.md`.
+  RED:      is the question's own file, not one whose name only begins with it -> expected true
+            to be false
+  GREEN:    the same (262 passed): a scope not ending in a slash is one file.
+  RED:      the CLI fetches a Research task's question and its module's briefs -> no
+            `feedback/fb-7.md` among the paths
+  GREEN:    the same (106 passed): the issue's feedback signal, read by the adapter, is passed
+            to core as the question.
+  RED:      the task record keeps a Research task's question, for the hook -> no `question`
+  GREEN:    the same (107 passed); prepare writes it, in the CLI and the sandbox driver. The
+            scenario passed and loses `@wip`.
+  REFACTOR: none. Concept §6 updated. Gate 814 and 139.
 
 ---
 

@@ -112,7 +112,12 @@ try {
     for (const step of gitSteps(plan, into)) execFileSync("git", step, { stdio: "inherit" });
     // The record the read-scope hook keeps the task's session to.
     const held = await github.task(task.project, task.task);
-    writeFileSync(join(into, TASK_RECORD), taskRecord({ ...held, contracts: plan.contracts }));
+    // A Research task's question is its feedback signal: the hook lets the session read it.
+    const question = held?.feedbackSignal === undefined ? {} : { question: held.feedbackSignal };
+    writeFileSync(
+      join(into, TASK_RECORD),
+      taskRecord({ ...held, contracts: plan.contracts, ...question }),
+    );
     // The member's work so far, from their open pull request, where it is not here already: work
     // on this machine may be newer, so it is never overwritten.
     const member = await github.account();

@@ -197,6 +197,11 @@ describe("the record prepare leaves in a task's folder, as the hook reads it", (
     expect(taskOfRecord(taskRecord(revision))).toEqual(revision);
   });
 
+  it("keeps a Research task's question, so the session may read it", () => {
+    const task = { role: "research" as const, module: "parser", question: "feedback/fb-7.md" };
+    expect(taskOfRecord(taskRecord(task))).toEqual(task);
+  });
+
   it("keeps the contracts prepare fetched, so the session may read them (decision 0014)", () => {
     const task = { role: "architecture" as const, module: "parser", contracts: ["tokens"] };
     expect(taskOfRecord(taskRecord(task))).toEqual(task);
