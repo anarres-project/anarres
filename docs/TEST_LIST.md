@@ -487,6 +487,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       rewriting `modules.yaml`): the fork is brought up to the project's main first, as the
       plugin does. And a finished task was looked for once, though GitHub's lists lag behind a
       task just closed (6bf8438: "No Test task … is done"): asked again until they catch up.
+      Once forks were synced, work replacing a file main already had (a second `modules.yaml`)
+      was refused for want of the file's version (53140ea, 90 of 91): it is given now.
 - [x] The sandbox run polls less: merges and finished runs every 5 seconds, decisions every 3
       (2026-10-24, from about 3,100 requests a run): c5666a4's full run took 2,466 (640, 577,
       599 and 650 across its four workers), and passed.

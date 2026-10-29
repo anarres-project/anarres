@@ -350,11 +350,19 @@ export class SandboxDriver implements Driver {
         put = await this.putFile(where, { message, content, branch });
       }
       if (put.status === 422) {
-        const there = await this.members.call<{ content: string }>(
+        const there = await this.members.call<{ content: string; sha: string }>(
           "GET",
           `${where}?ref=${encodeURIComponent(branch)}`,
         );
         if (Buffer.from(there.content, "base64").toString("utf8") === text) continue;
+        // Main has the file already (work revising it, such as a second modules.yaml): GitHub
+        // changes it only when told which version it replaces.
+        put = await this.members.request(
+          "PUT",
+          where,
+          { message, content, branch, sha: there.sha },
+          { repeatable: true },
+        );
       }
       if (put.status < 200 || put.status >= 300) {
         throw new Error(`GitHub PUT ${where} answered ${put.status}: ${JSON.stringify(put.data)}`);

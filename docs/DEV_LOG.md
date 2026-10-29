@@ -509,6 +509,10 @@ governance scenarios run alone.
 - Core's branch coverage fell to 99%: two fallbacks no test needed. REFACTOR: a Programme
   Architect's revision is one field (`contractRevision`), routed with the modules it starts.
   `@wip` removed; checked the scenario fails without the revision. Gate 766 and 129.
+- The 53140ea sandbox run: 90 of 91, the stale-work scenarios and the finished-task claim
+  passing. The one failure was the harness's: with forks synced, the second Programme Architect
+  work replaced a `modules.yaml` the branch already had, and GitHub wants the replaced file's
+  version for that; the driver now gives it.
 
 ---
 
