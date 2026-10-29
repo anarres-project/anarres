@@ -1,3 +1,13 @@
+/** GitHub's answer to a merge while one asked for before is still under way. */
+export const MERGE_IN_PROGRESS = "Merge already in progress";
+
+/**
+ * A repository rule GitHub could not run in time refuses the change without judging it: GitHub
+ * did nothing, so asking again is safe, as after a rate limit (seen 2026-10-29, a 409).
+ */
+export const ruleTimedOut = (answer: { status: number; message: string }) =>
+  answer.status === 409 && answer.message.includes("The rule did not run because of a timeout");
+
 /**
  * How long to wait before asking GitHub again, or undefined if waiting would not help. The caller
  * decides whether its request is safe to repeat.
@@ -11,7 +21,8 @@ export function retryAfter(
   // An error of GitHub's own, or a failing gateway, is usually a passing blip.
   if ([500, 502, 503, 504].includes(answer.status)) return 2_000;
   // So is a merge GitHub is still busy with, perhaps one a failed request set going.
-  if (answer.status === 405 && answer.message === "Merge already in progress") return 2_000;
+  if (answer.status === 405 && answer.message === MERGE_IN_PROGRESS) return 2_000;
+  if (ruleTimedOut(answer)) return 2_000;
   // GitHub signals rate limits with 403 or 429; anything else is not about them.
   if (answer.status !== 403 && answer.status !== 429) return undefined;
   const retry = answer.headers.get("retry-after");

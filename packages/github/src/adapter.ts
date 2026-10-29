@@ -27,6 +27,7 @@ import type {
 } from "@anarres/divlab";
 import { CLAIM } from "@anarres/divlab";
 import { strFromU8, unzipSync } from "fflate";
+import { MERGE_IN_PROGRESS } from "./rate-limits.ts";
 import {
   CLAIMED,
   commentForLeaseRanOut,
@@ -801,7 +802,9 @@ export class GitHubAdapter
         `${this.repo(project)}/pulls/${pullRequest}`,
       );
       if (pull.merged) return pull.merge_commit_sha;
-      if (status < 500 || attempt === WRITE_ATTEMPTS) {
+      // A merge an earlier ask began may still be under way, as a server error may leave it.
+      const inProgress = (data as { message?: string } | undefined)?.message === MERGE_IN_PROGRESS;
+      if ((status < 500 && !inProgress) || attempt === WRITE_ATTEMPTS) {
         throw new GitHubError("PUT", where, status, data);
       }
     }

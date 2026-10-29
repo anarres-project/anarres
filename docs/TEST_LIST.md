@@ -475,13 +475,15 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 - [ ] An intermittent sandbox failure confined to one worker's repository (d5b1284: pull
       requests never decided; 04d85ac: "too many files changed", then no tasks): not reproduced
       on demand. A failed worker now keeps its repositories: inspect them when it recurs.
-  - [ ] 72fc6cb (85 of 87): GitHub answered Divlab's merge with a server error, then "Merge
+  - [x] 72fc6cb (85 of 87): GitHub answered Divlab's merge with a server error, then "Merge
         already in progress" to each retry, and the pull request stayed unmerged; Divlab's run
-        failed, having recorded that it was about to merge. Divlab should find out whether the
-        merge landed rather than fail, and finish it from its record if not;
-  - [ ] the same repository's next run had a log write refused because main's rule "did not run
-        because of a timeout" (409): a refusal GitHub may lift if asked again, unlike a rule
-        refusing the change.
+        failed, having recorded that it was about to merge. Divlab already asked whether the
+        merge had landed; now a merge still in progress is asked for again, as after a server
+        error, up to three times. Should one stay in progress longer, the run fails with its
+        record, and the next Divlab run (the hourly lease check at the latest) finishes it;
+  - [x] the same repository's next run had a log write refused because main's rule "did not run
+        because of a timeout" (409): GitHub did nothing, so any request is asked again after
+        it, as after a rate limit; a rule refusing the change is not.
 - [x] The sandbox branched each member's work from their fork's main as it was when forked, so
       work changing a file merged since conflicted (6bf8438: the second Programme Architect work
       rewriting `modules.yaml`): the fork is brought up to the project's main first, as the

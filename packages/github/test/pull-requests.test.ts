@@ -97,6 +97,30 @@ describe("merging, when GitHub's server fails part way", () => {
     expect(await adapter.merge("ledger", "7", "c0ffee")).toBe("m3rg3d");
   });
 
+  it("asks again while GitHub says a merge asked for before is still in progress (seen 72fc6cb)", async () => {
+    const asked: string[] = [];
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (method === "PUT" && path === "repos/commons/ledger/pulls/7/merge") {
+          asked.push("merge");
+          return (
+            [
+              { status: 502, data: { message: "Server Error" } as T },
+              { status: 405, data: { message: "Merge already in progress" } as T },
+            ][asked.length - 1] ?? { status: 200, data: { sha: "m3rg3d", merged: true } as T }
+          );
+        }
+        if (method === "GET" && path === "repos/commons/ledger/pulls/7") {
+          return { status: 200, data: { merged: false, merge_commit_sha: null } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.merge("ledger", "7", "c0ffee")).toBe("m3rg3d");
+  });
+
   it("fails as before if GitHub did not merge it", async () => {
     const adapter = new GitHubAdapter({
       owner: "commons",

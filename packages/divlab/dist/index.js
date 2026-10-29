@@ -10598,6 +10598,24 @@ function unzipSync(data, opts) {
   return files;
 }
 
+// ../github/src/rate-limits.ts
+var MERGE_IN_PROGRESS = "Merge already in progress";
+var ruleTimedOut = (answer) => answer.status === 409 && answer.message.includes("The rule did not run because of a timeout");
+function retryAfter(answer, now, { waitForAllowance = true } = {}) {
+  if ([500, 502, 503, 504].includes(answer.status)) return 2e3;
+  if (answer.status === 405 && answer.message === MERGE_IN_PROGRESS) return 2e3;
+  if (ruleTimedOut(answer)) return 2e3;
+  if (answer.status !== 403 && answer.status !== 429) return void 0;
+  const retry = answer.headers.get("retry-after");
+  if (retry !== null) return Number(retry) * 1e3;
+  if (answer.message.includes("secondary rate limit")) return 6e4;
+  if (answer.headers.get("x-ratelimit-remaining") === "0") {
+    const wait = Number(answer.headers.get("x-ratelimit-reset")) * 1e3 - now;
+    return waitForAllowance || wait <= 6e4 ? wait : void 0;
+  }
+  return void 0;
+}
+
 // ../github/src/representation.ts
 var READY = "state:ready";
 var CONTINUATION = "continuation";
@@ -10871,21 +10889,6 @@ var decisionBlock = (feedbackSignal, inputsAt) => [
   "```"
 ].join("\n");
 
-// ../github/src/rate-limits.ts
-function retryAfter(answer, now, { waitForAllowance = true } = {}) {
-  if ([500, 502, 503, 504].includes(answer.status)) return 2e3;
-  if (answer.status === 405 && answer.message === "Merge already in progress") return 2e3;
-  if (answer.status !== 403 && answer.status !== 429) return void 0;
-  const retry = answer.headers.get("retry-after");
-  if (retry !== null) return Number(retry) * 1e3;
-  if (answer.message.includes("secondary rate limit")) return 6e4;
-  if (answer.headers.get("x-ratelimit-remaining") === "0") {
-    const wait = Number(answer.headers.get("x-ratelimit-reset")) * 1e3 - now;
-    return waitForAllowance || wait <= 6e4 ? wait : void 0;
-  }
-  return void 0;
-}
-
 // ../github/src/request.ts
 var ATTEMPTS = 4;
 var BLIP = 2e3;
@@ -10910,18 +10913,18 @@ async function requestGitHub(token2, method, path, body, options = {}) {
     }
     const text = await response.text();
     const data = parsed(text);
-    const message = data?.message;
+    const message = String(data?.message ?? "");
     const wait = retryAfter(
-      { status: response.status, headers: response.headers, message: String(message ?? "") },
+      { status: response.status, headers: response.headers, message },
       Date.now(),
       options
     );
-    const rateLimited = response.status === 403 || response.status === 429;
-    if (wait === void 0 || !rateLimited && !repeatable || attempt === ATTEMPTS) {
+    const undone = response.status === 403 || response.status === 429 || ruleTimedOut({ status: response.status, message });
+    if (wait === void 0 || !undone && !repeatable || attempt === ATTEMPTS) {
       return { status: response.status, data };
     }
     console.error(
-      `GitHub answered ${method} ${path} with ${response.status} (${String(message ?? "")}): asking again in ${wait / 1e3} s`
+      `GitHub answered ${method} ${path} with ${response.status} (${message}): asking again in ${wait / 1e3} s`
     );
     await pause(wait);
   }
@@ -11518,7 +11521,8 @@ var GitHubAdapter = class {
         `${this.repo(project2)}/pulls/${pullRequest}`
       );
       if (pull.merged) return pull.merge_commit_sha;
-      if (status < 500 || attempt === WRITE_ATTEMPTS) {
+      const inProgress = data?.message === MERGE_IN_PROGRESS;
+      if (status < 500 && !inProgress || attempt === WRITE_ATTEMPTS) {
         throw new GitHubError("PUT", where, status, data);
       }
     }

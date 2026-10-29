@@ -9,6 +9,7 @@ function answering(...answers: Response[]) {
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -29,5 +30,26 @@ describe("asking GitHub", () => {
         "GitHub answered POST repos/commons/ledger/issues with 403 (You have exceeded a secondary rate limit): asking again in 0 s",
       ],
     ]);
+  });
+
+  it("asks again for a write that a repository rule refused without running, as it timed out", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.useFakeTimers();
+    const timedOut =
+      "Repository rule violations found\n\nThe rule did not run because of a timeout.\n\n";
+    answering(
+      new Response(JSON.stringify({ message: timedOut }), { status: 409 }),
+      new Response("{}", { status: 201 }),
+    );
+    const asked = requestGitHub(
+      "t0k3n",
+      "PUT",
+      "repos/commons/ledger/contents/events/000071.json",
+      {
+        content: "e30=",
+      },
+    );
+    await vi.runAllTimersAsync();
+    expect((await asked).status).toBe(201);
   });
 });

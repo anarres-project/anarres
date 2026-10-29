@@ -1,11 +1,11 @@
-import { retryAfter } from "./rate-limits.ts";
+import { retryAfter, ruleTimedOut } from "./rate-limits.ts";
 
 const ATTEMPTS = 4;
 const BLIP = 2_000;
 
 /**
- * One call to the GitHub REST API, tried up to four times. A rate-limit refusal means GitHub did
- * nothing, so any request waits as long as GitHub asks and tries again. A failing gateway or a
+ * One call to the GitHub REST API, tried up to four times. A rate-limit refusal, or a repository
+ * rule that timed out, means GitHub did nothing, so any request waits and tries again. A failing gateway or a
  * dropped connection may come after GitHub acted, so only requests that are safe to repeat (reads
  * and deletes) try again after those; repeating a create could post a task twice.
  */
@@ -40,20 +40,24 @@ export async function requestGitHub<T>(
     }
     const text = await response.text();
     const data = parsed(text) as T;
-    const message = (data as { message?: unknown } | undefined)?.message;
+    const message = String((data as { message?: unknown } | undefined)?.message ?? "");
     const wait = retryAfter(
-      { status: response.status, headers: response.headers, message: String(message ?? "") },
+      { status: response.status, headers: response.headers, message },
       Date.now(),
       options,
     );
-    const rateLimited = response.status === 403 || response.status === 429;
-    if (wait === undefined || (!rateLimited && !repeatable) || attempt === ATTEMPTS) {
+    // Refused undone, so any request may ask again.
+    const undone =
+      response.status === 403 ||
+      response.status === 429 ||
+      ruleTimedOut({ status: response.status, message });
+    if (wait === undefined || (!undone && !repeatable) || attempt === ATTEMPTS) {
       return { status: response.status, data };
     }
     // Said in the run's log, so a run that waits a long time says why; on standard error, apart
     // from what a command prints.
     console.error(
-      `GitHub answered ${method} ${path} with ${response.status} (${String(message ?? "")}): asking again in ${wait / 1000} s`,
+      `GitHub answered ${method} ${path} with ${response.status} (${message}): asking again in ${wait / 1000} s`,
     );
     await pause(wait);
   }

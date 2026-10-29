@@ -583,6 +583,17 @@ governance scenarios run alone.
   REFACTOR: none. The in-process fake lists a comparison as GitHub does, too many from 300.
 - The f12fb4f sandbox run, with the 90-minute limit: 93 of 93 in 58 minutes, the stale-work and
   revised-contract scenarios among them.
+- Two GitHub-side failures from 72fc6cb's sandbox run, both in the GitHub adapter's unit tests
+  (GitHub's faults, which no scenario can make happen):
+  RED:      asks again while GitHub says a merge asked for before is still in progress -> GitHub
+            PUT …/pulls/7/merge answered 405: {"message":"Merge already in progress"}
+  GREEN:    the same (204 passed): a merge still in progress is asked for again, as after a
+            server error.
+  REFACTOR: GitHub's message stated once (`MERGE_IN_PROGRESS`).
+  RED:      asks again for a write that a repository rule refused without running, as it timed
+            out -> expected 409 to be 201
+  GREEN:    the same (205 passed): `ruleTimedOut`, a refusal undone, as a rate limit is.
+  REFACTOR: the request layer reads GitHub's message once.
 
 ---
 
