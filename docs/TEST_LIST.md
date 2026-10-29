@@ -146,7 +146,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       - [x] how far main was checked is recorded only when the check found a change not by
             Divlab, or once 50 commits have gone by (Bernard, 2026-10-29): most runs found only
             Divlab's own log writes, and wrote an event to say so;
-      - [ ] measure again in the sandbox (both cuts above, and the log listed in one request);
+      - [x] measure again in the sandbox (both cuts above, and the log listed in one request):
+            4787128's full run (98 scenarios, 63 minutes) fitted in the App's hour, no refusals;
       - [ ] the next cuts, if still needed: GraphQL's lag behind a write just made costs a
             second read of the texts (seen in claim runs); marking a task claimed reads the
             issue again for its labels, though the run read it already;
@@ -163,8 +164,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           reset and the resource counted) beside the `rate_limit` reading, so the two can be
           compared run by run; an answer without the headers, such as a failing gateway's page,
           leaves the last reading as it was;
-    - [ ] compare them across a sandbox run's Divlab runs, then rely on one (or say why not);
-    - [ ] 2828354 (81 of 97): a full run spends more of the App's 5,000 an hour than it has;
+    - [x] compare them across a sandbox run's Divlab runs, then rely on one (or say why not):
+          85c7bae's runs read the same both ways (2,210, then 2,232, of 5,000), so the
+          sandbox's retired check was what read another count. Rely on the answers' headers, as
+          GitHub advises; the `rate_limit` reading stays beside it for now, at one request;
+    - [x] 2828354 (81 of 97): a full run spends more of the App's 5,000 an hour than it has;
           GitHub refused Divlab from 14:25, and every worker's scenarios failed waiting. Cut
           Divlab's requests before the next push that runs the sandbox (Bernard, 2026-10-29);
           real projects in one organisation will share one App allowance just so;
@@ -648,7 +652,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         2026-10-29; decision 0015, question 6; rule `inputs_unchecked`). Scenario "Work whose
         inputs cannot be checked, as too much changed since its task was posted, goes back to its
         role", in-process only;
-  - [ ] the sandbox shows it;
+  - [x] the sandbox shows it (4787128: 97 of 98; the research brief scenario then passed alone,
+        once the driver looked for briefs in the prepared task's folder);
   - [ ] a revised contract: each module providing or using it gets an Architecture revision, at
         once if it has no task open, else in place of its open task's next one; where a stale
         revision would also be posted, the most upstream role wins:

@@ -683,6 +683,13 @@ governance scenarios run alone.
   my change, its effect on the harness missed. The in-process driver knows when a run ends, so
   the gate could not show it. The driver now waits, once the decision is recorded, until GitHub
   shows none of Divlab's runs in the project still going. Harness only; no production change.
+- The 4787128 sandbox run: 97 of 98, in 63 minutes, with no refusals from GitHub: the request
+  cuts let a full run fit in the App's hour. 85c7bae's Divlab runs read the App's allowance the
+  same by their answers' headers and by `rate_limit` (2,210 of 5,000), so the retired check was
+  what read another count. The one failure, "A member taking the revision after research has the
+  research brief to read", was the sandbox driver's: it listed only the `modules/` folder of the
+  prepared task, and briefs are fetched to `research-briefs/`. It lists both now; run alone
+  against the sandbox, the scenario passed. Harness only.
 
 ---
 

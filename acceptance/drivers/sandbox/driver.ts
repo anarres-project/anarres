@@ -1193,17 +1193,21 @@ export class SandboxDriver implements Driver {
     return "folder" in resumed ? { workIn: resumed.folder } : resumed;
   }
 
-  /** The modules' work in the prepared task's folder: the files under `modules/`. */
+  /** The modules' work in the prepared task's folder: the files under `modules/`, and briefs. */
   async moduleWorkFetched(
     task: { project: string; role: string; module: string },
     member: string,
   ): Promise<{ module: string; kind: string }[]> {
     const id = this.preparedIssues.get(`${member} ${task.role} ${task.module}`);
     if (id === undefined || this.machine === undefined) return [];
-    const modules = join(this.machine, taskFolder({ project: task.project, task: id }), "modules");
-    if (!existsSync(modules)) return [];
-    const files = readdirSync(modules, { recursive: true, encoding: "utf8" });
-    return moduleWorkIn(files.map((file) => `modules/${file.split(sep).join("/")}`));
+    const folder = join(this.machine, taskFolder({ project: task.project, task: id }));
+    const paths = ["modules", "research-briefs"].flatMap((top) => {
+      const place = join(folder, top);
+      if (!existsSync(place)) return [];
+      const files = readdirSync(place, { recursive: true, encoding: "utf8" });
+      return files.map((file) => `${top}/${file.split(sep).join("/")}`);
+    });
+    return moduleWorkIn(paths);
   }
 
   /** The contracts in the prepared task's folder: the folders of `programme/contracts/`. */
