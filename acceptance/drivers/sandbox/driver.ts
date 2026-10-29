@@ -9,7 +9,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, sep } from "node:path";
 import {
   askForWork,
   claim,
@@ -48,6 +48,7 @@ import {
   FAILS_ON_PURPOSE,
   feedbackSignalFile,
   inScenarioWords,
+  moduleWorkIn,
   otherFiles,
   PASSES_ON_PURPOSE,
   roleId,
@@ -1163,6 +1164,19 @@ export class SandboxDriver implements Driver {
       { prepared: existsSync(join(this.machine, folder, TASK_RECORD)) },
     );
     return "folder" in resumed ? { workIn: resumed.folder } : resumed;
+  }
+
+  /** The modules' work in the prepared task's folder: the files under `modules/`. */
+  async moduleWorkFetched(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<{ module: string; kind: string }[]> {
+    const id = this.preparedIssues.get(`${member} ${task.role} ${task.module}`);
+    if (id === undefined || this.machine === undefined) return [];
+    const modules = join(this.machine, taskFolder({ project: task.project, task: id }), "modules");
+    if (!existsSync(modules)) return [];
+    const files = readdirSync(modules, { recursive: true, encoding: "utf8" });
+    return moduleWorkIn(files.map((file) => `modules/${file.split(sep).join("/")}`));
   }
 
   /** The contracts in the prepared task's folder: the folders of `programme/contracts/`. */

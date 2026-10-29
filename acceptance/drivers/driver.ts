@@ -159,6 +159,14 @@ export interface Driver {
   contributionHistory(member: string): Promise<{ role: string; module: string }[]>;
   /** The member's plugin prepares a task they hold, on their machine; gives where its work is. */
   prepare(task: { project: string; role: string; module: string }, member: string): Promise<string>;
+  /**
+   * The modules' work among the files the member's plugin fetched when it prepared the task: each
+   * module, and the kind of work (architecture, specification, tests, code, reviews).
+   */
+  moduleWorkFetched(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<{ module: string; kind: string }[]>;
   /** The contracts among the files the member's plugin fetched when it prepared the task. */
   contractsFetched(
     task: { project: string; role: string; module: string },

@@ -439,6 +439,11 @@ governance scenarios run alone.
   `Received: "GitHub's hourly allowance has 100 requests left…"`. GREEN (3). Each scenario now
   checks both allowances before it starts, and the run prints both at its end; the job mints the
   App's token reading metadata only. Gate 123 scenarios.
+- Scenario: "A member preparing a Test task has its module's architecture and specification,
+  and nothing of another module". Red as `HarnessNotYetBuilt` (nothing looked at what preparing
+  fetched beyond contracts); then not yet right, the Then failing: the scenarios' Architecture
+  and Specification work wrote no artefacts to fetch. Green once they do, with no change to the
+  system; checked it fails if preparing fetches every file. Gate 124.
 
 ---
 

@@ -64,6 +64,15 @@ export function otherFiles(work: AcceptedWork) {
       path: `programme/contracts/${contract.name}/contract.md`,
       text: `# Contract ${contract.name}\n`,
     })),
+    // Architecture and Specification work write the module's architecture and specification.
+    ...(work.role === "Architecture" || work.role === "Specification"
+      ? [
+          {
+            path: `modules/${work.module}/${work.role === "Architecture" ? "architecture" : "specifications"}/${work.feedbackSignal}.md`,
+            text: `# ${work.role}\n`,
+          },
+        ]
+      : []),
     // Coding work changes the module's code; the sandbox project's tests fail on this marker.
     ...(work.role === "Coding"
       ? [
@@ -74,6 +83,26 @@ export function otherFiles(work: AcceptedWork) {
         ]
       : []),
   ];
+}
+
+/** The kind of a module's work each of its folders holds, in the scenarios' words. */
+const MODULE_WORK: Record<string, string> = {
+  architecture: "architecture",
+  specifications: "specification",
+  tests: "tests",
+  src: "code",
+  reviews: "reviews",
+};
+
+/** The modules' work among a project's files: each file's module, and its kind of work. */
+export function moduleWorkIn(paths: readonly string[]): { module: string; kind: string }[] {
+  return paths.flatMap((path) => {
+    const [top, module, folder] = path.split("/");
+    const kind = folder === undefined ? undefined : MODULE_WORK[folder];
+    return top === "modules" && module !== undefined && kind !== undefined
+      ? [{ module, kind }]
+      : [];
+  });
 }
 
 /** What a sandbox project's tests fail on: work a scenario makes fail on purpose (decision 0010). */

@@ -10,3 +10,12 @@ Feature: A member preparing a task has its role's inputs, and no others
     And Alice has claimed the Architecture task for "parser"
     When Alice prepares the Architecture task for "parser"
     Then Alice has the contract "tokens" to read, and not the contract "entries"
+
+  Scenario: A member preparing a Test task has its module's architecture and specification, and nothing of another module
+    Given a project with modules "parser" and "ledger"
+    And a member's Architecture work on "parser" was accepted with a pass verdict
+    And a member's Architecture work on "ledger" was accepted with a pass verdict
+    And a member's Specification work on "parser" was accepted with a pass verdict
+    And Alice has claimed the Test task for "parser"
+    When Alice prepares the Test task for "parser"
+    Then Alice has the architecture and the specification of "parser" to read, and nothing of "ledger"

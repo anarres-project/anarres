@@ -770,6 +770,26 @@ export class Anarres {
     }
   }
 
+  /**
+   * The member's prepared task fetched those kinds of a module's work, and nothing of another
+   * module's.
+   */
+  async memberHasWorkOf(member: string, module: string, kinds: string[], otherModule: string) {
+    const work = this.lastPrepared.get(member);
+    assert.ok(work !== undefined, `expected ${member} to have prepared a task`);
+    const fetched = await this.driver.moduleWorkFetched(work, this.member(member));
+    for (const kind of kinds) {
+      assert.ok(
+        fetched.some((one) => one.module === this.aliases.of(module) && one.kind === kind),
+        `expected ${member} to have the ${kind} of ${module} to read; fetched ${JSON.stringify(fetched)}`,
+      );
+    }
+    assert.ok(
+      !fetched.some((one) => one.module === this.aliases.of(otherModule)),
+      `expected ${member} to have nothing of ${otherModule}; fetched ${JSON.stringify(fetched)}`,
+    );
+  }
+
   async memberIsToldNoLongerHeld(member: string, task: Work) {
     const told = this.resumed.get(`${member} ${workOn(this.aliased(task))}`);
     assert.ok(

@@ -106,3 +106,15 @@ Then(
     return this.anarres.memberHasContracts(member, [contract], [notContract]);
   },
 );
+
+Then(
+  "{word} has the architecture and the specification of {string} to read, and nothing of {string}",
+  function (this: AnarresWorld, member: string, module: string, otherModule: string) {
+    return this.anarres.memberHasWorkOf(
+      member,
+      module,
+      ["architecture", "specification"],
+      otherModule,
+    );
+  },
+);
