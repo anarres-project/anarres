@@ -124,7 +124,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
     - [x] the sandbox run checks the App's allowance before each scenario, and prints it at the
           end, with a token the sandbox job mints that reads metadata only (Bernard, 2026-10-29:
           the key in this repository's `sandbox` environment too); a scenario that would start
-          without room fails at once, saying it is the App's allowance;
+          without room fails at once, saying it is the App's allowance. **Retired** the same day
+          (Bernard): in 2828354's run GitHub refused Divlab for want of the App's allowance from
+          14:25 to 14:35 while the check read 117 to 139 used, resetting at 14:45, another count;
+          and the minted token expires after an hour, which a 60-minute run outlives;
     - [ ] the requests a Divlab run makes, cut where the numbers show the cost. Sampled
           (4bc633c, 51 runs): 10 to 25 requests a run, about 15; listing the log's Git trees
           25%, writing events 15%, reading their text 12%, issues 8%, the ruleset check 6.5%:
@@ -135,7 +138,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       - [x] measured again in the sandbox (a7e72fa: 87 of 87 in 42 minutes; 50 runs sampled,
             about 12.8 requests a run, from 15: a sixth fewer). Listing the log's trees is still
             the most (18%), then writing events (17%), issues (9.5%), the ruleset check (8%);
-      - [ ] the next cuts, if the sandbox comes near the allowance again: the ruleset check on
+      - [ ] the next cuts, now that the sandbox has gone past the allowance: the ruleset check on
             every run (one request; only on runs that could have changed it?), and the log's
             two tree listings per read;
     - [x] the artefact downloads of Test and Coding work count too: tallied with the run's
@@ -152,6 +155,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           compared run by run; an answer without the headers, such as a failing gateway's page,
           leaves the last reading as it was;
     - [ ] compare them across a sandbox run's Divlab runs, then rely on one (or say why not);
+    - [ ] 2828354 (81 of 97): a full run spends more of the App's 5,000 an hour than it has;
+          GitHub refused Divlab from 14:25, and every worker's scenarios failed waiting. Cut
+          Divlab's requests before the next push that runs the sandbox (Bernard, 2026-10-29);
+          real projects in one organisation will share one App allowance just so;
   - [x] appending an event costs one request once the log has been read, not a listing plus a
         write; a number another run took since is found and skipped; a write GitHub fails is
         not retried, so an event GitHub saved anyway is not recorded twice;

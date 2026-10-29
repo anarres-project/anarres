@@ -1593,22 +1593,12 @@ export class SandboxDriver implements Driver {
   }
 
   /**
-   * How much of Divlab's App's hourly allowance in the sandbox is used: every Divlab run there
-   * shares it. Known only where the run has a token of the App's (the sandbox job mints one,
-   * able to read nothing but metadata); a run on a machine of one's own goes without.
+   * Stops the scenario before it starts if the allowance has no room for it. Divlab's App's is not
+   * checked: a token minted for the check read another count than Divlab's runs spend (2026-10-29),
+   * so Divlab's runs say what theirs is instead.
    */
-  static async appAllowance(): Promise<Allowance | undefined> {
-    const token = process.env.ANARRES_SANDBOX_APP_TOKEN;
-    return token ? allowanceOf(token, "Divlab's App's allowance") : undefined;
-  }
-
-  /** Stops the scenario before it starts if either allowance has no room for it. */
   static async checkAllowance(): Promise<void> {
-    const [mine, app] = [await SandboxDriver.allowance(), await SandboxDriver.appAllowance()];
-    const now = Date.now();
-    const why =
-      shortfall(mine, REQUESTS_A_SCENARIO_NEEDS, now) ??
-      (app && shortfall(app, REQUESTS_A_SCENARIO_NEEDS, now, "Divlab's App's"));
+    const why = shortfall(await SandboxDriver.allowance(), REQUESTS_A_SCENARIO_NEEDS, Date.now());
     if (why) throw new Error(why);
   }
 

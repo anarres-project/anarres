@@ -97,9 +97,8 @@ AfterAll(async () => {
   } else {
     await SandboxDriver.disposeRun();
   }
-  // What the run cost, so its budget can be watched: the driver's requests, and the two
-  // allowances (Divlab's runs act as its App, which has one of its own).
+  // What the run cost, so its budget can be watched: the driver's requests, and the allowance
+  // (Divlab's runs say what they cost their App's).
   console.log(SandboxDriver.requestsMade().join("\n"));
   await SandboxDriver.allowance();
-  await SandboxDriver.appAllowance();
 });

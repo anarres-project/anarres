@@ -17,13 +17,4 @@ describe("the sandbox's hourly allowance, before a scenario starts", () => {
       shortfall({ used: 4_000, limit: 5_000, reset: IN_20_MINUTES }, 200, NOW),
     ).toBeUndefined();
   });
-
-  it("names whose allowance it is: Divlab's App has one of its own", () => {
-    expect(
-      shortfall({ used: 4_900, limit: 5_000, reset: IN_20_MINUTES }, 200, NOW, "Divlab's App's"),
-    ).toBe(
-      "Divlab's App's hourly allowance has 100 requests left, and a scenario needs about 200: " +
-        "it resets at 10:20 UTC, in 20 minutes",
-    );
-  });
 });

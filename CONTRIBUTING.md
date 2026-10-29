@@ -106,10 +106,10 @@ organisation only, for all its repositories. Its repository permissions: read an
 contents, issues and pull requests; read for metadata; none for workflows. The organisation holds
 its Client ID as the Actions variable `DIVLAB_APP_CLIENT_ID` (the template's workflows read it;
 GitHub's token action no longer takes the App ID) and its private key as the Actions secret
-`DIVLAB_APP_PRIVATE_KEY`. Its only other copy is in this repository's `sandbox` environment, as
-the secret `DIVLAB_SANDBOX_APP_PRIVATE_KEY` beside the variable `DIVLAB_SANDBOX_APP_CLIENT_ID`:
-the sandbox job mints a token from it that reads metadata only, to check the App's hourly
-allowance before each scenario (the environment serves only workflows on main).
+`DIVLAB_APP_PRIVATE_KEY`. A second copy was kept in this repository's `sandbox` environment, as
+the secret `DIVLAB_SANDBOX_APP_PRIVATE_KEY` beside the variable `DIVLAB_SANDBOX_APP_CLIENT_ID`,
+for a check of the App's allowance that has since been retired (2026-10-29: it read another
+count than Divlab's runs spend); nothing uses them now, and they may be deleted.
 
 Each project repository gets, when it is set up, an Actions policy allowing `pull_request_target`
 for Divlab's pull request workflow only (decision 0006, addendum): GitHub blocks that event on

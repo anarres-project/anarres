@@ -644,6 +644,16 @@ governance scenarios run alone.
             Architecture -> 2 failed (one test, two rows)
   GREEN:    the same (779 passed): two rows in the AutoPM table, in core.
   REFACTOR: none. Concept §9 lists the difference from the AutoPM table.
+- The 2828354 sandbox run: 81 of 97. Divlab's App ran out of its hourly allowance: GitHub refused
+  its runs ("API rate limit exceeded for installation") from 14:25 until the window reset at
+  14:35, and every worker's claims and decisions waited past their scenarios. Meanwhile the
+  sandbox's own check of the App read 117 to 139 used, resetting at 14:45: another count. The
+  check's token also expired after its hour, failing the last four scenarios. And one Divlab run
+  had a log write refused by a rule that timed out (409): fixed in b4c11bc, not yet pushed.
+  Bernard: cut Divlab's requests before the next push that runs the sandbox; retire the check.
+- The sandbox's check of the App's allowance retired: the job mints no App token, scenarios check
+  only the sandbox's own allowance, and `shortfall` names no other (its test for the App's
+  wording deleted with the behaviour). Divlab's runs say what they cost the App.
 
 ---
 
