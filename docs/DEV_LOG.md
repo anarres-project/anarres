@@ -669,6 +669,14 @@ governance scenarios run alone.
   GREEN:    the same (219 passed): `checksProtection(run)`, used by the Action and, as it mirrors
             the Action, the in-process driver. Decision 0006 updated.
   REFACTOR: none.
+- How far main was checked is recorded only when needed (Bernard): a change not by Divlab, or
+  50 commits gone by, so the next check never pages. One write fewer on most runs.
+  RED:      does not record how far it checked when it found only its own commits, fewer than 50
+            -> expected [ { … mainChecked … } ] to deeply equal [] ("records how far it checked,
+            so the next run starts there" became the 50-commit case, as the decision changed it)
+  GREEN:    the same (786 passed).
+  REFACTOR: none. "records how far it checked when it found a change Divlab did not make" passed
+  first time, as it should; kept, since without it no test fails if that half is dropped (tried).
 
 ---
 

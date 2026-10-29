@@ -1087,6 +1087,7 @@ export async function checkMain(
     return;
   }
   const commits = await repository.commitsSince(project, since.mainChecked.upTo);
+  let found = false;
   for (const commit of commits) {
     if (commit.author === divlab && commit.signedByGitHub) continue;
     if (merges.has(commit.sha) || recorded.has(commit.sha)) continue;
@@ -1097,9 +1098,12 @@ export async function checkMain(
     };
     await log.append(change);
     await board.alertChangeNotByDivlab(change);
+    found = true;
   }
+  // How far main was checked is recorded only when the check found something, or once enough has
+  // gone by that the next check would page: each record is a write (Bernard, 2026-10-29).
   const last = commits.at(-1);
-  if (last !== undefined) {
+  if (last !== undefined && (found || commits.length >= RECORD_CHECK_AFTER)) {
     const checked: MainChecked = {
       project,
       decidedAt: clock().toISOString(),
@@ -1108,6 +1112,9 @@ export async function checkMain(
     await log.append(checked);
   }
 }
+
+/** The most commits main's check goes over before it records how far it checked. */
+const RECORD_CHECK_AFTER = 50;
 
 /** Project repositories as Divlab sets them up. */
 export interface ProjectRepositories {

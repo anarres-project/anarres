@@ -143,7 +143,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       - [x] the ruleset check: on the hourly lease check and on each run that may merge work (a
             pull request's, a finished check's), not on claims, releases or pushes (Bernard,
             2026-10-29; decision 0006 updated). Main's commits are still checked on every run;
-      - [ ] the next cuts, now that the sandbox has gone past the allowance: the ruleset check on
+      - [x] how far main was checked is recorded only when the check found a change not by
+            Divlab, or once 50 commits have gone by (Bernard, 2026-10-29): most runs found only
+            Divlab's own log writes, and wrote an event to say so;
+      - [ ] measure again in the sandbox (both cuts above, and the log listed in one request);
+      - [ ] the next cuts, if still needed: the ruleset check on
             every run (one request; only on runs that could have changed it?), and the log's
             two tree listings per read;
     - [x] the artefact downloads of Test and Coding work count too: tallied with the run's

@@ -10102,6 +10102,7 @@ async function checkMain(project2, repository, board, log, clock, divlab) {
     return;
   }
   const commits = await repository.commitsSince(project2, since.mainChecked.upTo);
+  let found = false;
   for (const commit of commits) {
     if (commit.author === divlab && commit.signedByGitHub) continue;
     if (merges.has(commit.sha) || recorded2.has(commit.sha)) continue;
@@ -10112,9 +10113,10 @@ async function checkMain(project2, repository, board, log, clock, divlab) {
     };
     await log.append(change);
     await board.alertChangeNotByDivlab(change);
+    found = true;
   }
   const last = commits.at(-1);
-  if (last !== void 0) {
+  if (last !== void 0 && (found || commits.length >= RECORD_CHECK_AFTER)) {
     const checked = {
       project: project2,
       decidedAt: clock().toISOString(),
@@ -10123,6 +10125,7 @@ async function checkMain(project2, repository, board, log, clock, divlab) {
     await log.append(checked);
   }
 }
+var RECORD_CHECK_AFTER = 50;
 async function checkProtection(project2, repositories, board) {
   if (await repositories.mainIsProtected(project2)) return;
   if (await board.unprotectedMainAlertOpen(project2)) return;

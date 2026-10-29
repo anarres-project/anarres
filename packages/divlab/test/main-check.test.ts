@@ -138,11 +138,47 @@ describe("checking every change to a project's main branch (Bernard, 2026-10-23)
     expect(alerts).toEqual([]);
   });
 
-  it("records how far it checked, so the next run starts there", async () => {
+  it("does not record how far it checked when it found only its own commits, fewer than 50 (Bernard, 2026-10-29)", async () => {
     const { repository, board } = mainWith([
       { sha: "e7e7e7", author: DIVLAB, signedByGitHub: true },
       { sha: "e8e8e8", author: DIVLAB, signedByGitHub: true },
     ]);
+    const appended: unknown[] = [];
+    const recording: EventLog = {
+      read: async () => [CHECKED],
+      append: async (event) => {
+        appended.push(event);
+      },
+    };
+    await checkMain("ledger", repository, board, recording, clock, DIVLAB);
+    expect(appended).toEqual([]);
+  });
+
+  it("records how far it checked when it found a change Divlab did not make", async () => {
+    const { repository, board } = mainWith([
+      { sha: "c0ffee", author: "mallory", signedByGitHub: true },
+    ]);
+    const appended: LogEvent[] = [];
+    const recording: EventLog = {
+      read: async () => [CHECKED],
+      append: async (event) => {
+        appended.push(event);
+      },
+    };
+    await checkMain("ledger", repository, board, recording, clock, DIVLAB);
+    expect(appended.filter((event) => "mainChecked" in event)).toEqual([
+      { project: "ledger", decidedAt: "2026-10-23T09:00:00.000Z", mainChecked: { upTo: "c0ffee" } },
+    ]);
+  });
+
+  it("records how far it checked once 50 commits have gone by, so the next check never pages", async () => {
+    const { repository, board } = mainWith(
+      Array.from({ length: 50 }, (_, i) => ({
+        sha: i === 49 ? "e8e8e8" : `e${i}`,
+        author: DIVLAB,
+        signedByGitHub: true,
+      })),
+    );
     const appended: unknown[] = [];
     const recording: EventLog = {
       read: async () => [CHECKED],
