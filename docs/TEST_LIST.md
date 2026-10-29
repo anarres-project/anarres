@@ -147,9 +147,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
             Divlab, or once 50 commits have gone by (Bernard, 2026-10-29): most runs found only
             Divlab's own log writes, and wrote an event to say so;
       - [ ] measure again in the sandbox (both cuts above, and the log listed in one request);
-      - [ ] the next cuts, if still needed: the ruleset check on
-            every run (one request; only on runs that could have changed it?), and the log's
-            two tree listings per read;
+      - [ ] the next cuts, if still needed: GraphQL's lag behind a write just made costs a
+            second read of the texts (seen in claim runs); marking a task claimed reads the
+            issue again for its labels, though the run read it already;
     - [x] the artefact downloads of Test and Coding work count too: tallied with the run's
           requests (`GET actions/artifacts/{n}/zip`);
   - [ ] GitHub's reading of the allowance used jumps between readings (2,141 then 726 a minute
