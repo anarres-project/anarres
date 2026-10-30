@@ -581,9 +581,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         requests at the reviewed commit;
   - [x] an acceptance scenario for each, in-process ("Human review where PDC coordinators
         require it");
-  - [ ] the sandbox shows them: its projects get the reviews workflow, its driver names a module
-        for review in the sandbox's governance file and puts it back (`@governance`), and
-        approves as a member account through GitHub's API.
+  - [x] the sandbox driver: its projects get the reviews workflow, it names a module for review
+        in the sandbox's governance file and puts it back (`@governance`), and approves as a
+        member account through GitHub's API;
+  - [ ] the sandbox shows them (a member's review of a fork's pull request wakes Divlab through
+        the reviews workflow, as GitHub runs it).
 - [x] A new project's main branch can be changed only by Divlab (`setUpProject`; a ruleset is a
       repository setting, not a template file).
 - [x] Work that reached main without Divlab merging it is not routed; it is recorded once and PDC

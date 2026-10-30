@@ -859,6 +859,11 @@ governance scenarios run alone.
   GREEN:    the same (217 passed in github): only an App's comments, read back from the quote
             Divlab wrote (`reasonOfRefusal`, beside `commentForRefusal`). Someone else's comment
             in the same words is not Divlab's, so cannot keep it quiet. Gate 848 and 145.
+- The sandbox driver for human review: projects get the template's reviews workflow; the driver
+  names a scenario's module for review in the sandbox's governance file and takes it out again
+  (the file is changed whole now, not only its members), and approves through GitHub's review API
+  as the member's account, waiting for Divlab's checks run. The four scenarios are `@governance`,
+  run alone, in place of `@sandbox-wip`. SANDBOX.md says so. Harness only.
 
 ---
 

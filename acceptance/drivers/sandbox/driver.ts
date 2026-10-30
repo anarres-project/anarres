@@ -193,6 +193,15 @@ export class SandboxDriver implements Driver {
         content: Buffer.from(templateWorkflow(CHECKS_WORKFLOW)).toString("base64"),
       },
     );
+    // The project's reviews workflow, as the template has it: a review given wakes Divlab (0016).
+    await this.github.call(
+      "PUT",
+      `repos/${this.org}/${project}/contents/.github/workflows/${REVIEWS_WORKFLOW}`,
+      {
+        message: "Install the project's reviews workflow from the project template",
+        content: Buffer.from(templateWorkflow(REVIEWS_WORKFLOW)).toString("base64"),
+      },
+    );
     if (!options.withoutToolchain) {
       await this.github.call("PUT", `repos/${this.org}/${project}/contents/anarres.yaml`, {
         message: "Declare the sandbox project's toolchain",
@@ -393,6 +402,7 @@ export class SandboxDriver implements Driver {
       number,
       feedbackSignal: work.feedbackSignal,
       merged,
+      decided: { path, task, listing },
     });
     if (merged) await this.expectWhatDivlabDecided(work.project, path, task, listing);
   }
@@ -1028,12 +1038,65 @@ export class SandboxDriver implements Driver {
     expected.ready += 1;
   }
 
-  async requireReview(_project: string, _module: string): Promise<void> {
-    throw new HarnessNotYetBuilt("naming a module for review in the sandbox's governance file");
+  /** Names the module for review in the sandbox's governance file, as PDC coordinators would. */
+  async requireReview(project: string, module: string): Promise<void> {
+    this.reviewNamed.add(project);
+    await this.changeGovernanceFile((file) => {
+      const review = file.review ?? {};
+      review[project] = [...(review[project] ?? []), module];
+      file.review = review;
+    });
   }
 
-  async approve(_project: string, _feedbackSignal: string, _member: string): Promise<void> {
-    throw new HarnessNotYetBuilt("a member approving work with GitHub's review, and waiting on it");
+  /**
+   * The member approves the work's pull request with GitHub's own review, as their account. The
+   * project's reviews workflow runs, and Divlab's checks workflow on its finishing: the driver
+   * waits for that run, and for Divlab's decision if it merged the work.
+   */
+  async approve(project: string, feedbackSignal: string, member: string): Promise<void> {
+    const submitted = run.submitted.find(
+      (pr) => pr.project === project && pr.feedbackSignal === feedbackSignal,
+    );
+    if (!submitted) throw new Error(`No pull request carries ${feedbackSignal} in ${project}`);
+    const account = await this.playAs(member);
+    const repository = `repos/${this.org}/${project}`;
+    const pullRequest = `${repository}/pulls/${submitted.number}`;
+    const { head } = await this.github.call<{ head: { sha: string } }>("GET", pullRequest);
+    const started = Date.now();
+    await account.call("POST", `${pullRequest}/reviews`, {
+      event: "APPROVE",
+      commit_id: head.sha,
+    });
+    await this.checksRunFinished(repository, started);
+    const { merged } = await this.github.call<{ merged: boolean }>("GET", pullRequest);
+    if (!merged || !submitted.decided) return;
+    submitted.merged = true;
+    const { path, task, listing } = submitted.decided;
+    await this.expectWhatDivlabDecided(project, path, task, listing);
+  }
+
+  /** Waits for Divlab's checks workflow run started after `since`, failing if it failed. */
+  private async checksRunFinished(repository: string, since: number): Promise<void> {
+    const workflow = `${repository}/actions/workflows/divlab-checks.yml`;
+    for (;;) {
+      await new Promise((resolve) => setTimeout(resolve, 5_000));
+      const { workflow_runs: runs } = await this.github.call<{ workflow_runs: WorkflowRun[] }>(
+        "GET",
+        `${workflow}/runs?per_page=5`,
+      );
+      const checks = runs.find((r) => Date.parse(r.created_at) >= since - 5_000);
+      if (checks?.status === "completed") {
+        if (checks.conclusion !== "success") {
+          throw new Error(
+            `Divlab's run after the review ended ${checks.conclusion}: ${await this.whyRunFailed(repository, checks)} (${checks.html_url})`,
+          );
+        }
+        return;
+      }
+      if (Date.now() - since > RUN_FINISH_LIMIT) {
+        throw new Error(`Divlab did not act on the review in ${repository}`);
+      }
+    }
   }
 
   /** The sandbox's governance file links the account playing `account` to the member's. */
@@ -1052,14 +1115,22 @@ export class SandboxDriver implements Driver {
    * so the standing record of the sandbox's own account (docs/SANDBOX.md) survives.
    */
   async restoreGovernance(): Promise<void> {
-    if (this.governanceFound.size === 0) return;
-    await this.changeGovernance((members) => {
+    if (this.governanceFound.size === 0 && this.reviewNamed.size === 0) return;
+    await this.changeGovernanceFile((file) => {
       for (const [login, record] of this.governanceFound) {
-        if (record === undefined) delete members[login];
-        else members[login] = record;
+        if (record === undefined) delete file.members[login];
+        else file.members[login] = record;
       }
+      // The projects are the scenario's own: none but it named them for review.
+      for (const project of this.reviewNamed) delete file.review?.[project];
+      if (file.review && Object.keys(file.review).length === 0) delete file.review;
     });
+    this.governanceFound.clear();
+    this.reviewNamed.clear();
   }
+
+  /** The projects this scenario named modules of for review in the governance file. */
+  private readonly reviewNamed = new Set<string>();
 
   /** Each account's record as this scenario first found it, before changing it. */
   private readonly governanceFound = new Map<
@@ -1076,12 +1147,15 @@ export class SandboxDriver implements Driver {
   private async changeGovernance(
     change: (members: Record<string, { level?: string; linked?: string[] }>) => void,
   ): Promise<void> {
+    await this.changeGovernanceFile((file) => change(file.members));
+  }
+
+  /** The sandbox's governance file, changed as a PDC coordinator would change its own. */
+  private async changeGovernanceFile(change: (file: GovernanceFile) => void): Promise<void> {
     const where = `repos/${this.org}/${SANDBOX_GOVERNANCE}/contents/governance/members.json`;
     const { content, sha } = await this.github.call<{ content: string; sha: string }>("GET", where);
-    const file = JSON.parse(Buffer.from(content, "base64").toString("utf8")) as {
-      members: Record<string, { level?: string; linked?: string[] }>;
-    };
-    change(file.members);
+    const file = JSON.parse(Buffer.from(content, "base64").toString("utf8")) as GovernanceFile;
+    change(file);
     await this.github.call("PUT", where, {
       message: "Set members for a sandbox scenario",
       content: Buffer.from(`${JSON.stringify(file, null, 2)}\n`).toString("base64"),
@@ -1757,6 +1831,15 @@ const TEMPLATE_WORKFLOWS = [
 /** The project's own checks workflow: the project's, not Divlab's, so installed as it is. */
 const CHECKS_WORKFLOW = "checks.yml";
 
+/** The project's reviews workflow, which runs nothing of Divlab's itself: installed as it is. */
+const REVIEWS_WORKFLOW = "reviews.yml";
+
+/** The governance file, as far as the sandbox changes it: trust levels, links and review. */
+type GovernanceFile = {
+  members: Record<string, { level?: string; linked?: string[] }>;
+  review?: Record<string, string[]>;
+};
+
 /** The sandbox project's tests, a script at its root, which no member's work may change. */
 const SANDBOX_TESTS = "sandbox-tests.sh";
 
@@ -1865,7 +1948,14 @@ const run = {
   /** Each sandbox account's login, by its token. */
   logins: new Map<string, string>(),
   /** The pull requests members' work was submitted in. */
-  submitted: [] as { project: string; number: number; feedbackSignal: string; merged: boolean }[],
+  submitted: [] as {
+    project: string;
+    number: number;
+    feedbackSignal: string;
+    merged: boolean;
+    /** What a decision made later, as after an approval, is expected of: its file and task. */
+    decided?: { path: string; task: Issue | undefined; listing: Listing };
+  }[],
 };
 
 const issueKey = (project: string, number: number) => `${project}#${number}`;
