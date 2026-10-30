@@ -935,6 +935,13 @@ governance scenarios run alone.
   project's check on it finished at 13:40:42, but the Divlab run its finishing started read it
   at 13:42 as still running (it recorded activity, and a failed check would have been said),
   and no event came after. Seen once; on the test list to watch.
+- The hourly check and the task of work it finishes.
+  RED:      (none) leaves alone the task of the work it finishes, though its lease ran out by
+            the log it read -> passed first run once the test's work named its task, as real
+            work does (first written without, it failed for that reason: the test's fault).
+            Already so: the lease loop reads each task from the board after finishing, and a
+            closed issue is no task. Kept as a regression test.
+  Gate 860 and 146.
 
 ---
 

@@ -479,4 +479,51 @@ describe("finishing, in the hourly check, what Divlab began", () => {
     await onLeaseCheck("ledger", board, begun, clock, repository).catch(() => {});
     expect(asked).toEqual(["7"]);
   });
+
+  it("leaves alone the task of the work it finishes, though its lease ran out by the log it read", async () => {
+    const work = {
+      fromRole: "specification",
+      module: "parser",
+      verdict: "pass",
+      impediments: [],
+      task: "12",
+    };
+    const begunLongAgo: EventLog = {
+      read: async () => [
+        ...(await claimedLongAgo.read("ledger")),
+        {
+          project: "ledger",
+          aboutToMerge: {
+            pullRequest: "7",
+            head: "c0ffee",
+            feedbackSignal: "feedback/FB-3.md",
+            work,
+          },
+        },
+      ],
+      append: async () => {},
+    };
+    const open = new Set(["12"]);
+    const released: string[] = [];
+    const watched: TaskBoard = {
+      ...board,
+      post: async () => {},
+      actedOn: async () => [],
+      task: async (_project, task) =>
+        open.has(task) ? { ...TEST_TASK, claimedBy: "alice" } : undefined,
+      close: async (_project, task) => {
+        open.delete(task);
+      },
+      releaseClaim: async (_project, task) => {
+        released.push(task);
+      },
+    };
+    const repository: Repository = {
+      ...nothingBegun,
+      merge: async () => "m3rged",
+      openHead: async () => "c0ffee",
+    };
+    await onLeaseCheck("ledger", watched, begunLongAgo, clock, repository);
+    expect([released, [...open]]).toEqual([[], []]);
+  });
 });

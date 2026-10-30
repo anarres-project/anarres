@@ -526,8 +526,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         after any push, unless its pull request was closed or pushed to since;
   - [ ] GitHub ran no hourly check in that project (12:17 came and went): scheduled runs are
         GitHub's best effort, so put-off work may wait more than an hour;
-  - [ ] a lease check that finishes put-off work does not then free that work's task by the
-        log it read before finishing;
+  - [x] a lease check that finishes put-off work does not then free that work's task by the
+        log it read before finishing (it already does not: the board is read after, and shows
+        the task closed; a regression test);
   - [ ] a pull request whose recorded merge was put off, then closed or pushed to, is asked
         about by every later run (one request each): stop asking once it is settled;
   - [ ] ccc85fd (105 of 106): Coding work's check finished at 13:40:42, yet Divlab's run that
