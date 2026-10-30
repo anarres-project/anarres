@@ -864,6 +864,14 @@ governance scenarios run alone.
   (the file is changed whole now, not only its members), and approves through GitHub's review API
   as the member's account, waiting for Divlab's checks run. The four scenarios are `@governance`,
   run alone, in place of `@sandbox-wip`. SANDBOX.md says so. Harness only.
+- The 095293d sandbox run: 97 of 102, in 88 minutes. Divlab acted rightly on every claim; the
+  failures were the harness's. One claim's job waited 8 minutes for a GitHub-hosted runner (queued
+  08:47:09, started 08:55:07), past the driver's wait, so "Partial work is merged, and its task is
+  posted again as a continuation" failed; Divlab gave the task once its run started. The driver,
+  having given up, never counted that task claimed, so its worker's claimed list held one more
+  than it expected from then on, and every later scenario there took a stale list as settled
+  (the four `@governance` eligibility scenarios, each failing with no claim seen though GitHub
+  shows each claimed within seconds). The give-back scenarios passed.
 
 ---
 
