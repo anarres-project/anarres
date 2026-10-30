@@ -1011,6 +1011,12 @@ governance scenarios run alone.
   repositories, pull requests, issues and event files, for Divlab and the driver alike), and the
   scenarios after found the tasks those writes never made. The `@governance` scenarios, the new
   alert's among them, never ran. The next run resets the governance file as it starts.
+- The d29ed64 sandbox run: 106 of 107, in 72 minutes. The new alert that the list of modules
+  needing review cannot be read passed, as did every human review scenario. The one failure was
+  the harness's: setting Carol's trust level, the driver's write of the governance file was
+  refused as out of date (409), GitHub's read having given the version before the last
+  scenario's write. The driver now reads again and makes its change on that, up to five times.
+  Harness only.
 
 ---
 

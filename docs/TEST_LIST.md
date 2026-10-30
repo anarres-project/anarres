@@ -617,7 +617,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         needing review);
   - [x] the sandbox shows them (a member's review of a fork's pull request wakes Divlab through
         the reviews workflow, as GitHub runs it): 5164e8a and ccc85fd, all four;
-  - [ ] the alert for an unreadable list seen in the sandbox (on the next code push).
+  - [x] the alert for an unreadable list seen in the sandbox (d29ed64).
 - [x] A new project's main branch can be changed only by Divlab (`setUpProject`; a ruleset is a
       repository setting, not a template file).
 - [x] Work that reached main without Divlab merging it is not routed; it is recorded once and PDC

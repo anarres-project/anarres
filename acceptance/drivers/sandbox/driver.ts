@@ -1185,14 +1185,26 @@ export class SandboxDriver implements Driver {
   /** The sandbox's governance file, changed as a PDC coordinator would change its own. */
   private async changeGovernanceFile(change: (file: GovernanceFile) => void): Promise<void> {
     const where = `repos/${this.org}/${SANDBOX_GOVERNANCE}/contents/governance/members.json`;
-    const { content, sha } = await this.github.call<{ content: string; sha: string }>("GET", where);
-    const file = JSON.parse(Buffer.from(content, "base64").toString("utf8")) as GovernanceFile;
-    change(file);
-    await this.github.call("PUT", where, {
-      message: "Set members for a sandbox scenario",
-      content: Buffer.from(`${JSON.stringify(file, null, 2)}\n`).toString("base64"),
-      sha,
-    });
+    // GitHub's read can lag just behind the last write, so a write on what it gave may be refused
+    // as out of date (409, seen d29ed64): read again and make the change on that.
+    for (let attempt = 1; ; attempt++) {
+      const { content, sha } = await this.github.call<{ content: string; sha: string }>(
+        "GET",
+        where,
+      );
+      const file = JSON.parse(Buffer.from(content, "base64").toString("utf8")) as GovernanceFile;
+      change(file);
+      const { status, data } = await this.github.request("PUT", where, {
+        message: "Set members for a sandbox scenario",
+        content: Buffer.from(`${JSON.stringify(file, null, 2)}\n`).toString("base64"),
+        sha,
+      });
+      if (status >= 200 && status < 300) return;
+      if (status !== 409 || attempt === 5) {
+        throw new Error(`GitHub PUT ${where} answered ${status}: ${JSON.stringify(data)}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+    }
   }
 
   /**
