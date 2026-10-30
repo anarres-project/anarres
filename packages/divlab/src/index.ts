@@ -361,8 +361,11 @@ export async function onLeaseCheck(
   board: TaskBoard,
   log: EventLog,
   clock: Clock,
+  repository: Repository,
 ): Promise<void> {
   const events = await log.read(project);
+  // The hourly check comes round even when nothing else happens in the project.
+  await finishWhatDivlabBegan(project, events, repository, board, log, clock);
   const leases = leasesFrom(events);
   for (const { task, role, module, claimedBy } of await board.claimedTasks(project)) {
     if (leases.has(task)) continue;
@@ -451,6 +454,10 @@ export interface Repository {
   feedbackSignals(project: string): Promise<string[]>;
   /** The commit a merged pull request's merge made on main. */
   mergeCommitOf(project: string, pullRequest: string): Promise<string>;
+  /** Merges the pull request at `head`, and only there, giving the merge's commit. */
+  merge(project: string, pullRequest: string, head: string): Promise<string>;
+  /** The commit an open pull request is at; nothing once it is closed. */
+  openHead(project: string, pullRequest: string): Promise<string | undefined>;
   /** Main's commits after `since`, oldest first. */
   commitsSince(project: string, since: string): Promise<MainCommit[]>;
   /** The commit main is at now. */
@@ -700,6 +707,47 @@ export async function onChecked(
   }
 }
 
+/**
+ * Merges Divlab began, recorded but never routed, finished from what it recorded, in the order it
+ * began them. Gives where main's feedback signals are.
+ */
+async function finishWhatDivlabBegan(
+  project: string,
+  events: LogEvent[],
+  repository: Repository,
+  board: TaskBoard,
+  log: EventLog,
+  clock: Clock,
+): Promise<string[]> {
+  const finished = new Set(events.filter((e) => !("aboutToMerge" in e)).map(signalOf));
+  const begun = new Map(
+    events.flatMap((e) =>
+      "aboutToMerge" in e ? [[e.aboutToMerge.feedbackSignal, e] as const] : [],
+    ),
+  );
+  const onMain = await repository.feedbackSignals(project);
+  // Begun by Divlab, whose run stopped before routing it: finish from what Divlab recorded, in
+  // the order it began them.
+  for (const [path, merge] of begun) {
+    if (finished.has(path)) continue;
+    const { work, member, pullRequest, head } = merge.aboutToMerge;
+    // Closed since, or pushed to and so decided afresh: there is nothing left to merge.
+    if (!onMain.includes(path) && (await repository.openHead(project, pullRequest)) !== head) {
+      continue;
+    }
+    // The run that merged it stopped before recording the merge's commit: GitHub has it. Not on
+    // main, GitHub put the merge off: it is asked for again, at the commit Divlab read.
+    const mergedAs = onMain.includes(path)
+      ? await repository.mergeCommitOf(project, pullRequest)
+      : await repository.merge(project, pullRequest, head);
+    await acceptSignal(project, path, work, board, log, clock, events, {
+      ...(member === undefined ? {} : { member }),
+      mergedAs,
+    });
+  }
+  return onMain;
+}
+
 /** Work has been merged to the project's main branch. */
 export async function onMerge(
   project: string,
@@ -729,19 +777,7 @@ export async function onMerge(
       else await actOn(decision, board, log);
     }
   }
-  const onMain = await repository.feedbackSignals(project);
-  // Merged by Divlab, whose run stopped before routing it: finish from what Divlab recorded, in
-  // the order it merged.
-  for (const [path, merge] of begun) {
-    if (finished.has(path) || !onMain.includes(path)) continue;
-    const { work, member, pullRequest } = merge.aboutToMerge;
-    // The run that merged it stopped before recording the merge's commit: GitHub has it.
-    const mergedAs = await repository.mergeCommitOf(project, pullRequest);
-    await acceptSignal(project, path, work, board, log, clock, events, {
-      ...(member === undefined ? {} : { member }),
-      mergedAs,
-    });
-  }
+  const onMain = await finishWhatDivlabBegan(project, events, repository, board, log, clock);
   for (const path of onMain) {
     if (finished.has(path) || begun.has(path)) continue;
     // Never read, let alone routed: whatever it says, it did not come through Divlab.

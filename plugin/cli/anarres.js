@@ -10808,6 +10808,13 @@ var GitHubAdapter = class {
     const { head, draft, user } = await this.call("GET", `${this.repo(project)}/pulls/${pullRequest}`);
     return { head: head.sha, draft, author: user.login };
   }
+  async openHead(project, pullRequest) {
+    const { state, head } = await this.call(
+      "GET",
+      `${this.repo(project)}/pulls/${pullRequest}`
+    );
+    return state === "open" ? head.sha : void 0;
+  }
   /**
    * What the pull request changes, as text read through the API; nothing is checked out. Each
    * file is read from the project's own copy of the pull request's commits, never by following a

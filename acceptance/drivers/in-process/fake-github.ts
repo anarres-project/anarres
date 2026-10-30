@@ -293,6 +293,11 @@ export class FakeGitHub
       : { image: "node:24", test: "npm test", report: "junit.xml" };
   }
 
+  /** The commit an open pull request is at: none once it is merged. */
+  async openHead(_project: string, pullRequest: string): Promise<string | undefined> {
+    return this.mergedPullRequests.includes(pullRequest) ? undefined : `head-of-${pullRequest}`;
+  }
+
   /** The project's open pull requests whose head is the commit. */
   async openAt(project: string, commit: string): Promise<string[]> {
     return this.pullRequests.flatMap(({ project: of }, index) => {
@@ -392,6 +397,9 @@ export class FakeGitHub
   /** The next merge succeeds, and then Divlab's run stops dead, as if its runner were lost. */
   interruptAfterNextMerge = false;
 
+  /** GitHub answers Divlab's next merge that it is busy, and does not make it. */
+  putOffNextMerge = false;
+
   /** The commit each merged pull request's merge made. */
   private readonly mergeShas = new Map<string, string>();
 
@@ -401,6 +409,10 @@ export class FakeGitHub
 
   /** Divlab merges: the commit carries the pull request's author, and GitHub signs it. */
   async merge(project: string, pullRequest: string): Promise<string> {
+    if (this.putOffNextMerge) {
+      this.putOffNextMerge = false;
+      throw new MergePutOff();
+    }
     const { files, author } = this.opened(pullRequest);
     for (const { path, text } of files) this.writeFile(project, path, text);
     this.commitTo(project, { author, signedByGitHub: true });
@@ -636,6 +648,11 @@ export class FakeGitHub
 /** Divlab's run stopped part way, as a lost runner or a cancelled job would stop it. */
 export class Interrupted extends Error {
   override name = "Interrupted";
+}
+
+/** GitHub would not merge yet, as when it says a merge is already in progress. */
+export class MergePutOff extends Error {
+  override name = "MergePutOff";
 }
 
 /**

@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { PROGRAMME } from "@anarres/core";
-import type { Contract, CoordinatorAlert, Driver, RoutingRecord } from "../drivers/driver.ts";
+import type {
+  AcceptedWork,
+  Contract,
+  CoordinatorAlert,
+  Driver,
+  RoutingRecord,
+} from "../drivers/driver.ts";
 import type { Aliases } from "./aliases.ts";
 
 /** Whoever does the work a scenario does not name a member for: never one it names. */
@@ -110,31 +116,30 @@ export class Anarres {
   }
 
   async divlabInterruptedAfterMerging(work: Work & { verdict: string }) {
-    this.signalsWritten += 1;
-    const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
-    this.feedbackSignals.set(workOn(this.aliased(work)), feedbackSignal);
-    const member = await this.holderOf(work);
-    await this.driver.interruptAfterMerging({
-      impediments: [],
-      ...this.aliased(work),
-      project: this.project,
-      member,
-      feedbackSignal,
-    });
+    await this.driver.interruptAfterMerging(await this.holdersWork(work));
+  }
+
+  async mergePutOffByGitHub(work: Work & { verdict: string }) {
+    await this.driver.putOffMerge(await this.holdersWork(work));
   }
 
   async divlabInterruptedAfterRecording(work: Work & { verdict: string }) {
+    await this.driver.interruptAfterRecording(await this.holdersWork(work));
+  }
+
+  /** The work, by the member holding its task, with a feedback signal of its own. */
+  private async holdersWork(work: Work & { verdict: string }): Promise<AcceptedWork> {
     this.signalsWritten += 1;
     const feedbackSignal = this.aliases.of(`feedback-${this.signalsWritten}`);
     this.feedbackSignals.set(workOn(this.aliased(work)), feedbackSignal);
     const member = await this.holderOf(work);
-    await this.driver.interruptAfterRecording({
+    return {
       impediments: [],
       ...this.aliased(work),
       project: this.project,
       member,
       feedbackSignal,
-    });
+    };
   }
 
   async divlabActsAgain() {

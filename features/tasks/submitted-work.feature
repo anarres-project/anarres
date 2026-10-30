@@ -83,6 +83,15 @@ Feature: Divlab merges the work members submit
     Then the only task ready for "parser" is a Test task
     And no PDC coordinator is alerted that work reached main without Divlab merging it
 
+  # Not in the sandbox: GitHub cannot be made to put off a merge on cue.
+  @sandbox-wip
+  Scenario: Work GitHub would not yet merge is merged by Divlab's hourly check
+    Given a project with a module "parser"
+    And GitHub would not yet merge a member's Specification work on "parser" when Divlab asked
+    When Divlab checks the project's leases
+    Then Divlab has merged the member's Specification work on "parser"
+    And the only task ready for "parser" is a Test task
+
   # Not in the sandbox: the real Action cannot be stopped between recording and acting on cue.
   @sandbox-wip
   Scenario: A decision Divlab recorded but did not act on is acted on by its next run, once

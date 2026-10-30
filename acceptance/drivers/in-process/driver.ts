@@ -46,7 +46,7 @@ import {
   signalName,
   workFiles,
 } from "../scenario-words.ts";
-import { DIVLAB_ACCOUNT, FakeGitHub, Interrupted } from "./fake-github.ts";
+import { DIVLAB_ACCOUNT, FakeGitHub, Interrupted, MergePutOff } from "./fake-github.ts";
 
 /** Where the Programme Architect's contracts are, a folder each (decision 0014). */
 const CONTRACTS = "programme/contracts/";
@@ -136,6 +136,17 @@ export class InProcessDriver implements Driver {
       return;
     }
     throw new Error("Divlab was not interrupted: it never merged the work");
+  }
+
+  async putOffMerge(work: AcceptedWork): Promise<void> {
+    this.github.putOffNextMerge = true;
+    try {
+      await this.submitWork(work);
+    } catch (error) {
+      if (!(error instanceof MergePutOff)) throw error;
+      return;
+    }
+    throw new Error("GitHub did not put off the merge: Divlab never asked for it");
   }
 
   async interruptAfterRecording(work: AcceptedWork): Promise<void> {
@@ -560,7 +571,7 @@ export class InProcessDriver implements Driver {
   }
 
   async divlabChecksLeases(project: string): Promise<void> {
-    await onLeaseCheck(project, this.github, this.github, this.clock);
+    await onLeaseCheck(project, this.github, this.github, this.clock, this.github);
     await this.afterRun(project, { leases: true });
   }
 

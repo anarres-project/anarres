@@ -520,6 +520,16 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         merge had landed; now a merge still in progress is asked for again, as after a server
         error, up to three times. Should one stay in progress longer, the run fails with its
         record, and the next Divlab run (the hourly lease check at the latest) finishes it;
+  - [x] 5164e8a (105 of 106): that next run did not, as only a run after a push to main
+        finished what Divlab began, and only when the merge had reached main. A merge GitHub put
+        off is now asked for again, at the commit Divlab read, by the hourly check and the run
+        after any push, unless its pull request was closed or pushed to since;
+  - [ ] GitHub ran no hourly check in that project (12:17 came and went): scheduled runs are
+        GitHub's best effort, so put-off work may wait more than an hour;
+  - [ ] a lease check that finishes put-off work does not then free that work's task by the
+        log it read before finishing;
+  - [ ] a pull request whose recorded merge was put off, then closed or pushed to, is asked
+        about by every later run (one request each): stop asking once it is settled;
   - [x] the same repository's next run had a log write refused because main's rule "did not run
         because of a timeout" (409): GitHub did nothing, so any request is asked again after
         it, as after a rate limit; a rule refusing the change is not.

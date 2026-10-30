@@ -540,6 +540,10 @@ export class SandboxDriver implements Driver {
     throw new HarnessNotYetBuilt("interrupting the real Action between merging and recording");
   }
 
+  async putOffMerge(_work: AcceptedWork): Promise<void> {
+    throw new HarnessNotYetBuilt("GitHub putting off the real Action's merge");
+  }
+
   async divlabActsAgain(_project: string): Promise<void> {
     throw new HarnessNotYetBuilt("interrupting the real Action between merging and recording");
   }

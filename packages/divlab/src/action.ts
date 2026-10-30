@@ -73,7 +73,7 @@ try {
   } else if ("release" in run) {
     await onRelease(project, run.release, github, github, clock);
   } else if ("leases" in run) {
-    await onLeaseCheck(project, github, github, clock);
+    await onLeaseCheck(project, github, github, clock, github);
   } else if ("checked" in run) {
     await onChecked(project, run.checked, github, github, github, clock);
   } else {

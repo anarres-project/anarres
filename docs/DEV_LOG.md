@@ -889,6 +889,47 @@ governance scenarios run alone.
   GREEN:    the same (54 passed): every Divlab workflow names it.
   REFACTOR: the claim workflow's own test of it removed, now said once for every workflow.
   Gate 852 and 145.
+- The 5164e8a sandbox run: 105 of 106, in 70 minutes. The four human review scenarios passed,
+  now reading the sandbox's own governance file: a member's approval of a fork's pull request
+  wakes Divlab through the reviews workflow, and it merges. No claim went missing from a claimed
+  listing (9def4dc). One failure, GitHub's: "A revised contract sends a module that is done back
+  to Architecture at once" had its merge answered "Merge already in progress" for the 22
+  seconds Divlab asks, though GitHub never made it. Divlab's run failed with its record, as
+  designed, but nothing finished it: only the run after a push finished what Divlab began, and
+  only once the merge was on main. GitHub never ran the project's 12:17 hourly check; run by
+  hand, it did nothing. The pull request stayed open.
+- Acceptance: "Work GitHub would not yet merge is merged by Divlab's hourly check", `@wip`
+  then `@sandbox-wip` (GitHub cannot be made to put a merge off on cue); the in-process fake
+  can now put off Divlab's next merge. Red in its Then: not merged.
+  RED:      asks GitHub again for a merge it was about to make, which GitHub put off ->
+            expected [] to deeply equal [ [ 'ledger', '7', 'c0ffee' ] ]
+  GREEN:    the same (233 passed). Divlab's repository port can merge. "Never routes work it was
+            about to merge but did not" now has GitHub put the merge off again, as the property
+            it guards, nothing routed unmerged, still holds.
+  RED:      routes work GitHub put off once it merges it, from the merge's commit -> expected []
+            to deeply equal [ { project: 'ledger', …(4) } ]
+  GREEN:    the same (234 passed).
+  REFACTOR: comment: begun, not merged.
+  RED:      does not ask again for a merge whose pull request was closed since -> Error: Divlab
+            should not have acted
+  GREEN:    the same (235 passed).
+  RED:      does not ask again for a merge whose pull request was pushed to since: that is
+            decided afresh -> the same
+  GREEN:    the same (236 passed): only a pull request still at the commit Divlab read.
+  RED:      the commit an open pull request is at is its head while it is open ->
+            `openHead is not a function`; with the stub, expected undefined to be 'c0ffee'
+  GREEN:    the same (218 passed in github).
+  RED:      is nothing once it is closed -> expected 'c0ffee' to be undefined
+  GREEN:    the same (219 passed).
+  The scenario passed, but by a run Divlab makes only after a push, which a put-off merge never
+  gives. Its When became Divlab's hourly check, and it went back to `@wip`, red in its Then.
+  RED:      the hourly check asks GitHub again for a merge it was about to make, which GitHub
+            put off -> expected [] to deeply equal [ '7' ]
+  GREEN:    the same (237 passed): the hourly check finishes what Divlab began first, the same
+            function the run after a push uses (`finishWhatDivlabBegan`, taken out of `onMerge`).
+            The scenario passed and lost `@wip`.
+  REFACTOR: the DSL's three ways a run stops share how they make the holder's work.
+  Gate 859 and 146.
 
 ---
 

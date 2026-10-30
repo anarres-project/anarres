@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type EventLog, onLeaseCheck, type TaskBoard } from "../src/index.ts";
+import { type EventLog, onLeaseCheck, type Repository, type TaskBoard } from "../src/index.ts";
 
 /** A task as the board describes it: the role and module it is for. */
 const TEST_TASK = { role: "test" as const, module: "parser" };
@@ -28,6 +28,16 @@ const board: TaskBoard = {
   claimedTasks: async () => [],
   // Telling coordinators is looked at by one test; the rest let it happen.
   alertClaimedWithoutClaim: async () => {},
+};
+
+/** Main as these tests leave it: Divlab began no merge it has not finished. */
+const nothingBegun: Repository = {
+  feedbackSignals: async () => [],
+  mergeCommitOf: untouched,
+  merge: untouched,
+  openHead: untouched,
+  commitsSince: untouched,
+  head: untouched,
 };
 
 /** Divlab's clock in these tests: 25 hours after the claim below. */
@@ -65,7 +75,7 @@ describe("checking a project's leases", () => {
       ],
       append: async () => {},
     };
-    await onLeaseCheck("ledger", watched, log, clock);
+    await onLeaseCheck("ledger", watched, log, clock, nothingBegun);
     expect(released).toEqual(["12"]);
   });
 
@@ -78,7 +88,7 @@ describe("checking a project's leases", () => {
         released.push(task);
       },
     };
-    await onLeaseCheck("ledger", watched, claimedLongAgo, clock);
+    await onLeaseCheck("ledger", watched, claimedLongAgo, clock, nothingBegun);
     expect(released).toEqual([]);
   });
 
@@ -91,7 +101,7 @@ describe("checking a project's leases", () => {
         released.push(task);
       },
     };
-    await onLeaseCheck("ledger", watched, claimedLongAgo, clock);
+    await onLeaseCheck("ledger", watched, claimedLongAgo, clock, nothingBegun);
     expect(released).toEqual([]);
   });
 
@@ -115,7 +125,7 @@ describe("checking a project's leases", () => {
       ],
       append: async () => {},
     };
-    await onLeaseCheck("ledger", watched, claimedAgain, clock);
+    await onLeaseCheck("ledger", watched, claimedAgain, clock, nothingBegun);
     expect(released).toEqual([]);
   });
 
@@ -136,7 +146,7 @@ describe("checking a project's leases", () => {
         appended.push(event);
       },
     };
-    await onLeaseCheck("ledger", watched, log, clock);
+    await onLeaseCheck("ledger", watched, log, clock, nothingBegun);
     expect([seen, appended]).toEqual([
       ["recorded", "released"],
       [
@@ -169,7 +179,7 @@ describe("checking a project's leases", () => {
       ],
       append: async () => {},
     };
-    await onLeaseCheck("ledger", watched, workedOnSince, clock);
+    await onLeaseCheck("ledger", watched, workedOnSince, clock, nothingBegun);
     expect(released).toEqual([]);
   });
 
@@ -193,7 +203,7 @@ describe("checking a project's leases", () => {
       ],
       append: async () => {},
     };
-    await onLeaseCheck("ledger", watched, someoneElse, clock);
+    await onLeaseCheck("ledger", watched, someoneElse, clock, nothingBegun);
     expect(released).toEqual(["12"]);
   });
 
@@ -207,7 +217,7 @@ describe("checking a project's leases", () => {
         told.push(ranOut);
       },
     };
-    await onLeaseCheck("ledger", watched, claimedLongAgo, clock);
+    await onLeaseCheck("ledger", watched, claimedLongAgo, clock, nothingBegun);
     expect(told).toEqual([{ project: "ledger", task: "12", member: "alice" }]);
   });
 
@@ -228,7 +238,7 @@ describe("checking a project's leases", () => {
       ],
       append: async () => {},
     };
-    await onLeaseCheck("ledger", watched, log, clock);
+    await onLeaseCheck("ledger", watched, log, clock, nothingBegun);
     expect(marked).toEqual([{ project: "ledger", task: "12", member: "alice" }]);
   });
 
@@ -254,7 +264,7 @@ describe("checking a project's leases", () => {
       ],
       append: async () => {},
     };
-    await onLeaseCheck("ledger", watched, log, clock);
+    await onLeaseCheck("ledger", watched, log, clock, nothingBegun);
     expect(marked).toEqual([]);
   });
 
@@ -275,7 +285,7 @@ describe("checking a project's leases", () => {
       ],
       append: async () => {},
     };
-    await onLeaseCheck("ledger", watched, log, clock);
+    await onLeaseCheck("ledger", watched, log, clock, nothingBegun);
     expect(marked).toEqual([{ project: "ledger", task: "12", member: "alice" }]);
   });
 });
@@ -291,7 +301,7 @@ describe("checking a task marked claimed that Divlab's log has no claim for", ()
       },
     };
     const noClaims: EventLog = { read: async () => [], append: async () => {} };
-    await onLeaseCheck("ledger", watched, noClaims, clock);
+    await onLeaseCheck("ledger", watched, noClaims, clock, nothingBegun);
     expect(released).toEqual(["12"]);
   });
 
@@ -306,7 +316,7 @@ describe("checking a task marked claimed that Divlab's log has no claim for", ()
       },
     };
     const noClaims: EventLog = { read: async () => [], append: async () => {} };
-    await onLeaseCheck("ledger", watched, noClaims, clock);
+    await onLeaseCheck("ledger", watched, noClaims, clock, nothingBegun);
     expect(alerts).toEqual([
       { project: "ledger", task: "12", role: "test", module: "parser", shownAs: "mallory" },
     ]);
@@ -323,7 +333,7 @@ describe("checking a task marked claimed that Divlab's log has no claim for", ()
       },
     };
     const noClaims: EventLog = { read: async () => [], append: async () => {} };
-    await onLeaseCheck("ledger", watched, noClaims, clock);
+    await onLeaseCheck("ledger", watched, noClaims, clock, nothingBegun);
     expect(alerts).toEqual([{ project: "ledger", task: "12", role: "test", module: "parser" }]);
   });
 
@@ -344,7 +354,7 @@ describe("checking a task marked claimed that Divlab's log has no claim for", ()
         appended.push(event);
       },
     };
-    await onLeaseCheck("ledger", watched, log, clock);
+    await onLeaseCheck("ledger", watched, log, clock, nothingBegun);
     expect([seen, appended]).toEqual([
       ["recorded", "released"],
       [
@@ -384,7 +394,7 @@ describe("checking a task the log shows free but the board still shows claimed",
       ],
       append: async () => {},
     };
-    await onLeaseCheck("ledger", watched, givenBack, clock);
+    await onLeaseCheck("ledger", watched, givenBack, clock, nothingBegun);
     expect(released).toEqual(["12"]);
   });
 
@@ -409,7 +419,7 @@ describe("checking a task the log shows free but the board still shows claimed",
       ],
       append: async (event) => void appended.push(event),
     };
-    await onLeaseCheck("ledger", watched, givenBackLongAgo, clock);
+    await onLeaseCheck("ledger", watched, givenBackLongAgo, clock, nothingBegun);
     expect([appended, told]).toEqual([[], []]);
   });
 
@@ -433,7 +443,40 @@ describe("checking a task the log shows free but the board still shows claimed",
       ],
       append: async () => void seen.push("recorded"),
     };
-    await onLeaseCheck("ledger", watched, ranOut, clock);
+    await onLeaseCheck("ledger", watched, ranOut, clock, nothingBegun);
     expect(seen).toEqual(["released 12"]);
+  });
+});
+
+describe("finishing, in the hourly check, what Divlab began", () => {
+  it("asks GitHub again for a merge it was about to make, which GitHub put off", async () => {
+    const begun: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          aboutToMerge: {
+            pullRequest: "7",
+            head: "c0ffee",
+            feedbackSignal: "feedback/FB-3.md",
+            work: { fromRole: "specification", module: "parser", verdict: "pass", impediments: [] },
+          },
+        },
+      ],
+      append: async () => {},
+    };
+    const asked: string[] = [];
+    const repository: Repository = {
+      feedbackSignals: async () => [],
+      mergeCommitOf: untouched,
+      merge: async (_project, pullRequest) => {
+        asked.push(pullRequest);
+        throw new Error("Merge already in progress");
+      },
+      openHead: async () => "c0ffee",
+      commitsSince: untouched,
+      head: untouched,
+    };
+    await onLeaseCheck("ledger", board, begun, clock, repository).catch(() => {});
+    expect(asked).toEqual(["7"]);
   });
 });

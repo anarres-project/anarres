@@ -23,6 +23,36 @@ describe("a member's pull request", () => {
   });
 });
 
+describe("the commit an open pull request is at", () => {
+  const answering =
+    (state: string) =>
+    async <T>(_token: string, method: string, path: string) => {
+      if (method === "GET" && path === "repos/commons/ledger/pulls/7") {
+        const pull = { state, head: { sha: "c0ffee" }, draft: false, user: { login: "alice" } };
+        return { status: 200, data: pull as T };
+      }
+      return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+    };
+
+  it("is its head while it is open", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: answering("open"),
+    });
+    expect(await adapter.openHead("ledger", "7")).toBe("c0ffee");
+  });
+
+  it("is nothing once it is closed: there is nothing to merge", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: answering("closed"),
+    });
+    expect(await adapter.openHead("ledger", "7")).toBeUndefined();
+  });
+});
+
 describe("merging a member's pull request", () => {
   it("gives the commit GitHub's merge made", async () => {
     const adapter = new GitHubAdapter({

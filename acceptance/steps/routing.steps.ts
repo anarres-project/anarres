@@ -412,6 +412,13 @@ Given(
 );
 
 Given(
+  "GitHub would not yet merge a member's {role} work on {string} when Divlab asked",
+  function (this: AnarresWorld, role: string, module: string) {
+    return this.anarres.mergePutOffByGitHub({ role, module, verdict: "pass" });
+  },
+);
+
+Given(
   "Divlab was interrupted just after recording its decision on a member's {role} work on {string}",
   function (this: AnarresWorld, role: string, module: string) {
     return this.anarres.divlabInterruptedAfterRecording({ role, module, verdict: "pass" });

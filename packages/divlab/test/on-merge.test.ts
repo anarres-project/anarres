@@ -49,6 +49,8 @@ describe("acting on a merge", () => {
   const onMain = (_text: string): Repository => ({
     feedbackSignals: async () => ["feedback/FB-9.md"],
     mergeCommitOf: async (_project, pullRequest) => `merge-of-${pullRequest}`,
+    merge: untouched,
+    openHead: async () => "c0ffee",
     commitsSince: async () => [],
     head: async () => "h3ad",
   });
@@ -174,6 +176,8 @@ describe("acting on a merge", () => {
     const merged: Repository = {
       ...onMain(passedSpecification),
       mergeCommitOf: async (_project, pullRequest) => `merge-of-${pullRequest}`,
+      merge: untouched,
+      openHead: untouched,
       commitsSince: async () => [],
       head: async () => "h3ad",
     };
@@ -201,6 +205,8 @@ describe("acting on a merge", () => {
     const listed: Repository = {
       feedbackSignals: async () => ["feedback/FB-1.md", "feedback/FB-2.md"],
       mergeCommitOf: async (_project, pullRequest) => `merge-of-${pullRequest}`,
+      merge: untouched,
+      openHead: untouched,
       commitsSince: async () => [],
       head: async () => "h3ad",
     };
@@ -253,6 +259,8 @@ describe("acting on a merge", () => {
         "feedback/FB-4.md",
       ],
       mergeCommitOf: async (_project, pullRequest) => `merge-of-${pullRequest}`,
+      merge: untouched,
+      openHead: untouched,
       commitsSince: async () => [],
       head: async () => "h3ad",
     };
@@ -269,6 +277,12 @@ describe("acting on a merge", () => {
 
   it("never routes work it was about to merge but did not, whose signal is not on main", async () => {
     const { seen, watchedBoard, watchedLog } = watching();
+    const putOffAgain: Repository = {
+      ...onMain(passedSpecification),
+      merge: async () => {
+        throw new Error("Merge already in progress");
+      },
+    };
     const begunOnly: EventLog = {
       ...watchedLog,
       read: async () => [
@@ -283,8 +297,116 @@ describe("acting on a merge", () => {
         },
       ],
     };
-    await onMerge("ledger", onMain(passedSpecification), watchedBoard, begunOnly, clock);
+    await expect(onMerge("ledger", putOffAgain, watchedBoard, begunOnly, clock)).rejects.toThrow();
     expect(seen.posted).toEqual([]);
+  });
+
+  it("asks GitHub again for a merge it was about to make, which GitHub put off", async () => {
+    const { watchedBoard, watchedLog } = watching();
+    const begunOnly: EventLog = {
+      ...watchedLog,
+      read: async () => [
+        {
+          project: "ledger",
+          aboutToMerge: {
+            pullRequest: "7",
+            head: "c0ffee",
+            feedbackSignal: "feedback/FB-3.md",
+            work: { fromRole: "specification", module: "parser", verdict: "pass", impediments: [] },
+          },
+        },
+      ],
+    };
+    const asked: string[][] = [];
+    const repository: Repository = {
+      ...onMain(passedSpecification),
+      merge: async (project, pullRequest, head) => {
+        asked.push([project, pullRequest, head]);
+        return "merged";
+      },
+    };
+    await onMerge("ledger", repository, watchedBoard, begunOnly, clock);
+    expect(asked).toEqual([["ledger", "7", "c0ffee"]]);
+  });
+
+  it("does not ask again for a merge whose pull request was closed since", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    const begunOnly: EventLog = {
+      ...watchedLog,
+      read: async () => [
+        {
+          project: "ledger",
+          aboutToMerge: {
+            pullRequest: "7",
+            head: "c0ffee",
+            feedbackSignal: "feedback/FB-3.md",
+            work: { fromRole: "specification", module: "parser", verdict: "pass", impediments: [] },
+          },
+        },
+      ],
+    };
+    const repository: Repository = {
+      ...onMain(passedSpecification),
+      openHead: async () => undefined,
+    };
+    await onMerge("ledger", repository, watchedBoard, begunOnly, clock);
+    expect(seen.posted).toEqual([]);
+  });
+
+  it("does not ask again for a merge whose pull request was pushed to since: that is decided afresh", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    const begunOnly: EventLog = {
+      ...watchedLog,
+      read: async () => [
+        {
+          project: "ledger",
+          aboutToMerge: {
+            pullRequest: "7",
+            head: "c0ffee",
+            feedbackSignal: "feedback/FB-3.md",
+            work: { fromRole: "specification", module: "parser", verdict: "pass", impediments: [] },
+          },
+        },
+      ],
+    };
+    const repository: Repository = {
+      ...onMain(passedSpecification),
+      openHead: async () => "n3wer",
+    };
+    await onMerge("ledger", repository, watchedBoard, begunOnly, clock);
+    expect(seen.posted).toEqual([]);
+  });
+
+  it("routes work GitHub put off once it merges it, from the merge's commit", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    const begunOnly: EventLog = {
+      ...watchedLog,
+      read: async () => [
+        {
+          project: "ledger",
+          aboutToMerge: {
+            pullRequest: "7",
+            head: "c0ffee",
+            feedbackSignal: "feedback/FB-3.md",
+            work: { fromRole: "specification", module: "parser", verdict: "pass", impediments: [] },
+          },
+        },
+      ],
+    };
+    const repository: Repository = {
+      ...onMain(passedSpecification),
+      merge: async () => "m3rged",
+    };
+    await onMerge("ledger", repository, watchedBoard, begunOnly, clock);
+    expect(seen.posted).toEqual([
+      {
+        project: "ledger",
+        role: "test",
+        module: "parser",
+        decidedOn: "feedback/FB-3.md",
+        inputsAt: "m3rged",
+      },
+    ]);
   });
 
   it("records when it found work that reached main without it, by its clock", async () => {

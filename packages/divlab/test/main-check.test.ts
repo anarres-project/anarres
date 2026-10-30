@@ -30,6 +30,8 @@ function mainWith(commits: MainCommit[]) {
   const repository: Repository = {
     feedbackSignals: untouched,
     mergeCommitOf: untouched,
+    merge: untouched,
+    openHead: untouched,
     commitsSince: async () => commits,
     head: untouched,
   };
@@ -198,6 +200,8 @@ describe("checking every change to a project's main branch (Bernard, 2026-10-23)
     const repository: Repository = {
       feedbackSignals: untouched,
       mergeCommitOf: untouched,
+      merge: untouched,
+      openHead: untouched,
       commitsSince: async (_project, since) => {
         asked.push(since);
         return [];
@@ -221,6 +225,8 @@ describe("checking every change to a project's main branch (Bernard, 2026-10-23)
     const repository: Repository = {
       feedbackSignals: untouched,
       mergeCommitOf: untouched,
+      merge: untouched,
+      openHead: untouched,
       commitsSince: untouched,
       head: async () => "s3tup",
     };

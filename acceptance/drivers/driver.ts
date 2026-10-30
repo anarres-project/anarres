@@ -96,6 +96,8 @@ export interface Driver {
   startProjectWithoutToolchain(project: string, modules: string[]): Promise<string>;
   /** Divlab merges the member's work but stops before it records and routes it. */
   interruptAfterMerging(work: AcceptedWork): Promise<void>;
+  /** GitHub puts off Divlab's merge of the member's work, and Divlab's run stops there. */
+  putOffMerge(work: AcceptedWork): Promise<void>;
   /** Divlab merges the member's work and records its decision, but stops before acting on it. */
   interruptAfterRecording(work: AcceptedWork): Promise<void>;
   /** Divlab acts on the project again, as the next push to main would make it. */

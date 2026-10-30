@@ -9721,8 +9721,9 @@ async function onRelease(project2, release, board, log, clock) {
   await log.append(released);
   await board.releaseClaim(project2, release.task);
 }
-async function onLeaseCheck(project2, board, log, clock) {
+async function onLeaseCheck(project2, board, log, clock, repository) {
   const events = await log.read(project2);
+  await finishWhatDivlabBegan(project2, events, repository, board, log, clock);
   const leases = leasesFrom(events);
   for (const { task, role, module, claimedBy } of await board.claimedTasks(project2)) {
     if (leases.has(task)) continue;
@@ -9864,6 +9865,28 @@ async function onChecked(project2, commit, pullRequests, board, log, clock) {
     await onPullRequest(project2, pullRequest, pullRequests, board, log, clock);
   }
 }
+async function finishWhatDivlabBegan(project2, events, repository, board, log, clock) {
+  const finished = new Set(events.filter((e) => !("aboutToMerge" in e)).map(signalOf));
+  const begun = new Map(
+    events.flatMap(
+      (e) => "aboutToMerge" in e ? [[e.aboutToMerge.feedbackSignal, e]] : []
+    )
+  );
+  const onMain = await repository.feedbackSignals(project2);
+  for (const [path, merge] of begun) {
+    if (finished.has(path)) continue;
+    const { work, member, pullRequest, head } = merge.aboutToMerge;
+    if (!onMain.includes(path) && await repository.openHead(project2, pullRequest) !== head) {
+      continue;
+    }
+    const mergedAs = onMain.includes(path) ? await repository.mergeCommitOf(project2, pullRequest) : await repository.merge(project2, pullRequest, head);
+    await acceptSignal(project2, path, work, board, log, clock, events, {
+      ...member === void 0 ? {} : { member },
+      mergedAs
+    });
+  }
+  return onMain;
+}
 async function onMerge(project2, repository, board, log, clock) {
   const events = await log.read(project2);
   const finished = new Set(events.filter((e) => !("aboutToMerge" in e)).map(signalOf));
@@ -9883,16 +9906,7 @@ async function onMerge(project2, repository, board, log, clock) {
       else await actOn(decision, board, log);
     }
   }
-  const onMain = await repository.feedbackSignals(project2);
-  for (const [path, merge] of begun) {
-    if (finished.has(path) || !onMain.includes(path)) continue;
-    const { work, member, pullRequest } = merge.aboutToMerge;
-    const mergedAs = await repository.mergeCommitOf(project2, pullRequest);
-    await acceptSignal(project2, path, work, board, log, clock, events, {
-      ...member === void 0 ? {} : { member },
-      mergedAs
-    });
-  }
+  const onMain = await finishWhatDivlabBegan(project2, events, repository, board, log, clock);
   for (const path of onMain) {
     if (finished.has(path) || begun.has(path)) continue;
     const record = {
@@ -11552,6 +11566,13 @@ var GitHubAdapter = class {
     const { head, draft, user } = await this.call("GET", `${this.repo(project2)}/pulls/${pullRequest}`);
     return { head: head.sha, draft, author: user.login };
   }
+  async openHead(project2, pullRequest) {
+    const { state, head } = await this.call(
+      "GET",
+      `${this.repo(project2)}/pulls/${pullRequest}`
+    );
+    return state === "open" ? head.sha : void 0;
+  }
   /**
    * What the pull request changes, as text read through the API; nothing is checked out. Each
    * file is read from the project's own copy of the pull request's commits, never by following a
@@ -11860,7 +11881,7 @@ try {
   } else if ("release" in run) {
     await onRelease(project, run.release, github, github, clock);
   } else if ("leases" in run) {
-    await onLeaseCheck(project, github, github, clock);
+    await onLeaseCheck(project, github, github, clock, github);
   } else if ("checked" in run) {
     await onChecked(project, run.checked, github, github, github, clock);
   } else {
