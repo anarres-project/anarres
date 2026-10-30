@@ -771,6 +771,11 @@ governance scenarios run alone.
   function for both). Both scenarios passed and lose `@wip`.
   REFACTOR: the handover instructions are said once, a shared part (`handing-over`) in the next,
             resume and release skills. Concept §10's command table updated.
+- Bernard, 2026-10-30, human review (decision 0016): PDC coordinators name, in the governance
+  file, the modules whose contributions need a human's approval; a member at *trusted* or above,
+  or a PDC coordinator, independent of the work, approves with GitHub's own review, for the
+  commit Divlab merges. A list that cannot be read holds everything, and coordinators are
+  alerted; a file with no list names no module. Test-list entries added (section 4).
 
 ---
 
