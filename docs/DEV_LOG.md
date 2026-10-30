@@ -930,6 +930,11 @@ governance scenarios run alone.
             The scenario passed and lost `@wip`.
   REFACTOR: the DSL's three ways a run stops share how they make the holder's work.
   Gate 859 and 146.
+- The ccc85fd sandbox run: 105 of 106, in 78 minutes. "Accounts a PDC coordinator has linked
+  are one member" failed in its Given: Alice's Coding work was neither merged nor refused. The
+  project's check on it finished at 13:40:42, but the Divlab run its finishing started read it
+  at 13:42 as still running (it recorded activity, and a failed check would have been said),
+  and no event came after. Seen once; on the test list to watch.
 
 ---
 

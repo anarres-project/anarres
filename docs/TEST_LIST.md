@@ -530,6 +530,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         log it read before finishing;
   - [ ] a pull request whose recorded merge was put off, then closed or pushed to, is asked
         about by every later run (one request each): stop asking once it is settled;
+  - [ ] ccc85fd (105 of 106): Coding work's check finished at 13:40:42, yet Divlab's run that
+        the checks finishing started (13:41:59) read it as still running, recorded activity
+        and stopped; no later event came, so it was neither merged nor refused. Once only: if
+        it recurs, see whether GitHub's list of a commit's checks lags, and whether the hourly
+        check should decide open work still waiting on a check;
   - [x] the same repository's next run had a log write refused because main's rule "did not run
         because of a timeout" (409): GitHub did nothing, so any request is asked again after
         it, as after a rate limit; a rule refusing the change is not.
