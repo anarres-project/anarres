@@ -535,6 +535,7 @@ describe("acting on a pull request", () => {
     // PDC coordinators name no module for review, and nobody has approved anything.
     governanceFile: async () => ({ members: {} }),
     approvals: async () => [],
+    refusalsGiven: async () => [],
     // Nothing on main changed since any task's inputs were pinned.
     changedOnMainSince: async () => [],
     modulesOnMain: async () => undefined,
@@ -805,6 +806,19 @@ describe("acting on a pull request", () => {
         "7: The work waits for a reviewer's approval: PDC coordinators require a person to approve work on parser before it is merged, a trusted member or a PDC coordinator with no part in the module",
       ],
     ]);
+  });
+
+  it("says only once that work waits for a reviewer, not on every run that finds no approval", async () => {
+    const [merged, refusals]: string[][] = [[], []];
+    const waiting =
+      "The work waits for a reviewer's approval: PDC coordinators require a person to approve work on parser before it is merged, a trusted member or a PDC coordinator with no part in the module";
+    const alreadySaid: PullRequests = {
+      ...submitting(merged, [specificationPasses], refusals),
+      governanceFile: async () => ({ members: {}, review: { ledger: ["parser"] } }),
+      refusalsGiven: async () => [waiting],
+    };
+    await onPullRequest("ledger", "7", alreadySaid, { ...held, post: async () => {} }, log, clock);
+    expect([merged, refusals]).toEqual([[], []]);
   });
 
   it("merges work on a module PDC coordinators require reviewed once a trusted member approves its commit", async () => {

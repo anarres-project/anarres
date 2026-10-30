@@ -325,7 +325,16 @@ export function logFrom(listed: string[], texts: Map<string, string>): LogEvent[
 
 /** The reason is quoted in a code block, so text a member wrote can never act as Markdown. */
 export function commentForRefusal(reason: string): string {
-  return `Divlab has not merged this pull request:\n\n${quoted(reason)}`;
+  return `${REFUSAL_OPENS}${quoted(reason)}`;
+}
+
+const REFUSAL_OPENS = "Divlab has not merged this pull request:\n\n";
+
+/** The reason a comment of Divlab's refusing a pull request gave, if it is one. */
+export function reasonOfRefusal(comment: string): string | undefined {
+  if (!comment.startsWith(REFUSAL_OPENS)) return undefined;
+  // Between the quote's opening and closing fences.
+  return comment.slice(REFUSAL_OPENS.length).split("\n").slice(1, -1).join("\n");
 }
 
 /** Divlab's reply to a member whose lease on a task ran out. */

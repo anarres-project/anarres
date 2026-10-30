@@ -488,6 +488,8 @@ export interface PullRequests extends Members {
   merge(project: string, pullRequest: string, head: string): Promise<string>;
   /** Divlab will not merge it: the member is told why. */
   refuse(project: string, pullRequest: string, reason: string): Promise<void>;
+  /** What Divlab has already told the member on the pull request, as it told them. */
+  refusalsGiven(project: string, pullRequest: string): Promise<string[]>;
   /**
    * What the project's own check found on the commit, or that it has not finished, and where it
    * can be seen (decision 0010).
@@ -1003,11 +1005,11 @@ export async function onPullRequest(
       approvalCounts(governance, reviewer, { author, module: signal.module }, history),
   );
   if (needsReview(governance, project, signal.module) && !approved) {
-    await pullRequests.refuse(
-      project,
-      pullRequest,
-      `The work waits for a reviewer's approval: PDC coordinators require a person to approve work on ${signal.module} before it is merged, a trusted member or a PDC coordinator with no part in the module`,
-    );
+    const waiting = `The work waits for a reviewer's approval: PDC coordinators require a person to approve work on ${signal.module} before it is merged, a trusted member or a PDC coordinator with no part in the module`;
+    // Said once: each run that finds no approval yet, after a review or a push, says nothing more.
+    if (!(await pullRequests.refusalsGiven(project, pullRequest)).includes(waiting)) {
+      await pullRequests.refuse(project, pullRequest, waiting);
+    }
     return;
   }
   await log.append({

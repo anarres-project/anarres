@@ -54,6 +54,7 @@ import {
   postedByDivlab,
   protectsMain,
   READY,
+  reasonOfRefusal,
   rulesetProtectingMain,
   taskFromIssue,
   UNPROTECTED_MAIN,
@@ -923,6 +924,18 @@ export class GitHubAdapter
         ? [{ reviewer: review.user.login, commit: review.commit_id }]
         : [],
     );
+  }
+
+  /** The reasons in Divlab's own refusals on the pull request: an App's comments, no one else's. */
+  async refusalsGiven(project: string, pullRequest: string): Promise<string[]> {
+    const listed = await this.call<{ user: { type: string } | null; body: string }[]>(
+      "GET",
+      `${this.repo(project)}/issues/${pullRequest}/comments?per_page=100&page=1`,
+    );
+    return listed.flatMap(({ user, body }) => {
+      const reason = user?.type === "Bot" ? reasonOfRefusal(body) : undefined;
+      return reason === undefined ? [] : [reason];
+    });
   }
 
   async refuse(project: string, pullRequest: string, reason: string): Promise<void> {

@@ -10101,11 +10101,10 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     ({ reviewer, commit }) => commit === head && approvalCounts(governance, reviewer, { author, module: signal.module }, history)
   );
   if (needsReview(governance, project2, signal.module) && !approved) {
-    await pullRequests.refuse(
-      project2,
-      pullRequest,
-      `The work waits for a reviewer's approval: PDC coordinators require a person to approve work on ${signal.module} before it is merged, a trusted member or a PDC coordinator with no part in the module`
-    );
+    const waiting = `The work waits for a reviewer's approval: PDC coordinators require a person to approve work on ${signal.module} before it is merged, a trusted member or a PDC coordinator with no part in the module`;
+    if (!(await pullRequests.refusalsGiven(project2, pullRequest)).includes(waiting)) {
+      await pullRequests.refuse(project2, pullRequest, waiting);
+    }
     return;
   }
   await log.append({
@@ -10861,9 +10860,12 @@ function logFrom(listed, texts) {
   return listed.filter((name) => /^\d{6}\.json$/.test(name)).sort().map((name) => eventFromFile(texts.get(name) ?? ""));
 }
 function commentForRefusal(reason) {
-  return `Divlab has not merged this pull request:
-
-${quoted(reason)}`;
+  return `${REFUSAL_OPENS}${quoted(reason)}`;
+}
+var REFUSAL_OPENS = "Divlab has not merged this pull request:\n\n";
+function reasonOfRefusal(comment) {
+  if (!comment.startsWith(REFUSAL_OPENS)) return void 0;
+  return comment.slice(REFUSAL_OPENS.length).split("\n").slice(1, -1).join("\n");
 }
 function commentForLeaseRanOut(ranOut) {
   return `@${ranOut.member}, your lease on this task ran out: ${LEASE_HOURS} hours passed without activity on it, so it is ready for anyone to claim again.`;
@@ -11696,6 +11698,17 @@ var GitHubAdapter = class {
     return reviews.flatMap(
       (review) => review.state === "APPROVED" && review.user ? [{ reviewer: review.user.login, commit: review.commit_id }] : []
     );
+  }
+  /** The reasons in Divlab's own refusals on the pull request: an App's comments, no one else's. */
+  async refusalsGiven(project2, pullRequest) {
+    const listed = await this.call(
+      "GET",
+      `${this.repo(project2)}/issues/${pullRequest}/comments?per_page=100&page=1`
+    );
+    return listed.flatMap(({ user, body }) => {
+      const reason = user?.type === "Bot" ? reasonOfRefusal(body) : void 0;
+      return reason === void 0 ? [] : [reason];
+    });
   }
   async refuse(project2, pullRequest, reason) {
     await this.comment(project2, pullRequest, commentForRefusal(reason));

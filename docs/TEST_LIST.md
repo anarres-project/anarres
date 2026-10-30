@@ -566,7 +566,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         coordinator, not the work's author nor linked to them, holding no role in the module;
   - [x] Divlab leaves work for a named module unmerged without an approval that counts, for the
         commit it would merge, and says on the pull request that it waits for a reviewer;
-  - [ ] it says so once, not on every run that finds no approval yet;
+  - [x] it says so once, not on every run that finds no approval yet: the adapter reads back
+        Divlab's own refusals on the pull request (an App's comments only);
+  - [ ] a pull request with more than 100 comments: only the first page is read, so Divlab may
+        say it waits again (harmless; page through if it is ever seen);
   - [x] with an approval that counts, for that commit, Divlab merges it as any other;
   - [x] an approval of an earlier commit does not count once the member has pushed since (unit;
         the in-process fake's pull requests keep one head, so no scenario pushes after one);

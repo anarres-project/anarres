@@ -414,10 +414,16 @@ export class FakeGitHub
     return sha;
   }
 
-  private readonly refused: { project: string; reason: string }[] = [];
+  private readonly refused: { project: string; pullRequest: string; reason: string }[] = [];
 
-  async refuse(project: string, _pullRequest: string, reason: string): Promise<void> {
-    this.refused.push({ project, reason });
+  async refuse(project: string, pullRequest: string, reason: string): Promise<void> {
+    this.refused.push({ project, pullRequest, reason });
+  }
+
+  async refusalsGiven(project: string, pullRequest: string): Promise<string[]> {
+    return this.refused
+      .filter((r) => r.project === project && r.pullRequest === pullRequest)
+      .map((r) => r.reason);
   }
 
   refusals(project: string): string[] {

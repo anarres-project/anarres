@@ -370,6 +370,34 @@ describe("approvals of a member's pull request (decision 0016)", () => {
   });
 });
 
+describe("what Divlab has already told a member on their pull request", () => {
+  it("is each reason in Divlab's own refusals, and nothing anyone else wrote", async () => {
+    const refusal = "Divlab has not merged this pull request:\n\n```\nThe work waits.\n```";
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) =>
+        method === "GET" && path === "repos/commons/ledger/issues/7/comments?per_page=100&page=1"
+          ? {
+              status: 200,
+              data: [
+                { user: { login: "divlab[bot]", type: "Bot" }, body: refusal },
+                {
+                  user: { login: "mallory", type: "User" },
+                  body: refusal.replace("waits", "is fine"),
+                },
+                {
+                  user: { login: "divlab[bot]", type: "Bot" },
+                  body: "Something else Divlab said.",
+                },
+              ] as T,
+            }
+          : { status: 200, data: [] as T },
+    });
+    expect(await adapter.refusalsGiven("ledger", "7")).toEqual(["The work waits."]);
+  });
+});
+
 describe("a member giving a task back, from their CLI", () => {
   it("is the release comment Divlab reads, on the task's issue", async () => {
     const comments: unknown[] = [];

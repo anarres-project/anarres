@@ -849,6 +849,16 @@ governance scenarios run alone.
   sandbox driver can name a module for review in its governance file (which it can change, as
   the `@governance` scenarios do, so no account need be set up by hand) and approve as a member.
   Gate 846 and 145.
+- Said once (decision 0016).
+  RED:      says only once that work waits for a reviewer -> expected [ [], …(1) ] to deeply
+            equal [ [], [] ]
+  GREEN:    the same (228 passed): Divlab reads what it already said on the pull request.
+  RED:      what Divlab has already told a member is each reason in its own refusals, nothing
+            anyone else wrote -> `refusalsGiven is not a function`; with the stub, expected [] to
+            deeply equal [ 'The work waits.' ]
+  GREEN:    the same (217 passed in github): only an App's comments, read back from the quote
+            Divlab wrote (`reasonOfRefusal`, beside `commentForRefusal`). Someone else's comment
+            in the same words is not Divlab's, so cannot keep it quiet. Gate 848 and 145.
 
 ---
 
