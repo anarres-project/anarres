@@ -418,6 +418,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] someone who does not hold the task is told so;
   - [ ] the plugin hands over partial work when a member gives a task back (concept §8, partial
         work: the task is re-queued as a continuation; section 5).
+    Bernard, 2026-10-30: hand it over. The release skill has Claude write the feedback signal
+    as partial, with a handover note, and submit it, so Divlab posts a continuation; with
+    nothing done, the CLI gives the task back. `anarres release` refuses while unsubmitted work
+    is in the role's place, saying to hand it over first.
 
 ## 3. Eligibility and conflict of interest
 
@@ -821,7 +825,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         core reads it only as a feedback signal's plain path, as one file, for Research alone;
         the task record keeps it for the hook. Scenario "A member preparing a Research task has
         the knowledge gap to read, and none of the module's work";
-  - [ ] the sandbox shows it (one file fetched by the sparse checkout's pattern);
+  - [x] the sandbox shows it (5c8e3c1: 100 of 100; one file fetched by the sparse checkout's
+        pattern);
   - [x] Divlab posts each task with the commit its inputs are pinned at, the merge that decided
         it, in the issue's words and its decision block; read back only if it is a commit name;
   - [x] a task decided by work Divlab did not merge (none yet: only merged work is routed) has no

@@ -744,6 +744,11 @@ governance scenarios run alone.
 - A task decided by work Divlab did not merge would have no pinned commit; the CLI already
   refuses to prepare a task without one, saying why (`prepare.test.ts`, "has no pinned
   inputs"), so the item is ticked with no new code.
+- The 5c8e3c1 sandbox run passed: 100 of 100, in 59 minutes; a Research task's question is
+  fetched as one file by the sparse checkout.
+- Bernard, 2026-10-30: a member giving a task back hands over the work done so far as partial
+  work (the release skill); `anarres release` gives back a task with nothing done, and refuses
+  while unsubmitted work is in the role's place.
 
 ---
 
