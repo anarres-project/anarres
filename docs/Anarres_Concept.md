@@ -337,7 +337,7 @@ The March AutoPM spec had a Claude session apply a fixed routing table. A fixed 
 |---|---|
 | `/anarres:next` | Find, claim and start an eligible task |
 | `/anarres:status` | Show current leases, open PRs and contribution history |
-| `/anarres:release` | Give up a task early, committing partial work |
+| `/anarres:release` | Give a task back early; work already done is handed over as partial work, and Divlab posts a continuation |
 | `/anarres:resume` | Continue a claimed task in a new session |
 
 ### Protecting members

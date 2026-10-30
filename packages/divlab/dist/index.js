@@ -9547,7 +9547,8 @@ function readToolchain(text) {
 var isClaim = (text) => text === CLAIM;
 var ACCOUNT_NAME = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/;
 var CLAIM = "/claim";
-var isRelease = (text) => text === "/release";
+var RELEASE = "/release";
+var isRelease = (text) => text === RELEASE;
 var COMMIT = /^[0-9a-f]{40}$/;
 var numberedByGitHub = (number) => Number.isSafeInteger(number) && number >= 1;
 function whatToActOn(name, event) {
@@ -11248,6 +11249,9 @@ var GitHubAdapter = class {
   /** The member's claim: Divlab's claim comment on the task's issue, made as the member. */
   async askToClaim(project2, task) {
     await this.call("POST", `${this.repo(project2)}/issues/${task}/comments`, { body: CLAIM });
+  }
+  async askToRelease(project2, task) {
+    await this.call("POST", `${this.repo(project2)}/issues/${task}/comments`, { body: RELEASE });
   }
   /** The account the token acts as: the member, when it is the member's own login. */
   async account() {

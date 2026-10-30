@@ -31,7 +31,7 @@ import {
 } from "@anarres/core";
 import { isClaim } from "./event.ts";
 
-export { CLAIM, checksProtection, type Run } from "./event.ts";
+export { CLAIM, checksProtection, RELEASE, type Run } from "./event.ts";
 
 export type WorkAccepted = {
   project: string;

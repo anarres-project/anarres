@@ -2,6 +2,7 @@ import {
   askForWork,
   claim,
   contributions,
+  giveBack,
   memberStatus,
   preparation,
   restoreDraft,
@@ -9,7 +10,7 @@ import {
   submit,
   taskFolder,
 } from "@anarres/cli";
-import { TRUST_LEVELS, trustAllows, trustLevelOf, underWay } from "@anarres/core";
+import { TRUST_LEVELS, trustAllows, trustLevelOf, underWay, writeScope } from "@anarres/core";
 import {
   CLAIM,
   checkMain,
@@ -620,6 +621,27 @@ export class InProcessDriver implements Driver {
       this.clock,
     );
     await this.afterRun(work.project, { pullRequest: "" });
+  }
+
+  /** A file of work in the role's own place, among the prepared task's folder's files. */
+  async writeWork(task: { project: string; role: string; module: string }, member: string) {
+    const folder = this.folders.get(`${member} ${task.project}#${this.openTaskId(task)}`);
+    if (folder === undefined) throw new Error(`${member} has not prepared the ${task.role} task`);
+    folder.push({
+      path: `${writeScope(roleId(task.role), task.module)}work.md`,
+      text: "So far.\n",
+    });
+  }
+
+  /** The member's plugin gives the task back through the CLI, from the prepared task's folder. */
+  async giveBack(task: { project: string; role: string; module: string }, member: string) {
+    const id = this.openTaskId(task);
+    const folder = this.folders.get(`${member} ${task.project}#${id}`) ?? [];
+    return giveBack(
+      { project: task.project, task: id },
+      folder.map(({ path }) => path),
+      { askToRelease: () => this.release(task, member) },
+    );
   }
 
   /** The member comments to give the task back, and the comment's run wakes Divlab. */

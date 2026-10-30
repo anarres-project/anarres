@@ -9389,6 +9389,7 @@ function readToolchain(text) {
 
 // ../divlab/src/event.ts
 var CLAIM = "/claim";
+var RELEASE = "/release";
 
 // ../divlab/src/index.ts
 var parts = (events) => [
@@ -10547,6 +10548,9 @@ var GitHubAdapter = class {
   async askToClaim(project, task) {
     await this.call("POST", `${this.repo(project)}/issues/${task}/comments`, { body: CLAIM });
   }
+  async askToRelease(project, task) {
+    await this.call("POST", `${this.repo(project)}/issues/${task}/comments`, { body: RELEASE });
+  }
   /** The account the token acts as: the member, when it is the member's own login. */
   async account() {
     const { login } = await this.call("GET", "user");
@@ -11170,6 +11174,13 @@ function taskOfRecord(text) {
     ...typeof record.question === "string" ? { question: record.question } : {}
   };
 }
+async function giveBack(task, changed, releasing) {
+  if (changed.length > 0) {
+    return `Not given back: ${task.project}#${task.task} has work not yet handed over (${changed.join(", ")}). Write its feedback signal as partial, with a handover note, and submit it: hand it over, and Divlab posts a continuation for whoever takes it next.`;
+  }
+  await releasing.askToRelease(task.project, task.task);
+  return `Gave back ${task.project}#${task.task}. Divlab makes it ready again for whoever takes it next.`;
+}
 function claimOutcome(named2, task, member) {
   if (task === void 0) return `${named2} is not a task anyone can claim now: run next again.`;
   if (task.claimedBy === member) return `You hold ${named2}: prepare it to begin.`;
@@ -11322,6 +11333,13 @@ function taskFolderOf(cwd) {
     if (dirname(folder) === folder) return void 0;
   }
 }
+function changedIn(folder) {
+  return execFileSync(
+    "git",
+    ["-C", folder, "status", "--porcelain", "--untracked-files=all", "--no-renames"],
+    { encoding: "utf8" }
+  ).split("\n").map((line) => line.slice(3)).filter((path) => path !== "" && path !== TASK_RECORD);
+}
 var [command, named] = process.argv.slice(2);
 if (command === "hook") {
   const call = JSON.parse(readFileSync(0, "utf8"));
@@ -11330,10 +11348,10 @@ if (command === "hook") {
   if (answer) console.log(JSON.stringify(answer));
   process.exit(0);
 }
-var TAKES_A_TASK = ["claim", "prepare", "resume", "submit"];
+var TAKES_A_TASK = ["claim", "prepare", "release", "resume", "submit"];
 if (command !== "next" && command !== "status" && !(command && TAKES_A_TASK.includes(command) && named)) {
   console.error(
-    "Usage: anarres next | anarres status | anarres claim|prepare|resume|submit project#number (submit: --draft too)"
+    "Usage: anarres next | anarres status | anarres claim|prepare|release|resume|submit project#number (submit: --draft too)"
   );
   process.exit(2);
 }
@@ -11435,6 +11453,18 @@ try {
     );
     process.exit("refused" in resumed ? 1 : 0);
   }
+  if (command === "release" && named) {
+    const task = taskNamed(named);
+    if (task === void 0) {
+      console.log(`Name the task as the offers do, project#number: ${named} is not one.`);
+      process.exit(1);
+    }
+    const folder = taskFolder(task);
+    const changed = existsSync(join(folder, TASK_RECORD)) ? changedIn(folder) : [];
+    const said = await giveBack(task, changed, github);
+    console.log(said);
+    process.exit(said.startsWith("Not given back") ? 1 : 0);
+  }
   if (command === "submit" && named) {
     const task = taskNamed(named);
     const folder = task && taskFolder(task);
@@ -11444,11 +11474,10 @@ try {
       console.log(`Not submitted: ${named} has no prepared folder here; prepare it first.`);
       process.exit(1);
     }
-    const changed = execFileSync(
-      "git",
-      ["-C", folder, "status", "--porcelain", "--untracked-files=all", "--no-renames"],
-      { encoding: "utf8" }
-    ).split("\n").map((line) => line.slice(3)).filter((path) => path !== "" && path !== TASK_RECORD).map((path) => ({ path, text: readFileSync(join(folder, path), "utf8") }));
+    const changed = changedIn(folder).map((path) => ({
+      path,
+      text: readFileSync(join(folder, path), "utf8")
+    }));
     const draft = process.argv.includes("--draft");
     console.log(
       await submit(

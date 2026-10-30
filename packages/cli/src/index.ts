@@ -314,6 +314,25 @@ export function taskOfRecord(text: string): RecordedTask | undefined {
   };
 }
 
+/** Where the member's CLI asks Divlab to give a task back: a comment, as the member, on its issue. */
+export interface Releasing {
+  askToRelease(project: string, task: string): Promise<void>;
+}
+
+/** The member gives back a task they hold. */
+export async function giveBack(
+  task: { project: string; task: string },
+  changed: readonly string[],
+  releasing: Releasing,
+): Promise<string> {
+  // Work done is handed over as partial work, never left behind (Bernard, 2026-10-30).
+  if (changed.length > 0) {
+    return `Not given back: ${task.project}#${task.task} has work not yet handed over (${changed.join(", ")}). Write its feedback signal as partial, with a handover note, and submit it: hand it over, and Divlab posts a continuation for whoever takes it next.`;
+  }
+  await releasing.askToRelease(task.project, task.task);
+  return `Gave back ${task.project}#${task.task}. Divlab makes it ready again for whoever takes it next.`;
+}
+
 /**
  * How a member's claim went, from what Divlab sets on the task (its claimed label and assignee),
  * never from the text of replies, which anyone could write.

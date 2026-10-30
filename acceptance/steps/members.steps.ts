@@ -149,3 +149,24 @@ Then(
     return this.anarres.memberHasKnowledgeGapToRead(member, { role, module });
   },
 );
+
+Given(
+  "{word} has written work on the {role} task for {string}",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.memberWritesWork(member, { role, module });
+  },
+);
+
+When(
+  "{word} gives back the {role} task for {string} from their machine",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.memberGivesBack(member, { role, module });
+  },
+);
+
+Then(
+  "{word} is told to hand over their work on the {role} task for {string} first",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.memberIsToldToHandOverFirst(member, { role, module });
+  },
+);

@@ -749,6 +749,28 @@ governance scenarios run alone.
 - Bernard, 2026-10-30: a member giving a task back hands over the work done so far as partial
   work (the release skill); `anarres release` gives back a task with nothing done, and refuses
   while unsubmitted work is in the role's place.
+- Giving a task back from the member's machine. Acceptance: "A member gives back a task they
+  have done nothing on, and it is ready for others" and "A member with work not yet handed over
+  is told to hand it over before giving the task back", red with `NotYetImplemented` at the
+  drivers (writing work in the folder is the harness's, built first).
+  RED:      giving a task back asks Divlab to make it ready again … when nothing has been done on
+            it -> `giveBack is not a function`; with the stub, expected [ [], '' ] to deeply
+            equal [ …(2) ]
+  GREEN:    the same (108 passed).
+  RED:      asks for nothing while work done on it is not yet handed over -> Error: asked
+  GREEN:    the same (109 passed).
+  RED:      a member giving a task back, from their CLI, is the release comment Divlab reads ->
+            `askToRelease is not a function`; with the stub, expected [] to deeply equal
+            [ { body: '/release' } ]
+  GREEN:    the same (434 passed in github and divlab): Divlab's `RELEASE`, stated once beside
+            `CLAIM`, and read by Divlab's own check of a comment.
+  RED:      its release skill may run two things without asking: release and submit -> ENOENT;
+            with a source carrying no tools, expected undefined to be 'Bash(node …'
+  GREEN:    the same (110 passed).
+  `anarres release` wires them, reading the folder's work as submit does (`changedIn`, now one
+  function for both). Both scenarios passed and lose `@wip`.
+  REFACTOR: the handover instructions are said once, a shared part (`handing-over`) in the next,
+            resume and release skills. Concept §10's command table updated.
 
 ---
 

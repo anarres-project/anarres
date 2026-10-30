@@ -314,6 +314,25 @@ describe("a member's claim, from their CLI", () => {
   });
 });
 
+describe("a member giving a task back, from their CLI", () => {
+  it("is the release comment Divlab reads, on the task's issue", async () => {
+    const comments: unknown[] = [];
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string, body?: unknown) => {
+        if (method === "POST" && path === "repos/commons/ledger/issues/4/comments") {
+          comments.push(body);
+          return { status: 201, data: {} as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    await adapter.askToRelease("ledger", "4");
+    expect(comments).toEqual([{ body: "/release" }]);
+  });
+});
+
 describe("a project's declared toolchain", () => {
   it("is read from anarres.yaml on the project's main branch", async () => {
     const declared = "toolchain:\n  image: node:24\n  test: npm test\n  report: junit.xml\n";

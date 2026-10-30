@@ -416,12 +416,15 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         task ready again; a release from anyone else changes nothing (in-process);
   - [x] the sandbox shows a release;
   - [x] someone who does not hold the task is told so;
-  - [ ] the plugin hands over partial work when a member gives a task back (concept §8, partial
+  - [x] the plugin hands over partial work when a member gives a task back (concept §8, partial
         work: the task is re-queued as a continuation; section 5).
     Bernard, 2026-10-30: hand it over. The release skill has Claude write the feedback signal
     as partial, with a handover note, and submit it, so Divlab posts a continuation; with
     nothing done, the CLI gives the task back. `anarres release` refuses while unsubmitted work
     is in the role's place, saying to hand it over first.
+    Built: `anarres release project#number` and the `/anarres:release` skill, which may run only
+    release and submit; anything git shows changed in the task's folder counts as work, as
+    submit reads it. Scenarios in "A member gives a task back from their machine", both drivers.
 
 ## 3. Eligibility and conflict of interest
 

@@ -931,6 +931,34 @@ export class Anarres {
     );
   }
 
+  /** What each member was told when they last gave a task back from their machine. */
+  private readonly givenBack = new Map<string, string>();
+
+  async memberWritesWork(member: string, task: Work) {
+    await this.driver.writeWork(
+      { ...this.aliased(task), project: this.project },
+      this.member(member),
+    );
+  }
+
+  async memberGivesBack(member: string, task: Work) {
+    this.givenBack.set(
+      `${member} ${workOn(this.aliased(task))}`,
+      await this.driver.giveBack(
+        { ...this.aliased(task), project: this.project },
+        this.member(member),
+      ),
+    );
+  }
+
+  async memberIsToldToHandOverFirst(member: string, task: Work) {
+    const told = this.givenBack.get(`${member} ${workOn(this.aliased(task))}`);
+    assert.ok(
+      told?.includes("hand it over"),
+      `expected ${member} to be told to hand over their work on the ${task.role} task for ${task.module} first; told ${JSON.stringify(told)}`,
+    );
+  }
+
   async memberReleases(member: string, task: Work) {
     await this.driver.release(
       { ...this.aliased(task), project: this.project },

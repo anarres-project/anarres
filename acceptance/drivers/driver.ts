@@ -188,6 +188,13 @@ export interface Driver {
     task: { project: string; role: string; module: string },
     member: string,
   ): Promise<{ workIn: string } | { refused: string }>;
+  /** The member writes work in the prepared task's folder on their machine, not yet submitted. */
+  writeWork(task: { project: string; role: string; module: string }, member: string): Promise<void>;
+  /** The member's plugin gives the task back through the CLI; gives what the member is told. */
+  giveBack(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<string>;
   /** The feedback signals in the task's folder on the member's machine: their work there. */
   workInFolder(
     task: { project: string; role: string; module: string },

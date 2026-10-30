@@ -10,7 +10,4 @@ member's lease on the task. The command checks the work as Divlab will before se
 and says what is wrong if it is not ready.
 
 If the member's allowance is running out before the work is done, hand it over instead of
-leaving it: write the feedback signal with `status: partial`, and under its header a handover
-note saying what is done, what is left, and anything the next member should know. Then submit
-as above, without `--draft`. Divlab merges what is there and posts the task again for someone
-to continue (decision 0008).
+leaving it.

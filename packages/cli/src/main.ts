@@ -12,6 +12,7 @@ import {
   describeOffers,
   describeStatus,
   gitSteps,
+  giveBack,
   hookAnswer,
   memberStatus,
   preparation,
@@ -37,6 +38,18 @@ function taskFolderOf(cwd: string) {
   }
 }
 
+/** The work in a task's folder: what changed there, as git sees it, but the folder's own record. */
+function changedIn(folder: string): string[] {
+  return execFileSync(
+    "git",
+    ["-C", folder, "status", "--porcelain", "--untracked-files=all", "--no-renames"],
+    { encoding: "utf8" },
+  )
+    .split("\n")
+    .map((line) => line.slice(3))
+    .filter((path) => path !== "" && path !== TASK_RECORD);
+}
+
 /**
  * The `anarres` command the plugin calls. It wires the CLI to GitHub, with the member's own
  * GitHub CLI login, and nothing more; what it offers is decided in `askForWork`, and claiming in
@@ -51,14 +64,14 @@ if (command === "hook") {
   if (answer) console.log(JSON.stringify(answer));
   process.exit(0);
 }
-const TAKES_A_TASK = ["claim", "prepare", "resume", "submit"];
+const TAKES_A_TASK = ["claim", "prepare", "release", "resume", "submit"];
 if (
   command !== "next" &&
   command !== "status" &&
   !(command && TAKES_A_TASK.includes(command) && named)
 ) {
   console.error(
-    "Usage: anarres next | anarres status | anarres claim|prepare|resume|submit project#number (submit: --draft too)",
+    "Usage: anarres next | anarres status | anarres claim|prepare|release|resume|submit project#number (submit: --draft too)",
   );
   process.exit(2);
 }
@@ -178,6 +191,19 @@ try {
     );
     process.exit("refused" in resumed ? 1 : 0);
   }
+  if (command === "release" && named) {
+    const task = taskNamed(named);
+    if (task === undefined) {
+      console.log(`Name the task as the offers do, project#number: ${named} is not one.`);
+      process.exit(1);
+    }
+    // Work done here, if the task was prepared on this machine, is handed over, not left behind.
+    const folder = taskFolder(task);
+    const changed = existsSync(join(folder, TASK_RECORD)) ? changedIn(folder) : [];
+    const said = await giveBack(task, changed, github);
+    console.log(said);
+    process.exit(said.startsWith("Not given back") ? 1 : 0);
+  }
   if (command === "submit" && named) {
     const task = taskNamed(named);
     const folder = task && taskFolder(task);
@@ -187,16 +213,10 @@ try {
       console.log(`Not submitted: ${named} has no prepared folder here; prepare it first.`);
       process.exit(1);
     }
-    // The work: what changed in the task's folder, as git sees it, but the folder's own record.
-    const changed = execFileSync(
-      "git",
-      ["-C", folder, "status", "--porcelain", "--untracked-files=all", "--no-renames"],
-      { encoding: "utf8" },
-    )
-      .split("\n")
-      .map((line) => line.slice(3))
-      .filter((path) => path !== "" && path !== TASK_RECORD)
-      .map((path) => ({ path, text: readFileSync(join(folder, path), "utf8") }));
+    const changed = changedIn(folder).map((path) => ({
+      path,
+      text: readFileSync(join(folder, path), "utf8"),
+    }));
     const draft = process.argv.includes("--draft");
     console.log(
       await submit(

@@ -17,8 +17,11 @@ const ACCOUNT_NAME = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/;
 /** The comment a member makes to claim a task, exactly: their CLI writes it, Divlab reads it. */
 export const CLAIM = "/claim";
 
+/** The comment a member makes to give a task back, exactly: their CLI writes it, Divlab reads it. */
+export const RELEASE = "/release";
+
 /** Whether a comment is a release: exactly the release command, nothing more. */
-const isRelease = (text: unknown): boolean => text === "/release";
+const isRelease = (text: unknown): boolean => text === RELEASE;
 
 /** A commit as GitHub names one: 40 lower-case hexadecimal digits. */
 const COMMIT = /^[0-9a-f]{40}$/;

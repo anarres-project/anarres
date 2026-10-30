@@ -77,4 +77,14 @@ describe("the Anarres plugin, as members install it (concept §10)", () => {
       );
     });
   });
+
+  describe("its release skill, /anarres:release", () => {
+    it("may run two things without asking: the bundled CLI's release and submit", () => {
+      const skill = repositoryFile("plugin/skills/release/SKILL.md");
+      const frontmatter = parse(skill.split("---")[1] ?? "");
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: Claude Code's placeholder, literally.
+      const cli = "node ${CLAUDE_PLUGIN_ROOT}/cli/anarres.js";
+      expect(frontmatter["allowed-tools"]).toBe(`Bash(${cli} release *) Bash(${cli} submit *)`);
+    });
+  });
 });

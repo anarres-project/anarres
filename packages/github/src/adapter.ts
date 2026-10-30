@@ -26,7 +26,7 @@ import type {
   RoutingEvent,
   TaskBoard,
 } from "@anarres/divlab";
-import { CLAIM } from "@anarres/divlab";
+import { CLAIM, RELEASE } from "@anarres/divlab";
 import { strFromU8, unzipSync } from "fflate";
 import { MERGE_IN_PROGRESS } from "./rate-limits.ts";
 import {
@@ -415,6 +415,10 @@ export class GitHubAdapter
   /** The member's claim: Divlab's claim comment on the task's issue, made as the member. */
   async askToClaim(project: string, task: string): Promise<void> {
     await this.call("POST", `${this.repo(project)}/issues/${task}/comments`, { body: CLAIM });
+  }
+
+  async askToRelease(project: string, task: string): Promise<void> {
+    await this.call("POST", `${this.repo(project)}/issues/${task}/comments`, { body: RELEASE });
   }
 
   /** The account the token acts as: the member, when it is the member's own login. */

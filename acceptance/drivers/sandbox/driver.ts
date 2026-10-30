@@ -15,6 +15,7 @@ import {
   claim,
   contributions,
   gitSteps,
+  giveBack,
   memberStatus,
   preparation,
   restoreDraft,
@@ -24,7 +25,7 @@ import {
   taskFolder,
   taskRecord,
 } from "@anarres/cli";
-import { TRUST_LEVELS, trustAllows } from "@anarres/core";
+import { TRUST_LEVELS, trustAllows, writeScope } from "@anarres/core";
 import {
   type LogEvent,
   type RoutingEvent,
@@ -1383,6 +1384,44 @@ export class SandboxDriver implements Driver {
       }
       await new Promise((resolve) => setTimeout(resolve, 3_000));
     }
+  }
+
+  /** A file of work in the role's own place, in the prepared task's folder on the machine. */
+  async writeWork(task: { project: string; role: string; module: string }, member: string) {
+    const id = this.preparedIssues.get(`${member} ${task.role} ${task.module}`);
+    if (id === undefined || this.machine === undefined) {
+      throw new Error(`${member} has not prepared the ${task.role} task for ${task.module}`);
+    }
+    const place = join(
+      this.machine,
+      taskFolder({ project: task.project, task: id }),
+      writeScope(roleId(task.role), task.module),
+    );
+    mkdirSync(place, { recursive: true });
+    writeFileSync(join(place, "work.md"), "So far.\n");
+  }
+
+  /**
+   * The member's plugin gives the task back through the CLI, from the prepared task's folder on
+   * the machine: its work there is what git shows changed, as `anarres release` reads it.
+   */
+  async giveBack(task: { project: string; role: string; module: string }, member: string) {
+    const id = this.preparedIssues.get(`${member} ${task.role} ${task.module}`);
+    if (id === undefined || this.machine === undefined) {
+      throw new Error(`${member} has not prepared the ${task.role} task for ${task.module}`);
+    }
+    const folder = join(this.machine, taskFolder({ project: task.project, task: id }));
+    const changed = execFileSync(
+      "git",
+      ["-C", folder, "status", "--porcelain", "--untracked-files=all", "--no-renames"],
+      { encoding: "utf8" },
+    )
+      .split("\n")
+      .map((line) => line.slice(3))
+      .filter((path) => path !== "" && path !== TASK_RECORD);
+    return giveBack({ project: task.project, task: id }, changed, {
+      askToRelease: () => this.release(task, member),
+    });
   }
 
   /** The member comments to give the task back, and Divlab's run makes it ready again. */
