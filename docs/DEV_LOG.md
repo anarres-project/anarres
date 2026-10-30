@@ -1017,6 +1017,11 @@ governance scenarios run alone.
   refused as out of date (409), GitHub's read having given the version before the last
   scenario's write. The driver now reads again and makes its change on that, up to five times.
   Harness only.
+- The 8acd886 sandbox run: 98 of 107, in 88 minutes, two short of the job's limit. Every
+  governance scenario passed, so the governance file's writes held. The nine failures all fell
+  between 18:58 and 19:06, each "Divlab's run … did not finish": in that window Divlab's runs,
+  usually 15 to 20 seconds, took 2 to 4 minutes, waiting for GitHub's runners, and every one
+  succeeded. GitHub's slowness, as on 095293d, outlasting the driver's waits.
 
 ---
 

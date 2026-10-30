@@ -555,6 +555,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the claimed listing is judged stale, like the ready one, by what it shows: a task the
         driver saw claimed, and has not seen closed or freed since, missing from it;
   - [ ] seen to hold in the sandbox (only a runner delay shows it; it logs nothing yet).
+- [ ] 8acd886 (98 of 107): GitHub's runners slow for eight minutes (Divlab's runs 2 to 4
+      minutes, not 20 seconds) failed nine scenarios on the driver's wait for a run to finish.
+      Twice now (095293d too). Longer waits would hold the run nearer its 90-minute limit, which
+      it came within two minutes of: weigh both before changing either.
 - [ ] b1898b1, near the end of a slow run: "Divlab neither merged nor refused" a Reviewer task's
       pull request while its Divlab run sat in progress for 6 minutes, and "Divlab did not act
       on the claim" of the next. Not seen in f12fb4f's run (93 of 93, 58 minutes); if they
