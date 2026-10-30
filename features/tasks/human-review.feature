@@ -49,3 +49,15 @@ Feature: Human review where PDC coordinators require it
     And a member submits Architecture work on "lexer" with a pass verdict
     Then Divlab has not merged the member's Architecture work on "parser"
     And PDC coordinators have been alerted once that the list of modules needing review cannot be read
+
+  # Not in the sandbox: GitHub runs the project's tests at once, and nothing holds them on cue.
+  @governance @sandbox-wip
+  Scenario: A reviewer who asks for changes after approving has withdrawn their approval
+    Given a project with a module "parser"
+    And PDC coordinators require a reviewer's approval for work on "parser"
+    And Carol is a trusted member
+    And a member submits Coding work on "parser" whose tests are still running
+    And Carol approves the member's Coding work on "parser"
+    And Carol asks for changes to the member's Coding work on "parser"
+    When the project's tests pass on the member's Coding work on "parser"
+    Then Divlab has not merged the member's Coding work on "parser"

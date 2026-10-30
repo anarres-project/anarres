@@ -598,8 +598,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] an approval of an earlier commit does not count once the member has pushed since (unit;
         the in-process fake's pull requests keep one head, so no scenario pushes after one);
   - [x] the adapter reads GitHub's Approve reviews, every page, leaving out deleted accounts;
-  - [ ] a reviewer who approved and then asked for changes: whether their latest review should
-        decide (GitHub's own rule for a reviewer); today any approval of the commit counts;
+  - [x] a reviewer who approved and then asked for changes has withdrawn the approval: each
+        reviewer's latest review decides (Bernard, 2026-10-30; core's `approvalsStanding`; the
+        adapter gives every Approve and Request changes review; in-process only, as the
+        sandbox cannot hold a project's tests running);
+  - [ ] a review GitHub shows dismissed: the adapter now leaves it out, so the reviewer's
+        earlier review decides; GitHub's own rule is that a dismissed reviewer has none;
   - [x] Divlab acts when a review is given: the template's reviews workflow, run without
         secrets, starts Divlab's checks workflow on finishing, which acts on the open pull
         requests at the reviewed commit;

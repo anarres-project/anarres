@@ -412,13 +412,22 @@ export class InProcessDriver implements Driver {
     return this.github.unreadableReviewListAlerts(project);
   }
 
+  /** As an approval, asking for changes starts Divlab's checks run for the reviewed commit. */
+  async requestChanges(project: string, feedbackSignal: string, member: string): Promise<void> {
+    const pullRequest = this.github.pullRequestFor(project, feedbackSignal);
+    this.github.giveReview(pullRequest, member, "changes requested");
+    const { head } = await this.github.pullRequest(project, pullRequest);
+    await onChecked(project, head, this.github, this.github, this.github, this.clock);
+    await this.afterRun(project, { checked: "" });
+  }
+
   /**
    * The member approves the work's pull request. As on GitHub, the reviews workflow's finishing
    * starts Divlab's checks run for the reviewed commit.
    */
   async approve(project: string, feedbackSignal: string, member: string): Promise<void> {
     const pullRequest = this.github.pullRequestFor(project, feedbackSignal);
-    this.github.approve(pullRequest, member);
+    this.github.giveReview(pullRequest, member, "approved");
     const { head } = await this.github.pullRequest(project, pullRequest);
     await onChecked(project, head, this.github, this.github, this.github, this.clock);
     await this.afterRun(project, { checked: "" });

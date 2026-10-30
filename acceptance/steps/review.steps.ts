@@ -26,6 +26,13 @@ When(
   },
 );
 
+When(
+  "{word} asks for changes to the member's {role} work on {string}",
+  function (this: AnarresWorld, member: string, role: string, module: string) {
+    return this.anarres.memberAsksForChanges(member, { role, module });
+  },
+);
+
 Then(
   "the member is told their work waits for a reviewer's approval",
   function (this: AnarresWorld) {

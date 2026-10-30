@@ -9258,6 +9258,11 @@ function needsReview(file, project2, module) {
 function reviewListUnreadable(file) {
   return modulesNeedingReview(file) === "unreadable";
 }
+function approvalsStanding(reviews) {
+  const latest = /* @__PURE__ */ new Map();
+  for (const review of reviews) latest.set(review.reviewer, review);
+  return [...latest.values()].filter(({ verdict }) => verdict === "approved").map(({ reviewer, commit }) => ({ reviewer, commit }));
+}
 function approvalCounts(file, reviewer, work, history) {
   const member = memberFor(file, reviewer);
   if (member === memberFor(file, work.author)) return false;
@@ -10114,7 +10119,7 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
   }
   const governance = await pullRequests.governanceFile();
   const history = membersParts(governance, events);
-  const approved = (await pullRequests.approvals(project2, pullRequest)).some(
+  const approved = approvalsStanding(await pullRequests.reviews(project2, pullRequest)).some(
     ({ reviewer, commit }) => commit === head && approvalCounts(governance, reviewer, { author, module: signal.module }, history)
   );
   if (reviewListUnreadable(governance) && !await board.unreadableReviewListAlertOpen(project2)) {
@@ -11069,6 +11074,10 @@ var mainCommit = (listed) => ({
   author: listed.author?.login,
   signedByGitHub: listed.committer?.login === "web-flow" && listed.commit.verification?.verified === true
 });
+var VERDICTS = /* @__PURE__ */ new Map([
+  ["APPROVED", "approved"],
+  ["CHANGES_REQUESTED", "changes requested"]
+]);
 var GOVERNANCE_REPOSITORY = "anarres-project/anarres";
 var GOVERNANCE_FILE = "governance/members.json";
 var COMPARED_FILES = 300;
@@ -11730,7 +11739,7 @@ var GitHubAdapter = class {
     return { state: "finished", url: run.html_url, report: readTestReport(strFromU8(xml)) };
   }
   /** GitHub's Approve reviews of the pull request: who approved, and the commit they reviewed. */
-  async approvals(project2, pullRequest) {
+  async reviews(project2, pullRequest) {
     const reviews = [];
     for (let page = 1; ; page++) {
       const listed = await this.call(
@@ -11740,9 +11749,10 @@ var GitHubAdapter = class {
       reviews.push(...listed);
       if (listed.length < 100) break;
     }
-    return reviews.flatMap(
-      (review) => review.state === "APPROVED" && review.user ? [{ reviewer: review.user.login, commit: review.commit_id }] : []
-    );
+    return reviews.flatMap((review) => {
+      const verdict = VERDICTS.get(review.state);
+      return verdict && review.user ? [{ reviewer: review.user.login, commit: review.commit_id, verdict }] : [];
+    });
   }
   /** The reasons in Divlab's own refusals on the pull request: an App's comments, no one else's. */
   async refusalsGiven(project2, pullRequest) {

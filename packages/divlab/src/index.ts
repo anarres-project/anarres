@@ -1,5 +1,6 @@
 import {
   approvalCounts,
+  approvalsStanding,
   CONTRACTS,
   changedInputs,
   contractsOfModule,
@@ -16,6 +17,7 @@ import {
   outsideScope,
   type Part,
   PROGRAMME,
+  type Review,
   ROLE_NAMES,
   type Role,
   type RoutingRecord,
@@ -518,8 +520,8 @@ export interface PullRequests extends Members {
   modulesOnMain(project: string): Promise<string | undefined>;
   /** The project's modules.yaml at the commit, if it had one. */
   modulesAt(project: string, commit: string): Promise<string | undefined>;
-  /** Who approved the pull request with GitHub's own review, and the commit each approved. */
-  approvals(project: string, pullRequest: string): Promise<{ reviewer: string; commit: string }[]>;
+  /** The reviews given on a pull request, oldest first: who, of which commit, and their verdict. */
+  reviews(project: string, pullRequest: string): Promise<Review[]>;
   /** The test report the project's check wrote on the commit, once it has finished (0011). */
   testReport(
     project: string,
@@ -1040,7 +1042,7 @@ export async function onPullRequest(
   const governance = await pullRequests.governanceFile();
   const history = membersParts(governance, events);
   // An approval is of the commit reviewed: only one of the commit Divlab merges counts.
-  const approved = (await pullRequests.approvals(project, pullRequest)).some(
+  const approved = approvalsStanding(await pullRequests.reviews(project, pullRequest)).some(
     ({ reviewer, commit }) =>
       commit === head &&
       approvalCounts(governance, reviewer, { author, module: signal.module }, history),

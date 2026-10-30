@@ -29,6 +29,9 @@ coordinators say what needs it, what a requirement covers, who may approve, and 
   module, by the same rules as claiming (decision 0007).
 - **How:** GitHub's own pull request review, *Approve*, by the reviewer's account. GitHub ties an
   approval to the commit reviewed; it counts only for the commit Divlab merges.
+- **A reviewer's latest review decides** (Bernard, 2026-10-30), as GitHub has it: one who
+  approves and then asks for changes has withdrawn the approval until they approve again. A
+  comment decides nothing.
 
 ## Consequences
 

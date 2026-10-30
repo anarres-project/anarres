@@ -656,9 +656,9 @@ describe("acting on a pull request", () => {
       url: "https://github.com/commons/ledger/actions/runs/1",
     }),
     openAt: async () => [],
-    // PDC coordinators name no module for review, and nobody has approved anything.
+    // PDC coordinators name no module for review, and nobody has reviewed anything.
     governanceFile: async () => ({ members: {} }),
-    approvals: async () => [],
+    reviews: async () => [],
     refusalsGiven: async () => [],
     // Nothing on main changed since any task's inputs were pinned.
     changedOnMainSince: async () => [],
@@ -921,7 +921,7 @@ describe("acting on a pull request", () => {
     const unreviewed: PullRequests = {
       ...submitting(merged, [specificationPasses], refusals),
       governanceFile: async () => ({ members: {}, review: { ledger: ["parser"] } }),
-      approvals: async () => [],
+      reviews: async () => [],
     };
     await onPullRequest("ledger", "7", unreviewed, { ...held, post: async () => {} }, log, clock);
     expect([merged, refusals]).toEqual([
@@ -989,7 +989,7 @@ describe("acting on a pull request", () => {
         members: { carol: { level: "trusted" } },
         review: { ledger: ["parser"] },
       }),
-      approvals: async () => [{ reviewer: "carol", commit: "c0ffee" }],
+      reviews: async () => [{ reviewer: "carol", commit: "c0ffee", verdict: "approved" }],
     };
     await onPullRequest("ledger", "7", approved, { ...held, post: async () => {} }, log, clock);
     expect(merged).toEqual(["7"]);
@@ -1003,7 +1003,7 @@ describe("acting on a pull request", () => {
         members: { carol: { level: "trusted" } },
         review: { ledger: ["parser"] },
       }),
-      approvals: async () => [{ reviewer: "carol", commit: "ea51e5" }],
+      reviews: async () => [{ reviewer: "carol", commit: "ea51e5", verdict: "approved" }],
     };
     await onPullRequest(
       "ledger",
@@ -1024,7 +1024,7 @@ describe("acting on a pull request", () => {
         members: { carol: { level: "trusted" } },
         review: { ledger: ["parser"] },
       }),
-      approvals: async () => [{ reviewer: "carol", commit: "c0ffee" }],
+      reviews: async () => [{ reviewer: "carol", commit: "c0ffee", verdict: "approved" }],
     };
     const carolHolds: EventLog = {
       ...log,

@@ -1075,6 +1075,11 @@ export class SandboxDriver implements Driver {
     }
   }
 
+  async requestChanges(_project: string, _feedbackSignal: string, _member: string): Promise<void> {
+    // Its one scenario needs the project's tests held running, which the sandbox cannot do.
+    throw new HarnessNotYetBuilt("a member asking for changes through GitHub's review");
+  }
+
   /**
    * The member approves the work's pull request with GitHub's own review, as their account. The
    * project's reviews workflow runs, and Divlab's checks workflow on its finishing: the driver

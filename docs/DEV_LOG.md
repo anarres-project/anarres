@@ -973,6 +973,31 @@ governance scenarios run alone.
   own entry, taken out after; its count of routing alerts leaves this label out, as the other
   escalations that are not routing's. Protocol slip: the adapter's alert stub went in with its
   test, not after the test was run; it failed on its assertion all the same. Gate 867 and 147.
+- Bernard, 2026-10-30: a reviewer's latest review decides; asking for changes after approving
+  withdraws the approval (decision 0016 amended). It matters only while something else holds
+  the work, such as its tests still running. Acceptance: "A reviewer who asks for changes after
+  approving has withdrawn their approval", `@wip @governance @sandbox-wip`, red with
+  `NotYetImplemented` at the drivers.
+  RED:      withdraws a reviewer's approval once they ask for changes after it ->
+            `approvalsStanding is not a function`; with a stub keeping every approval, expected
+            [ { reviewer: 'carol', … }, … ] to deeply equal []
+  GREEN:    the same (hard-coded []).
+  RED:      keeps a reviewer's approval while it is their latest review -> expected [] to
+            deeply equal [ { reviewer: 'carol', …(1) } ]
+  GREEN:    the same (285 passed): each reviewer's latest review.
+  RED:      (none) leaves one reviewer's approval standing when another asks for changes ->
+            passed first run: keying by reviewer went in before a test asked for it. Seen to fail
+            with every review keyed alike; kept.
+  Divlab's port gives reviews, not approvals: the tests' stand-ins changed first (45 failing
+  where Divlab still asked for approvals), then the port, with core deciding (240 passed).
+  RED:      the reviews of a pull request are its Approve and Request changes reviews ->
+            `reviews is not a function`; renamed, expected [ { reviewer: 'carol', …(2) } ] to
+            deeply equal [ …, { reviewer: 'erin', … } ]
+  GREEN:    the same (222 passed in github).
+  REFACTOR: GitHub's states read through a Map, so only its two deciding states match.
+  The scenario passed; with core's rule put back to every approval counting it failed in its
+  Then, so it depends on the rule; it lost `@wip`. Protocol slip: one step held a GREEN change
+  and the next test. Gate 870 and 148.
 
 ---
 

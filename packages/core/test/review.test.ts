@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { approvalCounts, needsReview, reviewListUnreadable } from "../src/index.ts";
+import {
+  approvalCounts,
+  approvalsStanding,
+  needsReview,
+  reviewListUnreadable,
+} from "../src/index.ts";
 
 describe("whether work on a module needs a person's approval (decision 0016)", () => {
   it("does when PDC coordinators name the module, for its project, in the governance file", () => {
@@ -83,5 +88,31 @@ describe("whether a person's approval of work counts (decision 0016)", () => {
     const file = { members: { carol: { level: "trusted" } } };
     const history = [{ member: "carol", role: "research" as const, module: "parser" }];
     expect(approvalCounts(file, "carol", work, history)).toBe(true);
+  });
+});
+
+describe("the approvals that stand on a pull request: each reviewer's latest review decides", () => {
+  it("withdraws a reviewer's approval once they ask for changes after it", () => {
+    const reviews = [
+      { reviewer: "carol", commit: "c0ffee", verdict: "approved" as const },
+      { reviewer: "carol", commit: "c0ffee", verdict: "changes requested" as const },
+    ];
+    expect(approvalsStanding(reviews)).toEqual([]);
+  });
+
+  it("keeps a reviewer's approval while it is their latest review, whatever they said before", () => {
+    const reviews = [
+      { reviewer: "carol", commit: "c0ffee", verdict: "changes requested" as const },
+      { reviewer: "carol", commit: "c0ffee", verdict: "approved" as const },
+    ];
+    expect(approvalsStanding(reviews)).toEqual([{ reviewer: "carol", commit: "c0ffee" }]);
+  });
+
+  it("leaves one reviewer's approval standing when another asks for changes", () => {
+    const reviews = [
+      { reviewer: "carol", commit: "c0ffee", verdict: "approved" as const },
+      { reviewer: "dave", commit: "c0ffee", verdict: "changes requested" as const },
+    ];
+    expect(approvalsStanding(reviews)).toEqual([{ reviewer: "carol", commit: "c0ffee" }]);
   });
 });

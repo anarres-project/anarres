@@ -1,5 +1,6 @@
 import {
   MODULES_FILE,
+  type Review,
   readTestReport,
   readToolchain,
   TEST_REPORT_LIMIT,
@@ -87,6 +88,12 @@ const mainCommit = (listed: ListedCommit): MainCommit => ({
 });
 
 /** Where PDC coordinators keep members' trust levels and linked accounts (decision 0007). */
+/** The reviews that decide anything, by the state GitHub gives them (decision 0016). */
+const VERDICTS = new Map<string, Review["verdict"]>([
+  ["APPROVED", "approved"],
+  ["CHANGES_REQUESTED", "changes requested"],
+]);
+
 const GOVERNANCE_REPOSITORY = "anarres-project/anarres";
 const GOVERNANCE_FILE = "governance/members.json";
 
@@ -929,10 +936,7 @@ export class GitHubAdapter
   }
 
   /** GitHub's Approve reviews of the pull request: who approved, and the commit they reviewed. */
-  async approvals(
-    project: string,
-    pullRequest: string,
-  ): Promise<{ reviewer: string; commit: string }[]> {
+  async reviews(project: string, pullRequest: string): Promise<Review[]> {
     const reviews: { user: { login: string } | null; state: string; commit_id: string }[] = [];
     for (let page = 1; ; page++) {
       const listed = await this.call<typeof reviews>(
@@ -942,11 +946,13 @@ export class GitHubAdapter
       reviews.push(...listed);
       if (listed.length < 100) break;
     }
-    return reviews.flatMap((review) =>
-      review.state === "APPROVED" && review.user
-        ? [{ reviewer: review.user.login, commit: review.commit_id }]
-        : [],
-    );
+    return reviews.flatMap((review) => {
+      // A comment decides nothing; a deleted account's review has no reviewer to judge.
+      const verdict = VERDICTS.get(review.state);
+      return verdict && review.user
+        ? [{ reviewer: review.user.login, commit: review.commit_id, verdict }]
+        : [];
+    });
   }
 
   /** The reasons in Divlab's own refusals on the pull request: an App's comments, no one else's. */

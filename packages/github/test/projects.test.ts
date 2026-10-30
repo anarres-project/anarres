@@ -314,8 +314,8 @@ describe("a member's claim, from their CLI", () => {
   });
 });
 
-describe("approvals of a member's pull request (decision 0016)", () => {
-  it("are GitHub's Approve reviews, each by its reviewer for the commit reviewed", async () => {
+describe("the reviews of a member's pull request (decision 0016)", () => {
+  it("are GitHub's Approve and Request changes reviews, each by its reviewer for the commit reviewed, oldest first", async () => {
     const adapter = new GitHubAdapter({
       owner: "commons",
       token: "test",
@@ -331,8 +331,9 @@ describe("approvals of a member's pull request (decision 0016)", () => {
             }
           : { status: 200, data: [] as T },
     });
-    expect(await adapter.approvals("ledger", "7")).toEqual([
-      { reviewer: "carol", commit: "c0ffee" },
+    expect(await adapter.reviews("ledger", "7")).toEqual([
+      { reviewer: "carol", commit: "c0ffee", verdict: "approved" },
+      { reviewer: "erin", commit: "c0ffee", verdict: "changes requested" },
     ]);
   });
 
@@ -352,8 +353,8 @@ describe("approvals of a member's pull request (decision 0016)", () => {
         return { status: 200, data: (pages[page ?? ""] ?? []) as T };
       },
     });
-    expect(await adapter.approvals("ledger", "7")).toEqual([
-      { reviewer: "carol", commit: "c0ffee" },
+    expect(await adapter.reviews("ledger", "7")).toEqual([
+      { reviewer: "carol", commit: "c0ffee", verdict: "approved" },
     ]);
   });
 
@@ -366,7 +367,7 @@ describe("approvals of a member's pull request (decision 0016)", () => {
           ? { status: 200, data: [{ user: null, state: "APPROVED", commit_id: "c0ffee" }] as T }
           : { status: 200, data: [] as T },
     });
-    expect(await adapter.approvals("ledger", "7")).toEqual([]);
+    expect(await adapter.reviews("ledger", "7")).toEqual([]);
   });
 });
 

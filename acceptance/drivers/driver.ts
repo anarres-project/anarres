@@ -226,6 +226,8 @@ export interface Driver {
   unreadableReviewListAlerts(project: string): Promise<number>;
   /** The member approves the pull request of the work with that feedback signal. */
   approve(project: string, feedbackSignal: string, member: string): Promise<void>;
+  /** The member asks for changes to the pull request of the work with that feedback signal. */
+  requestChanges(project: string, feedbackSignal: string, member: string): Promise<void>;
   /** PDC coordinators link a second account to a member in the governance file. */
   linkAccount(member: string, account: string): Promise<void>;
   /** Divlab's clock moves on, as time passes for a project. */

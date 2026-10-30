@@ -17,6 +17,25 @@ export function reviewListUnreadable(file: unknown): boolean {
   return modulesNeedingReview(file) === "unreadable";
 }
 
+/** A review given on a pull request: of a commit, approving it or asking for changes. */
+export type Review = {
+  reviewer: string;
+  commit: string;
+  verdict: "approved" | "changes requested";
+};
+
+/** The approvals still standing on a pull request, from its reviews oldest first. */
+export function approvalsStanding(
+  reviews: readonly Review[],
+): { reviewer: string; commit: string }[] {
+  // As GitHub has it: a reviewer's latest review is the one that stands.
+  const latest = new Map<string, Review>();
+  for (const review of reviews) latest.set(review.reviewer, review);
+  return [...latest.values()]
+    .filter(({ verdict }) => verdict === "approved")
+    .map(({ reviewer, commit }) => ({ reviewer, commit }));
+}
+
 /** Whether a person's approval of work counts towards merging it. */
 export function approvalCounts(
   file: unknown,

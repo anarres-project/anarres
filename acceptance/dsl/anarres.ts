@@ -715,6 +715,16 @@ export class Anarres {
     await this.driver.approve(this.project, feedbackSignal, this.member(member));
   }
 
+  /** The member asks for changes to the pull request of the work, with GitHub's review. */
+  async memberAsksForChanges(member: string, work: Work) {
+    const feedbackSignal = this.feedbackSignals.get(workOn(this.aliased(work)));
+    assert.ok(
+      feedbackSignal !== undefined,
+      `expected ${work.role} work on ${work.module} submitted`,
+    );
+    await this.driver.requestChanges(this.project, feedbackSignal, this.member(member));
+  }
+
   async memberIsTrusted(member: string, level: string) {
     await this.driver.setTrustLevel(this.member(member), level);
   }

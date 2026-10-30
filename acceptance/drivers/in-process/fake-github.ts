@@ -1,4 +1,4 @@
-import { MODULES_FILE } from "@anarres/core";
+import { MODULES_FILE, type Review } from "@anarres/core";
 import type {
   ChangedOnMain,
   ChangeNotByDivlab,
@@ -620,16 +620,18 @@ export class FakeGitHub
       : { members: this.trustLevels, review: this.review };
   }
 
-  /** GitHub's Approve reviews, by pull request: each of the commit it was at when reviewed. */
-  private readonly approved = new Map<string, { reviewer: string; commit: string }[]>();
+  /** GitHub's reviews, by pull request: each of the commit it was at when reviewed. */
+  private readonly reviewed = new Map<string, Review[]>();
 
-  approve(pullRequest: string, reviewer: string): void {
-    const given = this.approved.get(pullRequest) ?? [];
-    this.approved.set(pullRequest, [...given, { reviewer, commit: `head-of-${pullRequest}` }]);
+  /** The reviewer's review of the pull request's head, as GitHub keeps it: oldest first. */
+  giveReview(pullRequest: string, reviewer: string, verdict: Review["verdict"]): void {
+    const given = this.reviewed.get(pullRequest) ?? [];
+    const review = { reviewer, commit: `head-of-${pullRequest}`, verdict };
+    this.reviewed.set(pullRequest, [...given, review]);
   }
 
-  async approvals(_project: string, pullRequest: string) {
-    return this.approved.get(pullRequest) ?? [];
+  async reviews(_project: string, pullRequest: string): Promise<Review[]> {
+    return this.reviewed.get(pullRequest) ?? [];
   }
 
   /** Every open task, whether ready or claimed. */

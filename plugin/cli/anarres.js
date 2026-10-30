@@ -10305,6 +10305,10 @@ var mainCommit = (listed) => ({
   author: listed.author?.login,
   signedByGitHub: listed.committer?.login === "web-flow" && listed.commit.verification?.verified === true
 });
+var VERDICTS = /* @__PURE__ */ new Map([
+  ["APPROVED", "approved"],
+  ["CHANGES_REQUESTED", "changes requested"]
+]);
 var GOVERNANCE_REPOSITORY = "anarres-project/anarres";
 var GOVERNANCE_FILE = "governance/members.json";
 var COMPARED_FILES = 300;
@@ -10966,7 +10970,7 @@ var GitHubAdapter = class {
     return { state: "finished", url: run.html_url, report: readTestReport(strFromU8(xml)) };
   }
   /** GitHub's Approve reviews of the pull request: who approved, and the commit they reviewed. */
-  async approvals(project, pullRequest) {
+  async reviews(project, pullRequest) {
     const reviews = [];
     for (let page = 1; ; page++) {
       const listed = await this.call(
@@ -10976,9 +10980,10 @@ var GitHubAdapter = class {
       reviews.push(...listed);
       if (listed.length < 100) break;
     }
-    return reviews.flatMap(
-      (review) => review.state === "APPROVED" && review.user ? [{ reviewer: review.user.login, commit: review.commit_id }] : []
-    );
+    return reviews.flatMap((review) => {
+      const verdict = VERDICTS.get(review.state);
+      return verdict && review.user ? [{ reviewer: review.user.login, commit: review.commit_id, verdict }] : [];
+    });
   }
   /** The reasons in Divlab's own refusals on the pull request: an App's comments, no one else's. */
   async refusalsGiven(project, pullRequest) {
