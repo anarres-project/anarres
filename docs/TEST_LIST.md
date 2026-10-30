@@ -535,8 +535,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       (Bernard, 2026-10-29).
 - [ ] 095293d: a step that gives up waiting on Divlab (a runner queued 8 minutes) leaves the
       sandbox driver's counts of its worker's listings wrong for every later scenario there, as a
-      settled listing is judged by its count: the claimed listing should, like the ready one, be
-      judged stale by what it shows (a task seen claimed missing), not by its count alone.
+      settled listing is judged by its count:
+  - [x] the claimed listing is judged stale, like the ready one, by what it shows: a task the
+        driver saw claimed, and has not seen closed or freed since, missing from it;
+  - [ ] seen to hold in the sandbox (only a runner delay shows it; it logs nothing yet).
 - [ ] b1898b1, near the end of a slow run: "Divlab neither merged nor refused" a Reviewer task's
       pull request while its Divlab run sat in progress for 6 minutes, and "Divlab did not act
       on the claim" of the next. Not seen in f12fb4f's run (93 of 93, 58 minutes); if they

@@ -872,6 +872,9 @@ governance scenarios run alone.
   than it expected from then on, and every later scenario there took a stale list as settled
   (the four `@governance` eligibility scenarios, each failing with no claim seen though GitHub
   shows each claimed within seconds). The give-back scenarios passed.
+  The driver now keeps the tasks it saw claimed, and a claimed listing missing one is not yet
+  settled, whatever its count; a task Divlab gave after the driver stopped waiting then only
+  slows the later checks to the listing's deadline, rather than failing them. Harness only.
 
 ---
 

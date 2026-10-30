@@ -581,6 +581,7 @@ export class SandboxDriver implements Driver {
     if (task) {
       expected[listing] -= 1;
       run.closed.add(issueKey(project, task.number));
+      run.held.delete(issueKey(project, task.number));
     }
     const { decision } = event;
     if ("tasks" in decision) expected.ready += decision.tasks.length;
@@ -813,6 +814,7 @@ export class SandboxDriver implements Driver {
     expected.ready -= 1;
     expected.claimed += 1;
     run.closed.add(issueKey(task.project, issue.number));
+    run.held.add(issueKey(task.project, issue.number));
   }
 
   /** The project's open task for that role and module, ready or claimed. */
@@ -919,6 +921,7 @@ export class SandboxDriver implements Driver {
     expected.ready -= 1;
     expected.claimed += 1;
     run.closed.add(issueKey(task.project, issue.number));
+    run.held.add(issueKey(task.project, issue.number));
   }
 
   /** The log's claims, each with the role and module of the task issue it names. */
@@ -978,6 +981,7 @@ export class SandboxDriver implements Driver {
     expected.ready -= 1;
     expected.claimed += 1;
     run.closed.add(issueKey(task.project, issue.number));
+    run.held.add(issueKey(task.project, issue.number));
     this.claimedBehindDivlab.push(issue.number);
   }
 
@@ -1027,6 +1031,7 @@ export class SandboxDriver implements Driver {
         await this.asDivlab.close(task.project, String(issue.number));
         expected[listing] -= 1;
         run.closed.add(issueKey(task.project, issue.number));
+        run.held.delete(issueKey(task.project, issue.number));
       }
     }
     await this.asDivlab.post({
@@ -1382,6 +1387,7 @@ export class SandboxDriver implements Driver {
       expected.ready += 1;
       expected.claimedWithoutClaim += 1;
       run.closed.delete(issueKey(project, number));
+      run.held.delete(issueKey(project, number));
     }
   }
 
@@ -1537,6 +1543,7 @@ export class SandboxDriver implements Driver {
     expected.claimed -= 1;
     expected.ready += 1;
     run.closed.delete(issueKey(task.project, issue.number));
+    run.held.delete(issueKey(task.project, issue.number));
   }
 
   async claimedTasks(project: string): Promise<ClaimedTask[]> {
@@ -1756,17 +1763,22 @@ export class SandboxDriver implements Driver {
 
   /**
    * The issues in a listing, once GitHub shows as many as Divlab's event log says it should and,
-   * for ready tasks, none Divlab has closed. A count alone is not enough: a lagging list can show
-   * a closed task in place of the one that replaced it.
+   * for ready tasks, none Divlab has closed, and for claimed ones, each the driver saw claimed. A
+   * count alone is not enough: a lagging list can show a closed task in place of the one that
+   * replaced it, and a task Divlab gave after a step stopped waiting puts the count out.
    */
   private async settled(project: string, listing: Listing): Promise<Issue[]> {
     const [label, state] = LISTINGS[listing];
     const deadline = Date.now() + LISTS_CATCH_UP_LIMIT;
     for (;;) {
       const issues = await this.issues(project, label, state);
+      const shown = new Set(issues.map((issue) => issueKey(project, issue.number)));
+      // A lagging list can show a closed task in place of a new one: by its count it looks right.
       const stale =
-        listing === "ready" &&
-        issues.some((issue) => run.closed.has(issueKey(project, issue.number)));
+        listing === "ready"
+          ? [...shown].some((key) => run.closed.has(key))
+          : listing === "claimed" &&
+            [...run.held].some((key) => key.startsWith(`${project}#`) && !shown.has(key));
       if (
         (issues.length === this.expectedFor(project)[listing] && !stale) ||
         Date.now() > deadline
@@ -1945,6 +1957,8 @@ const run = {
   expected: new Map<string, Record<Listing, number>>(),
   /** The tasks merged work has closed or members have claimed, which a lagging list may still show as ready. */
   closed: new Set<string>(),
+  /** The tasks the driver has seen claimed and not since closed or freed: a claimed list shows them. */
+  held: new Set<string>(),
   /** Each sandbox account's login, by its token. */
   logins: new Map<string, string>(),
   /** The pull requests members' work was submitted in. */
