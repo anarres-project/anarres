@@ -35,3 +35,4 @@ jobs:
         with:
           token: ${{ steps.app.outputs.token }}
           app: ${{ steps.app.outputs.app-slug }}
+          governance: ${{ vars.ANARRES_GOVERNANCE }}

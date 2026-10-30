@@ -875,6 +875,20 @@ governance scenarios run alone.
   The driver now keeps the tasks it saw claimed, and a claimed listing missing one is not yet
   settled, whatever its count; a task Divlab gave after the driver stopped waiting then only
   slows the later checks to the listing's deadline, rather than failing them. Harness only.
+- The 9a34128 sandbox run (human review): 103 of 106, in 77 minutes. "Work on a module PDC
+  coordinators require reviewed waits for a reviewer's approval" failed: Divlab merged it. Only
+  the claim workflow told Divlab which governance file the organisation keeps; the pull request
+  and checks workflows did not, so in the sandbox Divlab read Anarres's own, which names no module
+  for review. "Merged once a trusted member approves it" passed for the same wrong reason. A
+  project of Anarres's own reads that file anyway, but the sandbox was not testing what it said.
+  The other two failures were claims missing from a stale claimed listing, which 9def4dc's
+  harness fix covers.
+  RED:      each of the project template's Divlab workflows tells Divlab where the organisation
+            keeps its governance file -> for the pull request, push, lease and checks
+            workflows, expected undefined to be '${{ vars.ANARRES_GOVERNANCE }}'
+  GREEN:    the same (54 passed): every Divlab workflow names it.
+  REFACTOR: the claim workflow's own test of it removed, now said once for every workflow.
+  Gate 852 and 145.
 
 ---
 

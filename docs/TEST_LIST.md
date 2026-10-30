@@ -590,6 +590,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the sandbox driver: its projects get the reviews workflow, it names a module for review
         in the sandbox's governance file and puts it back (`@governance`), and approves as a
         member account through GitHub's API;
+  - [x] every Divlab workflow tells Divlab the organisation's governance file (9a34128's run:
+        the pull request and checks workflows read Anarres's own, so the sandbox merged work
+        needing review);
   - [ ] the sandbox shows them (a member's review of a fork's pull request wakes Divlab through
         the reviews workflow, as GitHub runs it).
 - [x] A new project's main branch can be changed only by Divlab (`setUpProject`; a ruleset is a
