@@ -31,7 +31,7 @@ coordinators say what needs it, what a requirement covers, who may approve, and 
   approval to the commit reviewed; it counts only for the commit Divlab merges.
 - **A reviewer's latest review decides** (Bernard, 2026-10-30), as GitHub has it: one who
   approves and then asks for changes has withdrawn the approval until they approve again. A
-  comment decides nothing.
+  comment decides nothing; a review dismissed on GitHub withdraws what it said.
 
 ## Consequences
 

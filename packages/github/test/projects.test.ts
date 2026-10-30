@@ -358,6 +358,23 @@ describe("the reviews of a member's pull request (decision 0016)", () => {
     ]);
   });
 
+  it("include one dismissed since, which withdraws what it said", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) =>
+        method === "GET" && path === "repos/commons/ledger/pulls/7/reviews?per_page=100&page=1"
+          ? {
+              status: 200,
+              data: [{ user: { login: "carol" }, state: "DISMISSED", commit_id: "c0ffee" }] as T,
+            }
+          : { status: 200, data: [] as T },
+    });
+    expect(await adapter.reviews("ledger", "7")).toEqual([
+      { reviewer: "carol", commit: "c0ffee", verdict: "dismissed" },
+    ]);
+  });
+
   it("leave out an approval by an account since deleted: GitHub gives no reviewer", async () => {
     const adapter = new GitHubAdapter({
       owner: "commons",

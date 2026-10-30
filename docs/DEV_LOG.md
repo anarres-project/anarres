@@ -998,6 +998,14 @@ governance scenarios run alone.
   The scenario passed; with core's rule put back to every approval counting it failed in its
   Then, so it depends on the rule; it lost `@wip`. Protocol slip: one step held a GREEN change
   and the next test. Gate 870 and 148.
+- A dismissed review.
+  RED:      (none) core withdraws a reviewer's approval once their latest review was dismissed
+            -> passed at run time, the rule keeping only approvals; it failed to typecheck, as
+            a review could not be dismissed. The type allows it now.
+  RED:      the adapter includes a review dismissed since -> expected [] to deeply equal
+            [ { reviewer: 'carol', …(2) } ]
+  GREEN:    the same (872 passed in the gate).
+  Protocol slip: the type change went in with the adapter's test. Gate 872 and 148.
 
 ---
 

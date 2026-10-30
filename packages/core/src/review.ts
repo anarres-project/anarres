@@ -17,11 +17,11 @@ export function reviewListUnreadable(file: unknown): boolean {
   return modulesNeedingReview(file) === "unreadable";
 }
 
-/** A review given on a pull request: of a commit, approving it or asking for changes. */
+/** A review given on a pull request: of a commit, approving it, asking for changes, or dismissed. */
 export type Review = {
   reviewer: string;
   commit: string;
-  verdict: "approved" | "changes requested";
+  verdict: "approved" | "changes requested" | "dismissed";
 };
 
 /** The approvals still standing on a pull request, from its reviews oldest first. */

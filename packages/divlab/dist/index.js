@@ -11076,7 +11076,8 @@ var mainCommit = (listed) => ({
 });
 var VERDICTS = /* @__PURE__ */ new Map([
   ["APPROVED", "approved"],
-  ["CHANGES_REQUESTED", "changes requested"]
+  ["CHANGES_REQUESTED", "changes requested"],
+  ["DISMISSED", "dismissed"]
 ]);
 var GOVERNANCE_REPOSITORY = "anarres-project/anarres";
 var GOVERNANCE_FILE = "governance/members.json";

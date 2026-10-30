@@ -115,4 +115,12 @@ describe("the approvals that stand on a pull request: each reviewer's latest rev
     ];
     expect(approvalsStanding(reviews)).toEqual([{ reviewer: "carol", commit: "c0ffee" }]);
   });
+
+  it("withdraws a reviewer's approval once their latest review was dismissed", () => {
+    const reviews = [
+      { reviewer: "carol", commit: "c0ffee", verdict: "approved" as const },
+      { reviewer: "carol", commit: "c0ffee", verdict: "dismissed" as const },
+    ];
+    expect(approvalsStanding(reviews)).toEqual([]);
+  });
 });

@@ -602,8 +602,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         reviewer's latest review decides (Bernard, 2026-10-30; core's `approvalsStanding`; the
         adapter gives every Approve and Request changes review; in-process only, as the
         sandbox cannot hold a project's tests running);
-  - [ ] a review GitHub shows dismissed: the adapter now leaves it out, so the reviewer's
-        earlier review decides; GitHub's own rule is that a dismissed reviewer has none;
+  - [x] a review GitHub shows dismissed withdraws what it said, as GitHub has it: the adapter
+        gives it, and it is the reviewer's latest review;
   - [x] Divlab acts when a review is given: the template's reviews workflow, run without
         secrets, starts Divlab's checks workflow on finishing, which acts on the open pull
         requests at the reviewed commit;

@@ -88,10 +88,12 @@ const mainCommit = (listed: ListedCommit): MainCommit => ({
 });
 
 /** Where PDC coordinators keep members' trust levels and linked accounts (decision 0007). */
-/** The reviews that decide anything, by the state GitHub gives them (decision 0016). */
+/** The reviews that decide anything, by the state GitHub gives them (decision 0016): a dismissed
+ * one withdraws what it said. */
 const VERDICTS = new Map<string, Review["verdict"]>([
   ["APPROVED", "approved"],
   ["CHANGES_REQUESTED", "changes requested"],
+  ["DISMISSED", "dismissed"],
 ]);
 
 const GOVERNANCE_REPOSITORY = "anarres-project/anarres";
