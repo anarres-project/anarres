@@ -1,10 +1,11 @@
 name: Divlab (checks)
 
 # Divlab acts again on members' Coding work once the project's own tests have finished on it
-# (decision 0010): it reads the check's result, and runs none of the project's code.
+# (decision 0010): it reads the check's result, and runs none of the project's code. It acts
+# again too once someone has given a review, for work PDC coordinators require approved (0016).
 on:
   workflow_run:
-    workflows: [Project checks]
+    workflows: [Project checks, Project reviews]
     types: [completed]
 
 # The workflow's own token gets nothing: Divlab acts only with its App's token.

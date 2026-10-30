@@ -314,6 +314,62 @@ describe("a member's claim, from their CLI", () => {
   });
 });
 
+describe("approvals of a member's pull request (decision 0016)", () => {
+  it("are GitHub's Approve reviews, each by its reviewer for the commit reviewed", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) =>
+        method === "GET" && path === "repos/commons/ledger/pulls/7/reviews?per_page=100&page=1"
+          ? {
+              status: 200,
+              data: [
+                { user: { login: "carol" }, state: "APPROVED", commit_id: "c0ffee" },
+                { user: { login: "dave" }, state: "COMMENTED", commit_id: "c0ffee" },
+                { user: { login: "erin" }, state: "CHANGES_REQUESTED", commit_id: "c0ffee" },
+              ] as T,
+            }
+          : { status: 200, data: [] as T },
+    });
+    expect(await adapter.approvals("ledger", "7")).toEqual([
+      { reviewer: "carol", commit: "c0ffee" },
+    ]);
+  });
+
+  it("are read from every page, past GitHub's 100 at once", async () => {
+    const comment = { user: { login: "dave" }, state: "COMMENTED", commit_id: "c0ffee" };
+    const pages: Record<string, unknown[]> = {
+      "1": Array.from({ length: 100 }, () => comment),
+      "2": [{ user: { login: "carol" }, state: "APPROVED", commit_id: "c0ffee" }],
+    };
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, _method: string, path: string) => {
+        const page = path.match(
+          /^repos\/commons\/ledger\/pulls\/7\/reviews\?per_page=100&page=(\d+)$/,
+        )?.[1];
+        return { status: 200, data: (pages[page ?? ""] ?? []) as T };
+      },
+    });
+    expect(await adapter.approvals("ledger", "7")).toEqual([
+      { reviewer: "carol", commit: "c0ffee" },
+    ]);
+  });
+
+  it("leave out an approval by an account since deleted: GitHub gives no reviewer", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) =>
+        method === "GET" && path === "repos/commons/ledger/pulls/7/reviews?per_page=100&page=1"
+          ? { status: 200, data: [{ user: null, state: "APPROVED", commit_id: "c0ffee" }] as T }
+          : { status: 200, data: [] as T },
+    });
+    expect(await adapter.approvals("ledger", "7")).toEqual([]);
+  });
+});
+
 describe("a member giving a task back, from their CLI", () => {
   it("is the release comment Divlab reads, on the task's issue", async () => {
     const comments: unknown[] = [];

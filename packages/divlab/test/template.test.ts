@@ -14,6 +14,7 @@ const CLAIM_WORKFLOW = "divlab-claim.yml";
 const LEASE_WORKFLOW = "divlab-leases.yml";
 const CHECKS_WORKFLOW = "checks.yml";
 const CHECKED_WORKFLOW = "divlab-checks.yml";
+const REVIEWS_WORKFLOW = "reviews.yml";
 
 /** A GitHub Actions expression, as a workflow writes it. */
 const expression = (inside: string) => `\${{ ${inside} }}`;
@@ -169,9 +170,31 @@ describe("the project template's checks workflow (decision 0010)", () => {
 });
 
 describe("the project template's workflow for the project's checks finishing", () => {
-  it("runs when the project's checks workflow has finished, and on nothing else", () => {
+  it("runs when the project's checks or reviews workflow has finished, and on nothing else", () => {
     expect(templateWorkflow(CHECKED_WORKFLOW).on).toEqual({
-      workflow_run: { workflows: [templateWorkflow(CHECKS_WORKFLOW).name], types: ["completed"] },
+      workflow_run: {
+        workflows: [
+          templateWorkflow(CHECKS_WORKFLOW).name,
+          templateWorkflow(REVIEWS_WORKFLOW).name,
+        ],
+        types: ["completed"],
+      },
     });
+  });
+});
+
+describe("the project template's reviews workflow (decision 0016)", () => {
+  it("runs when someone gives a review on a pull request, and on nothing else", () => {
+    expect(templateWorkflow(REVIEWS_WORKFLOW).on).toEqual({
+      pull_request_review: { types: ["submitted"] },
+    });
+  });
+
+  it("gives the workflow's token nothing, and checks out and runs nothing of the pull request's", () => {
+    const workflow = templateWorkflow(REVIEWS_WORKFLOW);
+    expect(workflow.permissions).toEqual({});
+    expect(stepsOf(workflow)).toEqual([
+      { run: 'echo "A review was given. Divlab decides on the pull request next."' },
+    ]);
   });
 });

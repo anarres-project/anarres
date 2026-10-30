@@ -1,4 +1,5 @@
 import {
+  approvalCounts,
   CONTRACTS,
   changedInputs,
   contractsOfModule,
@@ -11,6 +12,7 @@ import {
   MODULES_FILE,
   mayTake,
   memberFor,
+  needsReview,
   outsideScope,
   type Part,
   PROGRAMME,
@@ -204,6 +206,10 @@ const parts = (events: readonly LogEvent[]): Part[] => [
   ...heldParts(events),
 ];
 
+/** Everyone's parts in the project, by member: accounts a PDC coordinator linked are one (§6). */
+const membersParts = (governance: unknown, events: readonly LogEvent[]): Part[] =>
+  parts(events).map((part) => ({ ...part, member: memberFor(governance, part.member) }));
+
 const heldParts = (events: readonly LogEvent[]): Part[] => {
   const held = new Map<string, Part>();
   for (const event of events) {
@@ -243,9 +249,8 @@ export interface Members {
  * one statement of it Divlab and the member's CLI both use.
  */
 export function eligibility(governance: unknown, events: readonly LogEvent[]) {
-  // Accounts a PDC coordinator linked are one member, for every rule (concept §6).
   const memberOf = (account: string) => memberFor(governance, account);
-  const history = parts(events).map((part) => ({ ...part, member: memberOf(part.member) }));
+  const history = membersParts(governance, events);
   return (account: string, task: { role: Role; module: string }) =>
     mayTake(
       { member: memberOf(account), role: task.role, module: task.module },
@@ -469,7 +474,7 @@ export type ChangeNotByDivlab = {
 /** The paths changed on main since a commit, or more than GitHub lists (decision 0015). */
 export type ChangedOnMain = string[] | { tooMany: true };
 
-export interface PullRequests {
+export interface PullRequests extends Members {
   /**
    * The pull request as it is now: the commit it is at, whether its member marked it a draft (work
    * under way, not finished), and who opened it, by GitHub's account name.
@@ -499,6 +504,8 @@ export interface PullRequests {
   modulesOnMain(project: string): Promise<string | undefined>;
   /** The project's modules.yaml at the commit, if it had one. */
   modulesAt(project: string, commit: string): Promise<string | undefined>;
+  /** Who approved the pull request with GitHub's own review, and the commit each approved. */
+  approvals(project: string, pullRequest: string): Promise<{ reviewer: string; commit: string }[]>;
   /** The test report the project's check wrote on the commit, once it has finished (0011). */
   testReport(
     project: string,
@@ -985,6 +992,23 @@ export async function onPullRequest(
       ];
       if (revised.length > 0) work = { ...work, contractsRevised: revised };
     }
+  }
+  // Work on a module PDC coordinators name is merged only once a person approves it (0016).
+  const governance = await pullRequests.governanceFile();
+  const history = membersParts(governance, events);
+  // An approval is of the commit reviewed: only one of the commit Divlab merges counts.
+  const approved = (await pullRequests.approvals(project, pullRequest)).some(
+    ({ reviewer, commit }) =>
+      commit === head &&
+      approvalCounts(governance, reviewer, { author, module: signal.module }, history),
+  );
+  if (needsReview(governance, project, signal.module) && !approved) {
+    await pullRequests.refuse(
+      project,
+      pullRequest,
+      `The work waits for a reviewer's approval: PDC coordinators require a person to approve work on ${signal.module} before it is merged, a trusted member or a PDC coordinator with no part in the module`,
+    );
+    return;
   }
   await log.append({
     project,

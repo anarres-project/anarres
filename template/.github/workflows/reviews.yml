@@ -1,0 +1,19 @@
+name: Project reviews
+
+# Someone has given a review on a pull request (decision 0016). For a member's pull request, from
+# a fork, GitHub runs this with no secrets, so it does nothing itself: its finishing starts
+# Divlab's checks workflow, which has the App's key and decides on the open pull requests at the
+# reviewed commit.
+on:
+  pull_request_review:
+    types: [submitted]
+
+# Nothing to read or write: the run only marks that a review was given.
+permissions: {}
+
+jobs:
+  reviewed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - run: echo "A review was given. Divlab decides on the pull request next."

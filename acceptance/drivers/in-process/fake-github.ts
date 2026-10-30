@@ -568,8 +568,30 @@ export class FakeGitHub
     this.trustLevels[member] = { ...record, linked: [...(record.linked ?? []), account] };
   }
 
+  /** The modules of each project PDC coordinators name as needing a person's approval. */
+  private readonly review: Record<string, string[]> = {};
+
+  requireReview(project: string, module: string): void {
+    this.review[project] = [...(this.review[project] ?? []), module];
+  }
+
   async governanceFile(): Promise<unknown> {
-    return { members: this.trustLevels };
+    // Until PDC coordinators name a module for review, the file has no list, as Anarres's has not.
+    return Object.keys(this.review).length === 0
+      ? { members: this.trustLevels }
+      : { members: this.trustLevels, review: this.review };
+  }
+
+  /** GitHub's Approve reviews, by pull request: each of the commit it was at when reviewed. */
+  private readonly approved = new Map<string, { reviewer: string; commit: string }[]>();
+
+  approve(pullRequest: string, reviewer: string): void {
+    const given = this.approved.get(pullRequest) ?? [];
+    this.approved.set(pullRequest, [...given, { reviewer, commit: `head-of-${pullRequest}` }]);
+  }
+
+  async approvals(_project: string, pullRequest: string) {
+    return this.approved.get(pullRequest) ?? [];
   }
 
   /** Every open task, whether ready or claimed. */

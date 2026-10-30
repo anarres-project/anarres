@@ -532,6 +532,9 @@ describe("acting on a pull request", () => {
       url: "https://github.com/commons/ledger/actions/runs/1",
     }),
     openAt: async () => [],
+    // PDC coordinators name no module for review, and nobody has approved anything.
+    governanceFile: async () => ({ members: {} }),
+    approvals: async () => [],
     // Nothing on main changed since any task's inputs were pinned.
     changedOnMainSince: async () => [],
     modulesOnMain: async () => undefined,
@@ -786,6 +789,88 @@ describe("acting on a pull request", () => {
       clock,
     );
     expect([merged, refusals]).toEqual([[], []]);
+  });
+
+  it("leaves work on a module PDC coordinators require reviewed unmerged, saying it waits for a reviewer", async () => {
+    const [merged, refusals]: string[][] = [[], []];
+    const unreviewed: PullRequests = {
+      ...submitting(merged, [specificationPasses], refusals),
+      governanceFile: async () => ({ members: {}, review: { ledger: ["parser"] } }),
+      approvals: async () => [],
+    };
+    await onPullRequest("ledger", "7", unreviewed, { ...held, post: async () => {} }, log, clock);
+    expect([merged, refusals]).toEqual([
+      [],
+      [
+        "7: The work waits for a reviewer's approval: PDC coordinators require a person to approve work on parser before it is merged, a trusted member or a PDC coordinator with no part in the module",
+      ],
+    ]);
+  });
+
+  it("merges work on a module PDC coordinators require reviewed once a trusted member approves its commit", async () => {
+    const merged: string[] = [];
+    const approved: PullRequests = {
+      ...submitting(merged),
+      governanceFile: async () => ({
+        members: { carol: { level: "trusted" } },
+        review: { ledger: ["parser"] },
+      }),
+      approvals: async () => [{ reviewer: "carol", commit: "c0ffee" }],
+    };
+    await onPullRequest("ledger", "7", approved, { ...held, post: async () => {} }, log, clock);
+    expect(merged).toEqual(["7"]);
+  });
+
+  it("does not count an approval of an earlier commit: what was pushed since has not been reviewed", async () => {
+    const merged: string[] = [];
+    const approvedBefore: PullRequests = {
+      ...submitting(merged),
+      governanceFile: async () => ({
+        members: { carol: { level: "trusted" } },
+        review: { ledger: ["parser"] },
+      }),
+      approvals: async () => [{ reviewer: "carol", commit: "ea51e5" }],
+    };
+    await onPullRequest(
+      "ledger",
+      "7",
+      approvedBefore,
+      { ...held, post: async () => {} },
+      log,
+      clock,
+    );
+    expect(merged).toEqual([]);
+  });
+
+  it("does not count an approval from a member with a part in the module", async () => {
+    const merged: string[] = [];
+    const approvedByPart: PullRequests = {
+      ...submitting(merged),
+      governanceFile: async () => ({
+        members: { carol: { level: "trusted" } },
+        review: { ledger: ["parser"] },
+      }),
+      approvals: async () => [{ reviewer: "carol", commit: "c0ffee" }],
+    };
+    const carolHolds: EventLog = {
+      ...log,
+      read: async () => [
+        {
+          project: "ledger",
+          decidedAt: "2026-10-22T08:00:00.000Z",
+          claimed: { task: "3", member: "carol", role: "architecture", module: "parser" },
+        },
+      ],
+    };
+    await onPullRequest(
+      "ledger",
+      "7",
+      approvedByPart,
+      { ...held, post: async () => {} },
+      carolHolds,
+      clock,
+    );
+    expect(merged).toEqual([]);
   });
 
   it("acts on the open pull requests at a commit once the project's checks finish on it", async () => {

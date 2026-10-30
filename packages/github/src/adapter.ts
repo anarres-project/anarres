@@ -904,6 +904,27 @@ export class GitHubAdapter
     return { state: "finished", url: run.html_url, report: readTestReport(strFromU8(xml)) };
   }
 
+  /** GitHub's Approve reviews of the pull request: who approved, and the commit they reviewed. */
+  async approvals(
+    project: string,
+    pullRequest: string,
+  ): Promise<{ reviewer: string; commit: string }[]> {
+    const reviews: { user: { login: string } | null; state: string; commit_id: string }[] = [];
+    for (let page = 1; ; page++) {
+      const listed = await this.call<typeof reviews>(
+        "GET",
+        `${this.repo(project)}/pulls/${pullRequest}/reviews?per_page=100&page=${page}`,
+      );
+      reviews.push(...listed);
+      if (listed.length < 100) break;
+    }
+    return reviews.flatMap((review) =>
+      review.state === "APPROVED" && review.user
+        ? [{ reviewer: review.user.login, commit: review.commit_id }]
+        : [],
+    );
+  }
+
   async refuse(project: string, pullRequest: string, reason: string): Promise<void> {
     await this.comment(project, pullRequest, commentForRefusal(reason));
   }

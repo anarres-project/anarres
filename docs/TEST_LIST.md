@@ -564,14 +564,23 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] PDC coordinators are alerted, once, when the list cannot be read;
   - [x] core decides whether an approval counts (`approvalCounts`): by a member at *trusted* or above, or a PDC
         coordinator, not the work's author nor linked to them, holding no role in the module;
-  - [ ] Divlab leaves work for a named module unmerged without an approval that counts, for the
-        commit it would merge, and says once on the pull request that it waits for a reviewer;
-  - [ ] with an approval that counts, for that commit, Divlab merges it as any other;
-  - [ ] an approval of an earlier commit does not count once the member has pushed since;
-  - [ ] the template's Divlab workflow runs when a review is given, and Divlab acts on that
-        pull request (in-process, then the sandbox, which needs an account at *trusted* in its
-        governance file to approve);
-  - [ ] an acceptance scenario for each, in-process, then in the sandbox.
+  - [x] Divlab leaves work for a named module unmerged without an approval that counts, for the
+        commit it would merge, and says on the pull request that it waits for a reviewer;
+  - [ ] it says so once, not on every run that finds no approval yet;
+  - [x] with an approval that counts, for that commit, Divlab merges it as any other;
+  - [x] an approval of an earlier commit does not count once the member has pushed since (unit;
+        the in-process fake's pull requests keep one head, so no scenario pushes after one);
+  - [x] the adapter reads GitHub's Approve reviews, every page, leaving out deleted accounts;
+  - [ ] a reviewer who approved and then asked for changes: whether their latest review should
+        decide (GitHub's own rule for a reviewer); today any approval of the commit counts;
+  - [x] Divlab acts when a review is given: the template's reviews workflow, run without
+        secrets, starts Divlab's checks workflow on finishing, which acts on the open pull
+        requests at the reviewed commit;
+  - [x] an acceptance scenario for each, in-process ("Human review where PDC coordinators
+        require it");
+  - [ ] the sandbox shows them: its projects get the reviews workflow, its driver names a module
+        for review in the sandbox's governance file and puts it back (`@governance`), and
+        approves as a member account through GitHub's API.
 - [x] A new project's main branch can be changed only by Divlab (`setUpProject`; a ruleset is a
       repository setting, not a template file).
 - [x] Work that reached main without Divlab merging it is not routed; it is recorded once and PDC

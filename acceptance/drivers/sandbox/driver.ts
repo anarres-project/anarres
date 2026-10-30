@@ -44,7 +44,7 @@ import type {
   ReadyTask,
   RoutingRecord,
 } from "../driver.ts";
-import { HarnessNotYetBuilt, NotYetImplemented } from "../errors.ts";
+import { HarnessNotYetBuilt } from "../errors.ts";
 import {
   FAILS_ON_PURPOSE,
   feedbackSignalFile,
@@ -1029,11 +1029,11 @@ export class SandboxDriver implements Driver {
   }
 
   async requireReview(_project: string, _module: string): Promise<void> {
-    throw new NotYetImplemented("PDC coordinators requiring a reviewer's approval");
+    throw new HarnessNotYetBuilt("naming a module for review in the sandbox's governance file");
   }
 
   async approve(_project: string, _feedbackSignal: string, _member: string): Promise<void> {
-    throw new NotYetImplemented("a reviewer approving work");
+    throw new HarnessNotYetBuilt("a member approving work with GitHub's review, and waiting on it");
   }
 
   /** The sandbox's governance file links the account playing `account` to the member's. */

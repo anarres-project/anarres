@@ -36,7 +36,6 @@ import type {
   ReadyTask,
   RoutingRecord,
 } from "../driver.ts";
-import { NotYetImplemented } from "../errors.ts";
 import {
   feedbackSignalFile,
   inScenarioWords,
@@ -390,12 +389,20 @@ export class InProcessDriver implements Driver {
     this.github.setTrustLevel(member, level);
   }
 
-  async requireReview(_project: string, _module: string): Promise<void> {
-    throw new NotYetImplemented("PDC coordinators requiring a reviewer's approval");
+  async requireReview(project: string, module: string): Promise<void> {
+    this.github.requireReview(project, module);
   }
 
-  async approve(_project: string, _feedbackSignal: string, _member: string): Promise<void> {
-    throw new NotYetImplemented("a reviewer approving work");
+  /**
+   * The member approves the work's pull request. As on GitHub, the reviews workflow's finishing
+   * starts Divlab's checks run for the reviewed commit.
+   */
+  async approve(project: string, feedbackSignal: string, member: string): Promise<void> {
+    const pullRequest = this.github.pullRequestFor(project, feedbackSignal);
+    this.github.approve(pullRequest, member);
+    const { head } = await this.github.pullRequest(project, pullRequest);
+    await onChecked(project, head, this.github, this.github, this.github, this.clock);
+    await this.afterRun(project, { checked: "" });
   }
 
   async linkAccount(member: string, account: string): Promise<void> {

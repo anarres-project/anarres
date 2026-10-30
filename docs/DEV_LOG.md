@@ -813,6 +813,42 @@ governance scenarios run alone.
   GREEN:    the same (281 passed in core): eligibility's `isRoleInModule`, now exported, said
             once.
   REFACTOR: none. Gate 837 and 141.
+- Human review, Divlab, the adapter and the template (decision 0016).
+  RED:      leaves work on a module PDC coordinators require reviewed unmerged, saying it waits
+            for a reviewer -> expected [ [ '7' ], [] ] to deeply equal [ [], …(1) ]
+  GREEN:    the same (222 passed in divlab, once the tests' stand-in for GitHub gave a governance
+            file with no review list and no approvals: the interface asks for both now).
+  RED:      merges it once a trusted member approves its commit -> expected [] to deeply equal
+            [ '7' ]
+  GREEN:    the same (223 passed).
+  RED:      does not count an approval of an earlier commit -> expected [ '7' ] to deeply equal []
+  GREEN:    the same (224 passed): only an approval of the commit Divlab merges.
+  RED:      does not count an approval from a member with a part in the module -> expected
+            [ '7' ] to deeply equal []
+  GREEN:    the same (225 passed): the project's parts, by member.
+  REFACTOR: the parts by member, which claims used too, are one function (`membersParts`).
+  RED:      approvals are GitHub's Approve reviews, by reviewer and commit -> `approvals is not a
+            function`; with the stub, expected [] to deeply equal [ { reviewer: 'carol', …(1) } ]
+  GREEN:    the same (214 passed in github).
+  RED:      leave out an approval by a deleted account -> TypeError (the guard had been written
+            ahead of its test: taken out to see this fail)
+  GREEN:    the same (215 passed).
+  RED:      are read from every page -> expected [] to deeply equal [ …(1) ]
+  GREEN:    the same (216 passed).
+  RED:      the template's reviews workflow runs on a review given, and on nothing else -> ENOENT;
+            with an empty file, expected {} to deeply equal { pull_request_review: … }
+  GREEN:    the same (48 passed). Its permissions and its one step were written with it; their
+            test passed first time (a slip: the file was written whole).
+  RED:      Divlab's checks workflow runs when the checks or reviews workflow finishes -> expected
+            { workflow_run: … } to deeply equal { workflow_run: … }
+  GREEN:    the same (227 passed). GitHub runs `pull_request_review` for a fork's pull request
+            with no secrets, so the reviews workflow does nothing itself; its finishing starts
+            Divlab's checks workflow, which has the App's key, as the project's checks already do.
+  The in-process driver approves as GitHub would: the review, then Divlab's checks run for the
+  reviewed commit. The four scenarios passed, lose `@wip`, and are `@sandbox-wip` until the
+  sandbox driver can name a module for review in its governance file (which it can change, as
+  the `@governance` scenarios do, so no account need be set up by hand) and approve as a member.
+  Gate 846 and 145.
 
 ---
 

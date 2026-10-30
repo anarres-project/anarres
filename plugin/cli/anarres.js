@@ -9396,6 +9396,7 @@ var parts = (events) => [
   ...mergedParts(events),
   ...heldParts(events)
 ];
+var membersParts = (governance, events) => parts(events).map((part) => ({ ...part, member: memberFor(governance, part.member) }));
 var heldParts = (events) => {
   const held = /* @__PURE__ */ new Map();
   for (const event of events) {
@@ -9420,7 +9421,7 @@ var mergedParts = (events) => routingDecisions(events).flatMap(
 );
 function eligibility(governance, events) {
   const memberOf = (account) => memberFor(governance, account);
-  const history = parts(events).map((part) => ({ ...part, member: memberOf(part.member) }));
+  const history = membersParts(governance, events);
   return (account, task) => mayTake(
     { member: memberOf(account), role: task.role, module: task.module },
     history,
@@ -10935,6 +10936,21 @@ var GitHubAdapter = class {
     const [xml] = Object.values(files);
     if (xml === void 0) return { state: "finished", url: run.html_url, report: NO_TEST_REPORT };
     return { state: "finished", url: run.html_url, report: readTestReport(strFromU8(xml)) };
+  }
+  /** GitHub's Approve reviews of the pull request: who approved, and the commit they reviewed. */
+  async approvals(project, pullRequest) {
+    const reviews = [];
+    for (let page = 1; ; page++) {
+      const listed = await this.call(
+        "GET",
+        `${this.repo(project)}/pulls/${pullRequest}/reviews?per_page=100&page=${page}`
+      );
+      reviews.push(...listed);
+      if (listed.length < 100) break;
+    }
+    return reviews.flatMap(
+      (review) => review.state === "APPROVED" && review.user ? [{ reviewer: review.user.login, commit: review.commit_id }] : []
+    );
   }
   async refuse(project, pullRequest, reason) {
     await this.comment(project, pullRequest, commentForRefusal(reason));

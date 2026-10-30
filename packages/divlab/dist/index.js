@@ -9250,6 +9250,36 @@ function contractsRevised(contracts, module, changed) {
 // ../core/src/offers.ts
 var underWay = (task) => task.feedbackSignal !== void 0;
 
+// ../core/src/review.ts
+function needsReview(file, project2, module) {
+  const named = modulesNeedingReview(file);
+  return named === "unreadable" || (named.get(project2) ?? []).includes(module);
+}
+function approvalCounts(file, reviewer, work, history) {
+  const member = memberFor(file, reviewer);
+  if (member === memberFor(file, work.author)) return false;
+  const hasPart = history.some(
+    (part) => part.member === member && part.module === work.module && isRoleInModule(part.role)
+  );
+  if (hasPart) return false;
+  return TRUST_LEVELS.indexOf(trustLevelOf(file, member)) >= TRUST_LEVELS.indexOf(REVIEWER_LEVEL);
+}
+var REVIEWER_LEVEL = "trusted";
+function modulesNeedingReview(file) {
+  if (!isRecord(file)) return "unreadable";
+  if (!Object.hasOwn(file, "review")) return /* @__PURE__ */ new Map();
+  const review = file.review;
+  if (!isRecord(review)) return "unreadable";
+  const named = /* @__PURE__ */ new Map();
+  for (const [project2, modules] of Object.entries(review)) {
+    if (!Array.isArray(modules)) return "unreadable";
+    if (!modules.every((one) => typeof one === "string" && isPlainName(one))) return "unreadable";
+    named.set(project2, modules);
+  }
+  return named;
+}
+var isRecord = (value) => typeof value === "object" && value !== null && !Array.isArray(value);
+
 // ../core/src/routing.ts
 var MODULE_PIPELINE = [
   "architecture",
@@ -9594,6 +9624,7 @@ var parts = (events) => [
   ...mergedParts(events),
   ...heldParts(events)
 ];
+var membersParts = (governance, events) => parts(events).map((part) => ({ ...part, member: memberFor(governance, part.member) }));
 var heldParts = (events) => {
   const held = /* @__PURE__ */ new Map();
   for (const event of events) {
@@ -9618,7 +9649,7 @@ var mergedParts = (events) => routingDecisions(events).flatMap(
 );
 function eligibility(governance, events) {
   const memberOf = (account) => memberFor(governance, account);
-  const history = parts(events).map((part) => ({ ...part, member: memberOf(part.member) }));
+  const history = membersParts(governance, events);
   return (account, task) => mayTake(
     { member: memberOf(account), role: task.role, module: task.module },
     history,
@@ -10063,6 +10094,19 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
       ];
       if (revised.length > 0) work = { ...work, contractsRevised: revised };
     }
+  }
+  const governance = await pullRequests.governanceFile();
+  const history = membersParts(governance, events);
+  const approved = (await pullRequests.approvals(project2, pullRequest)).some(
+    ({ reviewer, commit }) => commit === head && approvalCounts(governance, reviewer, { author, module: signal.module }, history)
+  );
+  if (needsReview(governance, project2, signal.module) && !approved) {
+    await pullRequests.refuse(
+      project2,
+      pullRequest,
+      `The work waits for a reviewer's approval: PDC coordinators require a person to approve work on ${signal.module} before it is merged, a trusted member or a PDC coordinator with no part in the module`
+    );
+    return;
   }
   await log.append({
     project: project2,
@@ -11637,6 +11681,21 @@ var GitHubAdapter = class {
     const [xml] = Object.values(files);
     if (xml === void 0) return { state: "finished", url: run.html_url, report: NO_TEST_REPORT };
     return { state: "finished", url: run.html_url, report: readTestReport(strFromU8(xml)) };
+  }
+  /** GitHub's Approve reviews of the pull request: who approved, and the commit they reviewed. */
+  async approvals(project2, pullRequest) {
+    const reviews = [];
+    for (let page = 1; ; page++) {
+      const listed = await this.call(
+        "GET",
+        `${this.repo(project2)}/pulls/${pullRequest}/reviews?per_page=100&page=${page}`
+      );
+      reviews.push(...listed);
+      if (listed.length < 100) break;
+    }
+    return reviews.flatMap(
+      (review) => review.state === "APPROVED" && review.user ? [{ reviewer: review.user.login, commit: review.commit_id }] : []
+    );
   }
   async refuse(project2, pullRequest, reason) {
     await this.comment(project2, pullRequest, commentForRefusal(reason));

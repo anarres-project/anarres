@@ -3,7 +3,10 @@ Feature: Human review where PDC coordinators require it
   only once a reviewer independent of the work has approved it: a trusted member or a PDC
   coordinator with no part in the module (decision 0016).
 
-  @wip
+  # Not yet in the sandbox: its driver cannot yet name a module for review in the sandbox's
+  # governance file, nor approve as a member. Each scenario below is in-process until it can.
+
+  @sandbox-wip
   Scenario: Work on a module PDC coordinators require reviewed waits for a reviewer's approval
     Given a project with a module "parser"
     And PDC coordinators require a reviewer's approval for work on "parser"
@@ -11,7 +14,7 @@ Feature: Human review where PDC coordinators require it
     Then Divlab has not merged the member's Architecture work on "parser"
     And the member is told their work waits for a reviewer's approval
 
-  @wip
+  @sandbox-wip
   Scenario: Work on a module PDC coordinators require reviewed is merged once a trusted member approves it
     Given a project with a module "parser"
     And PDC coordinators require a reviewer's approval for work on "parser"
@@ -20,7 +23,7 @@ Feature: Human review where PDC coordinators require it
     When Carol approves the member's Architecture work on "parser"
     Then Divlab has merged the member's Architecture work on "parser"
 
-  @wip
+  @sandbox-wip
   Scenario: An approval from a member who is not trusted does not count
     Given a project with a module "parser"
     And PDC coordinators require a reviewer's approval for work on "parser"
@@ -29,7 +32,7 @@ Feature: Human review where PDC coordinators require it
     When Dave approves the member's Architecture work on "parser"
     Then Divlab has not merged the member's Architecture work on "parser"
 
-  @wip
+  @sandbox-wip
   Scenario: An approval from a member with a part in the module does not count
     Given a project with a module "parser"
     And Carol is a trusted member
