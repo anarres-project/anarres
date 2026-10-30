@@ -1006,6 +1006,11 @@ governance scenarios run alone.
             [ { reviewer: 'carol', …(2) } ]
   GREEN:    the same (872 passed in the gate).
   Protocol slip: the type change went in with the adapter's test. Gate 872 and 148.
+- The 74f965f sandbox run was cancelled at the job's 90-minute limit, telling nothing of the
+  code: GitHub answered 500 and 502 to nearly everything from 14:21 to 14:28 (making
+  repositories, pull requests, issues and event files, for Divlab and the driver alike), and the
+  scenarios after found the tasks those writes never made. The `@governance` scenarios, the new
+  alert's among them, never ran. The next run resets the governance file as it starts.
 
 ---
 
