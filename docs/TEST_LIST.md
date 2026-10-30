@@ -557,11 +557,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] a feedback signal Divlab cannot read (unit tests only so far);
 - [ ] A contribution PDC coordinators require reviewed is merged only once a reviewer approves.
   Decision 0016 (Bernard, 2026-10-30):
-  - [ ] core reads, from the governance file, the modules of each project whose contributions
+  - [x] core reads, from the governance file, the modules of each project whose contributions
         need a human's approval, as data; a file with no such list names none;
-  - [ ] a file that cannot be read, or a malformed list, holds everything: every contribution
-        needs approval, and PDC coordinators are alerted (Bernard, 2026-10-30: fail closed);
-  - [ ] core decides whether an approval counts: by a member at *trusted* or above, or a PDC
+  - [x] a file that cannot be read, or a malformed list, holds everything: every contribution
+        needs approval (core's `needsReview`; Bernard, 2026-10-30: fail closed);
+  - [ ] PDC coordinators are alerted, once, when the list cannot be read;
+  - [x] core decides whether an approval counts (`approvalCounts`): by a member at *trusted* or above, or a PDC
         coordinator, not the work's author nor linked to them, holding no role in the module;
   - [ ] Divlab leaves work for a named module unmerged without an approval that counts, for the
         commit it would merge, and says once on the pull request that it waits for a reviewer;

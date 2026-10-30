@@ -216,6 +216,10 @@ export interface Driver {
    * for the role, as Divlab would have left them, for a scenario that begins partway along.
    */
   setUpModuleAt(task: { project: string; role: string; module: string }): Promise<void>;
+  /** PDC coordinators name the project's module in the governance file as needing review. */
+  requireReview(project: string, module: string): Promise<void>;
+  /** The member approves the pull request of the work with that feedback signal. */
+  approve(project: string, feedbackSignal: string, member: string): Promise<void>;
   /** PDC coordinators link a second account to a member in the governance file. */
   linkAccount(member: string, account: string): Promise<void>;
   /** Divlab's clock moves on, as time passes for a project. */

@@ -683,6 +683,21 @@ export class Anarres {
   }
 
   /** PDC coordinators have recorded the member at this trust level. */
+  /** PDC coordinators name the module in the governance file as needing a person's approval. */
+  async coordinatorsRequireReview(module: string) {
+    await this.driver.requireReview(this.project, this.aliases.of(module));
+  }
+
+  /** The member approves the pull request of the work on the module, with GitHub's review. */
+  async memberApproves(member: string, work: Work) {
+    const feedbackSignal = this.feedbackSignals.get(workOn(this.aliased(work)));
+    assert.ok(
+      feedbackSignal !== undefined,
+      `expected ${work.role} work on ${work.module} submitted`,
+    );
+    await this.driver.approve(this.project, feedbackSignal, this.member(member));
+  }
+
   async memberIsTrusted(member: string, level: string) {
     await this.driver.setTrustLevel(this.member(member), level);
   }

@@ -36,6 +36,7 @@ import type {
   ReadyTask,
   RoutingRecord,
 } from "../driver.ts";
+import { NotYetImplemented } from "../errors.ts";
 import {
   feedbackSignalFile,
   inScenarioWords,
@@ -387,6 +388,14 @@ export class InProcessDriver implements Driver {
 
   async setTrustLevel(member: string, level: string): Promise<void> {
     this.github.setTrustLevel(member, level);
+  }
+
+  async requireReview(_project: string, _module: string): Promise<void> {
+    throw new NotYetImplemented("PDC coordinators requiring a reviewer's approval");
+  }
+
+  async approve(_project: string, _feedbackSignal: string, _member: string): Promise<void> {
+    throw new NotYetImplemented("a reviewer approving work");
   }
 
   async linkAccount(member: string, account: string): Promise<void> {

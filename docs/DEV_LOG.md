@@ -776,6 +776,43 @@ governance scenarios run alone.
   or a PDC coordinator, independent of the work, approves with GitHub's own review, for the
   commit Divlab merges. A list that cannot be read holds everything, and coordinators are
   alerted; a file with no list names no module. Test-list entries added (section 4).
+- Human review, core (decision 0016). Acceptance: four scenarios in "Human review where PDC
+  coordinators require it", `@wip`, red with `NotYetImplemented` at the drivers.
+  RED:      needs a person's approval when PDC coordinators name the module -> `needsReview is
+            not a function`; with the stub, expected false to be true
+  GREEN:    the same (1 passed), hard-coded.
+  RED:      not for another module, nor another project's; not when no module is named -> 3
+            failed (two tests at once, a table and one more: a slip)
+  GREEN:    the same (4 passed).
+  RED:      holds everything given a list not per project, modules not a list, a module not
+            plainly named, or a file not read -> 3 expected false to be true, and a crash on the
+            unreadable file
+  GREEN:    the same (8 passed): read as data, failing closed.
+  RED:      not for a project whose name an object has of itself (`constructor`) -> TypeError
+  GREEN:    the same (9 passed): the named modules kept in a Map.
+  A module named by something not text: passed first time, as the check that demands it was
+  written ahead of its test (a slip); seen to fail with the check taken out, and kept.
+  RED:      an approval counts from a trusted member with no part in the module -> expected false
+            to be true (the empty stub written in the same step as the test: a slip)
+  GREEN:    the same (11 passed), hard-coded.
+  RED:      not from an established or a new member; from a PDC coordinator -> 2 failed
+  GREEN:    the same (14 passed): *trusted* or above.
+  RED:      not from the work's author, however trusted -> expected true to be false
+  GREEN:    the same (15 passed).
+  RED:      not from the member whose linked account wrote it -> expected true to be false (first
+            written the other way round, it passed for the wrong reason: the linked account was
+            simply new; corrected)
+  GREEN:    the same (16 passed): accounts compared as members.
+  RED:      from a trusted member's linked account, at that member's level -> expected false to
+            be true (the change that makes it pass had slipped into the last step undemanded;
+            taken out to see this fail)
+  GREEN:    the same (17 passed).
+  RED:      not from a member with a part in the module -> expected true to be false
+  GREEN:    the same (18 passed).
+  RED:      from a member whose only part was Research -> expected false to be true
+  GREEN:    the same (281 passed in core): eligibility's `isRoleInModule`, now exported, said
+            once.
+  REFACTOR: none. Gate 837 and 141.
 
 ---
 

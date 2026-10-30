@@ -5,7 +5,7 @@ import { levelNeeded, type TrustLevel, trustAllows } from "./trust-levels.ts";
 export type Part = { member: string; role: Role; module: string };
 
 /** Research answers a knowledge gap: it is not a role in a module (decision 0007). */
-const isRoleInModule = (role: Role) => role !== "research";
+export const isRoleInModule = (role: Role) => role !== "research";
 
 /**
  * Whether a member may take a task in a role on a module, given their trust level and everyone's
