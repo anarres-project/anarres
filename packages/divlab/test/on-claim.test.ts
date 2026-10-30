@@ -29,6 +29,8 @@ const board: TaskBoard = {
   alertNotAccepted: untouched,
   alertUnprotectedMain: untouched,
   unprotectedMainAlertOpen: untouched,
+  alertUnreadableReviewList: untouched,
+  unreadableReviewListAlertOpen: untouched,
   markModuleDone: untouched,
   task: untouched,
   close: untouched,

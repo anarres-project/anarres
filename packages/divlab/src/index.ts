@@ -22,6 +22,7 @@ import {
   readFeedbackSignal,
   readModules,
   readSignalFile,
+  reviewListUnreadable,
   routingRecord,
   type TestCounts,
   type TestReport,
@@ -110,6 +111,10 @@ export interface TaskBoard {
   alertUnprotectedMain(project: string): Promise<void>;
   /** Whether such an alert is still open: coordinators close it once main is protected again. */
   unprotectedMainAlertOpen(project: string): Promise<boolean>;
+  /** PDC coordinators are told that the governance file's list of modules needing review cannot be read. */
+  alertUnreadableReviewList(project: string): Promise<void>;
+  /** Whether such an alert is still open: coordinators close it once the list is fixed. */
+  unreadableReviewListAlertOpen(project: string): Promise<boolean>;
   markModuleDone(module: FinishedModule): Promise<void>;
   /** What Divlab recorded on a task it posted; undefined if there is no such task. */
   task(
@@ -1040,6 +1045,10 @@ export async function onPullRequest(
       commit === head &&
       approvalCounts(governance, reviewer, { author, module: signal.module }, history),
   );
+  // Held for want of a list that can be read, until a coordinator fixes it: they are told.
+  if (reviewListUnreadable(governance) && !(await board.unreadableReviewListAlertOpen(project))) {
+    await board.alertUnreadableReviewList(project);
+  }
   if (needsReview(governance, project, signal.module) && !approved) {
     const waiting = `The work waits for a reviewer's approval: PDC coordinators require a person to approve work on ${signal.module} before it is merged, a trusted member or a PDC coordinator with no part in the module`;
     // Said once: each run that finds no approval yet, after a review or a push, says nothing more.

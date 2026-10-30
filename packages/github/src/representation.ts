@@ -437,6 +437,17 @@ export function issueForUnprotectedMain(): NewIssue {
   };
 }
 
+export function issueForUnreadableReviewList(): NewIssue {
+  return {
+    title: "Escalation: the list of modules needing review cannot be read",
+    labels: ["escalation", UNREADABLE_REVIEW_LIST],
+    body: "Divlab cannot read the governance file's list of modules whose work needs a reviewer's approval (decision 0016), so until it can, all work in this project waits for a reviewer's approval. Fix the list, then close this issue; Divlab alerts again if it finds the list unreadable later.",
+  };
+}
+
+/** The label on Divlab's alert that the list of modules needing review cannot be read. */
+export const UNREADABLE_REVIEW_LIST = "unreadable-review-list";
+
 /** The label on Divlab's alert that a project's main branch is not protected. */
 export const UNPROTECTED_MAIN = "unprotected-main";
 /** The label of an alert of a change on main that Divlab did not make. */

@@ -693,6 +693,18 @@ export class Anarres {
     await this.driver.requireReview(this.project, this.aliases.of(module));
   }
 
+  async reviewListCannotBeRead() {
+    await this.driver.spoilReviewList(this.project);
+  }
+
+  async coordinatorsAlertedOnceOfUnreadableReviewList() {
+    assert.equal(
+      await this.driver.unreadableReviewListAlerts(this.project),
+      1,
+      "expected one alert that the list of modules needing review cannot be read",
+    );
+  }
+
   /** The member approves the pull request of the work on the module, with GitHub's review. */
   async memberApproves(member: string, work: Work) {
     const feedbackSignal = this.feedbackSignals.get(workOn(this.aliased(work)));

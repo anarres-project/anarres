@@ -101,7 +101,10 @@ too, and the project is taken out of the list again when they end; the standing 
 Each project gets the template's reviews workflow as it is. A member approves with GitHub's own
 review, through the API as their account, for the pull request's head. The reviews workflow runs
 on that without secrets, and Divlab's checks workflow runs on its finishing: the driver waits for
-that run, then for Divlab's decision if it merged the work (decision 0016).
+that run, then for Divlab's decision if it merged the work (decision 0016). "The list of
+modules PDC coordinators require reviewed cannot be read" gives the scenario's project an entry
+naming a module not plainly, which spoils the whole list, as `@governance` scenarios run alone;
+the entry is taken out when the scenario ends, as any other.
 
 **Each check** ("the only task ready for parser is a Coding task") reads GitHub as a member or a
 PDC coordinator would: open task issues, escalation issues, finished-module issues, and the event

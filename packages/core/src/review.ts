@@ -12,6 +12,11 @@ export function needsReview(file: unknown, project: string, module: string): boo
   return named === "unreadable" || (named.get(project) ?? []).includes(module);
 }
 
+/** Whether the governance file's list of modules needing review cannot be read. */
+export function reviewListUnreadable(file: unknown): boolean {
+  return modulesNeedingReview(file) === "unreadable";
+}
+
 /** Whether a person's approval of work counts towards merging it. */
 export function approvalCounts(
   file: unknown,

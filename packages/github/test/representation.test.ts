@@ -20,6 +20,7 @@ import {
   issueForNotAccepted,
   issueForTask,
   issueForUnprotectedMain,
+  issueForUnreadableReviewList,
   issueNumber,
   logFrom,
   policyAllowingDivlabChecks,
@@ -606,6 +607,16 @@ describe("an alert that a project's main branch is not protected, as a GitHub is
       title: "Escalation: this project's main branch is not protected",
       labels: ["escalation", "unprotected-main"],
       body: "Divlab found that this project's main branch no longer has the protection that lets only Divlab change it (decision 0006). Until it is restored, anyone with enough access could change main without Divlab's checks. Close this issue once main is protected again; Divlab alerts again if protection is lost later.",
+    });
+  });
+});
+
+describe("an alert that the list of modules needing review cannot be read, as a GitHub issue", () => {
+  it("tells PDC coordinators that everything waits for a reviewer, under a label that marks it until they close it", () => {
+    expect(issueForUnreadableReviewList()).toEqual({
+      title: "Escalation: the list of modules needing review cannot be read",
+      labels: ["escalation", "unreadable-review-list"],
+      body: "Divlab cannot read the governance file's list of modules whose work needs a reviewer's approval (decision 0016), so until it can, all work in this project waits for a reviewer's approval. Fix the list, then close this issue; Divlab alerts again if it finds the list unreadable later.",
     });
   });
 });

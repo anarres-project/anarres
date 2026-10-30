@@ -8,6 +8,13 @@ Given(
   },
 );
 
+Given(
+  "the list of modules PDC coordinators require reviewed cannot be read",
+  function (this: AnarresWorld) {
+    return this.anarres.reviewListCannotBeRead();
+  },
+);
+
 Given("{word} is a trusted member", function (this: AnarresWorld, member: string) {
   return this.anarres.memberIsTrusted(member, "trusted");
 });
@@ -23,5 +30,12 @@ Then(
   "the member is told their work waits for a reviewer's approval",
   function (this: AnarresWorld) {
     return this.anarres.memberIsToldWhy("waits for a reviewer's approval");
+  },
+);
+
+Then(
+  "PDC coordinators have been alerted once that the list of modules needing review cannot be read",
+  function (this: AnarresWorld) {
+    return this.anarres.coordinatorsAlertedOnceOfUnreadableReviewList();
   },
 );

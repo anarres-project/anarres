@@ -1057,6 +1057,24 @@ export class SandboxDriver implements Driver {
     });
   }
 
+  /** The project's entry in the list names a module not plainly, so the list cannot be read. */
+  async spoilReviewList(project: string): Promise<void> {
+    this.reviewNamed.add(project);
+    await this.changeGovernanceFile((file) => {
+      file.review = { ...(file.review ?? {}), [project]: ["not/plainly"] };
+    });
+  }
+
+  /** Divlab runs after the work it acted on, so give the last run time to look and alert. */
+  async unreadableReviewListAlerts(project: string): Promise<number> {
+    const deadline = Date.now() + 60_000;
+    for (;;) {
+      const alerts = await this.issues(project, "unreadable-review-list", "all");
+      if (alerts.length > 0 || Date.now() > deadline) return alerts.length;
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+    }
+  }
+
   /**
    * The member approves the work's pull request with GitHub's own review, as their account. The
    * project's reviews workflow runs, and Divlab's checks workflow on its finishing: the driver
@@ -1811,6 +1829,7 @@ export class SandboxDriver implements Driver {
         (l) =>
           l.name === "not-accepted" ||
           l.name === "unprotected-main" ||
+          l.name === "unreadable-review-list" ||
           l.name === "claimed-without-claim",
       );
     // Alerts of a change Divlab did not make are not accepted too, but no feedback signal's.

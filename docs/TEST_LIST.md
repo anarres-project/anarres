@@ -583,7 +583,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         need a human's approval, as data; a file with no such list names none;
   - [x] a file that cannot be read, or a malformed list, holds everything: every contribution
         needs approval (core's `needsReview`; Bernard, 2026-10-30: fail closed);
-  - [ ] PDC coordinators are alerted, once, when the list cannot be read;
+  - [x] PDC coordinators are alerted, once, when the list cannot be read: an issue in the
+        project, while one is open (core's `reviewListUnreadable`; in-process and, as
+        `@governance`, in the sandbox);
   - [x] core decides whether an approval counts (`approvalCounts`): by a member at *trusted* or above, or a PDC
         coordinator, not the work's author nor linked to them, holding no role in the module;
   - [x] Divlab leaves work for a named module unmerged without an approval that counts, for the
@@ -609,8 +611,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] every Divlab workflow tells Divlab the organisation's governance file (9a34128's run:
         the pull request and checks workflows read Anarres's own, so the sandbox merged work
         needing review);
-  - [ ] the sandbox shows them (a member's review of a fork's pull request wakes Divlab through
-        the reviews workflow, as GitHub runs it).
+  - [x] the sandbox shows them (a member's review of a fork's pull request wakes Divlab through
+        the reviews workflow, as GitHub runs it): 5164e8a and ccc85fd, all four;
+  - [ ] the alert for an unreadable list seen in the sandbox (on the next code push).
 - [x] A new project's main branch can be changed only by Divlab (`setUpProject`; a ruleset is a
       repository setting, not a template file).
 - [x] Work that reached main without Divlab merging it is not routed; it is recorded once and PDC

@@ -173,6 +173,21 @@ export class FakeGitHub
     return this.unprotectedAlerts.filter((alert) => alert.project === project).length;
   }
 
+  /** Alerts that the list of modules needing review cannot be read, by project. */
+  private readonly unreadableReviewListAlerted: string[] = [];
+
+  async alertUnreadableReviewList(project: string): Promise<void> {
+    this.unreadableReviewListAlerted.push(project);
+  }
+
+  async unreadableReviewListAlertOpen(project: string): Promise<boolean> {
+    return this.unreadableReviewListAlerted.includes(project);
+  }
+
+  unreadableReviewListAlerts(project: string): number {
+    return this.unreadableReviewListAlerted.filter((alerted) => alerted === project).length;
+  }
+
   /** Someone other than Divlab writes to main: it takes only if main is unprotected. */
   changeMainDirectly(project: string): boolean {
     if (this.protectedMains.has(project)) return false;
@@ -591,6 +606,11 @@ export class FakeGitHub
 
   requireReview(project: string, module: string): void {
     this.review[project] = [...(this.review[project] ?? []), module];
+  }
+
+  /** The project's entry names a module not plainly: the list cannot be read. */
+  spoilReviewList(project: string): void {
+    this.review[project] = ["not/plainly"];
   }
 
   async governanceFile(): Promise<unknown> {

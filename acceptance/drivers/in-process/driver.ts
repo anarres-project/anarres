@@ -404,6 +404,14 @@ export class InProcessDriver implements Driver {
     this.github.requireReview(project, module);
   }
 
+  async spoilReviewList(project: string): Promise<void> {
+    this.github.spoilReviewList(project);
+  }
+
+  async unreadableReviewListAlerts(project: string): Promise<number> {
+    return this.github.unreadableReviewListAlerts(project);
+  }
+
   /**
    * The member approves the work's pull request. As on GitHub, the reviews workflow's finishing
    * starts Divlab's checks run for the reviewed commit.

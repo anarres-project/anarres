@@ -40,3 +40,12 @@ Feature: Human review where PDC coordinators require it
     And a member submits Specification work on "parser" with a pass verdict
     When Carol approves the member's Specification work on "parser"
     Then Divlab has not merged the member's Specification work on "parser"
+
+  @governance
+  Scenario: Divlab alerts PDC coordinators, once, when it cannot read which modules need review
+    Given a project with modules "parser" and "lexer"
+    And the list of modules PDC coordinators require reviewed cannot be read
+    When a member submits Architecture work on "parser" with a pass verdict
+    And a member submits Architecture work on "lexer" with a pass verdict
+    Then Divlab has not merged the member's Architecture work on "parser"
+    And PDC coordinators have been alerted once that the list of modules needing review cannot be read

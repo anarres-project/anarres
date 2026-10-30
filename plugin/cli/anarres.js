@@ -10199,6 +10199,14 @@ function issueForUnprotectedMain() {
     body: "Divlab found that this project's main branch no longer has the protection that lets only Divlab change it (decision 0006). Until it is restored, anyone with enough access could change main without Divlab's checks. Close this issue once main is protected again; Divlab alerts again if protection is lost later."
   };
 }
+function issueForUnreadableReviewList() {
+  return {
+    title: "Escalation: the list of modules needing review cannot be read",
+    labels: ["escalation", UNREADABLE_REVIEW_LIST],
+    body: "Divlab cannot read the governance file's list of modules whose work needs a reviewer's approval (decision 0016), so until it can, all work in this project waits for a reviewer's approval. Fix the list, then close this issue; Divlab alerts again if it finds the list unreadable later."
+  };
+}
+var UNREADABLE_REVIEW_LIST = "unreadable-review-list";
 var UNPROTECTED_MAIN = "unprotected-main";
 var CHANGE_NOT_BY_DIVLAB = "change-not-by-divlab";
 var CLAIMED_WITHOUT_CLAIM = "claimed-without-claim";
@@ -10346,11 +10354,21 @@ var GitHubAdapter = class {
     await this.openIssue(project, issueForUnprotectedMain());
   }
   async unprotectedMainAlertOpen(project) {
+    return this.alertOpen(project, UNPROTECTED_MAIN);
+  }
+  /** Whether an alert under the label is open: coordinators close it once it is dealt with. */
+  async alertOpen(project, label) {
     const open = await this.call(
       "GET",
-      `${this.repo(project)}/issues?labels=${UNPROTECTED_MAIN}&state=open&per_page=1`
+      `${this.repo(project)}/issues?labels=${label}&state=open&per_page=1`
     );
     return open.length > 0;
+  }
+  async alertUnreadableReviewList(project) {
+    await this.openIssue(project, issueForUnreadableReviewList());
+  }
+  async unreadableReviewListAlertOpen(project) {
+    return this.alertOpen(project, UNREADABLE_REVIEW_LIST);
   }
   /** The rules GitHub applies to main now, whoever set them: readable with metadata access. */
   async mainIsProtected(project) {

@@ -9255,6 +9255,9 @@ function needsReview(file, project2, module) {
   const named = modulesNeedingReview(file);
   return named === "unreadable" || (named.get(project2) ?? []).includes(module);
 }
+function reviewListUnreadable(file) {
+  return modulesNeedingReview(file) === "unreadable";
+}
 function approvalCounts(file, reviewer, work, history) {
   const member = memberFor(file, reviewer);
   if (member === memberFor(file, work.author)) return false;
@@ -10114,6 +10117,9 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
   const approved = (await pullRequests.approvals(project2, pullRequest)).some(
     ({ reviewer, commit }) => commit === head && approvalCounts(governance, reviewer, { author, module: signal.module }, history)
   );
+  if (reviewListUnreadable(governance) && !await board.unreadableReviewListAlertOpen(project2)) {
+    await board.alertUnreadableReviewList(project2);
+  }
   if (needsReview(governance, project2, signal.module) && !approved) {
     const waiting = `The work waits for a reviewer's approval: PDC coordinators require a person to approve work on ${signal.module} before it is merged, a trusted member or a PDC coordinator with no part in the module`;
     if (!(await pullRequests.refusalsGiven(project2, pullRequest)).includes(waiting)) {
@@ -10957,6 +10963,14 @@ function issueForUnprotectedMain() {
     body: "Divlab found that this project's main branch no longer has the protection that lets only Divlab change it (decision 0006). Until it is restored, anyone with enough access could change main without Divlab's checks. Close this issue once main is protected again; Divlab alerts again if protection is lost later."
   };
 }
+function issueForUnreadableReviewList() {
+  return {
+    title: "Escalation: the list of modules needing review cannot be read",
+    labels: ["escalation", UNREADABLE_REVIEW_LIST],
+    body: "Divlab cannot read the governance file's list of modules whose work needs a reviewer's approval (decision 0016), so until it can, all work in this project waits for a reviewer's approval. Fix the list, then close this issue; Divlab alerts again if it finds the list unreadable later."
+  };
+}
+var UNREADABLE_REVIEW_LIST = "unreadable-review-list";
 var UNPROTECTED_MAIN = "unprotected-main";
 var CHANGE_NOT_BY_DIVLAB = "change-not-by-divlab";
 var CLAIMED_WITHOUT_CLAIM = "claimed-without-claim";
@@ -11104,11 +11118,21 @@ var GitHubAdapter = class {
     await this.openIssue(project2, issueForUnprotectedMain());
   }
   async unprotectedMainAlertOpen(project2) {
+    return this.alertOpen(project2, UNPROTECTED_MAIN);
+  }
+  /** Whether an alert under the label is open: coordinators close it once it is dealt with. */
+  async alertOpen(project2, label) {
     const open = await this.call(
       "GET",
-      `${this.repo(project2)}/issues?labels=${UNPROTECTED_MAIN}&state=open&per_page=1`
+      `${this.repo(project2)}/issues?labels=${label}&state=open&per_page=1`
     );
     return open.length > 0;
+  }
+  async alertUnreadableReviewList(project2) {
+    await this.openIssue(project2, issueForUnreadableReviewList());
+  }
+  async unreadableReviewListAlertOpen(project2) {
+    return this.alertOpen(project2, UNREADABLE_REVIEW_LIST);
   }
   /** The rules GitHub applies to main now, whoever set them: readable with metadata access. */
   async mainIsProtected(project2) {

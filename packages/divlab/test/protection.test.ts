@@ -34,6 +34,8 @@ function project(protectedMain: boolean, alertOpen = false) {
       alerts.push(name);
     },
     unprotectedMainAlertOpen: async () => alertOpen,
+    alertUnreadableReviewList: untouched,
+    unreadableReviewListAlertOpen: untouched,
   };
   return { alerts, repositories, board };
 }

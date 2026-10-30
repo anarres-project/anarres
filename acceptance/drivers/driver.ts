@@ -220,6 +220,10 @@ export interface Driver {
   setUpModuleAt(task: { project: string; role: string; module: string }): Promise<void>;
   /** PDC coordinators name the project's module in the governance file as needing review. */
   requireReview(project: string, module: string): Promise<void>;
+  /** The governance file's list of modules needing review stops being readable. */
+  spoilReviewList(project: string): Promise<void>;
+  /** How many times PDC coordinators were alerted that the list cannot be read. */
+  unreadableReviewListAlerts(project: string): Promise<number>;
   /** The member approves the pull request of the work with that feedback signal. */
   approve(project: string, feedbackSignal: string, member: string): Promise<void>;
   /** PDC coordinators link a second account to a member in the governance file. */

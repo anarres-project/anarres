@@ -12,6 +12,7 @@ export {
   issueForNotAccepted,
   issueForTask,
   issueForUnprotectedMain,
+  issueForUnreadableReviewList,
   issueNumber,
   type ListedIssue,
   logFrom,

@@ -43,6 +43,7 @@ import {
   issueForNotAccepted,
   issueForTask,
   issueForUnprotectedMain,
+  issueForUnreadableReviewList,
   issueNumber,
   isTask,
   type ListedIssue,
@@ -58,6 +59,7 @@ import {
   rulesetProtectingMain,
   taskFromIssue,
   UNPROTECTED_MAIN,
+  UNREADABLE_REVIEW_LIST,
 } from "./representation.ts";
 import { type Download, downloadGitHub, requestGitHub } from "./request.ts";
 
@@ -171,11 +173,24 @@ export class GitHubAdapter
   }
 
   async unprotectedMainAlertOpen(project: string): Promise<boolean> {
+    return this.alertOpen(project, UNPROTECTED_MAIN);
+  }
+
+  /** Whether an alert under the label is open: coordinators close it once it is dealt with. */
+  private async alertOpen(project: string, label: string): Promise<boolean> {
     const open = await this.call<unknown[]>(
       "GET",
-      `${this.repo(project)}/issues?labels=${UNPROTECTED_MAIN}&state=open&per_page=1`,
+      `${this.repo(project)}/issues?labels=${label}&state=open&per_page=1`,
     );
     return open.length > 0;
+  }
+
+  async alertUnreadableReviewList(project: string): Promise<void> {
+    await this.openIssue(project, issueForUnreadableReviewList());
+  }
+
+  async unreadableReviewListAlertOpen(project: string): Promise<boolean> {
+    return this.alertOpen(project, UNREADABLE_REVIEW_LIST);
   }
 
   /** The rules GitHub applies to main now, whoever set them: readable with metadata access. */

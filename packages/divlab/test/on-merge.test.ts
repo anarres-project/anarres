@@ -28,6 +28,8 @@ const board: TaskBoard = {
   alertNotAccepted: untouched,
   alertUnprotectedMain: untouched,
   unprotectedMainAlertOpen: untouched,
+  alertUnreadableReviewList: untouched,
+  unreadableReviewListAlertOpen: untouched,
   markModuleDone: untouched,
   task: untouched,
   close: untouched,
@@ -928,6 +930,42 @@ describe("acting on a pull request", () => {
         "7: The work waits for a reviewer's approval: PDC coordinators require a person to approve work on parser before it is merged, a trusted member or a PDC coordinator with no part in the module",
       ],
     ]);
+  });
+
+  it("alerts PDC coordinators when it cannot read which modules need review", async () => {
+    const alerted: string[] = [];
+    const unreadable: PullRequests = {
+      ...submitting(),
+      governanceFile: async () => ({ members: {}, review: { ledger: ["../parser"] } }),
+    };
+    const board: TaskBoard = {
+      ...held,
+      post: async () => {},
+      unreadableReviewListAlertOpen: async () => false,
+      alertUnreadableReviewList: async (project) => {
+        alerted.push(project);
+      },
+    };
+    await onPullRequest("ledger", "7", unreadable, board, log, clock);
+    expect(alerted).toEqual(["ledger"]);
+  });
+
+  it("alerts PDC coordinators of an unreadable list only once, while its alert is still open", async () => {
+    const alerted: string[] = [];
+    const unreadable: PullRequests = {
+      ...submitting(),
+      governanceFile: async () => ({ members: {}, review: { ledger: ["../parser"] } }),
+    };
+    const board: TaskBoard = {
+      ...held,
+      post: async () => {},
+      unreadableReviewListAlertOpen: async () => true,
+      alertUnreadableReviewList: async (project) => {
+        alerted.push(project);
+      },
+    };
+    await onPullRequest("ledger", "7", unreadable, board, log, clock);
+    expect(alerted).toEqual([]);
   });
 
   it("says only once that work waits for a reviewer, not on every run that finds no approval", async () => {

@@ -28,6 +28,8 @@ function boardKeepingPosts() {
     alertClaimedWithoutClaim: untouched,
     alertUnprotectedMain: untouched,
     unprotectedMainAlertOpen: untouched,
+    alertUnreadableReviewList: untouched,
+    unreadableReviewListAlertOpen: untouched,
   };
   return { posted, board };
 }

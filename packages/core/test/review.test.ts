@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { approvalCounts, needsReview } from "../src/index.ts";
+import { approvalCounts, needsReview, reviewListUnreadable } from "../src/index.ts";
 
 describe("whether work on a module needs a person's approval (decision 0016)", () => {
   it("does when PDC coordinators name the module, for its project, in the governance file", () => {
@@ -28,6 +28,16 @@ describe("whether work on a module needs a person's approval (decision 0016)", (
     ["a file that cannot be read at all", undefined],
   ])("does for every module, holding everything, given %s", (_what, file) => {
     expect(needsReview(file, "ledger", "parser")).toBe(true);
+  });
+});
+
+describe("whether the list of modules needing review cannot be read, so coordinators are told", () => {
+  it("can be read when it names modules plainly, project by project", () => {
+    expect(reviewListUnreadable({ members: {}, review: { ledger: ["parser"] } })).toBe(false);
+  });
+
+  it("cannot be read when a project's module is not named plainly", () => {
+    expect(reviewListUnreadable({ members: {}, review: { ledger: ["../parser"] } })).toBe(true);
   });
 });
 

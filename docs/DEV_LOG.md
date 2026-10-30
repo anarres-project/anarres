@@ -942,6 +942,37 @@ governance scenarios run alone.
             Already so: the lease loop reads each task from the board after finishing, and a
             closed issue is no task. Kept as a regression test.
   Gate 860 and 146.
+- Alerting PDC coordinators, once, that the list of modules needing review cannot be read
+  (decision 0016). Acceptance: "Divlab alerts PDC coordinators, once, when it cannot read which
+  modules need review", `@wip @governance`: two modules' work, so two runs find the list
+  unreadable. Red with `NotYetImplemented` at the drivers' count of such alerts.
+  RED:      the list can be read when it names modules plainly -> `reviewListUnreadable is not
+            a function`; with the stub, expected true to be false
+  GREEN:    the same (hard-coded).
+  RED:      cannot be read when a project's module is not named plainly -> expected false to be
+            true
+  GREEN:    the same (283 passed in core): read as `needsReview` reads it.
+  RED:      alerts PDC coordinators when it cannot read which modules need review -> expected []
+            to deeply equal [ 'ledger' ]
+  GREEN:    the same (239 passed in divlab).
+  RED:      alerts of an unreadable list only once, while its alert is still open -> expected
+            [ 'ledger' ] to deeply equal []
+  GREEN:    the same (240 passed).
+  RED:      the alert as an issue tells PDC coordinators that everything waits for a reviewer,
+            under a label -> `issueForUnreadableReviewList is not a function`; with the stub,
+            expected { title: '', … } to deeply equal { …(3) }
+  GREEN:    the same (220 passed in github).
+  RED:      alerting opens an issue in the project saying so -> expected [] to deeply equal
+            [ { …(3) } ]
+  GREEN:    the same (221 passed).
+  RED:      the alert is open while an issue under its label is open -> `unreadableReviewList
+            AlertOpen is not a function`; with the stub, expected false to be true
+  GREEN:    the same (222 passed).
+  REFACTOR: whether an alert is open is asked one way for both labels (`alertOpen`).
+  The scenario passed and lost `@wip`. The sandbox driver spoils the list with the project's
+  own entry, taken out after; its count of routing alerts leaves this label out, as the other
+  escalations that are not routing's. Protocol slip: the adapter's alert stub went in with its
+  test, not after the test was run; it failed on its assertion all the same. Gate 867 and 147.
 
 ---
 
