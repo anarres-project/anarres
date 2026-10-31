@@ -250,8 +250,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] main's modules.yaml unreadable when a module is done: integration does not start, and
         PDC coordinators are told why, the reason only in a code block (in-process; a project
         with no modules.yaml has nothing to read, and no alert);
-  - [ ] that alert only once while it is open, as the review list's is, should a held
-        Security & Quality pass be run again;
+  - [x] that alert only once while it is open, as the review list's is, should a held
+        Security & Quality pass be run again (unit; closing it re-arms it);
   - [x] the routing record keeps `lastModule` when read back, as it keeps the other fields
         Divlab adds, and is unreadable when it is anything but yes;
   - [x] Integration Specification's name, trust level (new), and its read (requirements,

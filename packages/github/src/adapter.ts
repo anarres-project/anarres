@@ -61,6 +61,7 @@ import {
   rulesetProtectingMain,
   taskFromIssue,
   UNPROTECTED_MAIN,
+  UNREADABLE_MODULES,
   UNREADABLE_REVIEW_LIST,
 } from "./representation.ts";
 import { type Download, downloadGitHub, requestGitHub } from "./request.ts";
@@ -197,6 +198,10 @@ export class GitHubAdapter
 
   async alertUnreadableModules(project: string, reason: string): Promise<void> {
     await this.openIssue(project, issueForUnreadableModules(reason));
+  }
+
+  async unreadableModulesAlertOpen(project: string): Promise<boolean> {
+    return this.alertOpen(project, UNREADABLE_MODULES);
   }
 
   async alertUnreadableReviewList(project: string): Promise<void> {

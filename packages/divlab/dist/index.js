@@ -10171,7 +10171,7 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     const onMain = await pullRequests.modulesOnMain(project2);
     const listed = readModules(onMain ?? "");
     const done = modulesDone(events);
-    if (onMain !== void 0 && "unreadable" in listed) {
+    if (onMain !== void 0 && "unreadable" in listed && !await board.unreadableModulesAlertOpen(project2)) {
       await board.alertUnreadableModules(
         project2,
         `The project's modules.yaml on main cannot be read: ${listed.unreadable}`
@@ -11217,6 +11217,9 @@ var GitHubAdapter = class {
   }
   async alertUnreadableModules(project2, reason) {
     await this.openIssue(project2, issueForUnreadableModules(reason));
+  }
+  async unreadableModulesAlertOpen(project2) {
+    return this.alertOpen(project2, UNREADABLE_MODULES);
   }
   async alertUnreadableReviewList(project2) {
     await this.openIssue(project2, issueForUnreadableReviewList());

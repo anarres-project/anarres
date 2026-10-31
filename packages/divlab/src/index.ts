@@ -117,6 +117,8 @@ export interface TaskBoard {
   alertUnreadableReviewList(project: string): Promise<void>;
   /** PDC coordinators are told that main's modules.yaml cannot be read, and why. */
   alertUnreadableModules(project: string, reason: string): Promise<void>;
+  /** Whether PDC coordinators' alert that modules.yaml cannot be read is still open. */
+  unreadableModulesAlertOpen(project: string): Promise<boolean>;
   /** Whether such an alert is still open: coordinators close it once the list is fixed. */
   unreadableReviewListAlertOpen(project: string): Promise<boolean>;
   markModuleDone(module: FinishedModule): Promise<void>;
@@ -1051,7 +1053,11 @@ export async function onPullRequest(
     const listed = readModules(onMain ?? "");
     const done = modulesDone(events);
     // A project with no modules.yaml has nothing to read; one it cannot read is never passed over.
-    if (onMain !== undefined && "unreadable" in listed) {
+    if (
+      onMain !== undefined &&
+      "unreadable" in listed &&
+      !(await board.unreadableModulesAlertOpen(project))
+    ) {
       await board.alertUnreadableModules(
         project,
         `The project's modules.yaml on main cannot be read: ${listed.unreadable}`,

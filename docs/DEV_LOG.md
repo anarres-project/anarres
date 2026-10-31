@@ -1145,6 +1145,18 @@ governance scenarios run alone.
   REFACTOR: none
   ```
   The scenario passed and lost `@wip`. Gate 902 and 155.
+- That alert once while it is open, as the review list's:
+  ```
+  RED:      does not tell PDC coordinators again while its alert that modules.yaml cannot be
+            read is open -> expected [ 'ledger' ] to deeply equal []
+  GREEN:    (247 passed; the first alert test's board now says no alert is open)
+  RED:      is open while an issue under its label is open in the project
+            -> TypeError: adapter.unreadableModulesAlertOpen is not a function; stubbed,
+            -> expected false to be true
+  GREEN:    (42 passed)
+  REFACTOR: none
+  ```
+  Gate 904 and 155.
 
 ---
 

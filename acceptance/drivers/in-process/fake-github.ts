@@ -195,6 +195,10 @@ export class FakeGitHub
     this.unreadableModulesListAlerted.push(project);
   }
 
+  async unreadableModulesAlertOpen(project: string): Promise<boolean> {
+    return this.unreadableModulesListAlerted.includes(project);
+  }
+
   unreadableModulesListAlerts(project: string): number {
     return this.unreadableModulesListAlerted.filter((alerted) => alerted === project).length;
   }

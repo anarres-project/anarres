@@ -30,6 +30,7 @@ function boardKeepingPosts() {
     unprotectedMainAlertOpen: untouched,
     alertUnreadableReviewList: untouched,
     alertUnreadableModules: untouched,
+    unreadableModulesAlertOpen: untouched,
     unreadableReviewListAlertOpen: untouched,
   };
   return { posted, board };

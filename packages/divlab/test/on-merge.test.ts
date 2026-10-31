@@ -30,6 +30,7 @@ const board: TaskBoard = {
   unprotectedMainAlertOpen: untouched,
   alertUnreadableReviewList: untouched,
   alertUnreadableModules: untouched,
+  unreadableModulesAlertOpen: untouched,
   unreadableReviewListAlertOpen: untouched,
   markModuleDone: untouched,
   task: untouched,
@@ -798,11 +799,35 @@ describe("acting on a pull request", () => {
       alertUnreadableModules: async (project, reason) => {
         alerted.push({ project, reason });
       },
+      unreadableModulesAlertOpen: async () => false,
     };
     await onPullRequest("ledger", "7", spoiled, finishing, log, clock);
     expect(alerted).toEqual([
       { project: "ledger", reason: expect.stringContaining("modules.yaml") },
     ]);
+  });
+
+  it("does not tell PDC coordinators again while its alert that modules.yaml cannot be read is open", async () => {
+    const alerted: string[] = [];
+    const securityPasses = {
+      path: "feedback/FB-1.md",
+      text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: security-and-quality\n  module: parser\n  verdict: pass\n---\n',
+    };
+    const spoiled: PullRequests = {
+      ...submitting([], [securityPasses]),
+      modulesOnMain: async () => "modules: [unclosed",
+    };
+    const alertedBefore: TaskBoard = {
+      ...heldAs("security-and-quality"),
+      markModuleDone: async () => {},
+      post: async () => {},
+      alertUnreadableModules: async (project) => {
+        alerted.push(project);
+      },
+      unreadableModulesAlertOpen: async () => true,
+    };
+    await onPullRequest("ledger", "7", spoiled, alertedBefore, log, clock);
+    expect(alerted).toEqual([]);
   });
 
   it("does not merge a draft: its member has not finished the work", async () => {

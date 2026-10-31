@@ -472,6 +472,23 @@ describe("alerting PDC coordinators that a project's modules.yaml cannot be read
     await adapter.alertUnreadableModules("ledger", "it is not YAML");
     expect(opened).toEqual([issueForUnreadableModules("it is not YAML")]);
   });
+
+  it("is open while an issue under its label is open in the project", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path === "repos/commons/ledger/issues?labels=unreadable-modules&state=open&per_page=1"
+        ) {
+          return { status: 200, data: [{ number: 32 }] as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.unreadableModulesAlertOpen("ledger")).toBe(true);
+  });
 });
 
 describe("alerting PDC coordinators that the list of modules needing review cannot be read", () => {
