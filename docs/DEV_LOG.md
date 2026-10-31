@@ -1321,6 +1321,10 @@ governance scenarios run alone.
   The types made Divlab say what an unreadable modules.yaml means here (not held); no test
   asked, so it is on the list as a question. The scenario passed and lost `@wip`. Gate 934
   and 160.
+- Bernard, 2026-10-31, amending decision 0017 again: an unreadable modules.yaml while
+  integration work passes holds integration and alerts once; the sandbox shows integration
+  with one journey scenario in a project of its own; naming the module at fault goes into
+  the plugin's role instructions when they are written. Test list updated.
 
 ---
 

@@ -285,7 +285,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           a request on every pull request;
     - [x] the coordinator's alert says why in words of its own, not "no rule covers";
     - [ ] the plugin's Integration Test instructions say how to name the module at fault (waits
-          on the plugin's role instructions, which do not exist yet);
+          on the plugin's role instructions, written with them: Bernard, 2026-10-31);
   - [ ] a module reopened after integration began: nothing more in integration is posted until
         every module is done again, then a new Integration Test task (Bernard, 2026-10-31):
     - [x] the module at fault done again → an Integration Test task, not Integration
@@ -295,9 +295,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
     - [x] integration work finishing while a module is reopened posts nothing further
           (`integration_held`, naming the modules), and is never revised as stale: 0017's hold
           wins over 0015's stale mark, its inputs changed or unchecked (in-process);
-    - [ ] main's modules.yaml unreadable while integration work passes: held, or alerted?
-          (today it is neither held nor alerted; the alert of the Security & Quality case
-          does not reach it);
+    - [ ] main's modules.yaml unreadable while integration work passes: held, and PDC
+          coordinators alerted once, by the Security & Quality case's alert (Bernard,
+          2026-10-31: hold and alert);
     - [x] an integration task posted but unclaimed when a module reopens is withdrawn
           (in-process; the board is asked for its ready tasks only when a decision reopens a
           module);
@@ -311,7 +311,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] preparing an integration task fetches only its role's inputs (core's read scopes, so no
         new code: a scenario for Integration Test, which fails with the contracts taken out of
         its scope); the hook judges them by the same scopes;
-  - [ ] the sandbox shows them.
+  - [ ] the sandbox shows them (Bernard, 2026-10-31): one journey scenario in a project of its
+        own, two small modules through to integration, Integration Specification, a failing
+        Integration Test sent back, then Integration Review completing the programme; the other
+        integration scenarios stay in-process only.
 - [x] Escalation: the same role is re-run more than three times → a PDC coordinator is alerted and
       no further task is posted (Bernard, 2026-10-12: per module, revision tasks only, the count
       starting again when that role's work passes).

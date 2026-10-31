@@ -57,3 +57,13 @@ and what happens when a module reopens.
 - **An integration task posted but unclaimed when a module reopens** is withdrawn.
 - **Eligibility** stands as read: the programme counts as one module, so a member holds one role
   among the Programme Architect and the three integration roles.
+
+## Amendment, 2026-10-31 (Bernard: each recommendation)
+
+- **modules.yaml unreadable while integration work passes:** nothing further in integration is
+  posted, and PDC coordinators are alerted once, as when a module is done; the work is merged
+  and recorded, and integration goes on once the file is fixed.
+- **The sandbox** shows integration with one journey scenario in a project of its own; the
+  other integration scenarios run in-process only, to keep the sandbox run within its time.
+- **How an Integration Test member names the module at fault** goes into the plugin's role
+  instructions when those are written.
