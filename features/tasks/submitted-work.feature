@@ -77,6 +77,13 @@ Feature: Divlab merges the work members submit
     And the member is told their feedback signal does not give its verdict
     And no task is ready for "parser"
 
+  Scenario: Work whose verdict is not one Anarres has is not merged, and the member is told why
+    Given a project with a module "parser"
+    When a member submits Specification work on "parser" whose feedback signal gives a verdict Anarres does not have
+    Then Divlab has not merged the member's Specification work on "parser"
+    And the member is told their feedback signal's verdict is not one Anarres has
+    And no task is ready for "parser"
+
   # Not in the sandbox: the real Action cannot be stopped between merging and recording on cue.
   Scenario: A merge Divlab was interrupted in is finished by its next run
     Given a project with a module "parser"

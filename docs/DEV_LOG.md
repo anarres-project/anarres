@@ -102,6 +102,19 @@ governance scenarios run alone.
   `anarres prepare` tells the session to load that skill before starting. The drivers report the
   skill named and whether the plugin carries it: the scenario is now not yet right, in its Then,
   as the plugin has no Programme Architect skill.
+- Gathering core's facts for the skills showed core holds no list of verdicts, and read any
+  plainly named verdict: a misspelt one advanced as a pass. Acceptance: "Work whose verdict is
+  not one Anarres has is not merged, and the member is told why", `@wip`, red in its Then
+  (merged).
+  ```
+  RED:      reading a feedback signal > finds a feedback signal unreadable when its verdict is
+            not one Anarres has -> expected { fromRole: 'test', …(3) } to deeply equal { Object (unreadable) }
+  GREEN:    (975 passed): core's `VERDICTS`, the concept document's four (§8)
+  REFACTOR: none
+  ```
+  The scenario passed and lost `@wip`; in-process only, the refusal path being shown in the
+  sandbox already (decision 0018). The CLI's check before submitting reads signals with core's
+  reader, so it says the same.
 
 ## 2026-10-27: Work only from the task's holder, and a module's first task
 

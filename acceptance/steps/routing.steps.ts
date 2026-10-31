@@ -124,6 +124,21 @@ When(
   },
 );
 
+When(
+  "a member submits {role} work on {string} whose feedback signal gives a verdict Anarres does not have",
+  function (this: AnarresWorld, role: string, module: string) {
+    // A verdict misspelt, as a member's session might write it.
+    return this.anarres.memberSubmitsWork({ role, module, verdict: "fial" });
+  },
+);
+
+Then(
+  "the member is told their feedback signal's verdict is not one Anarres has",
+  function (this: AnarresWorld) {
+    return this.anarres.memberIsToldWhy("verdict is not one Anarres has");
+  },
+);
+
 Then(
   "the member is told their feedback signal does not give its verdict",
   function (this: AnarresWorld) {

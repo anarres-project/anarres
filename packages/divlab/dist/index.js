@@ -8966,6 +8966,7 @@ import { readFileSync } from "node:fs";
 var import_yaml = __toESM(require_dist(), 1);
 var PLAIN_NAME = /^(?=.{1,40}$)[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
 var isPlainName = (name) => PLAIN_NAME.test(name);
+var VERDICTS = ["pass", "conditional_pass", "fail", "blocked"];
 function readFeedbackSignal(text) {
   const lines = text.split(/\r?\n/);
   if (lines[0] !== "---") return { unreadable: "it has no feedback signal header" };
@@ -8991,6 +8992,9 @@ function readFeedbackSignal(text) {
     if (!isPlainName(header[field])) {
       return { unreadable: `its feedback signal's ${field} is not a plain name` };
     }
+  }
+  if (!VERDICTS.includes(header.verdict)) {
+    return { unreadable: "its feedback signal's verdict is not one Anarres has" };
   }
   const impediments = header.impediments ?? [];
   if (!Array.isArray(impediments) || !impediments.every((impediment) => typeof impediment?.type === "string")) {
@@ -11320,7 +11324,7 @@ var mainCommit = (listed) => ({
   author: listed.author?.login,
   signedByGitHub: listed.committer?.login === "web-flow" && listed.commit.verification?.verified === true
 });
-var VERDICTS = /* @__PURE__ */ new Map([
+var VERDICTS2 = /* @__PURE__ */ new Map([
   ["APPROVED", "approved"],
   ["CHANGES_REQUESTED", "changes requested"],
   ["DISMISSED", "dismissed"]
@@ -12009,7 +12013,7 @@ var GitHubAdapter = class {
       if (listed.length < 100) break;
     }
     return reviews.flatMap((review) => {
-      const verdict = VERDICTS.get(review.state);
+      const verdict = VERDICTS2.get(review.state);
       return verdict && review.user ? [{ reviewer: review.user.login, commit: review.commit_id, verdict }] : [];
     });
   }

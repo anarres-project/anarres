@@ -31,6 +31,9 @@ const PLAIN_NAME = /^(?=.{1,40}$)[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
  */
 export const isPlainName = (name: string): boolean => PLAIN_NAME.test(name);
 
+/** The verdicts a piece of work may give (concept §8): defined here and nowhere else. */
+export const VERDICTS = ["pass", "conditional_pass", "fail", "blocked"] as const;
+
 /** Why a feedback signal could not be read. Divlab never guesses at what it meant. */
 export type Unreadable = { unreadable: string };
 
@@ -60,6 +63,9 @@ export function readFeedbackSignal(text: string): FeedbackSignal | Unreadable {
     if (!isPlainName(header[field])) {
       return { unreadable: `its feedback signal's ${field} is not a plain name` };
     }
+  }
+  if (!(VERDICTS as readonly string[]).includes(header.verdict)) {
+    return { unreadable: "its feedback signal's verdict is not one Anarres has" };
   }
   const impediments = header.impediments ?? [];
   if (

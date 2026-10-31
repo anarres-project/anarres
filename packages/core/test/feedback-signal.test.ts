@@ -275,6 +275,13 @@ describe("reading a feedback signal", () => {
     });
   });
 
+  it("finds a feedback signal unreadable when its verdict is not one Anarres has", () => {
+    const signal = headerWith("from_role: test", "module: parser", "verdict: fial");
+    expect(readFeedbackSignal(signal)).toEqual({
+      unreadable: "its feedback signal's verdict is not one Anarres has",
+    });
+  });
+
   it("finds a feedback signal unreadable when an impediment's type is not a plain name", () => {
     const signal = headerWith(
       "from_role: coding",

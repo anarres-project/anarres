@@ -757,6 +757,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       that are not plain, and (a scenario passing first time, kept as a regression test) a
       signal that leaves out its verdict;
   - [x] the sandbox shows the missing-verdict scenario (2026-10-24).
+  - [x] a verdict that is not one Anarres has (core's `VERDICTS`: pass, conditional pass, fail,
+        blocked) is unreadable, never taken as a pass (2026-10-31);
 - [x] Work for a task the member has not claimed is rejected (2026-10-27: work is merged only
       from the member Divlab shows holding its task; section 3).
 - [x] A feedback signal whose role, module, verdict or impediment types are not plain names

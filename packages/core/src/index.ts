@@ -14,6 +14,7 @@ export {
   readFeedbackSignal,
   readSignalFile,
   type Unreadable,
+  VERDICTS,
 } from "./feedback-signal.ts";
 export { LEASE_HOURS, leaseHasRunOut, leaseRunsOutAt } from "./leases.ts";
 export {
