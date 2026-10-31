@@ -3,6 +3,13 @@ Feature: A member preparing a task has its role's inputs, and no others
   fetches only what its role may read: for Architecture, among others, the contracts its module
   provides and uses, as the Programme Architect's modules.yaml says (decision 0014).
 
+  Scenario: A member preparing a new project's Programme Architect task has its requirements to read
+    Given a new project is started
+    And Alice is a trusted member
+    And Alice has claimed the Programme Architect task for the programme
+    When Alice prepares the Programme Architect task for the programme
+    Then Alice has the project's requirements to read
+
   Scenario: A member preparing an Architecture task has the contracts its module uses, and no others
     Given a new project is started
     And a member's Programme Architect work for the programme was accepted, listing the modules "parser", "lexer" and "ledger", with a contract "tokens" that "lexer" provides and "parser" uses, and a contract "entries" that "ledger" provides

@@ -44,7 +44,7 @@ import type {
   ReadyTask,
   RoutingRecord,
 } from "../driver.ts";
-import { HarnessNotYetBuilt } from "../errors.ts";
+import { HarnessNotYetBuilt, NotYetImplemented } from "../errors.ts";
 import {
   FAILS_ON_PURPOSE,
   feedbackSignalFile,
@@ -173,7 +173,12 @@ export class SandboxDriver implements Driver {
 
   private async makeProject(
     project: string,
-    options: { unprotected?: boolean; withoutToolchain?: boolean; modules?: string[] },
+    options: {
+      unprotected?: boolean;
+      withoutToolchain?: boolean;
+      modules?: string[];
+      requirements?: true;
+    },
   ): Promise<void> {
     await this.github.call("POST", `orgs/${this.org}/repos`, {
       name: project,
@@ -228,6 +233,17 @@ export class SandboxDriver implements Driver {
         content: Buffer.from(modulesYaml(options.modules)).toString("base64"),
       });
     }
+    // A project begins from its approved proposal's requirements.
+    if (options.requirements) {
+      await this.github.call(
+        "PUT",
+        `repos/${this.org}/${project}/contents/requirements/proposal.md`,
+        {
+          message: "The project's requirements",
+          content: Buffer.from("# The project's requirements\n").toString("base64"),
+        },
+      );
+    }
     run.expected.set(project, {
       ready: 0,
       claimed: 0,
@@ -244,8 +260,8 @@ export class SandboxDriver implements Driver {
   /** A repository of the scenario's own, set up and started as Divlab's App would. */
   async startProject(project: string): Promise<void> {
     this.projectOfScenario = project;
-    await this.makeProject(project, {});
-    await startProject(project, this.asDivlab);
+    await this.makeProject(project, { requirements: true });
+    await startProject(project, this.asDivlab, this.asDivlab);
     this.expectedFor(project).ready += 1;
   }
 
@@ -1337,7 +1353,7 @@ export class SandboxDriver implements Driver {
         ? undefined
         : await this.asMember(account).modulesAt(task.project, held.inputsAt);
     const plan = preparation(this.org, task.project, held, await loginOf(account), modules);
-    if ("refused" in plan) throw new Error(plan.refused);
+    if ("refused" in plan) return { refused: plan.refused };
     this.machine ??= mkdtempSync(join(tmpdir(), "anarres-member-"));
     const folder = taskFolder({ project: task.project, task: id });
     const into = join(this.machine, folder);
@@ -1363,7 +1379,7 @@ export class SandboxDriver implements Driver {
       );
     }
     this.preparedIssues.set(`${member} ${task.role} ${task.module}`, id);
-    return folder;
+    return { workIn: folder };
   }
 
   /** The member's plugin resumes a task through the CLI, in a new session on the same machine. */
@@ -1410,6 +1426,24 @@ export class SandboxDriver implements Driver {
     const folder = taskFolder({ project: task.project, task: id });
     const integration = join(this.machine, folder, "integration");
     return existsSync(integration) ? readdirSync(integration).sort() : [];
+  }
+
+  async instructionsGiven(
+    _task: { project: string; role: string; module: string },
+    _member: string,
+  ): Promise<{ role: string; inPlugin: boolean } | undefined> {
+    throw new NotYetImplemented("preparing a task names no role's instructions yet");
+  }
+
+  /** Whether the prepared task's folder holds the project's requirements. */
+  async requirementsFetched(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<boolean> {
+    const id = this.preparedIssues.get(`${member} ${task.role} ${task.module}`);
+    if (id === undefined || this.machine === undefined) return false;
+    const folder = taskFolder({ project: task.project, task: id });
+    return existsSync(join(this.machine, folder, "requirements"));
   }
 
   /** The contracts in the prepared task's folder: the folders of `programme/contracts/`. */

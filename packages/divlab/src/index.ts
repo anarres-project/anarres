@@ -1373,9 +1373,19 @@ export async function setUpProject(
 }
 
 /** A project begins: Divlab posts its first task. */
-export async function startProject(project: string, board: TaskBoard): Promise<void> {
-  // The Programme Architect decides the project's modules, in modules.yaml (decision 0013).
-  await board.post({ project, role: "programme-architect", module: PROGRAMME });
+export async function startProject(
+  project: string,
+  board: TaskBoard,
+  main: Pick<Repository, "head">,
+): Promise<void> {
+  // The Programme Architect decides the project's modules, in modules.yaml (decision 0013), from
+  // the requirements main holds as the project starts.
+  await board.post({
+    project,
+    role: "programme-architect",
+    module: PROGRAMME,
+    inputsAt: await main.head(project),
+  });
 }
 
 /** A module begins: Divlab posts its first task. */

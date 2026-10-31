@@ -65,6 +65,30 @@ governance scenarios run alone.
 
 ---
 
+## 2026-10-31: Role instructions (decision 0020)
+
+- Bernard, 2026-10-31: decision 0020. Role instructions written fresh, one skill per role built
+  from shared parts, core's facts put in at bundling, a test keeping the set complete, the roles
+  in the order a project needs them, each read by Bernard before it is pushed.
+- Outer scenario "A member preparing a task is told to follow its role's instructions" (`@wip`,
+  Programme Architect) failed dishonestly in its When: a new project's Programme Architect task
+  could not be prepared, as it named no commit for its inputs. A first real project would have
+  stopped at its first task. Set aside to fix that first.
+- Harness: preparing gives what the member is told, where the work is or why nothing was
+  fetched, so a refusal fails a Then honestly rather than throwing in the When. Started
+  projects hold their requirements, as a project begun from its proposal does.
+- Acceptance: "A member preparing a new project's Programme Architect task has its requirements
+  to read", `@wip`, red in its Then (nothing fetched: no commit named).
+  ```
+  RED:      starting a project > pins the Programme Architect's inputs at main as the project
+            starts -> expected undefined to be 'a1b2c3'
+  GREEN:    (3 passed): `startProject` posts the task with main's head as its pinned commit
+  REFACTOR: none
+  ```
+  The posting test now matches the task's fields with `objectContaining`, since the task carries
+  its pin too. The scenario passed and lost `@wip`; in-process only (fetching at a pinned commit
+  is shown in the sandbox already; decision 0018). Gate 972 and 170.
+
 ## 2026-10-27: Work only from the task's holder, and a module's first task
 
 - Bernard decided: Divlab merges work only from the member it shows holding the task the work is

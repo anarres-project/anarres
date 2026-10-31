@@ -988,6 +988,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         pattern);
   - [x] Divlab posts each task with the commit its inputs are pinned at, the merge that decided
         it, in the issue's words and its decision block; read back only if it is a commit name;
+  - [x] a new project's Programme Architect task is pinned at main as the project starts, so it
+        can be prepared (found by decision 0020's first scenario, 2026-10-31);
   - [x] a task decided by work Divlab did not merge (none yet: only merged work is routed) has no
         pinned commit; the CLI refuses to prepare one (its test for a task with no pinned inputs);
   - [x] the CLI's `prepare` fetches those places at that commit, and nothing else: for a task the

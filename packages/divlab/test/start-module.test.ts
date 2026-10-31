@@ -50,9 +50,19 @@ describe("starting a module", () => {
 describe("starting a project", () => {
   it("posts one ready task, the Programme Architect's, for the programme", async () => {
     const { posted, board } = boardKeepingPosts();
-    await startProject("ledger", board);
+    await startProject("ledger", board, { head: async () => "a1b2c3" });
     expect(posted).toEqual([
-      { project: "ledger", role: "programme-architect", module: "programme" },
+      expect.objectContaining({
+        project: "ledger",
+        role: "programme-architect",
+        module: "programme",
+      }),
     ]);
+  });
+
+  it("pins the Programme Architect's inputs at main as the project starts", async () => {
+    const { posted, board } = boardKeepingPosts();
+    await startProject("ledger", board, { head: async () => "a1b2c3" });
+    expect(posted[0]?.inputsAt).toBe("a1b2c3");
   });
 });

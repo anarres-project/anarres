@@ -175,8 +175,14 @@ export interface Driver {
   offeredTasks(member: string): Promise<{ role: string; module: string }[]>;
   /** The member's work Divlab has merged, as their plugin's status shows it. */
   contributionHistory(member: string): Promise<{ role: string; module: string }[]>;
-  /** The member's plugin prepares a task they hold, on their machine; gives where its work is. */
-  prepare(task: { project: string; role: string; module: string }, member: string): Promise<string>;
+  /**
+   * The member's plugin prepares a task they hold, on their machine: where its work is, or why
+   * nothing was fetched.
+   */
+  prepare(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<{ workIn: string } | { refused: string }>;
   /**
    * The modules' work among the files the member's plugin fetched when it prepared the task: each
    * module, and the kind of work (architecture, specification, tests, code, reviews).
@@ -195,6 +201,19 @@ export interface Driver {
     task: { project: string; role: string; module: string },
     member: string,
   ): Promise<string[]>;
+  /**
+   * The role whose instructions preparing the task told the member's session to follow, as the
+   * role is named in scenarios, and whether the plugin carries them; none if it named none.
+   */
+  instructionsGiven(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<{ role: string; inPlugin: boolean } | undefined>;
+  /** Whether the project's requirements were among the files the member's plugin fetched. */
+  requirementsFetched(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<boolean>;
   /** The contracts among the files the member's plugin fetched when it prepared the task. */
   contractsFetched(
     task: { project: string; role: string; module: string },

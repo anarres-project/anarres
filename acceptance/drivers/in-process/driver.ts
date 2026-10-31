@@ -44,6 +44,7 @@ import type {
   ReadyTask,
   RoutingRecord,
 } from "../driver.ts";
+import { NotYetImplemented } from "../errors.ts";
 import {
   feedbackSignalFile,
   inScenarioWords,
@@ -60,6 +61,8 @@ import { recording, SYSTEM_CALLS } from "./sandbox-coverage.ts";
 
 /** Where the Programme Architect's contracts are, a folder each (decision 0014). */
 const CONTRACTS = "programme/contracts/";
+/** Where a project's requirements are, from its proposal. */
+const REQUIREMENTS = "requirements/";
 
 /** Submits work to an in-memory fake of GitHub as pull requests, for Divlab to merge. */
 /** Divlab's clock in-process starts at a fixed time, so no scenario reads the wall clock. */
@@ -89,8 +92,10 @@ export class InProcessDriver implements Driver {
 
   async startProject(project: string): Promise<void> {
     this.github.repositories.set(project, []);
+    // A project begins from its approved proposal's requirements.
+    this.github.mergeFile(project, `${REQUIREMENTS}proposal.md`, "# The project's requirements\n");
     await setUpProject(project, this.system);
-    await startProject(project, this.system);
+    await startProject(project, this.system, this.system);
   }
 
   async startProjectWithoutToolchain(project: string, modules: string[]): Promise<string> {
@@ -543,7 +548,7 @@ export class InProcessDriver implements Driver {
         ? undefined
         : await this.system.modulesAt(task.project, held.inputsAt);
     const plan = preparation("anarres-project", task.project, held, member, modules);
-    if ("refused" in plan) throw new Error(plan.refused);
+    if ("refused" in plan) return { refused: plan.refused };
     if (held === undefined) throw new Error(`No task ${id} in ${task.project}`);
     const folder: { path: string; text: string }[] = [];
     await restoreDraft(
@@ -566,7 +571,7 @@ export class InProcessDriver implements Driver {
         .filter((path) => plan.paths.some((place) => path.startsWith(place))),
     );
     this.folders.set(`${member} ${task.project}#${id}`, folder);
-    return taskFolder({ project: task.project, task: id });
+    return { workIn: taskFolder({ project: task.project, task: id }) };
   }
 
   async moduleWorkFetched(
@@ -583,6 +588,21 @@ export class InProcessDriver implements Driver {
   ): Promise<string[]> {
     const fetched = this.fetched.get(`${member} ${task.project}#${this.openTaskId(task)}`) ?? [];
     return integrationKindsIn(fetched);
+  }
+
+  async requirementsFetched(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<boolean> {
+    const fetched = this.fetched.get(`${member} ${task.project}#${this.openTaskId(task)}`) ?? [];
+    return fetched.some((path) => path.startsWith(REQUIREMENTS));
+  }
+
+  async instructionsGiven(
+    _task: { project: string; role: string; module: string },
+    _member: string,
+  ): Promise<{ role: string; inPlugin: boolean } | undefined> {
+    throw new NotYetImplemented("preparing a task names no role's instructions yet");
   }
 
   async contractsFetched(

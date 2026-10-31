@@ -108,6 +108,20 @@ When(
 );
 
 Then(
+  "{word} is told to follow the {role}'s instructions, which the plugin carries",
+  function (this: AnarresWorld, member: string, role: string) {
+    return this.anarres.memberIsToldToFollowInstructionsOf(member, role);
+  },
+);
+
+Then(
+  "{word} has the project's requirements to read",
+  function (this: AnarresWorld, member: string) {
+    return this.anarres.memberHasRequirements(member);
+  },
+);
+
+Then(
   "{word} has the integration specifications and every contract to read, and none of the modules' work",
   function (this: AnarresWorld, member: string) {
     return this.anarres.memberHasIntegrationInputs(member, ["specifications"]);

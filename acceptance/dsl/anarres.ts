@@ -917,8 +917,8 @@ export class Anarres {
     );
   }
 
-  /** Where each member's prepared work is, by member and task. */
-  private readonly prepared = new Map<string, string>();
+  /** Where each member's prepared work is, or why nothing was fetched, by member and task. */
+  private readonly prepared = new Map<string, { workIn: string } | { refused: string }>();
   /** The task each member last prepared. */
   private readonly lastPrepared = new Map<string, Work & { project: string }>();
   /** What each member was told when they last resumed a task, by member and task. */
@@ -941,12 +941,29 @@ export class Anarres {
     );
   }
 
+  private preparedIn(key: string): string | undefined {
+    const prepared = this.prepared.get(key);
+    return prepared !== undefined && "workIn" in prepared ? prepared.workIn : undefined;
+  }
+
+  /** The task the member last prepared, which fetched its inputs. */
+  private preparedWork(member: string): Work & { project: string } {
+    const work = this.lastPrepared.get(member);
+    assert.ok(work !== undefined, `expected ${member} to have prepared a task`);
+    const prepared = this.prepared.get(`${member} ${workOn(work)}`);
+    assert.ok(
+      prepared !== undefined && "workIn" in prepared,
+      `expected ${member}'s ${work.role} task for ${work.module} to be prepared; ${JSON.stringify(prepared)}`,
+    );
+    return work;
+  }
+
   async memberIsToldWhereWorkIs(member: string, task: Work) {
     const key = `${member} ${workOn(this.aliased(task))}`;
     const told = this.resumed.get(key);
     assert.ok(
-      told !== undefined && "workIn" in told && told.workIn === this.prepared.get(key),
-      `expected ${member} to be told their work on the ${task.role} task for ${task.module} is where it was prepared, ${this.prepared.get(key)}; told ${JSON.stringify(told)}`,
+      told !== undefined && "workIn" in told && told.workIn === this.preparedIn(key),
+      `expected ${member} to be told their work on the ${task.role} task for ${task.module} is where it was prepared, ${this.preparedIn(key)}; told ${JSON.stringify(told)}`,
     );
   }
 
@@ -960,9 +977,28 @@ export class Anarres {
     );
   }
 
+  /** The member was told to follow their role's instructions, and the plugin has them. */
+  async memberIsToldToFollowInstructionsOf(member: string, role: string) {
+    const work = this.preparedWork(member);
+    const given = await this.driver.instructionsGiven(work, this.member(member));
+    assert.deepEqual(
+      given,
+      { role, inPlugin: true },
+      `expected ${member} to be told to follow the ${role}'s instructions, in the plugin`,
+    );
+  }
+
+  /** The member's prepared task fetched the project's requirements. */
+  async memberHasRequirements(member: string) {
+    const work = this.preparedWork(member);
+    assert.ok(
+      await this.driver.requirementsFetched(work, this.member(member)),
+      `expected ${member} to have the project's requirements to read`,
+    );
+  }
+
   async memberHasContracts(member: string, contracts: string[], notContracts: string[]) {
-    const work = this.lastPrepared.get(member);
-    assert.ok(work !== undefined, `expected ${member} to have prepared a task`);
+    const work = this.preparedWork(member);
     const fetched = await this.driver.contractsFetched(work, this.member(member));
     for (const contract of contracts) {
       assert.ok(
@@ -983,8 +1019,7 @@ export class Anarres {
    * work, every contract the programme has, and none of its modules' work (decision 0017).
    */
   async memberHasIntegrationInputs(member: string, kinds: string[]) {
-    const work = this.lastPrepared.get(member);
-    assert.ok(work !== undefined, `expected ${member} to have prepared a task`);
+    const work = this.preparedWork(member);
     const integration = await this.driver.integrationWorkFetched(work, this.member(member));
     assert.deepEqual(integration, kinds, `expected ${member} to have the integration ${kinds}`);
     const contracts = await this.driver.contractsFetched(work, this.member(member));
@@ -1005,8 +1040,7 @@ export class Anarres {
    * module's, if one is named.
    */
   async memberHasWorkOf(member: string, module: string, kinds: string[], otherModule?: string) {
-    const work = this.lastPrepared.get(member);
-    assert.ok(work !== undefined, `expected ${member} to have prepared a task`);
+    const work = this.preparedWork(member);
     const fetched = await this.driver.moduleWorkFetched(work, this.member(member));
     for (const kind of kinds) {
       assert.ok(
@@ -1026,8 +1060,7 @@ export class Anarres {
    * none of its module's work.
    */
   async memberHasKnowledgeGapToRead(member: string, reporting: Work) {
-    const work = this.lastPrepared.get(member);
-    assert.ok(work !== undefined, `expected ${member} to have prepared a task`);
+    const work = this.preparedWork(member);
     const signal = this.feedbackSignals.get(workOn(this.aliased(reporting)));
     const signals = await this.driver.feedbackSignalsFetched(work, this.member(member));
     assert.ok(
