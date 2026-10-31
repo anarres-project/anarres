@@ -1383,6 +1383,10 @@ governance scenarios run alone.
   cannot reach on cue, listed with their reasons. Taking the new tag off made the check name the
   method again. `@sandbox-wip` and `@in-process-only` are gone, as is the sandbox workflow's step
   listing them; `docs/SANDBOX.md` has the checklist.
+- The 411c3d5 sandbox run: 108 of 108 in 67 minutes, the last of every scenario. The e426879
+  run, the first of the `@sandbox` scenarios only: 46 of 46 (41 scenarios, outlines counted by
+  row), 307 steps, in 37 minutes, CI green. The integration journey passed on real GitHub at
+  its first run.
 
 ---
 
