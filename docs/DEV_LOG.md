@@ -1350,6 +1350,9 @@ governance scenarios run alone.
   before Divlab protects main, the in-process driver as it does for every project. It then
   passed in-process and lost `@wip`; the third account is made trusted for Integration Review,
   so it is `@governance`. Its first sandbox run is the next push's.
+- Bernard asked whether the sandbox runs need so many steps. Decision 0018 proposes the sandbox
+  runs only the scenarios chosen for it (`@sandbox`), about 40 of today's 109, each showing a
+  path to GitHub no other does; for Bernard to decide.
 
 ---
 
