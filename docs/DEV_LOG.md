@@ -1483,6 +1483,19 @@ governance scenarios run alone.
   ```
   The scenario passed and lost `@wip`. In-process only: routing is core's, and the governance
   file is read as the sandbox already shows (decision 0018).
+- The second reviewer independent of the first. Acceptance: "The member whose review passed
+  cannot take a high-risk module's second review", `@wip @governance`, red in its Then.
+  ```
+  RED:      is refused for a high-risk module's second review to the member whose review passed
+            -> expected 'allowed' to deeply equal { Object (refused) }
+  GREEN:    (351 passed)
+  RED:      onClaim > refuses a high-risk module's second review to the member whose review
+            passed -> Error: Divlab should not have acted (it granted the claim)
+  GREEN:    `eligibility` gives core the members whose reviews passed since Coding last passed
+  REFACTOR: none
+  ```
+  The scenario passed and lost `@wip`. Decision 0007 and the concept document (§15's trust
+  levels) say how high-risk modules work. Decision 0019 is built. Gate 971 and 168.
 
 ---
 

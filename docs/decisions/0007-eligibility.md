@@ -30,7 +30,9 @@ were settled before any code. Trust levels need a home before the site exists.
   *trusted* add Security & Quality and Programme Architect (and Governance, once it is a role).
   Each level may take what the levels below it may.
 - **Module risk**: until a PDC coordinator can mark a module high-risk, every module is treated
-  as low-risk, so new members may take its Coding tasks.
+  as low-risk, so new members may take its Coding tasks. (Amended 2026-10-31 by decision 0019:
+  coordinators mark high-risk modules in the governance file; Coding one needs an established
+  member, and its code is reviewed by two different members.)
 - **The governance file also records linked accounts**: accounts a PDC coordinator has linked are
   one member, for every rule.
 - **The sandbox's trust levels** come from the same kind of file in a repository in the sandbox

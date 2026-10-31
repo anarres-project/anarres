@@ -9185,6 +9185,9 @@ function mayTake(task, history, level, module = {}) {
       refused: `a ${ROLE_NAMES.coding} task on a high-risk module needs an established member, and you are ${level}`
     };
   }
+  if (module.highRisk && task.role === "reviewer" && module.reviewedBy?.includes(task.member)) {
+    return { refused: "a high-risk module's second review needs a member who has not reviewed it" };
+  }
   if (!trustAllows(level, task.role)) {
     const needed = levelNeeded(task.role);
     return {
@@ -9320,6 +9323,7 @@ var INTEGRATION_PIPELINE = [
   "integration-review"
 ];
 var FIRST_ROLE = MODULE_PIPELINE[0];
+var failed = (work) => work.verdict === "fail" || work.verdict === "blocked";
 var FAILURE_ROUTES = [
   { from: "architecture", reporting: "upstream_ambiguity", to: "programme-architect" },
   { from: "architecture", reporting: "architecture_impediment", to: "architecture" },
@@ -9516,7 +9520,10 @@ function eligibility(governance, project, events) {
     { member: memberOf(account), role: task.role, module: task.module },
     history,
     trustLevelOf(governance, memberOf(account)),
-    { highRisk: isHighRisk(governance, project, task.module) }
+    {
+      highRisk: isHighRisk(governance, project, task.module),
+      reviewedBy: [...reviewersSinceCoding(events, task.module, governance)]
+    }
   );
 }
 function leasesFrom(events) {
@@ -9533,6 +9540,17 @@ function leasesFrom(events) {
   return leases;
 }
 var routingDecisions = (log) => log.filter((event) => "work" in event);
+function reviewersSinceCoding(events, module, governance) {
+  const records = routingDecisions(events).filter((event) => event.work.module === module);
+  const coded = records.findLastIndex(
+    (event) => event.work.fromRole === "coding" && !failed(event.work)
+  );
+  return new Set(
+    records.slice(coded + 1).filter((event) => event.work.fromRole === "reviewer" && !failed(event.work)).flatMap(
+      (event) => event.member === void 0 ? [] : [memberFor(governance, event.member)]
+    )
+  );
+}
 
 // ../../node_modules/fflate/esm/index.mjs
 import { createRequire } from "module";

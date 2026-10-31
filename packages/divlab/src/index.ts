@@ -281,7 +281,10 @@ export function eligibility(governance: unknown, project: string, events: readon
       { member: memberOf(account), role: task.role, module: task.module },
       history,
       trustLevelOf(governance, memberOf(account)),
-      { highRisk: isHighRisk(governance, project, task.module) },
+      {
+        highRisk: isHighRisk(governance, project, task.module),
+        reviewedBy: [...reviewersSinceCoding(events, task.module, governance)],
+      },
     );
 }
 

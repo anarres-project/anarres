@@ -18,6 +18,17 @@ describe("whether a member may take a task (decision 0007)", () => {
     ).toBe("allowed");
   });
 
+  it("is refused for a high-risk module's second review to the member whose review passed (0019)", () => {
+    expect(
+      mayTake({ member: "alice", role: "reviewer", module: "parser" }, [], "established", {
+        highRisk: true,
+        reviewedBy: ["alice"],
+      }),
+    ).toEqual({
+      refused: "a high-risk module's second review needs a member who has not reviewed it",
+    });
+  });
+
   it("is refused to a member who has done other work in the module: one role per module", () => {
     const history = [{ member: "alice", role: "coding" as const, module: "parser" }];
     expect(

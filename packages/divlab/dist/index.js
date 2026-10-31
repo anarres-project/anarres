@@ -9190,6 +9190,9 @@ function mayTake(task, history, level, module = {}) {
       refused: `a ${ROLE_NAMES.coding} task on a high-risk module needs an established member, and you are ${level}`
     };
   }
+  if (module.highRisk && task.role === "reviewer" && module.reviewedBy?.includes(task.member)) {
+    return { refused: "a high-risk module's second review needs a member who has not reviewed it" };
+  }
   if (!trustAllows(level, task.role)) {
     const needed = levelNeeded(task.role);
     return {
@@ -9793,7 +9796,10 @@ function eligibility(governance, project2, events) {
     { member: memberOf(account), role: task.role, module: task.module },
     history,
     trustLevelOf(governance, memberOf(account)),
-    { highRisk: isHighRisk(governance, project2, task.module) }
+    {
+      highRisk: isHighRisk(governance, project2, task.module),
+      reviewedBy: [...reviewersSinceCoding(events, task.module, governance)]
+    }
   );
 }
 async function onClaim(project2, claim, board, log, clock, members) {

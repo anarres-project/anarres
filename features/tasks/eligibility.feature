@@ -76,3 +76,14 @@ Feature: Who may take a task
     And a member's Coding work on "parser" was accepted with a pass verdict
     When a member's Reviewer work on "parser" is accepted with a pass verdict
     Then the only task ready for "parser" is a Reviewer task
+
+  @governance
+  Scenario: The member whose review passed cannot take a high-risk module's second review
+    Given a project with a module "parser"
+    And PDC coordinators mark "parser" as high-risk
+    And a member's Coding work on "parser" was accepted with a pass verdict
+    And Alice is an established member
+    And Alice's Reviewer work on "parser" was accepted with a pass verdict
+    When Alice claims the Reviewer task for "parser"
+    Then Alice is told a high-risk module's second review needs a member who has not reviewed it
+    And a Reviewer task for "parser" is ready to claim

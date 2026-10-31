@@ -65,6 +65,16 @@ Then(
 );
 
 Then(
+  "{word} is told a high-risk module's second review needs a member who has not reviewed it",
+  function (this: AnarresWorld, member: string) {
+    return this.anarres.memberIsToldWhyRefused(
+      member,
+      "a high-risk module's second review needs a member who has not reviewed it",
+    );
+  },
+);
+
+Then(
   "{word} is told a {role} task needs an established member",
   function (this: AnarresWorld, member: string, role: string) {
     return this.anarres.memberIsToldTaskNeedsMoreTrust(member, role, "established");

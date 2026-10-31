@@ -15,13 +15,21 @@ export function mayTake(
   task: Part,
   history: readonly Part[],
   level: TrustLevel,
-  module: { highRisk?: boolean } = {},
+  module: {
+    highRisk?: boolean;
+    /** The members whose reviews of the module have passed since its code last changed. */
+    reviewedBy?: readonly string[];
+  } = {},
 ): { refused: string } | "allowed" {
   // New members code only low-risk modules (concept §11, decision 0019).
   if (module.highRisk && task.role === "coding" && level === "new") {
     return {
       refused: `a ${ROLE_NAMES.coding} task on a high-risk module needs an established member, and you are ${level}`,
     };
+  }
+  // A high-risk module's two reviews are by two different members (decision 0019).
+  if (module.highRisk && task.role === "reviewer" && module.reviewedBy?.includes(task.member)) {
+    return { refused: "a high-risk module's second review needs a member who has not reviewed it" };
   }
   if (!trustAllows(level, task.role)) {
     const needed = levelNeeded(task.role);

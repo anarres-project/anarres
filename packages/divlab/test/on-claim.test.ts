@@ -423,6 +423,50 @@ describe("who may claim a task (decision 0007)", () => {
     expect(alerted).toEqual([]);
   });
 
+  it("refuses a high-risk module's second review to the member whose review passed (0019)", async () => {
+    const refused: Refused[] = [];
+    const reviewTask: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "reviewer", module: "parser" }),
+      refuseMember: async (refusal) => {
+        refused.push(refusal);
+      },
+    };
+    const parserHighRisk: Members = {
+      governanceFile: async () => ({
+        members: { alice: { level: "established" } },
+        highRisk: { ledger: ["parser"] },
+      }),
+    };
+    const passed = (fromRole: string, member: string, feedbackSignal: string) =>
+      ({
+        project: "ledger",
+        member,
+        work: { fromRole, module: "parser", verdict: "pass", impediments: [], feedbackSignal },
+        decision: { tasks: [] },
+        reason: { rule: "passed" },
+      }) as LogEvent;
+    const aliceReviewed: EventLog = {
+      read: async () => [
+        passed("coding", "carol", "feedback/FB-1.md"),
+        passed("reviewer", "alice", "feedback/FB-2.md"),
+      ],
+      append: async () => {},
+    };
+    const clock = () => new Date("2026-10-23T09:00:00Z");
+    await onClaim(
+      "ledger",
+      { task: "12", member: "alice" },
+      reviewTask,
+      aliceReviewed,
+      clock,
+      parserHighRisk,
+    );
+    expect(refused.map((refusal) => refusal.reason)).toEqual([
+      "Divlab did not give you this task: a high-risk module's second review needs a member who has not reviewed it",
+    ]);
+  });
+
   it("refuses a member whose trust level is too low for the task, saying why", async () => {
     const refused: Refused[] = [];
     const reviewTask: TaskBoard = {
