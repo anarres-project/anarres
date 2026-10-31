@@ -1116,6 +1116,15 @@ governance scenarios run alone.
   claimed integration work to finish (0017's hold, not 0015's stale mark); an integration task
   posted but unclaimed when a module reopens is withdrawn; one role per member among the
   Programme Architect and the integration roles, as read. Test list updated.
+- The recorded work keeps `lastModule`: the first test passed first run, as reading back keeps
+  every field (kept as a regression test). Routing takes any value but absent as yes, so:
+  ```
+  RED:      is unreadable when it says the work completed the last module as anything but yes
+            -> expected { fromRole: 'test', …(4) } to deeply equal { Object (unreadable) }
+  GREEN:    (19 passed)
+  REFACTOR: none
+  ```
+  Gate 899 and 154.
 
 ---
 

@@ -9545,6 +9545,12 @@ function unreadableWork(work) {
   if (modulesToStart !== void 0 && !(Array.isArray(modulesToStart) && modulesToStart.every((module) => typeof module === "string" && isPlainName(module)))) {
     return { unreadable: "its work names the modules it started in more than plain names" };
   }
+  const { lastModule } = work;
+  if (lastModule !== void 0 && lastModule !== true) {
+    return {
+      unreadable: "its work says it completed the last module in something other than yes"
+    };
+  }
   return void 0;
 }
 var isObject = (value) => typeof value === "object" && value !== null;

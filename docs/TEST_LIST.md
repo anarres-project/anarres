@@ -249,8 +249,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         of its own, so the scenario needs a project of its own whose modules.yaml lists them;
   - [ ] main's modules.yaml unreadable when the last module is done: integration does not
         start, silently; say so to PDC coordinators;
-  - [ ] the routing record keeps `lastModule` when read back, as it keeps the other fields
-        Divlab adds;
+  - [x] the routing record keeps `lastModule` when read back, as it keeps the other fields
+        Divlab adds, and is unreadable when it is anything but yes;
   - [x] Integration Specification's name, trust level (new), and its read (requirements,
         contracts) and write (`integration/specifications/`) scopes in core;
   - [x] Integration Test's (new; reads requirements, contracts, integration specifications;

@@ -103,6 +103,13 @@ function unreadableWork(
   ) {
     return { unreadable: "its work names the modules it started in more than plain names" };
   }
+  // Integration starts from this (decision 0017).
+  const { lastModule } = work as { lastModule?: unknown };
+  if (lastModule !== undefined && lastModule !== true) {
+    return {
+      unreadable: "its work says it completed the last module in something other than yes",
+    };
+  }
   return undefined;
 }
 

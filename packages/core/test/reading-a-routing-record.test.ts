@@ -77,6 +77,20 @@ describe("reading back the work Divlab recorded as about to merge", () => {
     expect(readMergedWork(JSON.parse(JSON.stringify(WORK)))).toEqual(WORK);
   });
 
+  it("keeps that the work completed the last module, so integration still starts (0017)", () => {
+    const last = { ...WORK, fromRole: "security-and-quality", lastModule: true };
+    expect(readMergedWork(JSON.parse(JSON.stringify(last)))).toEqual(last);
+  });
+
+  it.each(["false", false, 1])(
+    "is unreadable when it says the work completed the last module as anything but yes: %j",
+    (lastModule) => {
+      expect(readMergedWork({ ...WORK, lastModule })).toEqual({
+        unreadable: "its work says it completed the last module in something other than yes",
+      });
+    },
+  );
+
   it("is unreadable when it gives no verdict, rather than routed as passed", () => {
     const { verdict: _, ...withoutVerdict } = WORK;
     expect(readMergedWork(withoutVerdict)).toEqual({
