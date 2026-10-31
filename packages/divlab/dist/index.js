@@ -9003,6 +9003,12 @@ function readFeedbackSignal(text) {
   if (atFault !== void 0 && !(typeof atFault === "string" && isPlainName(atFault))) {
     return { unreadable: "its feedback signal's module_at_fault is not a plain name" };
   }
+  for (const field of ["open_questions", "assumptions_made"]) {
+    const count = header[field];
+    if (count !== void 0 && !(Number.isSafeInteger(count) && count >= 0)) {
+      return { unreadable: `its feedback signal's ${field} is not a count` };
+    }
+  }
   const task = header.task_id;
   if (task !== void 0 && typeof task !== "string" && !Number.isInteger(task)) {
     return {
@@ -9018,7 +9024,9 @@ function readFeedbackSignal(text) {
     })),
     ...task === void 0 ? {} : { task: String(task) },
     ...header.status === "partial" ? { partial: true } : {},
-    ...atFault === void 0 ? {} : { moduleAtFault: atFault }
+    ...atFault === void 0 ? {} : { moduleAtFault: atFault },
+    ...header.open_questions === void 0 ? {} : { openQuestions: header.open_questions },
+    ...header.assumptions_made === void 0 ? {} : { assumptionsMade: header.assumptions_made }
   };
 }
 function readSignalFile(path) {

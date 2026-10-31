@@ -399,6 +399,41 @@ Then(
   },
 );
 
+When(
+  "a member's {role} work on {string} is accepted with a conditional pass verdict, with {int} open question(s) and {int} assumption(s) made",
+  function (
+    this: AnarresWorld,
+    role: string,
+    module: string,
+    openQuestions: number,
+    assumptionsMade: number,
+  ) {
+    return this.anarres.memberHasWorkAccepted({
+      role,
+      module,
+      verdict: "conditional pass",
+      openQuestions,
+      assumptionsMade,
+    });
+  },
+);
+
+Then(
+  "Divlab's record of the {role} work on {string} keeps its {int} open question(s) and {int} assumption(s) made",
+  function (
+    this: AnarresWorld,
+    role: string,
+    module: string,
+    openQuestions: number,
+    assumptionsMade: number,
+  ) {
+    return this.anarres.divlabRecordKeepsWork(
+      { role, module },
+      { verdict: "conditional pass", impediments: [], openQuestions, assumptionsMade },
+    );
+  },
+);
+
 Then(
   "Divlab's record of the {role} work on {string} keeps its feedback signal, its verdict and both problems it reported",
   function (this: AnarresWorld, role: string, module: string) {

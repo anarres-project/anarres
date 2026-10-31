@@ -6,6 +6,9 @@ export type AcceptedWork = {
   feedbackSignal: string;
   verdict: string;
   impediments: string[];
+  /** How many open questions and assumptions the member's feedback signal reports. */
+  openQuestions?: number;
+  assumptionsMade?: number;
   /** The module the member's integration tests found a defect in (decision 0017). */
   moduleAtFault?: string;
   /** The member's work leaves its feedback signal out. */
@@ -74,6 +77,8 @@ export type RoutingRecord = {
     verdict: string;
     impediments: string[];
     feedbackSignal: string;
+    openQuestions?: number;
+    assumptionsMade?: number;
   };
   outcome: { tasksFor?: string[]; moduleDone?: true } | { alert: true };
   reason: { rule: string; impediment?: string; role?: string };

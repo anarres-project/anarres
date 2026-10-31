@@ -32,3 +32,8 @@ Feature: Divlab records every routing decision
     Given a project with a module "parser"
     When a member's Test work on "parser" is accepted with a pass verdict
     Then Divlab's record of the Test work on "parser" says when Divlab decided, in UTC
+
+  Scenario: The record keeps a conditional pass's open questions and assumptions
+    Given a project with a module "parser"
+    When a member's Specification work on "parser" is accepted with a conditional pass verdict, with 1 open question and 2 assumptions made
+    Then Divlab's record of the Specification work on "parser" keeps its 1 open question and 2 assumptions made

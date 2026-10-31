@@ -27,6 +27,8 @@ export function feedbackSignalFile(work: AcceptedWork, task?: string) {
     ...(work.partial ? ["  status: partial"] : []),
     ...(work.withoutVerdict ? [] : [`  verdict: ${ids(work.verdict)}`]),
     ...(work.moduleAtFault === undefined ? [] : [`  module_at_fault: ${work.moduleAtFault}`]),
+    ...(work.openQuestions === undefined ? [] : [`  open_questions: ${work.openQuestions}`]),
+    ...(work.assumptionsMade === undefined ? [] : [`  assumptions_made: ${work.assumptionsMade}`]),
     ...(work.impediments.length === 0
       ? []
       : ["  impediments:", ...work.impediments.map((name) => `    - type: ${ids(name)}`)]),
@@ -171,6 +173,7 @@ export function inScenarioWords(event: RoutingEvent): RoutingRecord {
       verdict: words(work.verdict),
       impediments: work.impediments.map((impediment) => words(impediment.type)),
       feedbackSignal: signalName(work.feedbackSignal),
+      ...counts(work),
     },
     // A module done may start the programme's integration too (decision 0017).
     outcome:
@@ -223,4 +226,16 @@ export function modulesYaml(modules: string[], contracts: Contract[] = []): stri
       contracts.filter((c) => c.usedBy.includes(module)).map((c) => c.name),
     );
   return `modules:\n${modules.map(entry).join("")}`;
+}
+
+/** A conditional pass's counts as the record keeps them, read as data. */
+function counts(work: object): { openQuestions?: number; assumptionsMade?: number } {
+  const { openQuestions, assumptionsMade } = work as {
+    openQuestions?: number;
+    assumptionsMade?: number;
+  };
+  return {
+    ...(openQuestions === undefined ? {} : { openQuestions }),
+    ...(assumptionsMade === undefined ? {} : { assumptionsMade }),
+  };
 }

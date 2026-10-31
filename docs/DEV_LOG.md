@@ -1397,6 +1397,20 @@ governance scenarios run alone.
   REFACTOR: none
   ```
   The scenario passed and lost `@wip`; in-process only, routing being core's (decision 0018).
+- A conditional pass's open questions and assumptions (concept §9: kept in the event record;
+  §8's schema has them as counts). Acceptance: "The record keeps a conditional pass's open
+  questions and assumptions", `@wip`, red in its Then (the record had neither).
+  ```
+  RED:      gives a conditional pass's open questions and assumptions made, as counts
+            -> expected { fromRole: 'specification', …(3) } to match object { Object (openQuestions, assumptionsMade) }
+  GREEN:    (47 passed)
+  RED:      is unreadable when its open_questions/assumptions_made is not a whole number of none
+            or more (four rows) -> expected { …(4) } to deeply equal { Object (unreadable) }
+  GREEN:    (337 passed)
+  REFACTOR: none
+  ```
+  Divlab carries the signal's fields into the work it records, so the scenario then passed and
+  lost `@wip`.
 
 ---
 

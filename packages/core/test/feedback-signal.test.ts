@@ -72,6 +72,42 @@ describe("reading a feedback signal", () => {
     },
   );
 
+  it("gives a conditional pass's open questions and assumptions made, as counts", () => {
+    const signal = [
+      "---",
+      "feedback_signal:",
+      "  from_role: specification",
+      "  module: parser",
+      "  verdict: conditional_pass",
+      "  open_questions: 1",
+      "  assumptions_made: 2",
+      "---",
+      "",
+    ].join("\n");
+    expect(readFeedbackSignal(signal)).toMatchObject({ openQuestions: 1, assumptionsMade: 2 });
+  });
+
+  it.each([
+    ["open_questions", "-1"],
+    ["open_questions", "1.5"],
+    ["assumptions_made", '"two"'],
+    ["assumptions_made", "[2]"],
+  ])("is unreadable when its %s is not a whole number of none or more: %s", (field, value) => {
+    const signal = [
+      "---",
+      "feedback_signal:",
+      "  from_role: specification",
+      "  module: parser",
+      "  verdict: conditional_pass",
+      `  ${field}: ${value}`,
+      "---",
+      "",
+    ].join("\n");
+    expect(readFeedbackSignal(signal)).toEqual({
+      unreadable: `its feedback signal's ${field} is not a count`,
+    });
+  });
+
   it("reads a signal written with Windows line endings the same", () => {
     const signal = [
       "---",

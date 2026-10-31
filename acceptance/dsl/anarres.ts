@@ -203,6 +203,8 @@ export class Anarres {
       slicesChanged?: string[];
       contractsRevised?: string[];
       moduleAtFault?: string;
+      openQuestions?: number;
+      assumptionsMade?: number;
     },
     named?: string,
   ) {
@@ -1120,7 +1122,15 @@ export class Anarres {
     );
   }
 
-  async divlabRecordKeepsWork(work: Work, reported: { verdict: string; impediments: string[] }) {
+  async divlabRecordKeepsWork(
+    work: Work,
+    reported: {
+      verdict: string;
+      impediments: string[];
+      openQuestions?: number;
+      assumptionsMade?: number;
+    },
+  ) {
     const expected = this.aliased(work);
     const records = await this.recordsOf(work);
     assert.deepEqual(

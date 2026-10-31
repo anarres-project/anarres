@@ -331,8 +331,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         taken from the log itself, never from randomness or the clock, and unique because GitHub
         refuses a second file at the same number (adapter test: "gives a new event the next free
         number when another run has recorded one since"). Nothing to inject;
-  - [ ] a conditional pass's open questions and assumptions are kept in its event (needs them in
-        the accepted work first);
+  - [x] a conditional pass's open questions and assumptions are kept in its event: the feedback
+        signal's `open_questions` and `assumptions_made`, read as counts (in-process; routing does
+        not read them, so nothing new for the sandbox, decision 0018);
   - [x] the GitHub adapter writes each event as one file under `events/` in the project
         repository;
   - [x] if acting on a decision fails after it was recorded, a re-run neither duplicates the event

@@ -12,6 +12,9 @@ export type FeedbackSignal = {
   partial?: true;
   /** The module an integration test found a defect in (decision 0017). */
   moduleAtFault?: string;
+  /** How many open questions and assumptions the work reports (a conditional pass's). */
+  openQuestions?: number;
+  assumptionsMade?: number;
 };
 
 /**
@@ -72,6 +75,12 @@ export function readFeedbackSignal(text: string): FeedbackSignal | Unreadable {
   if (atFault !== undefined && !(typeof atFault === "string" && isPlainName(atFault))) {
     return { unreadable: "its feedback signal's module_at_fault is not a plain name" };
   }
+  for (const field of ["open_questions", "assumptions_made"]) {
+    const count = header[field];
+    if (count !== undefined && !(Number.isSafeInteger(count) && count >= 0)) {
+      return { unreadable: `its feedback signal's ${field} is not a count` };
+    }
+  }
   const task = header.task_id;
   if (task !== undefined && typeof task !== "string" && !Number.isInteger(task)) {
     return {
@@ -88,6 +97,8 @@ export function readFeedbackSignal(text: string): FeedbackSignal | Unreadable {
     ...(task === undefined ? {} : { task: String(task) }),
     ...(header.status === "partial" ? { partial: true } : {}),
     ...(atFault === undefined ? {} : { moduleAtFault: atFault }),
+    ...(header.open_questions === undefined ? {} : { openQuestions: header.open_questions }),
+    ...(header.assumptions_made === undefined ? {} : { assumptionsMade: header.assumptions_made }),
   };
 }
 
