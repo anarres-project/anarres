@@ -755,7 +755,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
 
 ## 4a. Any language (hosted projects)
 
-- [ ] Coding work is accepted only when the project's own CI check passes; Divlab never runs
+- [x] Coding work is accepted only when the project's own CI check passes; Divlab never runs
       project code (decision 0010, Bernard, 2026-10-27: Coding only; the template's check, by a
       name it fixes; a holder's push to their pull request renews the lease, draft or not):
   - [x] Coding work whose check failed on the commit Divlab read is not merged, and the member
@@ -787,7 +787,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the sandbox shows it (ee92e77: 80 of 80): its projects get the template's checks
         workflow and a toolchain whose tests fail only on work made to fail; "still running"
         cannot be held on cue, so those two scenarios stay in-process.
-- [ ] Test work is accepted when the project's report shows the new tests running and failing
+- [x] Test work is accepted when the project's report shows the new tests running and failing
       (decision 0011, Bernard, 2026-10-28):
   - [x] the report is read as data (core's `readTestReport`, with `sax` 1.6.1, no dependencies of
         its own): each test case by class and name, passed, failed (an assertion), errored or
@@ -864,11 +864,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         under way first, then the longest waiting";
   - [ ] size joins the ranking once tasks carry a size estimate (concept §4: `modules.yaml`'s
         estimate per module; Divlab would put it on each task);
-- [ ] Preparing a task fetches only the files the role may read, at the pinned versions.
+- [x] Preparing a task fetches only the files the role may read, at the pinned versions.
   - [x] core holds the access matrix's read scopes beside its write scopes, once: each module
         role reads its own module's places and its requirement slice (`programme/slices/<m>/`),
         never another module's, and no path that climbs out;
-  - [ ] the contracts a module provides and uses (decision 0014, Bernard, 2026-10-28):
+  - [x] the contracts a module provides and uses (decision 0014, Bernard, 2026-10-28):
     - [x] core's `readModules` reads each module's `provides` and `uses`, by plain name, given
           as lists of names (else unreadable: a crash, shown red first);
     - [x] unreadable: a contract provided by two modules, used but provided by none, or used by
@@ -921,7 +921,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] a file tool Claude Code adds later reaches the hook only once the matcher names it (the
         matcher cannot be "every tool": Bash must run the CLI): check Claude Code's tools when
         updating it.
-- [ ] A member who runs out of allowance can hand over partial work (decision 0008).
+- [x] A member who runs out of allowance can hand over partial work (decision 0008).
   - [x] a feedback signal's `status: partial` is read; core routes partial work to a continuation
         for the same role, carrying its signal, never on to the next role; Divlab merges it and
         posts the continuation, labelled so;
@@ -930,7 +930,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] the sandbox shows it (84 requests);
   - [x] the plugin's handover: the skill tells Claude to write the signal with `status: partial`
         and a handover note when allowance runs low, and to submit it, not as a draft;
-- [ ] The plugin submits a member's work (concept §8, step 6): writes the feedback signal naming
+- [x] The plugin submits a member's work (concept §8, step 6): writes the feedback signal naming
       the task, commits only the role's write place and the signal to a branch of the member's
       fork, and opens the pull request; a draft early on counts as activity on the lease.
   - [x] before anything is sent, the CLI checks the work as Divlab will: one readable feedback
@@ -944,7 +944,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] a draft submitted, then the work finished: the same pull request is marked ready (through
         GitHub's GraphQL API, the only way), failing out loud if GitHub refuses; Divlab's workflow
         runs when a draft is marked ready.
-- [ ] `/anarres:status` (concept §10): where the member's work stands.
+- [x] `/anarres:status` (concept §10): where the member's work stands.
   - [x] each task the member holds, across Anarres's projects, and when its lease runs out (a day
         from the claim or the member's latest work since, by Divlab's own lease rule); only plain
         names shown; `anarres status`, and the `/anarres:status` skill that may run only it; both
@@ -961,7 +961,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         their work Divlab merged, per project, from the event logs: project, role, module and
         day, plain names only; a scenario in both drivers;
   - [x] the sandbox shows the history (2026-10-24).
-- [ ] `/anarres:resume` (concept §10): continuing a held task in a new session.
+- [x] `/anarres:resume` (concept §10): continuing a held task in a new session.
   - [x] on the same machine: `anarres resume project#number` says the task's folder while the
         member holds it, refuses once they no longer hold it, and says to prepare it if it was
         never prepared here; the `/anarres:resume` skill may run resume, prepare and submit; two
@@ -993,7 +993,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         unreadable, never guessed at;
   - [x] a signal written with Windows line endings is read the same;
   - [x] Divlab finds the signals merged since it last ran, and routes each once;
-  - [ ] work naming a task that does not exist, or is not the member's (section 4);
+  - [x] work naming a task that does not exist, or is not the member's (section 4: refused,
+        as not an open task or not the holder's);
   - [x] a signal that reaches `main` unreadable is recorded once as not accepted, with the
         reason, and PDC coordinators are alerted once; the other signals are still routed
         (decision 0005): Divlab refuses an unreadable signal's pull request, so one can reach
