@@ -11286,7 +11286,8 @@ function preparation(owner, project, task, member, modulesFile) {
       // Core reads a Research task's question only if it is a feedback signal's plain path.
       ...task.feedbackSignal === void 0 ? {} : { question: task.feedbackSignal }
     }),
-    contracts
+    contracts,
+    skill: task.role
   };
 }
 function gitSteps(fetch2, into) {
@@ -11627,6 +11628,9 @@ try {
     });
     console.log(`Fetched into ${into}, as at ${plan.commit}: ${plan.paths.join(", ")}`);
     if (restored > 0) console.log(`Brought back ${restored} files of your work so far.`);
+    console.log(
+      `Before starting, load the plugin's ${plan.skill} skill and follow its instructions for the role.`
+    );
     process.exit(0);
   }
   if (command === "status") {

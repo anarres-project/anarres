@@ -44,7 +44,7 @@ import type {
   ReadyTask,
   RoutingRecord,
 } from "../driver.ts";
-import { NotYetImplemented } from "../errors.ts";
+import { inPlugin } from "../plugin.ts";
 import {
   feedbackSignalFile,
   inScenarioWords,
@@ -53,6 +53,7 @@ import {
   otherFiles,
   roleId,
   roleName,
+  roleNameOf,
   signalName,
   workFiles,
 } from "../scenario-words.ts";
@@ -539,6 +540,8 @@ export class InProcessDriver implements Driver {
    */
   /** The files each member's prepared task fetched, by member and task. */
   private readonly fetched = new Map<string, string[]>();
+  /** The skill preparing each member's task named for its role's instructions. */
+  private readonly skillsNamed = new Map<string, string>();
 
   async prepare(task: { project: string; role: string; module: string }, member: string) {
     const id = this.openTaskId(task);
@@ -563,6 +566,7 @@ export class InProcessDriver implements Driver {
       (path, text) => folder.push({ path, text }),
     );
     this.preparedHere.add(`${member} ${task.project}#${id}`);
+    this.skillsNamed.set(`${member} ${task.project}#${id}`, plan.skill);
     // The files at the pinned commit the sparse checkout of the role's read scope would fetch.
     this.fetched.set(
       `${member} ${task.project}#${id}`,
@@ -599,10 +603,11 @@ export class InProcessDriver implements Driver {
   }
 
   async instructionsGiven(
-    _task: { project: string; role: string; module: string },
-    _member: string,
+    task: { project: string; role: string; module: string },
+    member: string,
   ): Promise<{ role: string; inPlugin: boolean } | undefined> {
-    throw new NotYetImplemented("preparing a task names no role's instructions yet");
+    const skill = this.skillsNamed.get(`${member} ${task.project}#${this.openTaskId(task)}`);
+    return skill === undefined ? undefined : { role: roleNameOf(skill), inPlugin: inPlugin(skill) };
   }
 
   async contractsFetched(

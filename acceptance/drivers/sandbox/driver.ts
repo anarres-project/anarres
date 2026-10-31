@@ -45,6 +45,7 @@ import type {
   RoutingRecord,
 } from "../driver.ts";
 import { HarnessNotYetBuilt, NotYetImplemented } from "../errors.ts";
+import { inPlugin } from "../plugin.ts";
 import {
   FAILS_ON_PURPOSE,
   feedbackSignalFile,
@@ -1334,6 +1335,8 @@ export class SandboxDriver implements Driver {
   private machine: string | undefined;
   /** The issue of each task prepared on the member's machine, by `member role module`. */
   private readonly preparedIssues = new Map<string, string>();
+  /** The skill preparing each member's task named for its role's instructions. */
+  private readonly skillsNamed = new Map<string, string>();
 
   /**
    * The member's plugin prepares a task they hold through the CLI, as `anarres prepare` does:
@@ -1379,6 +1382,7 @@ export class SandboxDriver implements Driver {
       );
     }
     this.preparedIssues.set(`${member} ${task.role} ${task.module}`, id);
+    this.skillsNamed.set(`${member} ${task.role} ${task.module}`, plan.skill);
     return { workIn: folder };
   }
 
@@ -1429,10 +1433,11 @@ export class SandboxDriver implements Driver {
   }
 
   async instructionsGiven(
-    _task: { project: string; role: string; module: string },
-    _member: string,
+    task: { project: string; role: string; module: string },
+    member: string,
   ): Promise<{ role: string; inPlugin: boolean } | undefined> {
-    throw new NotYetImplemented("preparing a task names no role's instructions yet");
+    const skill = this.skillsNamed.get(`${member} ${task.role} ${task.module}`);
+    return skill === undefined ? undefined : { role: roleNameOf(skill), inPlugin: inPlugin(skill) };
   }
 
   /** Whether the prepared task's folder holds the project's requirements. */

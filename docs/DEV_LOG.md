@@ -88,6 +88,20 @@ governance scenarios run alone.
   The posting test now matches the task's fields with `objectContaining`, since the task carries
   its pin too. The scenario passed and lost `@wip`; in-process only (fetching at a pinned commit
   is shown in the sandbox already; decision 0018). Gate 972 and 170.
+- Back to the outer scenario: now `NotYetImplemented` at the driver, honestly.
+  ```
+  RED:      preparing a task > names the plugin's skill whose instructions the task's role
+            follows -> expected { …(4) } to match object { skill: 'programme-architect' }
+  GREEN:    (14 passed), hard-coded
+  RED:      names each role's own skill, a Coding task's the Coding skill
+            -> expected { …(5) } to match object { skill: 'coding' }
+  GREEN:    (15 passed): the role's own name
+  REFACTOR: none (before the first red, the first test's `toEqual` became `toMatchObject`, green,
+            so the new field did not break it)
+  ```
+  `anarres prepare` tells the session to load that skill before starting. The drivers report the
+  skill named and whether the plugin carries it: the scenario is now not yet right, in its Then,
+  as the plugin has no Programme Architect skill.
 
 ## 2026-10-27: Work only from the task's holder, and a module's first task
 

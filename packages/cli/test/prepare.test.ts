@@ -6,11 +6,30 @@ const SHA = "0123456789abcdef0123456789abcdef01234567";
 describe("preparing a task the member holds (concept §8)", () => {
   it("fetches only the places the task's role may read, as they were at its pinned commit", () => {
     const task = { role: "coding" as const, module: "parser", claimedBy: "alice", inputsAt: SHA };
-    expect(preparation("anarres-project", "ledger", task, "alice")).toEqual({
+    expect(preparation("anarres-project", "ledger", task, "alice")).toMatchObject({
       repository: "anarres-project/ledger",
       commit: SHA,
       paths: ["modules/parser/specifications/", "modules/parser/tests/"],
       contracts: [],
+    });
+  });
+
+  it("names the plugin's skill whose instructions the task's role follows (decision 0020)", () => {
+    const task = {
+      role: "programme-architect" as const,
+      module: "programme",
+      claimedBy: "alice",
+      inputsAt: SHA,
+    };
+    expect(preparation("anarres-project", "ledger", task, "alice")).toMatchObject({
+      skill: "programme-architect",
+    });
+  });
+
+  it("names each role's own skill, a Coding task's the Coding skill", () => {
+    const task = { role: "coding" as const, module: "parser", claimedBy: "alice", inputsAt: SHA };
+    expect(preparation("anarres-project", "ledger", task, "alice")).toMatchObject({
+      skill: "coding",
     });
   });
 

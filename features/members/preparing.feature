@@ -3,6 +3,14 @@ Feature: A member preparing a task has its role's inputs, and no others
   fetches only what its role may read: for Architecture, among others, the contracts its module
   provides and uses, as the Programme Architect's modules.yaml says (decision 0014).
 
+  @wip
+  Scenario: A member preparing a task is told to follow its role's instructions
+    Given a new project is started
+    And Alice is a trusted member
+    And Alice has claimed the Programme Architect task for the programme
+    When Alice prepares the Programme Architect task for the programme
+    Then Alice is told to follow the Programme Architect's instructions, which the plugin carries
+
   Scenario: A member preparing a new project's Programme Architect task has its requirements to read
     Given a new project is started
     And Alice is a trusted member

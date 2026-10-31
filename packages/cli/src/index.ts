@@ -100,7 +100,14 @@ export async function claim(named: string, claiming: Claiming): Promise<string> 
 
 /** What preparing a task fetches: the places its role may read, at its pinned commit. */
 export type Preparation =
-  | { repository: string; commit: string; paths: string[]; contracts: string[] }
+  | {
+      repository: string;
+      commit: string;
+      paths: string[];
+      contracts: string[];
+      /** The plugin's skill whose instructions the task's role follows (decision 0020). */
+      skill: string;
+    }
   | { refused: string };
 
 /**
@@ -146,6 +153,7 @@ export function preparation(
       ...(task.feedbackSignal === undefined ? {} : { question: task.feedbackSignal }),
     }),
     contracts,
+    skill: task.role,
   };
 }
 
