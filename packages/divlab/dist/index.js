@@ -10281,9 +10281,14 @@ function hasTaskOpen(events, module) {
   const latest = routingDecisions(events).filter((event) => event.work.module === module || postsFor(event)).at(-1);
   return latest !== void 0 && postsFor(latest);
 }
-var modulesDone = (events) => new Set(
-  routingDecisions(events).filter((event) => "moduleDone" in event.decision).map((event) => event.work.module)
-);
+function modulesDone(events) {
+  const done = /* @__PURE__ */ new Set();
+  for (const { work, decision } of routingDecisions(events)) {
+    if ("moduleDone" in decision) done.add(work.module);
+    for (const task of "tasks" in decision ? decision.tasks ?? [] : []) done.delete(task.module);
+  }
+  return done;
+}
 var modulesStarted = (events) => new Set(routingDecisions(events).flatMap((event) => event.work.modulesToStart ?? []));
 async function checkMain(project2, repository, board, log, clock, divlab) {
   const events = await log.read(project2);

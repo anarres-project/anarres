@@ -1189,12 +1189,15 @@ type RoutedWork = FeedbackSignal & {
 };
 
 /** The modules Divlab has recorded done. */
-const modulesDone = (events: LogEvent[]) =>
-  new Set(
-    routingDecisions(events)
-      .filter((event) => "moduleDone" in event.decision)
-      .map((event) => event.work.module),
-  );
+/** The modules done, as Divlab's decisions say, until a later one sent them work (0017). */
+function modulesDone(events: LogEvent[]): Set<string> {
+  const done = new Set<string>();
+  for (const { work, decision } of routingDecisions(events)) {
+    if ("moduleDone" in decision) done.add(work.module);
+    for (const task of "tasks" in decision ? (decision.tasks ?? []) : []) done.delete(task.module);
+  }
+  return done;
+}
 
 /** The modules earlier modules.yaml started, as Divlab's routing records say. */
 const modulesStarted = (events: LogEvent[]) =>

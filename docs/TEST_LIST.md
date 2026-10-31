@@ -290,8 +290,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         every module is done again, then a new Integration Test task (Bernard, 2026-10-31):
     - [x] the module at fault done again → an Integration Test task, not Integration
           Specification (in-process);
-    - [ ] a module is done only until a later decision sends it work again, so with two
-          reopened (a contract revision), the first done again starts nothing;
+    - [x] a module is done only until a later decision sends it work again, so with two
+          reopened (a contract revision), the first done again starts nothing (in-process);
     - [ ] integration work finishing while a module is reopened posts nothing further;
     - [x] an integration task posted but unclaimed when a module reopens is withdrawn
           (in-process; the board is asked for its ready tasks only when a decision reopens a

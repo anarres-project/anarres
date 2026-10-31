@@ -1284,6 +1284,18 @@ governance scenarios run alone.
   GREEN:    (929 in the gate)
   REFACTOR: none
   ```
+- A module done only until it is sent work again. Acceptance: "Integration waits while any
+  reopened module is still in its pipeline", `@wip @sandbox-wip`, red in its Then: parser's
+  Security & Quality passing again posted an Integration Specification task while lexer, sent
+  back by the contract revision, was not done.
+  ```
+  RED:      starts no integration while a module done before has been sent work again
+            -> expected [ { project: 'ledger', …(4) } ] to deeply equal []
+  GREEN:    (253 passed): Divlab reads the decisions in order, a module done when one finishes
+            it and not done when a later one sends it a task
+  REFACTOR: none
+  ```
+  The scenario passed and lost `@wip`. Gate 930 and 159.
 
 ---
 

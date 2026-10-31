@@ -900,6 +900,65 @@ describe("acting on a pull request", () => {
     expect(decided).toMatchObject({ withdrawn: ["12"] });
   });
 
+  it("starts no integration while a module done before has been sent work again (0017)", async () => {
+    const posted: PostedTask[] = [];
+    const securityPasses = {
+      path: "feedback/FB-5.md",
+      text: '---\nfeedback_signal:\n  task_id: "5"\n  from_role: security-and-quality\n  module: parser\n  verdict: pass\n---\n',
+    };
+    const listed: PullRequests = {
+      ...submitting([], [securityPasses]),
+      modulesOnMain: async () => "modules:\n  - name: lexer\n  - name: parser\n",
+    };
+    const done = (module: string, feedbackSignal: string): LogEvent => ({
+      project: "ledger",
+      work: {
+        fromRole: "security-and-quality",
+        module,
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal,
+      },
+      decision: { moduleDone: true },
+      reason: { rule: "pipeline_complete" },
+    });
+    const lexerReopened: EventLog = {
+      read: async () => [
+        done("lexer", "feedback/FB-0.md"),
+        done("parser", "feedback/FB-1.md"),
+        {
+          project: "ledger",
+          work: {
+            fromRole: "programme-architect",
+            module: "programme",
+            verdict: "pass",
+            impediments: [],
+            feedbackSignal: "feedback/FB-2.md",
+            modulesToStart: [],
+          },
+          decision: {
+            tasks: [
+              { role: "architecture", module: "lexer", feedbackSignal: "feedback/FB-2.md" },
+              { role: "architecture", module: "parser", feedbackSignal: "feedback/FB-2.md" },
+            ],
+          },
+          reason: { rule: "contract_revised", contracts: ["tokens"] },
+        },
+      ],
+      append: async () => {},
+    };
+    const finishing: TaskBoard = {
+      ...heldAs("security-and-quality"),
+      markModuleDone: async () => {},
+      post: async (task) => {
+        posted.push(task);
+      },
+      readyTasks: async () => [],
+    };
+    await onPullRequest("ledger", "7", listed, finishing, lexerReopened, clock);
+    expect(posted).toEqual([]);
+  });
+
   it("starts no integration while another module is not done", async () => {
     const posted: PostedTask[] = [];
     const securityPasses = {
