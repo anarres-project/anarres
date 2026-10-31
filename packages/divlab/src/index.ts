@@ -91,6 +91,8 @@ export type RoutingEvent = {
   member?: string;
   /** The commit Divlab's merge made on main, so it knows its merges from anyone else's. */
   mergedAs?: string;
+  /** The integration tasks nobody had claimed that the decision withdraws (decision 0017). */
+  withdrawn?: string[];
 } & RoutingRecord;
 
 /** Divlab's clock: the time is always given to it, never read from the wall. */
@@ -615,6 +617,12 @@ async function onWorkAccepted(
 ): Promise<void> {
   const { project, task, member, mergedAs, ...work } = event;
   const record = routingRecord(work, routingDecisions(events));
+  // Integration waits while a module is reopened: its tasks nobody has claimed are withdrawn,
+  // as the decision records.
+  const done = modulesDone(events);
+  const withdrawn = reopens(record.decision, done)
+    ? withdrawnOnReopening(record.decision, done, await board.readyTasks(project))
+    : [];
   const decided: RoutingEvent = {
     project,
     decidedAt: clock().toISOString(),
@@ -622,18 +630,11 @@ async function onWorkAccepted(
     ...(member === undefined ? {} : { member }),
     ...(mergedAs === undefined ? {} : { mergedAs }),
     ...record,
+    ...(withdrawn.length === 0 ? {} : { withdrawn }),
   };
-  // Integration waits while a module is reopened: its tasks nobody has claimed are withdrawn.
-  const done = modulesDone(events);
   await log.append(decided);
   events.push(decided);
   await actOn(decided, board, log);
-  if (reopens(record.decision, done)) {
-    const ready = await board.readyTasks(project);
-    for (const id of withdrawnOnReopening(record.decision, done, ready)) {
-      await board.close(project, id);
-    }
-  }
 }
 
 /** What a routing decision does on the board: a task, an alert or a finished module. */
@@ -641,6 +642,7 @@ async function actOn(event: RoutingEvent, board: TaskBoard, log: EventLog): Prom
   const { project, decision } = event;
   const decidedOn = event.work.feedbackSignal;
   if (event.task !== undefined) await board.close(project, event.task);
+  for (const withdrawn of event.withdrawn ?? []) await board.close(project, withdrawn);
   if ("alert" in decision) {
     await board.alertCoordinators(event);
   } else {

@@ -46,6 +46,15 @@ describe("reading back a routing record from the event log", () => {
     });
   });
 
+  it.each([["12", "../issues"], "12", [12]])(
+    "is unreadable when the tasks it withdrew are not a list of task numbers: %j",
+    (withdrawn) => {
+      expect(readRoutingRecord({ ...RECORD, withdrawn })).toEqual({
+        unreadable: "the tasks it withdrew are not a list of task numbers",
+      });
+    },
+  );
+
   it("is unreadable when a task it decided on names no role Anarres has", () => {
     const decision = { tasks: [{ role: "tester", module: "parser" }] };
     expect(readRoutingRecord({ ...RECORD, decision })).toEqual({

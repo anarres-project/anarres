@@ -9556,6 +9556,10 @@ function readRoutingRecord(value) {
   if (!decided.every((task) => Object.hasOwn(ROLE_NAMES, task.role))) {
     return { unreadable: "its decision names a role Anarres does not have" };
   }
+  const { withdrawn } = value;
+  if (withdrawn !== void 0 && !(Array.isArray(withdrawn) && withdrawn.every((id) => typeof id === "string" && /^\d+$/.test(id)))) {
+    return { unreadable: "the tasks it withdrew are not a list of task numbers" };
+  }
   return record;
 }
 function readMergedWork(value) {
@@ -9895,29 +9899,26 @@ var signalOf = (event) => {
 async function onWorkAccepted(event, board, log, clock, events) {
   const { project: project2, task, member, mergedAs, ...work } = event;
   const record = routingRecord(work, routingDecisions(events));
+  const done = modulesDone(events);
+  const withdrawn = reopens(record.decision, done) ? withdrawnOnReopening(record.decision, done, await board.readyTasks(project2)) : [];
   const decided = {
     project: project2,
     decidedAt: clock().toISOString(),
     ...task === void 0 ? {} : { task },
     ...member === void 0 ? {} : { member },
     ...mergedAs === void 0 ? {} : { mergedAs },
-    ...record
+    ...record,
+    ...withdrawn.length === 0 ? {} : { withdrawn }
   };
-  const done = modulesDone(events);
   await log.append(decided);
   events.push(decided);
   await actOn(decided, board, log);
-  if (reopens(record.decision, done)) {
-    const ready = await board.readyTasks(project2);
-    for (const id of withdrawnOnReopening(record.decision, done, ready)) {
-      await board.close(project2, id);
-    }
-  }
 }
 async function actOn(event, board, log) {
   const { project: project2, decision } = event;
   const decidedOn = event.work.feedbackSignal;
   if (event.task !== void 0) await board.close(project2, event.task);
+  for (const withdrawn of event.withdrawn ?? []) await board.close(project2, withdrawn);
   if ("alert" in decision) {
     await board.alertCoordinators(event);
   } else {

@@ -1273,6 +1273,17 @@ governance scenarios run alone.
   REFACTOR: none
   ```
   The scenario passed and lost `@wip`. Gate 925 and 159.
+- The withdrawal recorded:
+  ```
+  RED:      records the integration tasks a decision withdraws with the decision itself
+            -> expected { project: 'ledger', …(7) } to match object { withdrawn: [ '12' ] }
+  GREEN:    (252 passed): worked out before the decision is recorded, and closed by acting on
+            the record, as its task is
+  RED:      is unreadable when the tasks it withdrew are not a list of task numbers (three rows)
+            -> expected { …(4) } to deeply equal { Object (unreadable) }
+  GREEN:    (929 in the gate)
+  REFACTOR: none
+  ```
 
 ---
 

@@ -9336,6 +9336,10 @@ function readRoutingRecord(value) {
   if (!decided.every((task) => Object.hasOwn(ROLE_NAMES, task.role))) {
     return { unreadable: "its decision names a role Anarres does not have" };
   }
+  const { withdrawn } = value;
+  if (withdrawn !== void 0 && !(Array.isArray(withdrawn) && withdrawn.every((id) => typeof id === "string" && /^\d+$/.test(id)))) {
+    return { unreadable: "the tasks it withdrew are not a list of task numbers" };
+  }
   return record;
 }
 function readMergedWork(value) {

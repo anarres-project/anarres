@@ -85,6 +85,17 @@ export function readRoutingRecord(value: unknown): RoutingRecord | Unreadable {
   if (!decided.every((task) => Object.hasOwn(ROLE_NAMES, task.role as string))) {
     return { unreadable: "its decision names a role Anarres does not have" };
   }
+  // Divlab closes these when it acts on the record, so they are task numbers and nothing else.
+  const { withdrawn } = value;
+  if (
+    withdrawn !== undefined &&
+    !(
+      Array.isArray(withdrawn) &&
+      withdrawn.every((id) => typeof id === "string" && /^\d+$/.test(id))
+    )
+  ) {
+    return { unreadable: "the tasks it withdrew are not a list of task numbers" };
+  }
   return record;
 }
 

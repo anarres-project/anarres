@@ -860,6 +860,46 @@ describe("acting on a pull request", () => {
     expect(closed).not.toContain("11");
   });
 
+  it("records the integration tasks a decision withdraws with the decision itself (0017)", async () => {
+    const appended: LogEvent[] = [];
+    const integrationFails = {
+      path: "feedback/FB-3.md",
+      text: '---\nfeedback_signal:\n  task_id: "3"\n  from_role: integration-test\n  module: programme\n  verdict: fail\n  module_at_fault: parser\n  impediments:\n    - type: test_failures\n---\n',
+    };
+    const listed: PullRequests = {
+      ...submitting([], [integrationFails]),
+      modulesOnMain: async () => "modules:\n  - name: lexer\n  - name: parser\n",
+    };
+    const parserDone: LogEvent = {
+      project: "ledger",
+      work: {
+        fromRole: "security-and-quality",
+        module: "parser",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: "feedback/FB-1.md",
+      },
+      decision: { moduleDone: true },
+      reason: { rule: "pipeline_complete" },
+    };
+    const recording: EventLog = {
+      read: async () => [parserDone],
+      append: async (event) => {
+        appended.push(event);
+      },
+    };
+    const integrating: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "integration-test", module: "programme", claimedBy: "alice" }),
+      post: async () => {},
+      close: async () => {},
+      readyTasks: async () => [{ id: "12", role: "integration-review", module: "programme" }],
+    };
+    await onPullRequest("ledger", "7", listed, integrating, recording, clock);
+    const decided = appended.find((event) => "decision" in event);
+    expect(decided).toMatchObject({ withdrawn: ["12"] });
+  });
+
   it("starts no integration while another module is not done", async () => {
     const posted: PostedTask[] = [];
     const securityPasses = {

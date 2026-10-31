@@ -296,8 +296,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
     - [x] an integration task posted but unclaimed when a module reopens is withdrawn
           (in-process; the board is asked for its ready tasks only when a decision reopens a
           module);
-    - [ ] the withdrawal is recorded in Divlab's log, with the decision that caused it, and
-          read back; an interrupted run finishes it;
+    - [x] the withdrawal is recorded in Divlab's log, with the decision that caused it, and
+          read back only as a list of task numbers; acting on the record closes them, so an
+          interrupted run finishes it;
     - [ ] a contract revision leaves integration work already claimed to finish: decision
           0017's hold, not decision 0015's stale mark, applies to integration work;
     - [ ] an integration task posted but unclaimed when a module reopens is withdrawn;
