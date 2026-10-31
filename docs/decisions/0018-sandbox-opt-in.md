@@ -39,8 +39,26 @@ in a new way, until it hits its limit.
   caught timing bugs before.
 - **`@sandbox-wip` and `@in-process-only` go.** Under opt-in, a scenario not in the sandbox needs
   no tag. One that should be but cannot yet keeps a comment saying why, and goes on the test list.
-- **Adding to it:** a new feature adds a `@sandbox` scenario only where it reaches GitHub in a new
-  way, and the commit says which path.
+- **Adding to it: the checklist.** A new scenario is tagged `@sandbox` when it:
+  1. calls a GitHub API path or adapter method that no `@sandbox` scenario calls yet;
+  2. needs a workflow or a trigger the sandbox does not yet run (a new event, a new template
+     workflow);
+  3. depends on what only real GitHub decides: ordering, delays, lagging lists, permissions,
+     rulesets, forks;
+  4. changes the governance file, or relies on it, in a way no `@sandbox` scenario does;
+  5. is the one end-to-end journey of a new capability, as integration's is.
+
+  Otherwise it runs in-process only: new routing rules, refusal reasons and eligibility cases
+  are core's, proved on every commit. The commit adding a `@sandbox` tag says which item earns
+  it.
+- **Coverage the pipeline checks.** The sandbox run records which of the GitHub adapter's
+  public methods its scenarios called, as it already counts its requests. At the end of the
+  run a check compares them with every public method the adapter has, and fails, naming each
+  one no scenario called. So a new adapter method with no `@sandbox` scenario reaching it, or a
+  trim that drops the last scenario taking a path, fails the run instead of going unseen. This
+  makes item 1 a check, not a memory; items 2 to 5 stay judgements, rarer and easier to see. A
+  method that cannot be reached in the sandbox (one the lease scenarios need 24 hours for, say)
+  is named in the check's list of exceptions with the reason, in one place.
 - **The tags are where the list lives.** The list below is this proposal's starting point; once
   the tags are in, the feature files are the record, and `docs/SANDBOX.md` says what each group
   shows.
@@ -108,9 +126,15 @@ Each with the path it shows. Everything not listed runs in-process only.
   code or one adapter path already shown, so a fault in them is caught on every commit. A fault
   that shows only against GitHub, in a path no kept scenario takes, would be missed; the
   selection rule is meant to leave no such path.
-- **The cost of keeping it right:** each new feature asks whether it reaches GitHub in a new way.
-  That is a judgement, made in the commit that adds the feature and visible in review.
+- **The cost of keeping it right:** each new scenario is put to the checklist, in the commit
+  that adds it. Item 1, the commonest, is enforced by the coverage check; the rest are
+  judgements, visible in review.
+- **The coverage check tests this list too:** its first run shows whether the 40 reach every
+  adapter method. Any it names get a scenario added from those left out, or an exception with
+  its reason, before the opt-in is called done.
 - **The change itself:** tags on about 40 scenarios, the removal of `@sandbox-wip` and
   `@in-process-only` (their comments kept where they explain something), the sandbox profile,
-  the run's first step (which today lists the `@sandbox-wip` scenarios), and `docs/SANDBOX.md`.
-  No production code changes.
+  the run's first step (which today lists the `@sandbox-wip` scenarios), and `docs/SANDBOX.md`,
+  which gains the checklist. The coverage check is harness code, built test-first: recording the
+  calls in the sandbox driver, listing the adapter's public methods, and the end-of-run
+  comparison. No production code changes.
