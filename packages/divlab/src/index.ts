@@ -1091,6 +1091,13 @@ export async function onPullRequest(
       }
     }
   }
+  // Integration waits while a module is reopened, until every module is done again (0017).
+  if ((INTEGRATION_PIPELINE as readonly string[]).includes(role)) {
+    const listed = readModules((await pullRequests.modulesOnMain(project)) ?? "");
+    const done = modulesDone(events);
+    const reopened = "unreadable" in listed ? [] : listed.modules.filter((m) => !done.has(m));
+    if (reopened.length > 0) work = { ...work, modulesReopened: reopened };
+  }
   // A defect an integration test finds goes back to the module at fault, if the project has it.
   if (signal.moduleAtFault !== undefined) {
     const listed = readModules((await pullRequests.modulesOnMain(project)) ?? "");
@@ -1182,6 +1189,7 @@ type RoutedWork = FeedbackSignal & {
   lastModule?: true;
   integrationBegun?: true;
   moduleAtFaultUnlisted?: true;
+  modulesReopened?: string[];
   inputsChanged?: string[];
   inputsUnchecked?: true;
   contractsRevised?: string[];

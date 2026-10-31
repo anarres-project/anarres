@@ -1296,6 +1296,31 @@ governance scenarios run alone.
   REFACTOR: none
   ```
   The scenario passed and lost `@wip`. Gate 930 and 159.
+- Integration work finishing while a module is reopened. Acceptance: "Integration work claimed
+  before a module was reopened finishes, and nothing further is posted", `@wip @sandbox-wip`.
+  Its first red was the harness's: "a member's" work meant an unnamed member, not Alice, who
+  held the task, so the DSL set up a task of its own; a step for a named member's work for the
+  programme now says it as meant. Then red in its Then for the system's reason: the revised
+  contract sent Alice's Integration Specification back as stale (decision 0015), where 0017's
+  hold wins (Bernard, 2026-10-31).
+  ```
+  RED:      lets integration work whose inputs changed finish as it is, not revised as stale
+            -> expected { tasks: [ { …(4) } ] } to deeply equal { tasks: [ { …(2) } ] }
+  GREEN:    (328 passed)
+  RED:      lets integration work whose inputs could not be checked finish as it is too
+            -> the same
+  GREEN:    (329 passed)
+  RED:      posts nothing further in integration while a module is reopened
+            -> expected { …(2) } to deeply equal { decision: { tasks: [] }, …(1) }
+  GREEN:    (330 passed)
+  RED:      acting on a pull request > posts nothing further when integration work passes
+            while a module is reopened -> "role": "integration-test" posted
+  GREEN:    (254 passed)
+  REFACTOR: none
+  ```
+  The types made Divlab say what an unreadable modules.yaml means here (not held); no test
+  asked, so it is on the list as a question. The scenario passed and lost `@wip`. Gate 934
+  and 160.
 
 ---
 

@@ -9345,13 +9345,14 @@ function rule(work) {
   }
   if (work.partial) return continuation(work);
   if (failed(work)) return revise(work);
-  if (work.inputsChanged?.length) {
+  const integrating = INTEGRATION_PIPELINE.includes(work.fromRole);
+  if (work.inputsChanged?.length && !integrating) {
     return {
       decision: staleRevision(work),
       reason: { rule: "inputs_changed", inputs: work.inputsChanged }
     };
   }
-  if (work.inputsUnchecked)
+  if (work.inputsUnchecked && !integrating)
     return { decision: staleRevision(work), reason: { rule: "inputs_unchecked" } };
   if (work.fromRole === "research") return returnResearch(work);
   if (work.modulesToStart !== void 0) return startModules(work, work.modulesToStart);
@@ -9443,6 +9444,12 @@ function startModules(work, modules) {
 function advance(work) {
   const integrating = INTEGRATION_PIPELINE.indexOf(work.fromRole);
   if (integrating >= 0) {
+    if (work.modulesReopened?.length) {
+      return {
+        decision: { tasks: [] },
+        reason: { rule: "integration_held", modules: work.modulesReopened }
+      };
+    }
     const role = INTEGRATION_PIPELINE[integrating + 1];
     if (role === void 0) {
       return { decision: { moduleDone: true }, reason: { rule: "pipeline_complete" } };
@@ -10228,6 +10235,12 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
         work = { ...work, integrationBegun: true };
       }
     }
+  }
+  if (INTEGRATION_PIPELINE.includes(role)) {
+    const listed = readModules(await pullRequests.modulesOnMain(project2) ?? "");
+    const done = modulesDone(events);
+    const reopened = "unreadable" in listed ? [] : listed.modules.filter((m) => !done.has(m));
+    if (reopened.length > 0) work = { ...work, modulesReopened: reopened };
   }
   if (signal.moduleAtFault !== void 0) {
     const listed = readModules(await pullRequests.modulesOnMain(project2) ?? "");

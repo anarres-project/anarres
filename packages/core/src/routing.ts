@@ -24,6 +24,8 @@ export type AcceptedWork = {
   moduleAtFaultUnlisted?: true;
   /** Security & Quality's work on the last of the programme's modules not yet done (0017). */
   lastModule?: true;
+  /** For integration work: the modules not done again since they were reopened (decision 0017). */
+  modulesReopened?: string[];
   /** The programme's integration had begun before a module was reopened (decision 0017). */
   integrationBegun?: true;
   /** The contracts the module provides or uses revised after the task was posted (0015). */
@@ -91,6 +93,7 @@ export type Reason =
   | { rule: "research_returned" }
   | { rule: "no_matching_rule" }
   | { rule: "no_module_at_fault" }
+  | { rule: "integration_held"; modules: string[] }
   | { rule: "unlisted_module_at_fault"; module: string }
   | { rule: "re_run_limit"; role: Role }
   | { rule: "inputs_changed"; inputs: string[] }
@@ -120,13 +123,15 @@ export function rule(work: AcceptedWork): Ruling {
   if (work.partial) return continuation(work);
   if (failed(work)) return revise(work);
   // Failed or part-done work goes where those rules send it, the most upstream (decision 0015).
-  if (work.inputsChanged?.length) {
+  // Integration work finishes as it is: integration runs again once every module is done (0017).
+  const integrating = (INTEGRATION_PIPELINE as readonly string[]).includes(work.fromRole);
+  if (work.inputsChanged?.length && !integrating) {
     return {
       decision: staleRevision(work),
       reason: { rule: "inputs_changed", inputs: work.inputsChanged },
     };
   }
-  if (work.inputsUnchecked)
+  if (work.inputsUnchecked && !integrating)
     return { decision: staleRevision(work), reason: { rule: "inputs_unchecked" } };
   if (work.fromRole === "research") return returnResearch(work);
   if (work.modulesToStart !== undefined) return startModules(work, work.modulesToStart);
@@ -254,6 +259,13 @@ function startModules(work: AcceptedWork, modules: string[]): Ruling {
 function advance(work: AcceptedWork): Ruling {
   const integrating = (INTEGRATION_PIPELINE as readonly string[]).indexOf(work.fromRole);
   if (integrating >= 0) {
+    // Nothing further in integration until every module is done again (decision 0017).
+    if (work.modulesReopened?.length) {
+      return {
+        decision: { tasks: [] },
+        reason: { rule: "integration_held", modules: work.modulesReopened },
+      };
+    }
     const role = INTEGRATION_PIPELINE[integrating + 1];
     // Integration Review passing completes the programme, done as a module is.
     if (role === undefined) {

@@ -153,6 +153,13 @@ When(
 );
 
 When(
+  "{word} submits {role} work for the programme with a {verdict} verdict",
+  function (this: AnarresWorld, member: string, role: string, verdict: string) {
+    return this.anarres.namedMemberSubmitsWork(member, { role, module: "programme", verdict });
+  },
+);
+
+When(
   "{word} submits {role} work on {string} with a {verdict} verdict",
   function (this: AnarresWorld, member: string, role: string, module: string, verdict: string) {
     return this.anarres.namedMemberSubmitsWork(member, { role, module, verdict });

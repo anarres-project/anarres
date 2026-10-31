@@ -292,7 +292,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           Specification (in-process);
     - [x] a module is done only until a later decision sends it work again, so with two
           reopened (a contract revision), the first done again starts nothing (in-process);
-    - [ ] integration work finishing while a module is reopened posts nothing further;
+    - [x] integration work finishing while a module is reopened posts nothing further
+          (`integration_held`, naming the modules), and is never revised as stale: 0017's hold
+          wins over 0015's stale mark, its inputs changed or unchecked (in-process);
+    - [ ] main's modules.yaml unreadable while integration work passes: held, or alerted?
+          (today it is neither held nor alerted; the alert of the Security & Quality case
+          does not reach it);
     - [x] an integration task posted but unclaimed when a module reopens is withdrawn
           (in-process; the board is asked for its ready tasks only when a decision reopens a
           module);

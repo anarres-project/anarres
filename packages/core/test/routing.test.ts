@@ -132,6 +132,48 @@ describe("routing accepted work", () => {
     });
   });
 
+  it("lets integration work whose inputs changed finish as it is, not revised as stale (0017)", () => {
+    expect(
+      route({
+        fromRole: "integration-specification",
+        module: "programme",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        inputsChanged: ["contracts/tokens.md"],
+      }),
+    ).toEqual({ tasks: [{ role: "integration-test", module: "programme" }] });
+  });
+
+  it("lets integration work whose inputs could not be checked finish as it is too (0017)", () => {
+    expect(
+      route({
+        fromRole: "integration-test",
+        module: "programme",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        inputsUnchecked: true,
+      }),
+    ).toEqual({ tasks: [{ role: "integration-review", module: "programme" }] });
+  });
+
+  it("posts nothing further in integration while a module is reopened (0017)", () => {
+    expect(
+      rule({
+        fromRole: "integration-specification",
+        module: "programme",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        modulesReopened: ["lexer", "parser"],
+      }),
+    ).toEqual({
+      decision: { tasks: [] },
+      reason: { rule: "integration_held", modules: ["lexer", "parser"] },
+    });
+  });
+
   it("makes an Integration Test task ready when Integration Specification passes (decision 0017)", () => {
     expect(
       route({

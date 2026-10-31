@@ -959,6 +959,72 @@ describe("acting on a pull request", () => {
     expect(posted).toEqual([]);
   });
 
+  it("posts nothing further when integration work passes while a module is reopened (0017)", async () => {
+    const posted: PostedTask[] = [];
+    const specificationPasses = {
+      path: "feedback/FB-6.md",
+      text: '---\nfeedback_signal:\n  task_id: "6"\n  from_role: integration-specification\n  module: programme\n  verdict: pass\n---\n',
+    };
+    const listed: PullRequests = {
+      ...submitting(
+        [],
+        [
+          specificationPasses,
+          { path: "integration/specifications/checkout.feature", text: "Feature: Checkout\n" },
+        ],
+      ),
+      modulesOnMain: async () => "modules:\n  - name: lexer\n  - name: parser\n",
+    };
+    const done = (module: string, feedbackSignal: string): LogEvent => ({
+      project: "ledger",
+      work: {
+        fromRole: "security-and-quality",
+        module,
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal,
+      },
+      decision: { moduleDone: true },
+      reason: { rule: "pipeline_complete" },
+    });
+    const parserReopened: EventLog = {
+      read: async () => [
+        done("lexer", "feedback/FB-0.md"),
+        done("parser", "feedback/FB-1.md"),
+        {
+          project: "ledger",
+          work: {
+            fromRole: "programme-architect",
+            module: "programme",
+            verdict: "pass",
+            impediments: [],
+            feedbackSignal: "feedback/FB-2.md",
+            modulesToStart: [],
+          },
+          decision: {
+            tasks: [{ role: "architecture", module: "parser", feedbackSignal: "feedback/FB-2.md" }],
+          },
+          reason: { rule: "contract_revised", contracts: ["tokens"] },
+        },
+      ],
+      append: async () => {},
+    };
+    const integrating: TaskBoard = {
+      ...board,
+      task: async () => ({
+        role: "integration-specification",
+        module: "programme",
+        claimedBy: "alice",
+      }),
+      close: async () => {},
+      post: async (task) => {
+        posted.push(task);
+      },
+    };
+    await onPullRequest("ledger", "7", listed, integrating, parserReopened, clock);
+    expect(posted).toEqual([]);
+  });
+
   it("starts no integration while another module is not done", async () => {
     const posted: PostedTask[] = [];
     const securityPasses = {
