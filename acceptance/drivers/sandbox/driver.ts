@@ -25,7 +25,7 @@ import {
   taskFolder,
   taskRecord,
 } from "@anarres/cli";
-import { TRUST_LEVELS, trustAllows, writeScope } from "@anarres/core";
+import { PROGRAMME, TRUST_LEVELS, trustAllows, writeScope } from "@anarres/core";
 import {
   type LogEvent,
   type RoutingEvent,
@@ -1029,7 +1029,11 @@ export class SandboxDriver implements Driver {
   /** Divlab's App closes the module's open tasks and posts the role's, as its runs would. */
   async setUpModuleAt(task: { project: string; role: string; module: string }): Promise<void> {
     const expected = this.expectedFor(task.project);
-    const inModule = (issue: Issue) => labelValue(issue, "module:") === task.module;
+    // In the programme, the Programme Architect's work and integration go on side by side, so
+    // only the role's own open tasks are done.
+    const inModule = (issue: Issue) =>
+      labelValue(issue, "module:") === task.module &&
+      (task.module !== PROGRAMME || labelValue(issue, "role:") === roleId(task.role));
     for (const listing of ["ready", "claimed"] as const) {
       for (const issue of (await this.settled(task.project, listing)).filter(inModule)) {
         await this.asDivlab.close(task.project, String(issue.number));

@@ -12,6 +12,7 @@ import {
 } from "@anarres/cli";
 import {
   MODULES_FILE,
+  PROGRAMME,
   TRUST_LEVELS,
   trustAllows,
   trustLevelOf,
@@ -397,8 +398,12 @@ export class InProcessDriver implements Driver {
   }
 
   async setUpModuleAt(task: { project: string; role: string; module: string }): Promise<void> {
+    // In the programme, the Programme Architect's work and integration go on side by side, so
+    // only the role's own open tasks are done.
+    const ahead = (open: { role: string; module: string }) =>
+      open.module === task.module && (task.module !== PROGRAMME || open.role === roleId(task.role));
     for (const open of this.github.openTasksOf(task.project)) {
-      if (open.module === task.module) await this.github.close(task.project, open.id);
+      if (ahead(open)) await this.github.close(task.project, open.id);
     }
     await this.github.post({
       project: task.project,

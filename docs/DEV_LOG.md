@@ -1230,6 +1230,14 @@ governance scenarios run alone.
   REFACTOR: core exports the integration pipeline, so Divlab asks it which roles are integration's
   ```
   The scenario passed and lost `@wip`. Gate 918 and 157.
+- Withdrawing an unclaimed integration task when a module reopens. Acceptance: "An integration
+  task nobody has claimed is withdrawn when a module is reopened", `@wip @sandbox-wip`. It
+  passed first run, for the harness's reason: arranging the Programme Architect's revision
+  closed every open task in the programme, the integration task too. With the When taken out,
+  the Integration Specification task was ready, so integration had started. The drivers now
+  close only the role's own open tasks in the programme, where the Programme Architect's work
+  and integration go side by side; the scenario is red in its Then (the Integration
+  Specification task still ready), the rest of the suite green. Gate 918 and 158.
 
 ---
 

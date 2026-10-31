@@ -90,3 +90,14 @@ Feature: The integration pipeline
     And a member's Integration Test work for the programme was accepted with a fail verdict, its tests finding a defect in "parser"
     When a member's Security & Quality work on "parser" is accepted with a pass verdict
     Then the only task ready is an Integration Test task for the programme
+
+  # Not in the sandbox yet, as the first scenario.
+  @wip @sandbox-wip
+  Scenario: An integration task nobody has claimed is withdrawn when a module is reopened
+    Given a new project is started
+    And a member's Programme Architect work for the programme was accepted, listing the modules "parser", "lexer" and "ledger", with a contract "tokens" that "lexer" provides and "parser" uses, and a contract "entries" that "ledger" provides
+    And a member's Security & Quality work on "lexer" was accepted with a pass verdict
+    And a member's Security & Quality work on "parser" was accepted with a pass verdict
+    And a member's Security & Quality work on "ledger" was accepted with a pass verdict
+    When the Programme Architect's work is revised, changing the contract "tokens"
+    Then no task is ready for the programme
