@@ -279,7 +279,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
     - [x] with no module named → a PDC coordinator (`no_module_at_fault`), never a guess;
     - [x] with a module named that main's modules.yaml does not list, or when it cannot be
           read → a PDC coordinator (`unlisted_module_at_fault`, naming it; unit);
-    - [ ] the recorded work's `moduleAtFaultUnlisted` read back only as yes, as `lastModule`;
+    - [x] the recorded work's `moduleAtFaultUnlisted` read back only as yes, as `lastModule`;
     - [ ] refactor: the two reads of main's modules.yaml in acting on a pull request, one;
     - [ ] the coordinator's alert says why in words of its own, not "no rule covers";
     - [ ] the plugin's Integration Test instructions say how to name the module at fault;

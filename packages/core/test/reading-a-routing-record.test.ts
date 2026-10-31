@@ -91,6 +91,15 @@ describe("reading back the work Divlab recorded as about to merge", () => {
     },
   );
 
+  it.each(["false", false])(
+    "is unreadable when it says the module at fault is unlisted as anything but yes: %j",
+    (moduleAtFaultUnlisted) => {
+      expect(readMergedWork({ ...WORK, moduleAtFaultUnlisted })).toEqual({
+        unreadable: "its work says its module at fault is unlisted in something other than yes",
+      });
+    },
+  );
+
   it("is unreadable when it gives no verdict, rather than routed as passed", () => {
     const { verdict: _, ...withoutVerdict } = WORK;
     expect(readMergedWork(withoutVerdict)).toEqual({

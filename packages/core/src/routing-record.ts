@@ -56,6 +56,15 @@ const WORK_FIELDS = [
   ["verdict", "verdict"],
 ] as const;
 
+/**
+ * What Divlab adds to the work only as yes, and what each says: routing takes any value as yes,
+ * so nothing else is read back (decision 0017).
+ */
+const YES_FIELDS = [
+  ["lastModule", "it completed the last module"],
+  ["moduleAtFaultUnlisted", "its module at fault is unlisted"],
+] as const;
+
 /** A record read back from the event log, checked before routing relies on it. */
 export function readRoutingRecord(value: unknown): RoutingRecord | Unreadable {
   if (
@@ -103,12 +112,11 @@ function unreadableWork(
   ) {
     return { unreadable: "its work names the modules it started in more than plain names" };
   }
-  // Integration starts from this (decision 0017).
-  const { lastModule } = work as { lastModule?: unknown };
-  if (lastModule !== undefined && lastModule !== true) {
-    return {
-      unreadable: "its work says it completed the last module in something other than yes",
-    };
+  for (const [field, says] of YES_FIELDS) {
+    const value = (work as Record<string, unknown>)[field];
+    if (value !== undefined && value !== true) {
+      return { unreadable: `its work says ${says} in something other than yes` };
+    }
   }
   return undefined;
 }

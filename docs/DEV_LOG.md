@@ -1197,6 +1197,13 @@ governance scenarios run alone.
   out, its own test ("… names a module and main's modules.yaml cannot be read") failed, Divlab
   crashing on the unreadable list (TypeError); put back, green (249). REFACTOR: none. Gate 912
   and 157.
+- ```
+  RED:      is unreadable when it says the module at fault is unlisted as anything but yes
+            -> expected { fromRole: 'test', …(4) } to deeply equal { Object (unreadable) }
+  GREEN:    (317 passed)
+  REFACTOR: the two yes-only fields read back by one table
+  ```
+  Gate 914 and 157.
 
 ---
 
