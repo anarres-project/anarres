@@ -706,6 +706,18 @@ export class Anarres {
     await this.driver.spoilReviewList(this.project);
   }
 
+  async modulesListCannotBeRead() {
+    await this.driver.spoilModulesList(this.project);
+  }
+
+  async coordinatorsAlertedOfUnreadableModulesList() {
+    assert.equal(
+      await this.driver.unreadableModulesListAlerts(this.project),
+      1,
+      "expected an alert that the project's list of its modules cannot be read",
+    );
+  }
+
   async coordinatorsAlertedOnceOfUnreadableReviewList() {
     assert.equal(
       await this.driver.unreadableReviewListAlerts(this.project),

@@ -44,6 +44,7 @@ import {
   issueForNotAccepted,
   issueForTask,
   issueForUnprotectedMain,
+  issueForUnreadableModules,
   issueForUnreadableReviewList,
   issueNumber,
   isTask,
@@ -192,6 +193,10 @@ export class GitHubAdapter
       `${this.repo(project)}/issues?labels=${label}&state=open&per_page=1`,
     );
     return open.length > 0;
+  }
+
+  async alertUnreadableModules(project: string, reason: string): Promise<void> {
+    await this.openIssue(project, issueForUnreadableModules(reason));
   }
 
   async alertUnreadableReviewList(project: string): Promise<void> {

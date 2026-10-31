@@ -445,6 +445,18 @@ export function issueForUnreadableReviewList(): NewIssue {
   };
 }
 
+/** Why the file cannot be read may repeat what it says, so it goes only in a code block. */
+export function issueForUnreadableModules(reason: string): NewIssue {
+  return {
+    title: "Escalation: the project's modules.yaml cannot be read",
+    labels: ["escalation", UNREADABLE_MODULES],
+    body: `Divlab cannot read the project's modules.yaml on main, so it cannot tell whether every module is done, and will not start the integration pipeline (decision 0017) until it can. Fix modules.yaml through the Programme Architect's work, then close this issue. Why Divlab cannot read it:\n\n${quoted(reason)}`,
+  };
+}
+
+/** The label on Divlab's alert that a project's modules.yaml cannot be read. */
+export const UNREADABLE_MODULES = "unreadable-modules";
+
 /** The label on Divlab's alert that the list of modules needing review cannot be read. */
 export const UNREADABLE_REVIEW_LIST = "unreadable-review-list";
 

@@ -115,6 +115,8 @@ export interface TaskBoard {
   unprotectedMainAlertOpen(project: string): Promise<boolean>;
   /** PDC coordinators are told that the governance file's list of modules needing review cannot be read. */
   alertUnreadableReviewList(project: string): Promise<void>;
+  /** PDC coordinators are told that main's modules.yaml cannot be read, and why. */
+  alertUnreadableModules(project: string, reason: string): Promise<void>;
   /** Whether such an alert is still open: coordinators close it once the list is fixed. */
   unreadableReviewListAlertOpen(project: string): Promise<boolean>;
   markModuleDone(module: FinishedModule): Promise<void>;
@@ -1045,8 +1047,16 @@ export async function onPullRequest(
   // The last of the programme's modules done starts its integration pipeline (decision 0017):
   // the modules are those main's modules.yaml lists.
   if (role === "security-and-quality" && !failed(signal) && !signal.partial) {
-    const listed = readModules((await pullRequests.modulesOnMain(project)) ?? "");
+    const onMain = await pullRequests.modulesOnMain(project);
+    const listed = readModules(onMain ?? "");
     const done = modulesDone(events);
+    // A project with no modules.yaml has nothing to read; one it cannot read is never passed over.
+    if (onMain !== undefined && "unreadable" in listed) {
+      await board.alertUnreadableModules(
+        project,
+        `The project's modules.yaml on main cannot be read: ${listed.unreadable}`,
+      );
+    }
     if (
       !("unreadable" in listed) &&
       listed.modules.every((module) => module === signal.module || done.has(module))

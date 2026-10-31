@@ -420,6 +420,14 @@ export class InProcessDriver implements Driver {
     this.github.spoilReviewList(project);
   }
 
+  async spoilModulesList(project: string): Promise<void> {
+    this.github.mergeFile(project, MODULES_FILE, "modules: [unclosed");
+  }
+
+  async unreadableModulesListAlerts(project: string): Promise<number> {
+    return this.github.unreadableModulesListAlerts(project);
+  }
+
   async unreadableReviewListAlerts(project: string): Promise<number> {
     return this.github.unreadableReviewListAlerts(project);
   }

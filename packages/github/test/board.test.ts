@@ -3,6 +3,7 @@ import {
   GitHubAdapter,
   issueForClaimedWithoutClaim,
   issueForTask,
+  issueForUnreadableModules,
   issueForUnreadableReviewList,
 } from "../src/index.ts";
 import { commentForRefused } from "../src/representation.ts";
@@ -451,6 +452,25 @@ describe("alerting PDC coordinators to a task shown as claimed without a claim",
     };
     await adapter.alertClaimedWithoutClaim(alert);
     expect(opened).toEqual([issueForClaimedWithoutClaim(alert)]);
+  });
+});
+
+describe("alerting PDC coordinators that a project's modules.yaml cannot be read", () => {
+  it("opens an issue in the project saying so, and why", async () => {
+    const opened: unknown[] = [];
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string, body?: unknown) => {
+        if (method === "POST" && path === "repos/commons/ledger/issues") {
+          opened.push(body);
+          return { status: 201, data: { number: 32 } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    await adapter.alertUnreadableModules("ledger", "it is not YAML");
+    expect(opened).toEqual([issueForUnreadableModules("it is not YAML")]);
   });
 });
 

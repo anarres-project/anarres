@@ -47,3 +47,13 @@ Feature: The integration pipeline
     When a member's Integration Review work for the programme is accepted with a pass verdict
     Then the programme is done
     And no task is ready for the programme
+
+  # Not in the sandbox yet, as the first scenario.
+  @sandbox-wip
+  Scenario: Divlab tells PDC coordinators when it cannot read the project's modules as one is done
+    Given a project with modules "parser" and "lexer"
+    And a member's Security & Quality work on "lexer" was accepted with a pass verdict
+    And the project's list of its modules cannot be read
+    When a member's Security & Quality work on "parser" is accepted with a pass verdict
+    Then PDC coordinators have been alerted that the project's list of its modules cannot be read
+    And no task is ready for the programme

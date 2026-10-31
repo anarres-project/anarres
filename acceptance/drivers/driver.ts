@@ -229,6 +229,10 @@ export interface Driver {
   spoilReviewList(project: string): Promise<void>;
   /** How many times PDC coordinators were alerted that the list cannot be read. */
   unreadableReviewListAlerts(project: string): Promise<number>;
+  /** The project's modules.yaml on main stops being readable. */
+  spoilModulesList(project: string): Promise<void>;
+  /** How many times PDC coordinators were alerted that the project's modules cannot be read. */
+  unreadableModulesListAlerts(project: string): Promise<number>;
   /** The member approves the pull request of the work with that feedback signal. */
   approve(project: string, feedbackSignal: string, member: string): Promise<void>;
   /** The member asks for changes to the pull request of the work with that feedback signal. */

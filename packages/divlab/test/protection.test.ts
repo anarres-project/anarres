@@ -35,6 +35,7 @@ function project(protectedMain: boolean, alertOpen = false) {
     },
     unprotectedMainAlertOpen: async () => alertOpen,
     alertUnreadableReviewList: untouched,
+    alertUnreadableModules: untouched,
     unreadableReviewListAlertOpen: untouched,
   };
   return { alerts, repositories, board };

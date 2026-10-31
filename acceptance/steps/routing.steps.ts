@@ -606,6 +606,17 @@ Then("no task is ready for the programme", function (this: AnarresWorld) {
   return this.anarres.noTaskReadyForTheProgramme();
 });
 
+Given("the project's list of its modules cannot be read", function (this: AnarresWorld) {
+  return this.anarres.modulesListCannotBeRead();
+});
+
+Then(
+  "PDC coordinators have been alerted that the project's list of its modules cannot be read",
+  function (this: AnarresWorld) {
+    return this.anarres.coordinatorsAlertedOfUnreadableModulesList();
+  },
+);
+
 Given("a new project is started", function (this: AnarresWorld) {
   return this.anarres.newProjectStarted();
 });

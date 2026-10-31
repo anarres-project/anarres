@@ -20,6 +20,7 @@ import {
   issueForNotAccepted,
   issueForTask,
   issueForUnprotectedMain,
+  issueForUnreadableModules,
   issueForUnreadableReviewList,
   issueNumber,
   logFrom,
@@ -617,6 +618,22 @@ describe("an alert that the list of modules needing review cannot be read, as a 
       title: "Escalation: the list of modules needing review cannot be read",
       labels: ["escalation", "unreadable-review-list"],
       body: "Divlab cannot read the governance file's list of modules whose work needs a reviewer's approval (decision 0016), so until it can, all work in this project waits for a reviewer's approval. Fix the list, then close this issue; Divlab alerts again if it finds the list unreadable later.",
+    });
+  });
+});
+
+describe("an alert that a project's modules.yaml cannot be read, as a GitHub issue", () => {
+  it("says integration cannot start until it is fixed, with why it cannot be read only in a code block", () => {
+    expect(issueForUnreadableModules("modules.yaml cannot be read: `@all`")).toEqual({
+      title: "Escalation: the project's modules.yaml cannot be read",
+      labels: ["escalation", "unreadable-modules"],
+      body: [
+        "Divlab cannot read the project's modules.yaml on main, so it cannot tell whether every module is done, and will not start the integration pipeline (decision 0017) until it can. Fix modules.yaml through the Programme Architect's work, then close this issue. Why Divlab cannot read it:",
+        "",
+        "```",
+        "modules.yaml cannot be read: `@all`",
+        "```",
+      ].join("\n"),
     });
   });
 });

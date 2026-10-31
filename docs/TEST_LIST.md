@@ -247,8 +247,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         those main's modules.yaml lists; in-process; the in-process projects now list theirs);
   - [ ] the same in the sandbox: a worker's scenarios share one project, each starting modules
         of its own, so the scenario needs a project of its own whose modules.yaml lists them;
-  - [ ] main's modules.yaml unreadable when the last module is done: integration does not
-        start, silently; say so to PDC coordinators;
+  - [x] main's modules.yaml unreadable when a module is done: integration does not start, and
+        PDC coordinators are told why, the reason only in a code block (in-process; a project
+        with no modules.yaml has nothing to read, and no alert);
+  - [ ] that alert only once while it is open, as the review list's is, should a held
+        Security & Quality pass be run again;
   - [x] the routing record keeps `lastModule` when read back, as it keeps the other fields
         Divlab adds, and is unreadable when it is anything but yes;
   - [x] Integration Specification's name, trust level (new), and its read (requirements,

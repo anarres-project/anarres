@@ -1125,6 +1125,26 @@ governance scenarios run alone.
   REFACTOR: none
   ```
   Gate 899 and 154.
+- An unreadable modules.yaml as a module is done. Acceptance: "Divlab tells PDC coordinators
+  when it cannot read the project's modules as one is done", `@wip @sandbox-wip`, red in its
+  Then (no alert). Cycles:
+  ```
+  RED:      tells PDC coordinators when it cannot read main's modules.yaml as a module is done
+            -> expected [] to deeply equal [ { project: 'ledger', …(1) } ]
+  GREEN:    (246 passed), once a project with no modules.yaml was left unalerted: an existing
+            test, whose project has none, failed with the alert at first
+  REFACTOR: none
+  RED:      an alert that a project's modules.yaml cannot be read, as a GitHub issue
+            -> TypeError: issueForUnreadableModules is not a function; stubbed,
+            -> expected { title: '', labels: [], body: '' } to deeply equal { …(3) }
+  GREEN:    (72 passed)
+  RED:      alerting … opens an issue in the project saying so, and why
+            -> TypeError: adapter.alertUnreadableModules is not a function; stubbed,
+            -> expected [] to deeply equal [ { …(3) } ]
+  GREEN:    (41 passed)
+  REFACTOR: none
+  ```
+  The scenario passed and lost `@wip`. Gate 902 and 155.
 
 ---
 

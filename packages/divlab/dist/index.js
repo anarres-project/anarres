@@ -10168,8 +10168,15 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     }
   }
   if (role === "security-and-quality" && !failed(signal) && !signal.partial) {
-    const listed = readModules(await pullRequests.modulesOnMain(project2) ?? "");
+    const onMain = await pullRequests.modulesOnMain(project2);
+    const listed = readModules(onMain ?? "");
     const done = modulesDone(events);
+    if (onMain !== void 0 && "unreadable" in listed) {
+      await board.alertUnreadableModules(
+        project2,
+        `The project's modules.yaml on main cannot be read: ${listed.unreadable}`
+      );
+    }
     if (!("unreadable" in listed) && listed.modules.every((module) => module === signal.module || done.has(module))) {
       work = { ...work, lastModule: true };
     }
@@ -11035,6 +11042,16 @@ function issueForUnreadableReviewList() {
     body: "Divlab cannot read the governance file's list of modules whose work needs a reviewer's approval (decision 0016), so until it can, all work in this project waits for a reviewer's approval. Fix the list, then close this issue; Divlab alerts again if it finds the list unreadable later."
   };
 }
+function issueForUnreadableModules(reason) {
+  return {
+    title: "Escalation: the project's modules.yaml cannot be read",
+    labels: ["escalation", UNREADABLE_MODULES],
+    body: `Divlab cannot read the project's modules.yaml on main, so it cannot tell whether every module is done, and will not start the integration pipeline (decision 0017) until it can. Fix modules.yaml through the Programme Architect's work, then close this issue. Why Divlab cannot read it:
+
+${quoted(reason)}`
+  };
+}
+var UNREADABLE_MODULES = "unreadable-modules";
 var UNREADABLE_REVIEW_LIST = "unreadable-review-list";
 var UNPROTECTED_MAIN = "unprotected-main";
 var CHANGE_NOT_BY_DIVLAB = "change-not-by-divlab";
@@ -11197,6 +11214,9 @@ var GitHubAdapter = class {
       `${this.repo(project2)}/issues?labels=${label}&state=open&per_page=1`
     );
     return open.length > 0;
+  }
+  async alertUnreadableModules(project2, reason) {
+    await this.openIssue(project2, issueForUnreadableModules(reason));
   }
   async alertUnreadableReviewList(project2) {
     await this.openIssue(project2, issueForUnreadableReviewList());

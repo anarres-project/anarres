@@ -1065,6 +1065,14 @@ export class SandboxDriver implements Driver {
     });
   }
 
+  async spoilModulesList(_project: string): Promise<void> {
+    throw new HarnessNotYetBuilt("a project's modules.yaml on main that cannot be read");
+  }
+
+  async unreadableModulesListAlerts(_project: string): Promise<number> {
+    throw new HarnessNotYetBuilt("a project's modules.yaml on main that cannot be read");
+  }
+
   /** Divlab runs after the work it acted on, so give the last run time to look and alert. */
   async unreadableReviewListAlerts(project: string): Promise<number> {
     const deadline = Date.now() + 60_000;

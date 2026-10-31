@@ -188,6 +188,17 @@ export class FakeGitHub
     return this.unreadableReviewListAlerted.filter((alerted) => alerted === project).length;
   }
 
+  /** Alerts that the project's list of its modules cannot be read, by project. */
+  private readonly unreadableModulesListAlerted: string[] = [];
+
+  async alertUnreadableModules(project: string, _reason: string): Promise<void> {
+    this.unreadableModulesListAlerted.push(project);
+  }
+
+  unreadableModulesListAlerts(project: string): number {
+    return this.unreadableModulesListAlerted.filter((alerted) => alerted === project).length;
+  }
+
   /** Someone other than Divlab writes to main: it takes only if main is unprotected. */
   changeMainDirectly(project: string): boolean {
     if (this.protectedMains.has(project)) return false;

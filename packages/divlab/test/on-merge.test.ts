@@ -29,6 +29,7 @@ const board: TaskBoard = {
   alertUnprotectedMain: untouched,
   unprotectedMainAlertOpen: untouched,
   alertUnreadableReviewList: untouched,
+  alertUnreadableModules: untouched,
   unreadableReviewListAlertOpen: untouched,
   markModuleDone: untouched,
   task: untouched,
@@ -778,6 +779,30 @@ describe("acting on a pull request", () => {
     };
     await onPullRequest("ledger", "7", listed, finishing, log, clock);
     expect(posted).toEqual([]);
+  });
+
+  it("tells PDC coordinators when it cannot read main's modules.yaml as a module is done", async () => {
+    const alerted: { project: string; reason: string }[] = [];
+    const securityPasses = {
+      path: "feedback/FB-1.md",
+      text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: security-and-quality\n  module: parser\n  verdict: pass\n---\n',
+    };
+    const spoiled: PullRequests = {
+      ...submitting([], [securityPasses]),
+      modulesOnMain: async () => "modules: [unclosed",
+    };
+    const finishing: TaskBoard = {
+      ...heldAs("security-and-quality"),
+      markModuleDone: async () => {},
+      post: async () => {},
+      alertUnreadableModules: async (project, reason) => {
+        alerted.push({ project, reason });
+      },
+    };
+    await onPullRequest("ledger", "7", spoiled, finishing, log, clock);
+    expect(alerted).toEqual([
+      { project: "ledger", reason: expect.stringContaining("modules.yaml") },
+    ]);
   });
 
   it("does not merge a draft: its member has not finished the work", async () => {
