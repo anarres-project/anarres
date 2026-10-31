@@ -245,8 +245,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] when the last of a project's modules is done, Divlab posts an Integration Specification
         task for the programme; not while any module is still in its pipeline (the modules are
         those main's modules.yaml lists; in-process; the in-process projects now list theirs);
-  - [ ] the same in the sandbox: a worker's scenarios share one project, each starting modules
-        of its own, so the scenario needs a project of its own whose modules.yaml lists them;
+  - [x] the same in the sandbox: a worker's scenarios share one project, each starting modules
+        of its own, so the scenario needs a project of its own whose modules.yaml lists them
+        (the integration journey, decision 0018);
   - [x] main's modules.yaml unreadable when a module is done: integration does not start, and
         PDC coordinators are told why, the reason only in a code block (in-process; a project
         with no modules.yaml has nothing to read, and no alert);
@@ -284,9 +285,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           considered and left, as they never both run, and reading it for all work would cost
           a request on every pull request;
     - [x] the coordinator's alert says why in words of its own, not "no rule covers";
+    - [ ] an `interface_impediment` from integration work goes to the Programme Architect, as
+          from a module's roles;
     - [ ] the plugin's Integration Test instructions say how to name the module at fault (waits
           on the plugin's role instructions, written with them: Bernard, 2026-10-31);
-  - [ ] a module reopened after integration began: nothing more in integration is posted until
+  - [x] a module reopened after integration began: nothing more in integration is posted until
         every module is done again, then a new Integration Test task (Bernard, 2026-10-31):
     - [x] the module at fault done again → an Integration Test task, not Integration
           Specification (in-process);
@@ -304,9 +307,6 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
     - [x] the withdrawal is recorded in Divlab's log, with the decision that caused it, and
           read back only as a list of task numbers; acting on the record closes them, so an
           interrupted run finishes it;
-    - [ ] a contract revision leaves integration work already claimed to finish: decision
-          0017's hold, not decision 0015's stale mark, applies to integration work;
-    - [ ] an integration task posted but unclaimed when a module reopens is withdrawn;
   - [x] the template's checks run on Integration Test work (`integration/tests/`);
   - [x] preparing an integration task fetches only its role's inputs (core's read scopes, so no
         new code: a scenario for Integration Test, which fails with the contracts taken out of
