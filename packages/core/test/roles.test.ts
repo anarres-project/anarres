@@ -10,6 +10,10 @@ describe("role names", () => {
     expect(ROLE_NAMES["programme-architect"]).toBe("Programme Architect");
   });
 
+  it("names the Integration Specification role as members know it (decision 0017)", () => {
+    expect(ROLE_NAMES["integration-specification"]).toBe("Integration Specification");
+  });
+
   it("names the Research role as members know it", () => {
     expect(ROLE_NAMES.research).toBe("Research");
   });

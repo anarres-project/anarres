@@ -81,6 +81,15 @@ export class Anarres {
     );
   }
 
+  async noTaskReadyForTheProgramme() {
+    const ready = await this.driver.readyTasks(this.project);
+    assert.deepEqual(
+      ready.map(roleAndModule).filter(({ module }) => module === "programme"),
+      [],
+      "expected no task ready for the programme",
+    );
+  }
+
   /** A project of its own, so its counts are its scenario's alone. */
   async projectOfItsOwn(module: string): Promise<void> {
     this.project = this.ownProject("own");

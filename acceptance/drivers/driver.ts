@@ -73,7 +73,7 @@ export type RoutingRecord = {
     impediments: string[];
     feedbackSignal: string;
   };
-  outcome: { tasksFor: string[] } | { alert: true } | { moduleDone: true };
+  outcome: { tasksFor?: string[]; moduleDone?: true } | { alert: true };
   reason: { rule: string; impediment?: string; role?: string };
   /** When Divlab decided, as it recorded it. */
   decidedAt?: string;

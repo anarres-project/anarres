@@ -447,6 +447,52 @@ describe("acting on a merge", () => {
     ]);
   });
 
+  it("marks the last module done and posts the integration task its decision names (0017)", async () => {
+    const { seen, watchedBoard, watchedLog } = watching();
+    const work = {
+      fromRole: "security-and-quality",
+      module: "parser",
+      verdict: "pass",
+      impediments: [],
+    };
+    const recordedOnly: EventLog = {
+      ...watchedLog,
+      read: async () => [
+        {
+          project: "ledger",
+          aboutToMerge: {
+            pullRequest: "7",
+            head: "c0ffee",
+            feedbackSignal: "feedback/FB-9.md",
+            work,
+          },
+        },
+        {
+          project: "ledger",
+          work: { ...work, feedbackSignal: "feedback/FB-9.md", lastModule: true },
+          decision: {
+            moduleDone: true,
+            tasks: [{ role: "integration-specification", module: "programme" }],
+          },
+          reason: { rule: "pipeline_complete" },
+        },
+      ],
+    };
+    const done: string[] = [];
+    const finishing: TaskBoard = {
+      ...watchedBoard,
+      actedOn: async () => [],
+      markModuleDone: async ({ module }) => {
+        done.push(module);
+      },
+    };
+    await onMerge("ledger", onMain(passedSpecification), finishing, recordedOnly, clock);
+    expect([done, seen.posted.map(({ role, module }) => ({ role, module }))]).toEqual([
+      ["parser"],
+      [{ role: "integration-specification", module: "programme" }],
+    ]);
+  });
+
   it("closes the task a recorded decision was for, when it acts on it later", async () => {
     const { watchedBoard, watchedLog } = watching();
     const closed: string[] = [];
@@ -672,6 +718,67 @@ describe("acting on a pull request", () => {
     }),
   });
   const log: EventLog = { read: async () => [], append: async () => {} };
+
+  it("starts the integration pipeline when the module the work completes is the last not done (0017)", async () => {
+    const posted: PostedTask[] = [];
+    const securityPasses = {
+      path: "feedback/FB-1.md",
+      text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: security-and-quality\n  module: parser\n  verdict: pass\n---\n',
+    };
+    const listed: PullRequests = {
+      ...submitting([], [securityPasses]),
+      modulesOnMain: async () => "modules:\n  - name: lexer\n  - name: parser\n",
+    };
+    const lexerDone: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          work: {
+            fromRole: "security-and-quality",
+            module: "lexer",
+            verdict: "pass",
+            impediments: [],
+            feedbackSignal: "feedback/FB-0.md",
+          },
+          decision: { moduleDone: true },
+          reason: { rule: "pipeline_complete" },
+        },
+      ],
+      append: async () => {},
+    };
+    const finishing: TaskBoard = {
+      ...heldAs("security-and-quality"),
+      markModuleDone: async () => {},
+      post: async (task) => {
+        posted.push(task);
+      },
+    };
+    await onPullRequest("ledger", "7", listed, finishing, lexerDone, clock);
+    expect(posted.map(({ role, module }) => ({ role, module }))).toEqual([
+      { role: "integration-specification", module: "programme" },
+    ]);
+  });
+
+  it("starts no integration while another module is not done", async () => {
+    const posted: PostedTask[] = [];
+    const securityPasses = {
+      path: "feedback/FB-1.md",
+      text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: security-and-quality\n  module: parser\n  verdict: pass\n---\n',
+    };
+    const listed: PullRequests = {
+      ...submitting([], [securityPasses]),
+      modulesOnMain: async () => "modules:\n  - name: lexer\n  - name: parser\n",
+    };
+    const finishing: TaskBoard = {
+      ...heldAs("security-and-quality"),
+      markModuleDone: async () => {},
+      post: async (task) => {
+        posted.push(task);
+      },
+    };
+    await onPullRequest("ledger", "7", listed, finishing, log, clock);
+    expect(posted).toEqual([]);
+  });
 
   it("does not merge a draft: its member has not finished the work", async () => {
     const merged: string[] = [];

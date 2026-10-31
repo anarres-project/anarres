@@ -584,6 +584,10 @@ Then(
   },
 );
 
+Then("no task is ready for the programme", function (this: AnarresWorld) {
+  return this.anarres.noTaskReadyForTheProgramme();
+});
+
 Given("a new project is started", function (this: AnarresWorld) {
   return this.anarres.newProjectStarted();
 });

@@ -240,7 +240,32 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
       has no open task to claim (Bernard, 2026-10-21; validated in section 4, and anything that
       reaches main another way is handled as decision 0005 says). Shown 2026-10-27: work naming
       the module's finished task is refused, since nobody holds a closed task.
-- [ ] All module pipelines done → the integration pipeline starts (concept §9; Phase 2).
+- [ ] All module pipelines done → the integration pipeline starts (concept §9; Phase 2;
+      decision 0017, Bernard, 2026-10-31):
+  - [x] when the last of a project's modules is done, Divlab posts an Integration Specification
+        task for the programme; not while any module is still in its pipeline (the modules are
+        those main's modules.yaml lists; in-process; the in-process projects now list theirs);
+  - [ ] the same in the sandbox: a worker's scenarios share one project, each starting modules
+        of its own, so the scenario needs a project of its own whose modules.yaml lists them;
+  - [ ] main's modules.yaml unreadable when the last module is done: integration does not
+        start, silently; say so to PDC coordinators;
+  - [ ] the routing record keeps `lastModule` when read back, as it keeps the other fields
+        Divlab adds;
+  - [x] Integration Specification's name, trust level (new), and its read (requirements,
+        contracts) and write (`integration/specifications/`) scopes in core;
+  - [ ] Integration Test's and Integration Review's;
+  - [ ] Integration Specification passing → Integration Test; Integration Test passing (its
+        check green) → Integration Review; Integration Review passing → the programme is done;
+  - [ ] who may take them: Specification's and Test's levels, and trusted for Integration Review;
+        nobody reviews integration work they wrote;
+  - [ ] a failing integration test naming a module sends that module back to Specification,
+        carrying the integration signal; an `interface_impediment` goes to the Programme
+        Architect;
+  - [ ] a module reopened after integration began: nothing more in integration is posted until
+        every module is done again, then a new Integration Test task;
+  - [ ] the template's checks run on Integration Test work;
+  - [ ] preparing an integration task fetches only its role's inputs, and the hook judges them;
+  - [ ] the sandbox shows them.
 - [x] Escalation: the same role is re-run more than three times → a PDC coordinator is alerted and
       no further task is posted (Bernard, 2026-10-12: per module, revision tasks only, the count
       starting again when that role's work passes).

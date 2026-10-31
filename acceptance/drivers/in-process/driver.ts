@@ -10,7 +10,14 @@ import {
   submit,
   taskFolder,
 } from "@anarres/cli";
-import { TRUST_LEVELS, trustAllows, trustLevelOf, underWay, writeScope } from "@anarres/core";
+import {
+  MODULES_FILE,
+  TRUST_LEVELS,
+  trustAllows,
+  trustLevelOf,
+  underWay,
+  writeScope,
+} from "@anarres/core";
 import {
   CLAIM,
   checkMain,
@@ -67,6 +74,10 @@ export class InProcessDriver implements Driver {
     options: { unprotected?: boolean } = {},
   ): Promise<void> {
     this.github.repositories.set(project, modules);
+    // As the Programme Architect's merged work would have listed them (decision 0013), before
+    // Divlab first looks at main.
+    const listing = modules.map((module) => `  - name: ${module}\n`).join("");
+    this.github.mergeFile(project, MODULES_FILE, `modules:\n${listing}`);
     if (!options.unprotected) await setUpProject(project, this.github);
     for (const module of modules) await startModule(project, module, this.github);
   }

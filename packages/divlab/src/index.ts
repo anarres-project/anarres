@@ -625,12 +625,14 @@ async function actOn(event: RoutingEvent, board: TaskBoard, log: EventLog): Prom
   if (event.task !== undefined) await board.close(project, event.task);
   if ("alert" in decision) {
     await board.alertCoordinators(event);
-  } else if ("moduleDone" in decision) {
-    await board.markModuleDone({ project, module: event.work.module, decidedOn });
   } else {
-    // A task's inputs are read as they were at the merge that decided it.
+    if ("moduleDone" in decision) {
+      await board.markModuleDone({ project, module: event.work.module, decidedOn });
+    }
+    // A task's inputs are read as they were at the merge that decided it. The last module done
+    // starts the programme's integration (decision 0017).
     const inputsAt = event.mergedAs === undefined ? {} : { inputsAt: event.mergedAs };
-    for (const task of decision.tasks) {
+    for (const task of decision.tasks ?? []) {
       await board.post({ project, ...task, decidedOn, ...inputsAt });
     }
   }
@@ -1038,6 +1040,18 @@ export async function onPullRequest(
       if (revised.length > 0) work = { ...work, contractsRevised: revised };
     }
   }
+  // The last of the programme's modules done starts its integration pipeline (decision 0017):
+  // the modules are those main's modules.yaml lists.
+  if (role === "security-and-quality" && !failed(signal) && !signal.partial) {
+    const listed = readModules((await pullRequests.modulesOnMain(project)) ?? "");
+    const done = modulesDone(events);
+    if (
+      !("unreadable" in listed) &&
+      listed.modules.every((module) => module === signal.module || done.has(module))
+    ) {
+      work = { ...work, lastModule: true };
+    }
+  }
   // Work on a module PDC coordinators name is merged only once a person approves it (0016).
   const governance = await pullRequests.governanceFile();
   const history = membersParts(governance, events);
@@ -1114,16 +1128,25 @@ function hasTaskOpen(events: LogEvent[], module: string): boolean {
 
 /**
  * A feedback signal with what Divlab found on validating it: the modules a Programme Architect's
- * modules.yaml starts (0013) or sends back, and the inputs and contracts revised since its task
- * was posted (0015).
+ * modules.yaml starts (0013) or sends back, the inputs and contracts revised since its task was
+ * posted (0015), and whether it finishes the last module not done (0017).
  */
 type RoutedWork = FeedbackSignal & {
   modulesToStart?: string[];
+  lastModule?: true;
   inputsChanged?: string[];
   inputsUnchecked?: true;
   contractsRevised?: string[];
   contractRevision?: { contracts: string[]; modules: string[] };
 };
+
+/** The modules Divlab has recorded done. */
+const modulesDone = (events: LogEvent[]) =>
+  new Set(
+    routingDecisions(events)
+      .filter((event) => "moduleDone" in event.decision)
+      .map((event) => event.work.module),
+  );
 
 /** The modules earlier modules.yaml started, as Divlab's routing records say. */
 const modulesStarted = (events: LogEvent[]) =>

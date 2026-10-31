@@ -126,7 +126,7 @@ CSD splits work **by role**: each agent sees one layer. That alone does not fit 
 
 **Sizing rule.** Every task must fit comfortably in one session of a typical member's spare allowance. If the Programme Architect's size estimate says a module's layer is too big, the module is split again. The decomposition is recursive, and the same rule applies at every level.
 
-**Integration pipeline.** Once module pipelines reach their done criteria, an integration pipeline checks the assembled system against programme-level acceptance scenarios. Failures are traced back to a module or a contract.
+**Integration pipeline.** Once module pipelines reach their done criteria, an integration pipeline checks the assembled system against programme-level acceptance scenarios. Failures are traced back to a module or a contract: a defect in a module sends it back to Specification, so the missed behaviour becomes a module scenario, then a failing module test, then code; a contract that does not work goes to the Programme Architect. A module reopened after integration has begun holds integration until every module is done again, when the integration tests are run again. Integration Review passing completes the programme (decision 0017).
 
 ---
 
@@ -145,7 +145,9 @@ Read and write scopes follow the CSD access control matrix, extended for modules
 | Coding | Module | specifications, tests **only** | `modules/<m>/src/` |
 | Reviewer | Module | requirement slice, specifications, `src/` | `modules/<m>/reviews/` |
 | Security & Quality | Module | requirement slice, architecture, `src/` | `modules/<m>/reviews/` |
-| Integration Spec / Test | Programme | requirements, contracts | `integration/` |
+| Integration Specification | Programme | requirements, contracts | `integration/specifications/` |
+| Integration Test | Programme | requirements, contracts, integration specifications | `integration/tests/` |
+| Integration Review | Programme | requirements, contracts, integration specifications and tests | `integration/reviews/` |
 | Research | Any | its question (the feedback signal that reported the knowledge gap) and `research-briefs/<m>/` | `research-briefs/<m>/` |
 | Governance | Programme | **everything** | `governance/` |
 
@@ -306,7 +308,8 @@ The March AutoPM spec had a Claude session apply a fixed routing table. A fixed 
     role, and the count starts again when that role's work passes. A fourth re-run is not posted:
     a PDC coordinator is alerted instead (the AutoPM's "same agent re-run > 3 times")
   - a contract revision → revision tasks for every module that uses the contract
-  - all module pipelines done → integration pipeline
+  - all module pipelines done → integration pipeline: the modules are those `modules.yaml` on
+    main lists, and the last one done posts an Integration Specification task (decision 0017)
   - a `conditional_pass` routes exactly as a `pass` does; its open questions and assumptions are
     kept in the event record
   - **v1 difference:** the AutoPM table advances a pass only while ρ > 0. Until Divlab computes

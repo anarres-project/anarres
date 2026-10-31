@@ -9033,8 +9033,11 @@ var WRITE_SCOPES = {
   reviewer: (module) => `modules/${module}/reviews/`,
   "security-and-quality": (module) => `modules/${module}/reviews/`,
   // Research's brief is for the module its task names (Bernard, 2026-10-29).
-  research: (module) => `research-briefs/${module}/`
+  research: (module) => `research-briefs/${module}/`,
+  // The programme's integration pipeline (decision 0017).
+  "integration-specification": () => `${INTEGRATION}specifications/`
 };
+var INTEGRATION = "integration/";
 function outsideScope(role, module, paths) {
   const signal = paths.find((path) => path.startsWith("feedback/"));
   const scope = writeScope(role, module);
@@ -9073,7 +9076,9 @@ var READ_SCOPES = {
     `modules/${module}/src/`
   ],
   // Research reads its module's briefs, not the module's work (Bernard, 2026-10-29).
-  research: (module) => [writeScope("research", module)]
+  research: (module) => [writeScope("research", module)],
+  // The whole programme's requirements and every contract between its modules (decision 0017).
+  "integration-specification": () => ["requirements/", CONTRACTS]
 };
 function readScope(role, module, task = {}) {
   return [
@@ -9108,7 +9113,8 @@ var ROLE_NAMES = {
   coding: "Coding",
   reviewer: "Reviewer",
   "security-and-quality": "Security & Quality",
-  research: "Research"
+  research: "Research",
+  "integration-specification": "Integration Specification"
 };
 var isRole = (value) => typeof value === "string" && Object.hasOwn(ROLE_NAMES, value);
 
@@ -9119,6 +9125,8 @@ var LEVEL_NEEDED = {
   test: "new",
   coding: "new",
   research: "new",
+  // As a module's Specification (decision 0017).
+  "integration-specification": "new",
   architecture: "established",
   reviewer: "established",
   "security-and-quality": "trusted",
@@ -9394,7 +9402,11 @@ function startModules(work, modules) {
 function advance(work) {
   const next = MODULE_PIPELINE.indexOf(work.fromRole) + 1;
   if (next === MODULE_PIPELINE.length) {
-    return { decision: { moduleDone: true }, reason: { rule: "pipeline_complete" } };
+    const integration = work.lastModule ? { tasks: [{ role: "integration-specification", module: PROGRAMME }] } : {};
+    return {
+      decision: { moduleDone: true, ...integration },
+      reason: { rule: "pipeline_complete" }
+    };
   }
   return {
     decision: {
@@ -9828,11 +9840,12 @@ async function actOn(event, board, log) {
   if (event.task !== void 0) await board.close(project2, event.task);
   if ("alert" in decision) {
     await board.alertCoordinators(event);
-  } else if ("moduleDone" in decision) {
-    await board.markModuleDone({ project: project2, module: event.work.module, decidedOn });
   } else {
+    if ("moduleDone" in decision) {
+      await board.markModuleDone({ project: project2, module: event.work.module, decidedOn });
+    }
     const inputsAt = event.mergedAs === void 0 ? {} : { inputsAt: event.mergedAs };
-    for (const task of decision.tasks) {
+    for (const task of decision.tasks ?? []) {
       await board.post({ project: project2, ...task, decidedOn, ...inputsAt });
     }
   }
@@ -10117,6 +10130,13 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
       if (revised.length > 0) work = { ...work, contractsRevised: revised };
     }
   }
+  if (role === "security-and-quality" && !failed(signal) && !signal.partial) {
+    const listed = readModules(await pullRequests.modulesOnMain(project2) ?? "");
+    const done = modulesDone(events);
+    if (!("unreadable" in listed) && listed.modules.every((module) => module === signal.module || done.has(module))) {
+      work = { ...work, lastModule: true };
+    }
+  }
   const governance = await pullRequests.governanceFile();
   const history = membersParts(governance, events);
   const approved = approvalsStanding(await pullRequests.reviews(project2, pullRequest)).some(
@@ -10163,6 +10183,9 @@ function hasTaskOpen(events, module) {
   const latest = routingDecisions(events).filter((event) => event.work.module === module || postsFor(event)).at(-1);
   return latest !== void 0 && postsFor(latest);
 }
+var modulesDone = (events) => new Set(
+  routingDecisions(events).filter((event) => "moduleDone" in event.decision).map((event) => event.work.module)
+);
 var modulesStarted = (events) => new Set(routingDecisions(events).flatMap((event) => event.work.modulesToStart ?? []));
 async function checkMain(project2, repository, board, log, clock, divlab) {
   const events = await log.read(project2);

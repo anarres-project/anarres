@@ -38,6 +38,7 @@ describe("what a role's work may change (concept §6)", () => {
     ["reviewer", "modules/parser/reviews/review-1.md"],
     ["security-and-quality", "modules/parser/reviews/security-1.md"],
     ["research", "research-briefs/parser/tokenisers.md"],
+    ["integration-specification", "integration/specifications/checkout.md"],
   ])("lets %s write %s, and nothing in another role's place", (role, inScope) => {
     expect(outsideScope(role, "parser", [inScope])).toEqual([]);
     expect(outsideScope(role, "parser", ["modules/parser/elsewhere/x.md"])).toEqual([
@@ -112,6 +113,11 @@ describe("what a role's work may read (concept §6)", () => {
       ["modules/parser/tests/t.ts"],
     ],
     ["research", [], ["modules/parser/src/x.ts"]],
+    [
+      "integration-specification",
+      ["requirements/r1.md", "programme/contracts/tokens/c.md"],
+      ["modules/parser/specifications/a.md", "programme/slices/parser/s.md"],
+    ],
   ])("lets %s read %j and not %j", (role, readable, unreadable) => {
     expect(readable.every((path) => mayRead(role, "parser", path))).toBe(true);
     expect(unreadable.some((path) => mayRead(role, "parser", path))).toBe(false);

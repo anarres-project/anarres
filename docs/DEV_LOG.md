@@ -1022,6 +1022,46 @@ governance scenarios run alone.
   between 18:58 and 19:06, each "Divlab's run … did not finish": in that window Divlab's runs,
   usually 15 to 20 seconds, took 2 to 4 minutes, waiting for GitHub's runners, and every one
   succeeded. GitHub's slowness, as on 095293d, outlasting the driver's waits.
+- Bernard, 2026-10-31: the integration pipeline next (Phase 2's last piece), and decision 0017:
+  an Integration Review role; a module defect an integration test finds goes back to that
+  module's Specification, a contract problem to the Programme Architect; Integration
+  Specification and Test at Specification's and Test's levels, Integration Review at trusted,
+  nobody reviewing integration work they wrote; a module reopened holds integration until every
+  module is done again, then Integration Test again. The CSD repository (synced 2026-10-31) has
+  no programme-level integration pipeline. Concept §5, §6 and §9 updated.
+- Integration starts. Acceptance: "When the last module is done, the integration pipeline
+  starts", `@wip`, red in its Then (no Integration Specification task); "Integration waits while
+  any module is still in its pipeline" passed first run (nothing posts for the programme yet),
+  kept as a guard.
+  RED:      names the Integration Specification role -> expected undefined to be 'Integration
+            Specification'
+  GREEN:    the same (288 passed in core).
+  RED:      (none) its trust level -> passed for the wrong reason: a role with no level stated
+            gives undefined, which lets anyone take it, a gap only the type checker closes. The
+            row now also asserts each role's stated level (`levelNeeded`, exported), which failed
+            for it -> expected undefined to be 'new'
+  GREEN:    the same (289 passed).
+  RED:      its write scope -> `WRITE_SCOPES[role] is not a function`
+  GREEN:    `integration/specifications/` (290 passed).
+  RED:      its read scope -> `READ_SCOPES[role] is not a function`
+  GREEN:    the requirements and every contract (291 passed); the type checker agreed.
+  RED:      starts the integration pipeline when the module it completes was the last not done
+            -> expected { moduleDone: true } to deeply equal { moduleDone: true, …(1) }
+  GREEN:    the same (292 passed): a module-done decision may carry tasks.
+  RED:      marks the last module done and posts the integration task its decision names ->
+            expected [ [ 'parser' ], [] ] to deeply equal [ [ 'parser' ], [ { …(2) } ] ]
+  GREEN:    the same (241 passed in divlab).
+  RED:      starts the integration pipeline when the module the work completes is the last not
+            done -> expected [] to deeply equal [ { …(2) } ]
+  GREEN:    the same (242 passed): Security & Quality passing marks `lastModule` when every
+            other module main's modules.yaml lists is recorded done.
+  RED:      (none) starts no integration while another module is not done -> passed first run,
+            the check written whole; seen to fail with the check broken, and kept.
+  The in-process projects now list their modules in modules.yaml on main, as the Programme
+  Architect's merged work would. One scenario, "Completing a module is recorded", had one
+  module, so completing it now starts integration too; it has two modules now, keeping it about
+  one module completing, and a record's outcome can say both. The scenario passed and is
+  `@sandbox-wip` (the sandbox's shared projects). Gate 880 and 150.
 
 ---
 

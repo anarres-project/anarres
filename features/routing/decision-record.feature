@@ -18,7 +18,7 @@ Feature: Divlab records every routing decision
     Then Divlab records that the Specification work on "parser" went to a PDC coordinator because no rule covers it
 
   Scenario: Completing a module is recorded
-    Given a project with a module "parser"
+    Given a project with modules "parser" and "lexer"
     When a member's Security & Quality work on "parser" is accepted with a pass verdict
     Then Divlab records that the Security & Quality work on "parser" completed the module
 

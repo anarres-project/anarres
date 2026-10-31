@@ -1,3 +1,4 @@
+import { PROGRAMME } from "./access.ts";
 import type { Role } from "./roles.ts";
 
 export type AcceptedWork = {
@@ -17,6 +18,8 @@ export type AcceptedWork = {
   inputsChanged?: string[];
   /** Too much changed on main since the task was posted to tell whether its inputs did (0015). */
   inputsUnchecked?: true;
+  /** Security & Quality's work on the last of the programme's modules not yet done (0017). */
+  lastModule?: true;
   /** The contracts the module provides or uses revised after the task was posted (0015). */
   contractsRevised?: string[];
   /** For the Programme Architect's work: its revised contracts, and the modules they send back
@@ -53,7 +56,7 @@ export const FIRST_ROLE: Role = MODULE_PIPELINE[0];
 
 export type RoutingDecision =
   | { tasks: Task[] }
-  | { moduleDone: true }
+  | { moduleDone: true; tasks?: Task[] }
   | { alert: { reason: "no_matching_rule" | "re_run_limit" } };
 
 /** The rule that decided a routing decision. */
@@ -213,7 +216,14 @@ function startModules(work: AcceptedWork, modules: string[]): Ruling {
 function advance(work: AcceptedWork): Ruling {
   const next = (MODULE_PIPELINE as readonly string[]).indexOf(work.fromRole) + 1;
   if (next === MODULE_PIPELINE.length) {
-    return { decision: { moduleDone: true }, reason: { rule: "pipeline_complete" } };
+    // The last module done starts the programme's integration pipeline (decision 0017).
+    const integration = work.lastModule
+      ? { tasks: [{ role: "integration-specification" as const, module: PROGRAMME }] }
+      : {};
+    return {
+      decision: { moduleDone: true, ...integration },
+      reason: { rule: "pipeline_complete" },
+    };
   }
   return {
     decision: {

@@ -99,6 +99,22 @@ describe("routing accepted work", () => {
     ).toEqual({ moduleDone: true });
   });
 
+  it("starts the integration pipeline when the module it completes was the last not done (decision 0017)", () => {
+    expect(
+      route({
+        fromRole: "security-and-quality",
+        module: "parser",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        lastModule: true,
+      }),
+    ).toEqual({
+      moduleDone: true,
+      tasks: [{ role: "integration-specification", module: "programme" }],
+    });
+  });
+
   it("completes the module when its Security & Quality check passes conditionally", () => {
     expect(
       route({

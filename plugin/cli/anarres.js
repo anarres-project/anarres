@@ -9031,8 +9031,11 @@ var WRITE_SCOPES = {
   reviewer: (module) => `modules/${module}/reviews/`,
   "security-and-quality": (module) => `modules/${module}/reviews/`,
   // Research's brief is for the module its task names (Bernard, 2026-10-29).
-  research: (module) => `research-briefs/${module}/`
+  research: (module) => `research-briefs/${module}/`,
+  // The programme's integration pipeline (decision 0017).
+  "integration-specification": () => `${INTEGRATION}specifications/`
 };
+var INTEGRATION = "integration/";
 function outsideScope(role, module, paths) {
   const signal = paths.find((path) => path.startsWith("feedback/"));
   const scope = writeScope(role, module);
@@ -9071,7 +9074,9 @@ var READ_SCOPES = {
     `modules/${module}/src/`
   ],
   // Research reads its module's briefs, not the module's work (Bernard, 2026-10-29).
-  research: (module) => [writeScope("research", module)]
+  research: (module) => [writeScope("research", module)],
+  // The whole programme's requirements and every contract between its modules (decision 0017).
+  "integration-specification": () => ["requirements/", CONTRACTS]
 };
 function readScope(role, module, task = {}) {
   return [
@@ -9103,7 +9108,8 @@ var ROLE_NAMES = {
   coding: "Coding",
   reviewer: "Reviewer",
   "security-and-quality": "Security & Quality",
-  research: "Research"
+  research: "Research",
+  "integration-specification": "Integration Specification"
 };
 var isRole = (value) => typeof value === "string" && Object.hasOwn(ROLE_NAMES, value);
 
@@ -9114,6 +9120,8 @@ var LEVEL_NEEDED = {
   test: "new",
   coding: "new",
   research: "new",
+  // As a module's Specification (decision 0017).
+  "integration-specification": "new",
   architecture: "established",
   reviewer: "established",
   "security-and-quality": "trusted",

@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { memberFor, type Role, type TrustLevel, trustAllows, trustLevelOf } from "../src/index.ts";
+import {
+  levelNeeded,
+  memberFor,
+  type Role,
+  type TrustLevel,
+  trustAllows,
+  trustLevelOf,
+} from "../src/index.ts";
 
 describe("what a member's trust level lets them take (concept §11, decision 0007)", () => {
   it("does not let a new member take a Reviewer task", () => {
@@ -19,10 +26,14 @@ describe("what a member's trust level lets them take (concept §11, decision 000
     ["reviewer", "established", "new"],
     ["security-and-quality", "trusted", "established"],
     ["programme-architect", "trusted", "established"],
+    // As a module's Specification (decision 0017).
+    ["integration-specification", "new", undefined],
   ])("lets %s be taken from %s up, not by %s", (role, lowest, below) => {
     expect(trustAllows(lowest, role)).toBe(true);
     expect(trustAllows("pdc-coordinator", role)).toBe(true);
     if (below !== undefined) expect(trustAllows(below, role)).toBe(false);
+    // Stated for every role: a role with none would let anyone take it.
+    expect(levelNeeded(role)).toBe(lowest);
   });
 });
 

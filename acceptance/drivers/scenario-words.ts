@@ -145,12 +145,16 @@ export function inScenarioWords(event: RoutingEvent): RoutingRecord {
       impediments: work.impediments.map((impediment) => words(impediment.type)),
       feedbackSignal: signalName(work.feedbackSignal),
     },
+    // A module done may start the programme's integration too (decision 0017).
     outcome:
-      "tasks" in decision
-        ? { tasksFor: decision.tasks.map((task) => roleName(task.role)) }
-        : "alert" in decision
-          ? { alert: true }
-          : { moduleDone: true },
+      "alert" in decision
+        ? { alert: true }
+        : {
+            ...("moduleDone" in decision ? { moduleDone: true as const } : {}),
+            ...(decision.tasks === undefined
+              ? {}
+              : { tasksFor: decision.tasks.map((task) => roleName(task.role)) }),
+          },
     reason:
       "impediment" in reason
         ? { ...reason, impediment: words(reason.impediment) }

@@ -18,7 +18,12 @@ const WRITE_SCOPES: Record<Role, (module: string) => string> = {
   "security-and-quality": (module) => `modules/${module}/reviews/`,
   // Research's brief is for the module its task names (Bernard, 2026-10-29).
   research: (module) => `research-briefs/${module}/`,
+  // The programme's integration pipeline (decision 0017).
+  "integration-specification": () => `${INTEGRATION}specifications/`,
 };
+
+/** Where the programme's integration pipeline keeps its work (decision 0017). */
+const INTEGRATION = "integration/";
 
 /**
  * The paths among those a piece of work changes that its role may not write (concept §6). Every
@@ -82,6 +87,8 @@ const READ_SCOPES: Record<Role, (module: string, contracts: readonly string[]) =
   ],
   // Research reads its module's briefs, not the module's work (Bernard, 2026-10-29).
   research: (module) => [writeScope("research", module)],
+  // The whole programme's requirements and every contract between its modules (decision 0017).
+  "integration-specification": () => ["requirements/", CONTRACTS],
 };
 
 /** The places a role's work may read, for the module named in its task, a continuation or not. */

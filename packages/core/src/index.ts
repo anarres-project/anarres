@@ -59,6 +59,7 @@ export {
 } from "./test-report.ts";
 export { readToolchain, type Toolchain } from "./toolchain.ts";
 export {
+  levelNeeded,
   memberFor,
   TRUST_LEVELS,
   type TrustLevel,
