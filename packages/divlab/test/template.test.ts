@@ -115,10 +115,11 @@ describe("the project template's checks workflow (decision 0010)", () => {
     expect(Object.keys(workflow.on)).toEqual(["pull_request"]);
   });
 
-  it("runs only on pull requests changing a module's code or tests, where only Coding and Test write", () => {
+  it("runs only on pull requests changing a module's code or tests, or the integration tests, where only Coding, Test and Integration Test write", () => {
     expect(workflow.on.pull_request.paths).toEqual([
       `${writeScope("coding", "*")}**`,
       `${writeScope("test", "*")}**`,
+      `${writeScope("integration-test", "programme")}**`,
     ]);
   });
   it("gives the workflow's own token nothing but reading the project's code", () => {

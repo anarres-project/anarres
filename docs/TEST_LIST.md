@@ -258,15 +258,19 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         integration tests; writes `integration/reviews/`);
   - [x] Integration Specification passing → Integration Test → Integration Review; Integration
         Review passing → the programme is done, marked done as a module is (in-process);
-  - [ ] Integration Test passing needs its check green, as Coding's does;
-  - [ ] who may take them: Specification's and Test's levels, and trusted for Integration Review;
-        nobody reviews integration work they wrote;
+  - [x] Integration Test passing needs its check green, as Coding's does, and work changing no
+        integration test is refused, saying so (unit);
+  - [ ] an acceptance scenario: Integration Test work whose tests fail is not merged;
+  - [x] who may take them: Specification's and Test's levels, and trusted for Integration Review;
+        nobody reviews integration work they wrote: the programme counts as one module, so a
+        member takes one role among the Programme Architect and the three integration roles
+        (decision 0007's rule as it stands; regression tests); module work bars none of them;
   - [ ] a failing integration test naming a module sends that module back to Specification,
         carrying the integration signal; an `interface_impediment` goes to the Programme
         Architect;
   - [ ] a module reopened after integration began: nothing more in integration is posted until
         every module is done again, then a new Integration Test task;
-  - [ ] the template's checks run on Integration Test work;
+  - [x] the template's checks run on Integration Test work (`integration/tests/`);
   - [ ] preparing an integration task fetches only its role's inputs, and the hook judges them;
   - [ ] the sandbox shows them.
 - [x] Escalation: the same role is re-run more than three times → a PDC coordinator is alerted and

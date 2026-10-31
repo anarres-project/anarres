@@ -962,6 +962,61 @@ describe("acting on a pull request", () => {
     ]);
   });
 
+  it("does not merge Integration Test work the project's tests failed on (0017)", async () => {
+    const [merged, refusals]: string[][] = [[], []];
+    const integrationTest = {
+      path: "feedback/FB-7.md",
+      text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: integration-test\n  module: programme\n  verdict: pass\n---\n',
+    };
+    const failing: PullRequests = {
+      ...submitting(
+        merged,
+        [integrationTest, { path: "integration/tests/checkout.test.ts", text: "export {};\n" }],
+        refusals,
+      ),
+      check: async () => ({
+        state: "failed",
+        url: "https://github.com/commons/ledger/actions/runs/42",
+      }),
+    };
+    const held: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "integration-test", module: "programme", claimedBy: "alice" }),
+      close: async () => {},
+      post: async () => {},
+    };
+    await onPullRequest("ledger", "7", failing, held, log, clock);
+    expect([merged, refusals]).toEqual([
+      [],
+      [
+        "7: The project's tests failed on this work, so it is not merged: https://github.com/commons/ledger/actions/runs/42",
+      ],
+    ]);
+  });
+
+  it("refuses Integration Test work that says it passed but changes no integration test (0017)", async () => {
+    const refusals: string[] = [];
+    const integrationTest = {
+      path: "feedback/FB-7.md",
+      text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: integration-test\n  module: programme\n  verdict: pass\n---\n',
+    };
+    const held: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "integration-test", module: "programme", claimedBy: "alice" }),
+    };
+    await onPullRequest(
+      "ledger",
+      "7",
+      submitting([], [integrationTest], refusals),
+      held,
+      log,
+      clock,
+    );
+    expect(refusals).toEqual([
+      "7: Integration Test work that says it passed changes the integration tests, in integration/tests/, and this changes none: the project's tests run only on code and tests",
+    ]);
+  });
+
   it("does not merge Coding work the project's tests failed on, and tells the member where", async () => {
     const [merged, refusals]: string[][] = [[], []];
     const coding = {

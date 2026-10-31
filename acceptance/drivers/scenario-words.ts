@@ -36,6 +36,13 @@ export function feedbackSignalFile(work: AcceptedWork, task?: string) {
   return { path: `feedback/${name}.md`, text: `${header.join("\n")}\n` };
 }
 
+/** Where in `integration/` each integration role writes, by its name in the scenarios. */
+const INTEGRATION_PLACES: Record<string, string | undefined> = {
+  "Integration Specification": "specifications",
+  "Integration Test": "tests",
+  "Integration Review": "reviews",
+};
+
 /** Every file a member's work changes: its feedback signal, and any others the scenario says. */
 export function workFiles(work: AcceptedWork, task?: string) {
   return [feedbackSignalFile(work, task), ...otherFiles(work)];
@@ -75,6 +82,16 @@ export function otherFiles(work: AcceptedWork) {
     ...(work.role === "Research"
       ? [{ path: `research-briefs/${work.module}/${work.feedbackSignal}.md`, text: "# Brief\n" }]
       : []),
+    // The integration roles write the programme's integration specifications, tests and reviews
+    // (decision 0017).
+    ...(INTEGRATION_PLACES[work.role] === undefined
+      ? []
+      : [
+          {
+            path: `integration/${INTEGRATION_PLACES[work.role]}/${work.feedbackSignal}.md`,
+            text: `# ${work.role}\n`,
+          },
+        ]),
     // Architecture and Specification work write the module's architecture and specification.
     ...(work.role === "Architecture" || work.role === "Specification"
       ? [

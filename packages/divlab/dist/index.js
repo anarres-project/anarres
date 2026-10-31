@@ -10047,13 +10047,13 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     return;
   }
   let tests;
-  if (role === "coding" && !failed(signal) && !signal.partial) {
-    const code = writeScope("coding", signal.module);
+  if ((role === "coding" || role === "integration-test") && !failed(signal) && !signal.partial) {
+    const code = writeScope(role, signal.module);
     if (!files.some((file2) => file2.path.startsWith(code))) {
       await pullRequests.refuse(
         project2,
         pullRequest,
-        `Coding work that says it passed changes the module's code, in ${code}, and this changes none: the project's tests run only on code`
+        role === "coding" ? `Coding work that says it passed changes the module's code, in ${code}, and this changes none: the project's tests run only on code` : `Integration Test work that says it passed changes the integration tests, in ${code}, and this changes none: the project's tests run only on code and tests`
       );
       return;
     }

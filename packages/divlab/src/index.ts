@@ -894,15 +894,17 @@ export async function onPullRequest(
   let tests: TestCounts | undefined;
   // Coding work saying it passed is merged only once the project's own tests pass on it; work
   // reporting a failure, or handed over partial, advances nothing, and its tests may well fail
-  // (decision 0010).
-  if (role === "coding" && !failed(signal) && !signal.partial) {
+  // (decision 0010). So is Integration Test's, whose tests run against the finished code (0017).
+  if ((role === "coding" || role === "integration-test") && !failed(signal) && !signal.partial) {
     // The project's checks run only on code, so work changing none would wait for ever.
-    const code = writeScope("coding", signal.module);
+    const code = writeScope(role, signal.module);
     if (!files.some((file) => file.path.startsWith(code))) {
       await pullRequests.refuse(
         project,
         pullRequest,
-        `Coding work that says it passed changes the module's code, in ${code}, and this changes none: the project's tests run only on code`,
+        role === "coding"
+          ? `Coding work that says it passed changes the module's code, in ${code}, and this changes none: the project's tests run only on code`
+          : `Integration Test work that says it passed changes the integration tests, in ${code}, and this changes none: the project's tests run only on code and tests`,
       );
       return;
     }

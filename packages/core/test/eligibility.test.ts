@@ -58,4 +58,21 @@ describe("whether a member may take a task (decision 0007)", () => {
       refused: "a Security & Quality task needs a trusted member, and you are established",
     });
   });
+
+  it("does not let the member who wrote the programme's integration specification review it (0017)", () => {
+    const task = { member: "carol", role: "integration-review" as const, module: "programme" };
+    const history = [
+      { member: "carol", role: "integration-specification" as const, module: "programme" },
+    ];
+    expect(mayTake(task, history, "trusted")).toEqual({
+      refused:
+        "a member takes only one role in a module, and you have worked on it as Integration Specification",
+    });
+  });
+
+  it("lets a member who worked on a module take a role in the programme's integration (0017)", () => {
+    const task = { member: "carol", role: "integration-test" as const, module: "programme" };
+    const history = [{ member: "carol", role: "coding" as const, module: "parser" }];
+    expect(mayTake(task, history, "new")).toBe("allowed");
+  });
 });

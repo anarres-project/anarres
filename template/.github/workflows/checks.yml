@@ -6,7 +6,7 @@ name: Project checks
 # result.
 on:
   pull_request:
-    paths: ["modules/*/src/**", "modules/*/tests/**"]
+    paths: ["modules/*/src/**", "modules/*/tests/**", "integration/tests/**"]
 
 # The workflow's own token may read the project's code, and nothing more.
 permissions:

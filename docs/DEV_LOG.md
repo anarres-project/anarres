@@ -1087,6 +1087,22 @@ governance scenarios run alone.
   with Integration Review taken out of the order both failed in their Then, so they depend on
   it. All `@sandbox-wip`, as the first. Protocol slip: one step held the trust level's GREEN
   and the write scope's test. Gate 891 and 153.
+- Who may take the integration roles, and Integration Test's check.
+  RED:      (none) the member who wrote the integration specification may not review it, and
+            module work bars no integration role -> both passed first run: the programme counts
+            as one module under decision 0007's rule, so a member takes one role among the
+            Programme Architect and the three integration roles. Kept as regression tests. That
+            is stricter than "nobody reviews integration work they wrote": raised with Bernard.
+  RED:      does not merge Integration Test work the project's tests failed on -> expected
+            [ [ '7' ], [] ]: it was merged
+  GREEN:    the same (244 passed): Integration Test waits on the check as Coding does.
+  RED:      refuses Integration Test work that changes no integration test -> the Coding wording
+  GREEN:    the same (245 passed).
+  RED:      the template's checks run on the integration tests -> expected [ …(1) ] to deeply
+            equal [ …(2) ]
+  GREEN:    `integration/tests/**` joins the paths.
+  Two integration scenarios then failed: the harness's integration work changed no file, so
+  Integration Test was refused; it writes each integration role's artefact now. Gate 895 and 153.
 
 ---
 
