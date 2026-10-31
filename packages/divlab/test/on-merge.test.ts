@@ -1025,6 +1025,51 @@ describe("acting on a pull request", () => {
     expect(posted).toEqual([]);
   });
 
+  describe("integration work passing while main's modules.yaml cannot be read (0017)", () => {
+    const specificationPasses = {
+      path: "feedback/FB-6.md",
+      text: '---\nfeedback_signal:\n  task_id: "6"\n  from_role: integration-specification\n  module: programme\n  verdict: pass\n---\n',
+    };
+    const spoiled: PullRequests = {
+      ...submitting(
+        [],
+        [
+          specificationPasses,
+          { path: "integration/specifications/checkout.feature", text: "Feature: Checkout\n" },
+        ],
+      ),
+      modulesOnMain: async () => "modules: [unclosed",
+    };
+    const integrating = (seen: { posted: PostedTask[]; alerted: string[] }): TaskBoard => ({
+      ...board,
+      task: async () => ({
+        role: "integration-specification",
+        module: "programme",
+        claimedBy: "alice",
+      }),
+      close: async () => {},
+      post: async (task) => {
+        seen.posted.push(task);
+      },
+      alertUnreadableModules: async (project) => {
+        seen.alerted.push(project);
+      },
+      unreadableModulesAlertOpen: async () => false,
+    });
+
+    it("posts nothing further in integration", async () => {
+      const seen = { posted: [] as PostedTask[], alerted: [] as string[] };
+      await onPullRequest("ledger", "7", spoiled, integrating(seen), log, clock);
+      expect(seen.posted).toEqual([]);
+    });
+
+    it("tells PDC coordinators it cannot read modules.yaml", async () => {
+      const seen = { posted: [] as PostedTask[], alerted: [] as string[] };
+      await onPullRequest("ledger", "7", spoiled, integrating(seen), log, clock);
+      expect(seen.alerted).toEqual(["ledger"]);
+    });
+  });
+
   it("starts no integration while another module is not done", async () => {
     const posted: PostedTask[] = [];
     const securityPasses = {
@@ -1111,6 +1156,9 @@ describe("acting on a pull request", () => {
       task: async () => ({ role: "integration-test", module: "programme", claimedBy: "alice" }),
       close: async () => {},
       post: async () => {},
+      // It tells coordinators too that modules.yaml cannot be read, as any integration work does.
+      alertUnreadableModules: async () => {},
+      unreadableModulesAlertOpen: async () => false,
       alertCoordinators: async (alert) => {
         alerts.push(alert);
       },

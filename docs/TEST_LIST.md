@@ -295,7 +295,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
     - [x] integration work finishing while a module is reopened posts nothing further
           (`integration_held`, naming the modules), and is never revised as stale: 0017's hold
           wins over 0015's stale mark, its inputs changed or unchecked (in-process);
-    - [ ] main's modules.yaml unreadable while integration work passes: held, and PDC
+    - [x] main's modules.yaml unreadable while integration work passes: held, and PDC
           coordinators alerted once, by the Security & Quality case's alert (Bernard,
           2026-10-31: hold and alert);
     - [x] an integration task posted but unclaimed when a module reopens is withdrawn

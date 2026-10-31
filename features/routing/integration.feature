@@ -126,3 +126,14 @@ Feature: The integration pipeline
     And the Programme Architect's work was revised since, changing the contract "tokens"
     When Alice submits Integration Specification work for the programme with a pass verdict
     Then no task is ready for the programme
+
+  # Not in the sandbox: it runs integration in one journey of its own (decision 0017).
+  @sandbox-wip
+  Scenario: Integration waits, and Divlab tells PDC coordinators, when it cannot read the project's modules
+    Given a project with modules "parser" and "lexer"
+    And a member's Security & Quality work on "lexer" was accepted with a pass verdict
+    And a member's Security & Quality work on "parser" was accepted with a pass verdict
+    And the project's list of its modules cannot be read
+    When a member's Integration Specification work for the programme is accepted with a pass verdict
+    Then PDC coordinators have been alerted that the project's list of its modules cannot be read
+    And no task is ready for the programme

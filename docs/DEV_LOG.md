@@ -1325,6 +1325,23 @@ governance scenarios run alone.
   integration work passes holds integration and alerts once; the sandbox shows integration
   with one journey scenario in a project of its own; naming the module at fault goes into
   the plugin's role instructions when they are written. Test list updated.
+- Hold and alert. Acceptance: "Integration waits, and Divlab tells PDC coordinators, when it
+  cannot read the project's modules", `@wip @sandbox-wip`, red in its Then (no alert).
+  ```
+  RED:      posts nothing further in integration while the project's modules cannot be read
+            -> expected { …(2) } to deeply equal { decision: { tasks: [] }, …(1) }
+  GREEN:    (331 passed): `modules_unreadable`
+  RED:      integration work passing while main's modules.yaml cannot be read > posts nothing
+            further in integration -> "role": "integration-test" posted
+  GREEN:    (255 passed)
+  RED:      … > tells PDC coordinators it cannot read modules.yaml
+            -> expected [] to deeply equal [ 'ledger' ]
+  GREEN:    the Security & Quality case's alert drawn into one function both call; the test of
+            a failing integration test naming a module with modules.yaml unreadable now meets
+            the alert too, as any integration work does, and its board answers it
+  REFACTOR: none further
+  ```
+  The scenario passed and lost `@wip`. Gate 937 and 162.
 
 ---
 

@@ -9444,6 +9444,9 @@ function startModules(work, modules) {
 function advance(work) {
   const integrating = INTEGRATION_PIPELINE.indexOf(work.fromRole);
   if (integrating >= 0) {
+    if (work.modulesUnreadable) {
+      return { decision: { tasks: [] }, reason: { rule: "modules_unreadable" } };
+    }
     if (work.modulesReopened?.length) {
       return {
         decision: { tasks: [] },
@@ -10222,12 +10225,7 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     const onMain = await pullRequests.modulesOnMain(project2);
     const listed = readModules(onMain ?? "");
     const done = modulesDone(events);
-    if (onMain !== void 0 && "unreadable" in listed && !await board.unreadableModulesAlertOpen(project2)) {
-      await board.alertUnreadableModules(
-        project2,
-        `The project's modules.yaml on main cannot be read: ${listed.unreadable}`
-      );
-    }
+    await alertIfUnreadable(project2, onMain, listed, board);
     if (!("unreadable" in listed) && listed.modules.every((module) => module === signal.module || done.has(module))) {
       work = { ...work, lastModule: true };
       const integrating = INTEGRATION_PIPELINE;
@@ -10237,10 +10235,16 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     }
   }
   if (INTEGRATION_PIPELINE.includes(role)) {
-    const listed = readModules(await pullRequests.modulesOnMain(project2) ?? "");
+    const onMain = await pullRequests.modulesOnMain(project2);
+    const listed = readModules(onMain ?? "");
     const done = modulesDone(events);
-    const reopened = "unreadable" in listed ? [] : listed.modules.filter((m) => !done.has(m));
-    if (reopened.length > 0) work = { ...work, modulesReopened: reopened };
+    if ("unreadable" in listed) {
+      work = { ...work, modulesUnreadable: true };
+      await alertIfUnreadable(project2, onMain, listed, board);
+    } else {
+      const reopened = listed.modules.filter((m) => !done.has(m));
+      if (reopened.length > 0) work = { ...work, modulesReopened: reopened };
+    }
   }
   if (signal.moduleAtFault !== void 0) {
     const listed = readModules(await pullRequests.modulesOnMain(project2) ?? "");
@@ -10293,6 +10297,14 @@ function hasTaskOpen(events, module) {
   const postsFor = (event) => "tasks" in event.decision && event.decision.tasks.some((task) => task.module === module);
   const latest = routingDecisions(events).filter((event) => event.work.module === module || postsFor(event)).at(-1);
   return latest !== void 0 && postsFor(latest);
+}
+async function alertIfUnreadable(project2, onMain, listed, board) {
+  if (onMain !== void 0 && "unreadable" in listed && !await board.unreadableModulesAlertOpen(project2)) {
+    await board.alertUnreadableModules(
+      project2,
+      `The project's modules.yaml on main cannot be read: ${listed.unreadable}`
+    );
+  }
 }
 function modulesDone(events) {
   const done = /* @__PURE__ */ new Set();

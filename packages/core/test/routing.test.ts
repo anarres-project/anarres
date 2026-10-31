@@ -174,6 +174,19 @@ describe("routing accepted work", () => {
     });
   });
 
+  it("posts nothing further in integration while the project's modules cannot be read (0017)", () => {
+    expect(
+      rule({
+        fromRole: "integration-specification",
+        module: "programme",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        modulesUnreadable: true,
+      }),
+    ).toEqual({ decision: { tasks: [] }, reason: { rule: "modules_unreadable" } });
+  });
+
   it("makes an Integration Test task ready when Integration Specification passes (decision 0017)", () => {
     expect(
       route({

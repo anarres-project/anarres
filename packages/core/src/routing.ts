@@ -26,6 +26,8 @@ export type AcceptedWork = {
   lastModule?: true;
   /** For integration work: the modules not done again since they were reopened (decision 0017). */
   modulesReopened?: string[];
+  /** For integration work: main's modules.yaml could not be read, so who is done is unknown. */
+  modulesUnreadable?: true;
   /** The programme's integration had begun before a module was reopened (decision 0017). */
   integrationBegun?: true;
   /** The contracts the module provides or uses revised after the task was posted (0015). */
@@ -94,6 +96,7 @@ export type Reason =
   | { rule: "no_matching_rule" }
   | { rule: "no_module_at_fault" }
   | { rule: "integration_held"; modules: string[] }
+  | { rule: "modules_unreadable" }
   | { rule: "unlisted_module_at_fault"; module: string }
   | { rule: "re_run_limit"; role: Role }
   | { rule: "inputs_changed"; inputs: string[] }
@@ -259,7 +262,11 @@ function startModules(work: AcceptedWork, modules: string[]): Ruling {
 function advance(work: AcceptedWork): Ruling {
   const integrating = (INTEGRATION_PIPELINE as readonly string[]).indexOf(work.fromRole);
   if (integrating >= 0) {
-    // Nothing further in integration until every module is done again (decision 0017).
+    // Nothing further in integration until every module is done again (decision 0017), nor
+    // while Divlab cannot tell whether they are.
+    if (work.modulesUnreadable) {
+      return { decision: { tasks: [] }, reason: { rule: "modules_unreadable" } };
+    }
     if (work.modulesReopened?.length) {
       return {
         decision: { tasks: [] },

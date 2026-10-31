@@ -1068,17 +1068,7 @@ export async function onPullRequest(
     const onMain = await pullRequests.modulesOnMain(project);
     const listed = readModules(onMain ?? "");
     const done = modulesDone(events);
-    // A project with no modules.yaml has nothing to read; one it cannot read is never passed over.
-    if (
-      onMain !== undefined &&
-      "unreadable" in listed &&
-      !(await board.unreadableModulesAlertOpen(project))
-    ) {
-      await board.alertUnreadableModules(
-        project,
-        `The project's modules.yaml on main cannot be read: ${listed.unreadable}`,
-      );
-    }
+    await alertIfUnreadable(project, onMain, listed, board);
     if (
       !("unreadable" in listed) &&
       listed.modules.every((module) => module === signal.module || done.has(module))
@@ -1093,10 +1083,16 @@ export async function onPullRequest(
   }
   // Integration waits while a module is reopened, until every module is done again (0017).
   if ((INTEGRATION_PIPELINE as readonly string[]).includes(role)) {
-    const listed = readModules((await pullRequests.modulesOnMain(project)) ?? "");
+    const onMain = await pullRequests.modulesOnMain(project);
+    const listed = readModules(onMain ?? "");
     const done = modulesDone(events);
-    const reopened = "unreadable" in listed ? [] : listed.modules.filter((m) => !done.has(m));
-    if (reopened.length > 0) work = { ...work, modulesReopened: reopened };
+    if ("unreadable" in listed) {
+      work = { ...work, modulesUnreadable: true };
+      await alertIfUnreadable(project, onMain, listed, board);
+    } else {
+      const reopened = listed.modules.filter((m) => !done.has(m));
+      if (reopened.length > 0) work = { ...work, modulesReopened: reopened };
+    }
   }
   // A defect an integration test finds goes back to the module at fault, if the project has it.
   if (signal.moduleAtFault !== undefined) {
@@ -1190,6 +1186,7 @@ type RoutedWork = FeedbackSignal & {
   integrationBegun?: true;
   moduleAtFaultUnlisted?: true;
   modulesReopened?: string[];
+  modulesUnreadable?: true;
   inputsChanged?: string[];
   inputsUnchecked?: true;
   contractsRevised?: string[];
@@ -1197,6 +1194,29 @@ type RoutedWork = FeedbackSignal & {
 };
 
 /** The modules Divlab has recorded done. */
+/**
+ * PDC coordinators are told, once while the alert is open, that main's modules.yaml cannot be
+ * read. A project with no modules.yaml has nothing to read; one it cannot read is never passed
+ * over.
+ */
+async function alertIfUnreadable(
+  project: string,
+  onMain: string | undefined,
+  listed: ReturnType<typeof readModules>,
+  board: TaskBoard,
+): Promise<void> {
+  if (
+    onMain !== undefined &&
+    "unreadable" in listed &&
+    !(await board.unreadableModulesAlertOpen(project))
+  ) {
+    await board.alertUnreadableModules(
+      project,
+      `The project's modules.yaml on main cannot be read: ${listed.unreadable}`,
+    );
+  }
+}
+
 /** The modules done, as Divlab's decisions say, until a later one sent them work (0017). */
 function modulesDone(events: LogEvent[]): Set<string> {
   const done = new Set<string>();
