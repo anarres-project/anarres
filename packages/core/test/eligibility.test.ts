@@ -2,6 +2,22 @@ import { describe, expect, it } from "vitest";
 import { mayTake } from "../src/index.ts";
 
 describe("whether a member may take a task (decision 0007)", () => {
+  it("is refused to a new member for Coding on a high-risk module (decision 0019)", () => {
+    expect(
+      mayTake({ member: "alice", role: "coding", module: "parser" }, [], "new", { highRisk: true }),
+    ).toEqual({
+      refused: "a Coding task on a high-risk module needs an established member, and you are new",
+    });
+  });
+
+  it("is allowed to an established member for Coding on a high-risk module (decision 0019)", () => {
+    expect(
+      mayTake({ member: "alice", role: "coding", module: "parser" }, [], "established", {
+        highRisk: true,
+      }),
+    ).toBe("allowed");
+  });
+
   it("is refused to a member who has done other work in the module: one role per module", () => {
     const history = [{ member: "alice", role: "coding" as const, module: "parser" }];
     expect(

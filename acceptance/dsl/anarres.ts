@@ -714,6 +714,10 @@ export class Anarres {
     await this.driver.requireReview(this.project, this.aliases.of(module));
   }
 
+  async coordinatorsMarkHighRisk(module: string) {
+    await this.driver.markHighRisk(this.project, this.aliases.of(module));
+  }
+
   async reviewListCannotBeRead() {
     await this.driver.spoilReviewList(this.project);
   }
@@ -765,6 +769,16 @@ export class Anarres {
   /** PDC coordinators record that the member's second account is theirs: one member, not two. */
   async secondAccountIsLinked(member: string) {
     await this.driver.linkAccount(this.member(member), this.member(`${member}-second-account`));
+  }
+
+  async memberIsToldWhyRefused(member: string, why: string) {
+    const told = await this.driver.claimRefusals(this.project);
+    assert.ok(
+      told.some(
+        (refusal) => refusal.member === this.member(member) && refusal.reason.includes(why),
+      ),
+      `expected ${member} to be told ${why}; Divlab said: ${JSON.stringify(told)}`,
+    );
   }
 
   async memberIsToldTaskNeedsMoreTrust(member: string, role: string, level: string) {

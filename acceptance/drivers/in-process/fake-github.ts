@@ -623,6 +623,13 @@ export class FakeGitHub
     this.review[project] = [...(this.review[project] ?? []), module];
   }
 
+  /** The modules of each project PDC coordinators name as high-risk (decision 0019). */
+  private readonly highRisk: Record<string, string[]> = {};
+
+  markHighRisk(project: string, module: string): void {
+    this.highRisk[project] = [...(this.highRisk[project] ?? []), module];
+  }
+
   /** The project's entry names a module not plainly: the list cannot be read. */
   spoilReviewList(project: string): void {
     this.review[project] = ["not/plainly"];
@@ -630,9 +637,11 @@ export class FakeGitHub
 
   async governanceFile(): Promise<unknown> {
     // Until PDC coordinators name a module for review, the file has no list, as Anarres's has not.
-    return Object.keys(this.review).length === 0
-      ? { members: this.trustLevels }
-      : { members: this.trustLevels, review: this.review };
+    return {
+      members: this.trustLevels,
+      ...(Object.keys(this.review).length === 0 ? {} : { review: this.review }),
+      ...(Object.keys(this.highRisk).length === 0 ? {} : { highRisk: this.highRisk }),
+    };
   }
 
   /** GitHub's reviews, by pull request: each of the commit it was at when reviewed. */

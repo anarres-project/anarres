@@ -1411,6 +1411,28 @@ governance scenarios run alone.
   ```
   Divlab carries the signal's fields into the work it records, so the scenario then passed and
   lost `@wip`.
+- Bernard, 2026-10-31: decision 0019, high-risk modules (each recommendation): coordinators
+  name them per project in the governance file; Coding on one needs an established member; two
+  independent reviewers, now; an unreadable list makes every module high-risk and alerts once.
+- A new member coding a high-risk module. Acceptance: "A new member cannot take a Coding task on
+  a module PDC coordinators mark high-risk", `@wip @governance`, red in its Then (Alice got it).
+  ```
+  RED:      whether a module is high-risk > is when PDC coordinators name it
+            -> TypeError: isHighRisk is not a function; stubbed, -> expected false to be true
+  GREEN:    (338 passed): the review list's reader now reads any per-project list
+  RED:      is, for every module, while the list cannot be read (two rows) -> expected false to be true
+  GREEN:    (340 passed)
+  RED:      whether a member may take a task > is refused to a new member for Coding on a
+            high-risk module -> expected 'allowed' to deeply equal { Object (refused) }
+  GREEN:    (341 passed)
+  RED:      onClaim > refuses a new member Coding on a module PDC coordinators mark high-risk
+            -> Error: Divlab should not have acted (it granted the claim)
+  GREEN:    `eligibility` takes the project, and asks core whether the module is high-risk;
+            the CLI's offers share it
+  REFACTOR: none
+  ```
+  "is allowed to an established member for Coding on a high-risk module" passed first run, a
+  regression test. The scenario passed and lost `@wip`.
 
 ---
 

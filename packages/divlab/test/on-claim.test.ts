@@ -354,6 +354,33 @@ describe("who may claim a task (decision 0007)", () => {
     expect(claimed.map((claim) => claim.member)).toEqual(["bob"]);
   });
 
+  it("refuses a new member Coding on a module PDC coordinators mark high-risk (0019)", async () => {
+    const refused: Refused[] = [];
+    const codingTask: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "coding", module: "parser" }),
+      refuseMember: async (refusal) => {
+        refused.push(refusal);
+      },
+    };
+    const parserHighRisk: Members = {
+      governanceFile: async () => ({ members: {}, highRisk: { ledger: ["parser"] } }),
+    };
+    const log: EventLog = { read: async () => [], append: async () => {} };
+    const clock = () => new Date("2026-10-23T09:00:00Z");
+    await onClaim(
+      "ledger",
+      { task: "12", member: "alice" },
+      codingTask,
+      log,
+      clock,
+      parserHighRisk,
+    );
+    expect(refused.map((refusal) => refusal.reason)).toEqual([
+      "Divlab did not give you this task: a Coding task on a high-risk module needs an established member, and you are new",
+    ]);
+  });
+
   it("refuses a member whose trust level is too low for the task, saying why", async () => {
     const refused: Refused[] = [];
     const reviewTask: TaskBoard = {

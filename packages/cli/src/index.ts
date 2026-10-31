@@ -34,7 +34,7 @@ export async function askForWork(member: string, projects: Projects): Promise<Of
   const governance = await projects.governanceFile();
   const offers: (Offer & Rankable)[] = [];
   for (const project of await projects.names()) {
-    const mayTake = eligibility(governance, await projects.log(project));
+    const mayTake = eligibility(governance, project, await projects.log(project));
     for (const task of await projects.readyTasks(project)) {
       // What is offered is shown in the member's session: only plain names, as Divlab writes them.
       if (

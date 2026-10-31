@@ -33,6 +33,15 @@ Feature: Who may take a task
     And a Reviewer task for "parser" is ready to claim
 
   @governance
+  Scenario: A new member cannot take a Coding task on a module PDC coordinators mark high-risk
+    Given a project with a module "parser"
+    And PDC coordinators mark "parser" as high-risk
+    And a member's Test work on "parser" was accepted with a pass verdict
+    When Alice claims the Coding task for "parser"
+    Then Alice is told a Coding task on a high-risk module needs an established member
+    And a Coding task for "parser" is ready to claim
+
+  @governance
   Scenario: An established member can take a Reviewer task
     Given a project with a module "parser"
     And Alice is an established member

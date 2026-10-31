@@ -15,7 +15,14 @@ export function mayTake(
   task: Part,
   history: readonly Part[],
   level: TrustLevel,
+  module: { highRisk?: boolean } = {},
 ): { refused: string } | "allowed" {
+  // New members code only low-risk modules (concept §11, decision 0019).
+  if (module.highRisk && task.role === "coding" && level === "new") {
+    return {
+      refused: `a ${ROLE_NAMES.coding} task on a high-risk module needs an established member, and you are ${level}`,
+    };
+  }
   if (!trustAllows(level, task.role)) {
     const needed = levelNeeded(task.role);
     return {

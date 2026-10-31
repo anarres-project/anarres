@@ -1077,6 +1077,16 @@ export class SandboxDriver implements Driver {
     });
   }
 
+  /** Names the module as high-risk in the sandbox's governance file, as PDC coordinators would. */
+  async markHighRisk(project: string, module: string): Promise<void> {
+    this.reviewNamed.add(project);
+    await this.changeGovernanceFile((file) => {
+      const highRisk = file.highRisk ?? {};
+      highRisk[project] = [...(highRisk[project] ?? []), module];
+      file.highRisk = highRisk;
+    });
+  }
+
   /** The project's entry in the list names a module not plainly, so the list cannot be read. */
   async spoilReviewList(project: string): Promise<void> {
     this.reviewNamed.add(project);
@@ -1184,6 +1194,8 @@ export class SandboxDriver implements Driver {
       // The projects are the scenario's own: none but it named them for review.
       for (const project of this.reviewNamed) delete file.review?.[project];
       if (file.review && Object.keys(file.review).length === 0) delete file.review;
+      for (const project of this.reviewNamed) delete file.highRisk?.[project];
+      if (file.highRisk && Object.keys(file.highRisk).length === 0) delete file.highRisk;
     });
     this.governanceFound.clear();
     this.reviewNamed.clear();
@@ -1930,6 +1942,7 @@ const REVIEWS_WORKFLOW = "reviews.yml";
 type GovernanceFile = {
   members: Record<string, { level?: string; linked?: string[] }>;
   review?: Record<string, string[]>;
+  highRisk?: Record<string, string[]>;
 };
 
 /** The sandbox project's tests, a script at its root, which no member's work may change. */

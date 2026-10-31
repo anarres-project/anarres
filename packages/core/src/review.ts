@@ -57,13 +57,16 @@ export function approvalCounts(
 const REVIEWER_LEVEL: TrustLevel = "trusted";
 
 /** The modules of each project the governance file names for review, read as data. */
-function modulesNeedingReview(file: unknown): Map<string, string[]> | "unreadable" {
+const modulesNeedingReview = (file: unknown) => modulesNamed(file, "review");
+
+/** The modules of each project a list in the governance file names, read as data. */
+function modulesNamed(file: unknown, list: string): Map<string, string[]> | "unreadable" {
   if (!isRecord(file)) return "unreadable";
-  if (!Object.hasOwn(file, "review")) return new Map();
-  const review = file.review;
-  if (!isRecord(review)) return "unreadable";
+  if (!Object.hasOwn(file, list)) return new Map();
+  const listed = file[list];
+  if (!isRecord(listed)) return "unreadable";
   const named = new Map<string, string[]>();
-  for (const [project, modules] of Object.entries(review)) {
+  for (const [project, modules] of Object.entries(listed)) {
     if (!Array.isArray(modules)) return "unreadable";
     if (!modules.every((one) => typeof one === "string" && isPlainName(one))) return "unreadable";
     named.set(project, modules);
@@ -73,3 +76,12 @@ function modulesNeedingReview(file: unknown): Map<string, string[]> | "unreadabl
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
+
+/**
+ * Whether PDC coordinators name a project's module as high-risk (decision 0019). A list that
+ * cannot be read makes every module high-risk, until a coordinator fixes it.
+ */
+export function isHighRisk(file: unknown, project: string, module: string): boolean {
+  const named = modulesNamed(file, "highRisk");
+  return named === "unreadable" || (named.get(project) ?? []).includes(module);
+}

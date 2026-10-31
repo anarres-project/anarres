@@ -518,9 +518,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         the first time it ran, kept as a regression test);
   - [ ] risk marking: a PDC coordinator marks a module high-risk, and new members may not code
         it (decision 0019, Bernard, 2026-10-31):
-    - [ ] the governance file names each project's high-risk modules; a new member's claim of
-          a Coding task on one is refused, saying why; an established member's is granted;
-    - [ ] the CLI does not offer a new member Coding on a high-risk module;
+    - [x] the governance file names each project's high-risk modules; a new member's claim of
+          a Coding task on one is refused, saying why; an established member's is granted
+          (in-process; the governance file is read as the sandbox already shows);
+    - [x] the CLI does not offer a new member Coding on a high-risk module (the same
+          `eligibility`, which Divlab and the CLI share);
     - [ ] an unreadable marking makes every module high-risk, and PDC coordinators are alerted
           once;
     - [ ] a high-risk module's Reviewer pass makes a second Reviewer task ready, unless two

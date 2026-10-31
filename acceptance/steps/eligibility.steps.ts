@@ -36,6 +36,20 @@ Given("{word} is an established member", function (this: AnarresWorld, member: s
   return this.anarres.memberIsTrusted(member, "established");
 });
 
+Given("PDC coordinators mark {string} as high-risk", function (this: AnarresWorld, module: string) {
+  return this.anarres.coordinatorsMarkHighRisk(module);
+});
+
+Then(
+  "{word} is told a {role} task on a high-risk module needs an established member",
+  function (this: AnarresWorld, member: string, role: string) {
+    return this.anarres.memberIsToldWhyRefused(
+      member,
+      `a ${role} task on a high-risk module needs an established member`,
+    );
+  },
+);
+
 Then(
   "{word} is told a {role} task needs an established member",
   function (this: AnarresWorld, member: string, role: string) {

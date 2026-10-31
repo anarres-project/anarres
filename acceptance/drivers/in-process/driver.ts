@@ -424,6 +424,10 @@ export class InProcessDriver implements Driver {
     this.github.requireReview(project, module);
   }
 
+  async markHighRisk(project: string, module: string): Promise<void> {
+    this.github.markHighRisk(project, module);
+  }
+
   async spoilReviewList(project: string): Promise<void> {
     this.github.spoilReviewList(project);
   }

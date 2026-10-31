@@ -9184,7 +9184,12 @@ function memberFor(file, account) {
 
 // ../core/src/eligibility.ts
 var isRoleInModule = (role) => role !== "research";
-function mayTake(task, history, level) {
+function mayTake(task, history, level, module = {}) {
+  if (module.highRisk && task.role === "coding" && level === "new") {
+    return {
+      refused: `a ${ROLE_NAMES.coding} task on a high-risk module needs an established member, and you are ${level}`
+    };
+  }
   if (!trustAllows(level, task.role)) {
     const needed = levelNeeded(task.role);
     return {
@@ -9312,13 +9317,14 @@ function approvalCounts(file, reviewer, work, history) {
   return TRUST_LEVELS.indexOf(trustLevelOf(file, member)) >= TRUST_LEVELS.indexOf(REVIEWER_LEVEL);
 }
 var REVIEWER_LEVEL = "trusted";
-function modulesNeedingReview(file) {
+var modulesNeedingReview = (file) => modulesNamed(file, "review");
+function modulesNamed(file, list) {
   if (!isRecord(file)) return "unreadable";
-  if (!Object.hasOwn(file, "review")) return /* @__PURE__ */ new Map();
-  const review = file.review;
-  if (!isRecord(review)) return "unreadable";
+  if (!Object.hasOwn(file, list)) return /* @__PURE__ */ new Map();
+  const listed = file[list];
+  if (!isRecord(listed)) return "unreadable";
   const named = /* @__PURE__ */ new Map();
-  for (const [project2, modules] of Object.entries(review)) {
+  for (const [project2, modules] of Object.entries(listed)) {
     if (!Array.isArray(modules)) return "unreadable";
     if (!modules.every((one) => typeof one === "string" && isPlainName(one))) return "unreadable";
     named.set(project2, modules);
@@ -9326,6 +9332,10 @@ function modulesNeedingReview(file) {
   return named;
 }
 var isRecord = (value) => typeof value === "object" && value !== null && !Array.isArray(value);
+function isHighRisk(file, project2, module) {
+  const named = modulesNamed(file, "highRisk");
+  return named === "unreadable" || (named.get(project2) ?? []).includes(module);
+}
 
 // ../core/src/routing.ts
 var MODULE_PIPELINE = [
@@ -9762,13 +9772,14 @@ var mergedParts = (events) => routingDecisions(events).flatMap(
     }
   ]
 );
-function eligibility(governance, events) {
+function eligibility(governance, project2, events) {
   const memberOf = (account) => memberFor(governance, account);
   const history = membersParts(governance, events);
   return (account, task) => mayTake(
     { member: memberOf(account), role: task.role, module: task.module },
     history,
-    trustLevelOf(governance, memberOf(account))
+    trustLevelOf(governance, memberOf(account)),
+    { highRisk: isHighRisk(governance, project2, task.module) }
   );
 }
 async function onClaim(project2, claim, board, log, clock, members) {
@@ -9782,7 +9793,7 @@ async function onClaim(project2, claim, board, log, clock, members) {
     return;
   }
   const events = await log.read(project2);
-  const mayClaim = eligibility(await members.governanceFile(), events);
+  const mayClaim = eligibility(await members.governanceFile(), project2, events);
   const allowed = (account) => mayClaim(account, task);
   const asker = allowed(claim.member);
   if (asker !== "allowed") {

@@ -9,6 +9,7 @@ import {
   FIRST_ROLE,
   failed,
   INTEGRATION_PIPELINE,
+  isHighRisk,
   isRole,
   leaseHasRunOut,
   MODULES_FILE,
@@ -267,7 +268,7 @@ export interface Members {
  * file, and each member's part in the project as its log shows (concept §6, decision 0007). The
  * one statement of it Divlab and the member's CLI both use.
  */
-export function eligibility(governance: unknown, events: readonly LogEvent[]) {
+export function eligibility(governance: unknown, project: string, events: readonly LogEvent[]) {
   const memberOf = (account: string) => memberFor(governance, account);
   const history = membersParts(governance, events);
   return (account: string, task: { role: Role; module: string }) =>
@@ -275,6 +276,7 @@ export function eligibility(governance: unknown, events: readonly LogEvent[]) {
       { member: memberOf(account), role: task.role, module: task.module },
       history,
       trustLevelOf(governance, memberOf(account)),
+      { highRisk: isHighRisk(governance, project, task.module) },
     );
 }
 
@@ -298,7 +300,7 @@ export async function onClaim(
   }
   // A member the conflict-of-interest rules bar from the task is told why (decision 0007).
   const events = await log.read(project);
-  const mayClaim = eligibility(await members.governanceFile(), events);
+  const mayClaim = eligibility(await members.governanceFile(), project, events);
   const allowed = (account: string) => mayClaim(account, task);
   const asker = allowed(claim.member);
   if (asker !== "allowed") {
