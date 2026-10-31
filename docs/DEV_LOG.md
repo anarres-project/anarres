@@ -1496,6 +1496,8 @@ governance scenarios run alone.
   ```
   The scenario passed and lost `@wip`. Decision 0007 and the concept document (§15's trust
   levels) say how high-risk modules work. Decision 0019 is built. Gate 971 and 168.
+- The 208acf6 sandbox run: 47 of 47 (the unreadable high-risk list's scenario the one added),
+  317 steps, in 42 minutes, CI green.
 
 ---
 
