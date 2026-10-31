@@ -467,7 +467,7 @@ export class InProcessDriver implements Driver {
     const offers = await askForWork(member, {
       names: async () => [...this.github.repositories.keys()],
       readyTasks: async (project) =>
-        this.github.readyTasks(project).map((task) => ({
+        (await this.github.readyTasks(project)).map((task) => ({
           id: task.id,
           role: task.role,
           module: task.module,
@@ -738,13 +738,13 @@ export class InProcessDriver implements Driver {
   }
 
   async readyTasks(project: string): Promise<ReadyTask[]> {
-    return this.github
-      .readyTasks(project)
-      .map(({ role, module, feedbackSignal, continuation }) => ({
+    return (await this.github.readyTasks(project)).map(
+      ({ role, module, feedbackSignal, continuation }) => ({
         role: roleName(role),
         module,
         ...(feedbackSignal === undefined ? {} : { feedbackSignal: signalName(feedbackSignal) }),
         ...(continuation ? { continuation } : {}),
-      }));
+      }),
+    );
   }
 }

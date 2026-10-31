@@ -9655,6 +9655,17 @@ function readToolchain(text) {
   return { image, test, report };
 }
 
+// ../core/src/withdrawing.ts
+function withdrawnOnReopening(decision, done, ready) {
+  if (!reopens(decision, done)) return [];
+  const integrating = INTEGRATION_PIPELINE;
+  return ready.filter(({ role }) => integrating.includes(role)).map(({ id }) => id);
+}
+function reopens(decision, done) {
+  const tasks = "tasks" in decision ? decision.tasks : [];
+  return tasks.some((task) => done.has(task.module));
+}
+
 // src/event.ts
 var isClaim = (text) => text === CLAIM;
 var ACCOUNT_NAME = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/;
@@ -9892,9 +9903,16 @@ async function onWorkAccepted(event, board, log, clock, events) {
     ...mergedAs === void 0 ? {} : { mergedAs },
     ...record
   };
+  const done = modulesDone(events);
   await log.append(decided);
   events.push(decided);
   await actOn(decided, board, log);
+  if (reopens(record.decision, done)) {
+    const ready = await board.readyTasks(project2);
+    for (const id of withdrawnOnReopening(record.decision, done, ready)) {
+      await board.close(project2, id);
+    }
+  }
 }
 async function actOn(event, board, log) {
   const { project: project2, decision } = event;

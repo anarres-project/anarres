@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { withdrawnOnReopening } from "../src/index.ts";
+import { reopens, withdrawnOnReopening } from "../src/index.ts";
 
 describe("withdrawing integration tasks when a module is reopened (decision 0017)", () => {
   it("withdraws the ready integration task when the decision sends work to a module that is done", () => {
@@ -7,7 +7,7 @@ describe("withdrawing integration tasks when a module is reopened (decision 0017
       withdrawnOnReopening(
         { tasks: [{ role: "architecture", module: "parser" }] },
         new Set(["parser", "lexer"]),
-        [{ task: "12", role: "integration-specification", module: "programme" }],
+        [{ id: "12", role: "integration-specification", module: "programme" }],
       ),
     ).toEqual(["12"]);
   });
@@ -15,7 +15,7 @@ describe("withdrawing integration tasks when a module is reopened (decision 0017
   it("withdraws nothing when the decision sends work only to modules not done", () => {
     expect(
       withdrawnOnReopening({ tasks: [{ role: "test", module: "parser" }] }, new Set(["lexer"]), [
-        { task: "12", role: "integration-specification", module: "programme" },
+        { id: "12", role: "integration-specification", module: "programme" },
       ]),
     ).toEqual([]);
   });
@@ -26,9 +26,9 @@ describe("withdrawing integration tasks when a module is reopened (decision 0017
         { tasks: [{ role: "architecture", module: "parser" }] },
         new Set(["parser"]),
         [
-          { task: "11", role: "test", module: "lexer" },
-          { task: "12", role: "integration-test", module: "programme" },
-          { task: "13", role: "programme-architect", module: "programme" },
+          { id: "11", role: "test", module: "lexer" },
+          { id: "12", role: "integration-test", module: "programme" },
+          { id: "13", role: "programme-architect", module: "programme" },
         ],
       ),
     ).toEqual(["12"]);
@@ -39,9 +39,17 @@ describe("withdrawing integration tasks when a module is reopened (decision 0017
     (decision) => {
       expect(
         withdrawnOnReopening(decision, new Set(["parser"]), [
-          { task: "12", role: "integration-test", module: "programme" },
+          { id: "12", role: "integration-test", module: "programme" },
         ]),
       ).toEqual([]);
     },
   );
+});
+
+describe("whether a decision reopens a module that was done (decision 0017)", () => {
+  it("does when it sends work to a module that is done", () => {
+    expect(
+      reopens({ tasks: [{ role: "specification", module: "parser" }] }, new Set(["parser"])),
+    ).toBe(true);
+  });
 });

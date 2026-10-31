@@ -1,8 +1,7 @@
-import type { Role } from "./roles.ts";
 import { INTEGRATION_PIPELINE, type RoutingDecision, type Task } from "./routing.ts";
 
-/** A task the board shows ready, nobody holding it. */
-export type ReadyTask = { task: string; role: Role; module: string };
+/** A task the board shows ready, nobody holding it: its role as the board gives it, as data. */
+export type UnclaimedTask = { id: string; role: string; module: string };
 
 /**
  * The ready integration tasks a decision withdraws: those still unclaimed when it sends work to a
@@ -12,11 +11,16 @@ export type ReadyTask = { task: string; role: Role; module: string };
 export function withdrawnOnReopening(
   decision: RoutingDecision,
   done: ReadonlySet<string>,
-  ready: readonly ReadyTask[],
+  ready: readonly UnclaimedTask[],
 ): string[] {
+  if (!reopens(decision, done)) return [];
+  const integrating: readonly string[] = INTEGRATION_PIPELINE;
+  return ready.filter(({ role }) => integrating.includes(role)).map(({ id }) => id);
+}
+
+/** Whether the decision sends work to a module that was done. */
+export function reopens(decision: RoutingDecision, done: ReadonlySet<string>): boolean {
   // A decision that has tasks lists them: it never holds an empty slot for them.
   const tasks = "tasks" in decision ? (decision.tasks as Task[]) : [];
-  if (!tasks.some((task) => done.has(task.module))) return [];
-  const integrating: readonly Role[] = INTEGRATION_PIPELINE;
-  return ready.filter(({ role }) => integrating.includes(role)).map(({ task }) => task);
+  return tasks.some((task) => done.has(task.module));
 }

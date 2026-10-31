@@ -293,8 +293,11 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
     - [ ] a module is done only until a later decision sends it work again, so with two
           reopened (a contract revision), the first done again starts nothing;
     - [ ] integration work finishing while a module is reopened posts nothing further;
-    - [ ] an integration task posted but unclaimed when a module reopens is withdrawn
-          (acceptance `@wip`, red in its Then);
+    - [x] an integration task posted but unclaimed when a module reopens is withdrawn
+          (in-process; the board is asked for its ready tasks only when a decision reopens a
+          module);
+    - [ ] the withdrawal is recorded in Divlab's log, with the decision that caused it, and
+          read back; an interrupted run finishes it;
     - [ ] a contract revision leaves integration work already claimed to finish: decision
           0017's hold, not decision 0015's stale mark, applies to integration work;
     - [ ] an integration task posted but unclaimed when a module reopens is withdrawn;

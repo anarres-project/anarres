@@ -670,7 +670,7 @@ export class FakeGitHub
     if (task) delete task.claimedBy;
   }
 
-  readyTasks(project: string): OpenTask[] {
+  async readyTasks(project: string): Promise<OpenTask[]> {
     return this.openTasks.filter((task) => task.project === project && !task.claimedBy);
   }
 

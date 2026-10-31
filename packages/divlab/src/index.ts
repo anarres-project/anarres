@@ -25,6 +25,7 @@ import {
   readFeedbackSignal,
   readModules,
   readSignalFile,
+  reopens,
   reviewListUnreadable,
   routingRecord,
   type TestCounts,
@@ -32,7 +33,9 @@ import {
   type Toolchain,
   testCounts,
   trustLevelOf,
+  type UnclaimedTask,
   type Unreadable,
+  withdrawnOnReopening,
   writeScope,
 } from "@anarres/core";
 import { isClaim } from "./event.ts";
@@ -135,6 +138,8 @@ export interface TaskBoard {
       })
     | undefined
   >;
+  /** The project's tasks ready to claim, held by nobody. */
+  readyTasks(project: string): Promise<UnclaimedTask[]>;
   /** The task is done: nobody can claim it any more. */
   close(project: string, task: string): Promise<void>;
   /** The feedback signals whose routing decisions the board shows Divlab acted on. */
@@ -618,9 +623,17 @@ async function onWorkAccepted(
     ...(mergedAs === undefined ? {} : { mergedAs }),
     ...record,
   };
+  // Integration waits while a module is reopened: its tasks nobody has claimed are withdrawn.
+  const done = modulesDone(events);
   await log.append(decided);
   events.push(decided);
   await actOn(decided, board, log);
+  if (reopens(record.decision, done)) {
+    const ready = await board.readyTasks(project);
+    for (const id of withdrawnOnReopening(record.decision, done, ready)) {
+      await board.close(project, id);
+    }
+  }
 }
 
 /** What a routing decision does on the board: a task, an alert or a finished module. */

@@ -1258,6 +1258,21 @@ governance scenarios run alone.
   first run, as the code was there. The second row first gave a decision an absent task list,
   which the types do not allow (typecheck caught it after the commit; fixed before pushing): a
   decision with tasks always lists them, so the list is read as it is. Gate 923.
+- Withdrawing, in Divlab. Core's ready task is `UnclaimedTask`, `id` as the adapter's ready
+  tasks have it, its role as text, since it is data from the board.
+  ```
+  RED:      withdraws a ready integration task when its decision reopens a module that was done
+            -> expected [ '3' ] to include '12'
+  GREEN:    asking the board for ready tasks on every decision: 54 tests failed, their boards
+            having none to give, and it would cost a request every time. So, first:
+  RED:      whether a decision reopens a module > does when it sends work to a module that is
+            done -> TypeError: reopens is not a function
+  GREEN:    (324 passed), drawn out of withdrawnOnReopening, whose tests cover its other cases
+  GREEN:    Divlab asks for ready tasks only when a decision reopens a module (251 passed; the
+            contract revision tests' boards say nothing is ready)
+  REFACTOR: none
+  ```
+  The scenario passed and lost `@wip`. Gate 925 and 159.
 
 ---
 

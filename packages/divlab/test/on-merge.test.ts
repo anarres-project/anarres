@@ -32,6 +32,7 @@ const board: TaskBoard = {
   alertUnreadableReviewList: untouched,
   alertUnreadableModules: untouched,
   unreadableModulesAlertOpen: untouched,
+  readyTasks: untouched,
   unreadableReviewListAlertOpen: untouched,
   markModuleDone: untouched,
   task: untouched,
@@ -814,6 +815,49 @@ describe("acting on a pull request", () => {
     expect(posted.map(({ role, module }) => ({ role, module }))).toEqual([
       { role: "integration-test", module: "programme" },
     ]);
+  });
+
+  it("withdraws a ready integration task when its decision reopens a module that was done (0017)", async () => {
+    const closed: string[] = [];
+    const integrationFails = {
+      path: "feedback/FB-3.md",
+      text: '---\nfeedback_signal:\n  task_id: "3"\n  from_role: integration-test\n  module: programme\n  verdict: fail\n  module_at_fault: parser\n  impediments:\n    - type: test_failures\n---\n',
+    };
+    const listed: PullRequests = {
+      ...submitting([], [integrationFails]),
+      modulesOnMain: async () => "modules:\n  - name: lexer\n  - name: parser\n",
+    };
+    const done = (module: string, feedbackSignal: string): LogEvent => ({
+      project: "ledger",
+      work: {
+        fromRole: "security-and-quality",
+        module,
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal,
+      },
+      decision: { moduleDone: true },
+      reason: { rule: "pipeline_complete" },
+    });
+    const bothDone: EventLog = {
+      read: async () => [done("lexer", "feedback/FB-0.md"), done("parser", "feedback/FB-1.md")],
+      append: async () => {},
+    };
+    const integrating: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "integration-test", module: "programme", claimedBy: "alice" }),
+      post: async () => {},
+      close: async (_project, task) => {
+        closed.push(task);
+      },
+      readyTasks: async () => [
+        { id: "11", role: "test", module: "lexer" },
+        { id: "12", role: "integration-review", module: "programme" },
+      ],
+    };
+    await onPullRequest("ledger", "7", listed, integrating, bothDone, clock);
+    expect(closed).toContain("12");
+    expect(closed).not.toContain("11");
   });
 
   it("starts no integration while another module is not done", async () => {
@@ -1899,6 +1943,8 @@ describe("acting on a pull request", () => {
     ];
     const programmeHeld: TaskBoard = {
       ...board,
+      // Nothing in integration is ready while the revision reopens a module.
+      readyTasks: async () => [],
       task: async () => ({ role: "programme-architect", module: "programme", claimedBy: "alice" }),
       close: async () => {},
       post: async (task) => {
@@ -1923,6 +1969,8 @@ describe("acting on a pull request", () => {
     ];
     const programmeHeld: TaskBoard = {
       ...board,
+      // Nothing in integration is ready while the revision reopens a module.
+      readyTasks: async () => [],
       task: async () => ({ role: "programme-architect", module: "programme", claimedBy: "alice" }),
       close: async () => {},
       post: async (task) => {
@@ -1968,6 +2016,8 @@ describe("acting on a pull request", () => {
     ];
     const programmeHeld: TaskBoard = {
       ...board,
+      // Nothing in integration is ready while the revision reopens a module.
+      readyTasks: async () => [],
       task: async () => ({ role: "programme-architect", module: "programme", claimedBy: "alice" }),
       close: async () => {},
       post: async (task) => {
@@ -2029,6 +2079,8 @@ describe("acting on a pull request", () => {
     };
     const programmeHeld: TaskBoard = {
       ...board,
+      // Nothing in integration is ready while the revision reopens a module.
+      readyTasks: async () => [],
       task: async () => ({ role: "programme-architect", module: "programme", claimedBy: "alice" }),
       close: async () => {},
       post: async (task) => {
@@ -2093,6 +2145,8 @@ describe("acting on a pull request", () => {
     };
     const programmeHeld: TaskBoard = {
       ...board,
+      // Nothing in integration is ready while the revision reopens a module.
+      readyTasks: async () => [],
       task: async () => ({ role: "programme-architect", module: "programme", claimedBy: "alice" }),
       close: async () => {},
       post: async (task) => {
