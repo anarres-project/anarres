@@ -3,10 +3,12 @@ Feature: A new project starts with its Programme Architect's task, and each modu
   Programme Architect's, who decides its modules in modules.yaml. Each module then starts with
   its first task ready: Architecture, the first role in a module's pipeline (decision 0013).
 
+  @sandbox
   Scenario: A new project starts with a Programme Architect task for the programme
     Given a new project is started
     Then the only task ready is a Programme Architect task for the programme
 
+  @sandbox
   Scenario: The Programme Architect's modules start once its work is merged
     Given a new project is started
     When a member's Programme Architect work for the programme was accepted, listing the modules "parser" and "lexer"

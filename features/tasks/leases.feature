@@ -3,7 +3,6 @@ Feature: Leases
   time: a lease. A lease runs out after 24 hours without activity, and the task is ready again.
 
   # Not in the sandbox: its clock is GitHub's, and nothing can move it on 24 hours.
-  @sandbox-wip
   Scenario: A lease runs out after 24 hours without activity, and the task is ready again
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
@@ -14,7 +13,6 @@ Feature: Leases
     And Alice is told the lease on the task ran out
 
   # Not in the sandbox: its clock is GitHub's, and nothing can move it on 24 hours.
-  @sandbox-wip
   Scenario: A lease holds the task until 24 hours have passed
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
@@ -24,7 +22,6 @@ Feature: Leases
     Then the Test task for "parser" is claimed by Alice
 
   # Not in the sandbox: its clock is GitHub's, and nothing can move it on 24 hours.
-  @sandbox-wip
   Scenario: A member whose lease ran out has their work merged while they still hold the task
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
@@ -33,6 +30,7 @@ Feature: Leases
     And Alice submits Test work on "parser" with a pass verdict
     Then Divlab has merged the member's Test work on "parser"
 
+  @sandbox
   Scenario: Divlab does not merge draft work
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
@@ -48,7 +46,6 @@ Feature: Leases
     When Divlab checks the project's leases
     Then the Test task for "parser" is claimed by Alice
 
-  @sandbox-wip
   Scenario: Draft work extends the lease
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
@@ -60,7 +57,6 @@ Feature: Leases
     Then the Test task for "parser" is claimed by Alice
 
   # Not in the sandbox: its clock is GitHub's, and nothing can move it on 24 hours.
-  @sandbox-wip
   Scenario: Each push to a draft extends the lease too
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
@@ -73,7 +69,6 @@ Feature: Leases
     Then the Test task for "parser" is claimed by Alice
 
   # Not in the sandbox: its clock is GitHub's, and nothing can move it on 24 hours.
-  @sandbox-wip
   Scenario: A task whose lease ran out goes to a new claim without waiting for Divlab's check
     Divlab's check runs every hour, but GitHub stops a quiet project's scheduled runs, so a claim
     on a task whose lease has run out frees it there and then.
@@ -86,6 +81,7 @@ Feature: Leases
     Then the Test task for "parser" is claimed by Bob
     And Alice is told the lease on the task ran out
 
+  @sandbox
   Scenario: A task shown as claimed that Divlab never gave anyone is made ready again
     Divlab records each claim before the task shows it, so a task shown as claimed with no claim
     in Divlab's log was changed by someone else. PDC coordinators are told.

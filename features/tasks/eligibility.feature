@@ -3,7 +3,7 @@ Feature: Who may take a task
   role in a module for its whole life: whoever wrote a module's tests never writes its code, and
   whoever produced any of it never reviews it. Divlab checks this when a member claims a task.
 
-  @governance
+  @governance @sandbox
   Scenario: A member who wrote a module's code cannot review it
     Given a project with a module "parser"
     And Alice is an established member
@@ -40,7 +40,7 @@ Feature: Who may take a task
     When Alice claims the Reviewer task for "parser"
     Then the Reviewer task for "parser" is claimed by Alice
 
-  @governance
+  @governance @sandbox
   Scenario: Accounts a PDC coordinator has linked are one member
     Given a project with a module "parser"
     And Alice is an established member

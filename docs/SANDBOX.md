@@ -79,8 +79,8 @@ module needs a second unnamed member, played by an account left over. For a role
 not take, the driver records that account at the level needed, so the scenario changes the
 governance file and is tagged `@governance`. Each member must be a different account, or Divlab would see them as one person and,
 rightly, refuse what one person may not do twice (one role per module, decision 0007). A
-scenario with four members fails at once with `HarnessNotYetBuilt` and is tagged
-`@sandbox-wip`. A claim or a release Divlab refuses ends when Divlab replies; one it grants,
+scenario with four members fails at once with `HarnessNotYetBuilt`, so none is tagged
+`@sandbox`. A claim or a release Divlab refuses ends when Divlab replies; one it grants,
 when the issue shows it. Members claiming together comment in order,
 but GitHub decides which comment's run starts first, so the sandbox shows the first claim made
 winning under real GitHub ordering, not a chosen order.
@@ -117,32 +117,46 @@ keep them anyway. **Before a run starts**, a sweep deletes what interrupted runs
 sandbox organisations: repositories a run made, more than an hour ago (no run lasts that long), so
 a kept repository lasts until a run an hour or more later.
 
-## What the scenarios cover
+## Which scenarios run here (decision 0018)
 
-The scenarios are in `features/`, one file per capability. Today:
+The sandbox runs only the scenarios tagged `@sandbox`; every scenario runs in-process on every
+commit. A scenario earns the tag when it:
 
-- `routing/next-task`: a pass moves a module to its next role, through the whole pipeline.
-- `routing/failed-work`: every route for failed or blocked work, several problems at once (the most
-  upstream wins), revision tasks carrying the feedback that sent work back, and failures no rule
-  covers, which go to a PDC coordinator rather than being guessed at.
-- `routing/knowledge-gaps`: Research comes first, and goes back to the role that asked for it.
-- `routing/escalation`: a role re-run a fourth time goes to a PDC coordinator instead.
-- `routing/module-completion`: a Security & Quality pass marks a module done.
-- `routing/decision-record` and `routing/coordinator-alerts`: every decision is recorded with its
-  inputs and rule; an alert says what was reported and why routing stopped.
-- `tasks/merged-work`: merged work closes the task it was for.
-- `tasks/submitted-work`: Divlab merges the work members submit, and refuses what it cannot accept.
-- `tasks/claiming`: a member claims a ready task by commenting on it.
-- `projects/protected-main`: only Divlab changes a project's main branch; the tripwire; the alert
-  when main is not protected.
-- `routing/integration`: one journey in a project of its own, set up with two modules listed in
-  its modules.yaml, from the last module done through Integration Specification, a failing
-  Integration Test sent back to the module at fault, that module done again, Integration Test
-  again and Integration Review to the programme done (decision 0017). The other integration
-  scenarios run in-process only (`@sandbox-wip`): a worker's scenarios share one project, so
-  none is ever its last module, and a project of their own each would cost the run more time
-  than it has (Bernard, 2026-10-31). The journey makes the third account trusted for
-  Integration Review, so it is `@governance` and runs alone.
+1. calls a GitHub API path or adapter method that no `@sandbox` scenario calls yet;
+2. needs a workflow or a trigger the sandbox does not yet run (a new event, a new template
+   workflow);
+3. depends on what only real GitHub decides: ordering, delays, lagging lists, permissions,
+   rulesets, forks;
+4. changes the governance file, or relies on it, in a way no `@sandbox` scenario does;
+5. is the one end-to-end journey of a new capability, as integration's is.
+
+Otherwise it runs in-process only: routing rules, refusal reasons and eligibility cases are
+core's, proved on every commit. The commit adding a `@sandbox` tag says which item earns it.
+
+**The gate checks item 1.** `npm test` runs the `@sandbox` scenarios in-process a second time
+(`npm run test:sandbox-coverage`), with the fake GitHub noting which of its methods Divlab and
+the CLI call, and fails, naming each method of the GitHub adapter the fake stands in for that
+none of them reached. A method the sandbox cannot reach is listed, with why, in
+`SANDBOX_UNREACHABLE` (`acceptance/drivers/in-process/sandbox-coverage.ts`): a lease's 24 hours,
+the paths that finish interrupted runs or merges GitHub put off, and an unreadable
+modules.yaml, which the sandbox could only make with a change protection refuses.
+
+Today 41 scenarios, by capability:
+
+- `members/*`: the CLI against real GitHub: offers, submitting, giving back, preparing (files
+  read as data, and at a pinned commit), resuming on another machine.
+- `projects/*`: protection and the tripwire, the Actions policy, starting a project and its
+  modules, a project without a toolchain.
+- `routing/*`: one pass and one revision, an alert, the event log, a module done, inputs
+  changed since a task was posted, the test counts, and the integration journey: a project of
+  its own listing two modules, from the last module done through a failing Integration Test
+  sent back to the module at fault, to Integration Review completing the programme (decision
+  0017). The journey makes the third account trusted for Integration Review, so it is
+  `@governance` and runs alone.
+- `tasks/*`: claims (and two made together), giving back, eligibility read from the governance
+  file, human review, drafts, the lease check run by hand, merged work closing its task, the
+  project's own checks, and submissions (several at once, from someone not holding the task,
+  outside the role's scope).
 
 ## What it proves beyond the in-process run
 
@@ -155,34 +169,18 @@ The scenarios are in `features/`, one file per capability. Today:
 - Divlab's workflows take turns, and the tripwire leaves Divlab's own merges alone.
 - All of it copes with GitHub's delays, lagging lists and rate limits.
 
-## Routing tables run in-process
+## Time
 
-A scenario outline over the routing table (which role's work goes where) keeps its first row in
-the sandbox and tags the rest of its table `@in-process-only` (Bernard, 2026-10-27). The table is
-pure routing in `packages/core`, checked in full by unit tests and in-process; one row shows each
-rule working against GitHub. So does escalation's count starting again once the role's work
-passes: the fourth re-run going to a PDC coordinator shows escalation against GitHub. The job's
-limit is 90 minutes, a margin over a full run's 60 or so, not a budget (Bernard, 2026-10-29: the
-scenarios of decision 0015, each going through several merges, took a run past the earlier 60).
-Running every row cost the sandbox more Divlab runs than its time limit and the App's share of
-GitHub's limits allow, once each piece of work needed a claim first.
-
-"Work whose inputs cannot be checked, as too much changed since its task was posted, goes back to
-its role" is in-process only too: it needs more than 300 files changed, the most GitHub lists of a
-comparison, which would cost the sandbox over 300 writes. The adapter's unit tests check how it
-reads GitHub's answer.
-
-## Scenarios not yet run in the sandbox
-
-A scenario that passes in-process but cannot yet run against the sandbox is tagged
-`@sandbox-wip`, with a comment saying why. The sandbox run leaves it out, and its first step lists
-every such scenario, so none is forgotten. The tag goes once the scenario passes in the sandbox.
+The job's limit is 90 minutes. Before decision 0018 every scenario ran here unless tagged out,
+109 of them in about 70 minutes; scenarios timed out when GitHub's runners were slow. What costs
+is each piece of work a scenario puts through Divlab: a pull request from a fork, a claim, a
+Divlab run, perhaps the project's checks, then waiting for GitHub's lists.
 
 ## Not covered yet
 
-- Eligibility and the plugin, which are not built yet; claiming and leases are under way. The
-  lease scenarios need 24 hours to pass, which the sandbox cannot make happen, so they run
-  in-process only; the sandbox installs the hourly lease workflow with the rest of the template.
+- Leases running out: they need 24 hours, which the sandbox cannot make happen, so those
+  scenarios run in-process only; the sandbox installs the hourly lease workflow with the rest of
+  the template, and runs it by hand.
 
 The test list (`docs/TEST_LIST.md`) tracks each of these.
 

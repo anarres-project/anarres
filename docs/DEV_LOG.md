@@ -1353,6 +1353,36 @@ governance scenarios run alone.
 - Bernard asked whether the sandbox runs need so many steps. Decision 0018 proposes the sandbox
   runs only the scenarios chosen for it (`@sandbox`), about 40 of today's 109, each showing a
   path to GitHub no other does; for Bernard to decide.
+- Bernard accepted decision 0018, with its checklist for the `@sandbox` tag and a coverage
+  check. Building the check showed the decision's first plan was wrong: in the sandbox, Divlab's
+  calls to GitHub happen in its Action runs, where the driver cannot see them, so recording the
+  driver's calls would measure the harness. Bernard chose the in-process form: the gate runs
+  the `@sandbox` scenarios in-process with the fake noting what Divlab and the CLI call.
+  ```
+  RED:      names each adapter method no sandbox scenario called
+            -> Cannot find module './sandbox-coverage.ts'; stubbed,
+            -> expected [] to deeply equal [ 'merge', 'close' ]
+  GREEN:    (1 passed)
+  RED:      leaves out a method the sandbox cannot reach, as its exceptions say why
+            -> expected [ 'tellLeaseRanOut' ] to deeply equal []
+  GREEN:    (2 passed)
+  RED:      notes each method called, and gives the fake's own answer
+            -> TypeError: recording is not a function
+  GREEN:    (3 passed); "passes what is not a method through" passed first run, the branch
+            being there already (slip)
+  RED:      the adapter's methods the fake stands in for -> TypeError: standingIn is not a function
+  GREEN:    (5 passed), written without a stub first (slip)
+  REFACTOR: none
+  ```
+  The in-process driver gives Divlab and the CLI a recording stand-in of the fake, keeping the
+  fake itself for arranging and checking. The first run of the check, with the 40 tagged, named
+  nine methods: one a scenario must reach (Divlab's alert of a change it did not make: "A change
+  reaching main without Divlab, feedback signal or not, is noticed" tagged, 41); one the CLI
+  reached through a stand-in function that bypassed the recording (fixed); one private to the
+  adapter, its name shared by chance with a harness method of the fake; and six the sandbox
+  cannot reach on cue, listed with their reasons. Taking the new tag off made the check name the
+  method again. `@sandbox-wip` and `@in-process-only` are gone, as is the sandbox workflow's step
+  listing them; `docs/SANDBOX.md` has the checklist.
 
 ---
 

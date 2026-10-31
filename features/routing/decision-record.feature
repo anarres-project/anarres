@@ -22,6 +22,7 @@ Feature: Divlab records every routing decision
     When a member's Security & Quality work on "parser" is accepted with a pass verdict
     Then Divlab records that the Security & Quality work on "parser" completed the module
 
+  @sandbox
   Scenario: The record keeps everything the work reported
     Given a project with a module "parser"
     When a member's Coding work on "parser" is accepted with a fail verdict, reporting test failures and an architecture impediment

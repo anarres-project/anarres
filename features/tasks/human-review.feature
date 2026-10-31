@@ -5,7 +5,7 @@ Feature: Human review where PDC coordinators require it
 
   # Each changes the sandbox's governance file, which every scenario there reads, so runs alone.
 
-  @governance
+  @governance @sandbox
   Scenario: Work on a module PDC coordinators require reviewed waits for a reviewer's approval
     Given a project with a module "parser"
     And PDC coordinators require a reviewer's approval for work on "parser"
@@ -13,7 +13,7 @@ Feature: Human review where PDC coordinators require it
     Then Divlab has not merged the member's Architecture work on "parser"
     And the member is told their work waits for a reviewer's approval
 
-  @governance
+  @governance @sandbox
   Scenario: Work on a module PDC coordinators require reviewed is merged once a trusted member approves it
     Given a project with a module "parser"
     And PDC coordinators require a reviewer's approval for work on "parser"
@@ -41,7 +41,7 @@ Feature: Human review where PDC coordinators require it
     When Carol approves the member's Specification work on "parser"
     Then Divlab has not merged the member's Specification work on "parser"
 
-  @governance
+  @governance @sandbox
   Scenario: Divlab alerts PDC coordinators, once, when it cannot read which modules need review
     Given a project with modules "parser" and "lexer"
     And the list of modules PDC coordinators require reviewed cannot be read
@@ -51,7 +51,7 @@ Feature: Human review where PDC coordinators require it
     And PDC coordinators have been alerted once that the list of modules needing review cannot be read
 
   # Not in the sandbox: GitHub runs the project's tests at once, and nothing holds them on cue.
-  @governance @sandbox-wip
+  @governance
   Scenario: A reviewer who asks for changes after approving has withdrawn their approval
     Given a project with a module "parser"
     And PDC coordinators require a reviewer's approval for work on "parser"

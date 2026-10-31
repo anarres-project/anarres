@@ -1,3 +1,4 @@
+import { GitHubAdapter } from "@anarres/github";
 import {
   After,
   AfterAll,
@@ -12,6 +13,13 @@ import {
 } from "@cucumber/cucumber";
 import type { Driver } from "../drivers/driver.ts";
 import { InProcessDriver } from "../drivers/in-process/driver.ts";
+import { FakeGitHub } from "../drivers/in-process/fake-github.ts";
+import {
+  SANDBOX_UNREACHABLE,
+  SYSTEM_CALLS,
+  standingIn,
+  unreached,
+} from "../drivers/in-process/sandbox-coverage.ts";
 import { SandboxDriver } from "../drivers/sandbox/driver.ts";
 import { mayStart } from "../drivers/sandbox/governance-alone.ts";
 import { runRepository } from "../drivers/sandbox/sweep.ts";
@@ -101,4 +109,20 @@ AfterAll(async () => {
   // (Divlab's runs say what they cost their App's).
   console.log(SandboxDriver.requestsMade().join("\n"));
   await SandboxDriver.allowance();
+});
+
+// ANARRES_SANDBOX_COVERAGE=1 runs the @sandbox scenarios in-process to check they reach every
+// path to GitHub the fake stands in for (decision 0018).
+AfterAll(() => {
+  if (process.env.ANARRES_SANDBOX_COVERAGE !== "1") return;
+  const missed = unreached(
+    standingIn(GitHubAdapter, FakeGitHub),
+    SYSTEM_CALLS,
+    SANDBOX_UNREACHABLE,
+  );
+  if (missed.length > 0) {
+    throw new Error(
+      `No @sandbox scenario reaches these GitHub adapter methods: ${missed.join(", ")}. Tag a scenario that does @sandbox, or add the method to SANDBOX_UNREACHABLE with its reason.`,
+    );
+  }
 });

@@ -20,7 +20,6 @@ Feature: Divlab escalates a role that keeps being sent back
   # In-process only: escalation counting is routing logic, and the fourth re-run above shows it
   # against GitHub. In the sandbox it would run alone, as its second unnamed member needs a
   # Reviewer's trust recorded (Bernard, 2026-10-27).
-  @in-process-only
   Scenario: The count starts again once the role's work passes
     Given a project with a module "parser"
     And a member's Coding work on "parser" has been sent back for test failures 3 times

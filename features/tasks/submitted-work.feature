@@ -2,12 +2,14 @@ Feature: Divlab merges the work members submit
   So that every change to a project has passed Divlab's checks,
   only Divlab merges a member's work into the project, and it routes the work as it merges it.
 
+  @sandbox
   Scenario: Work that passes validation is merged and routed
     Given a project with a module "parser"
     When a member submits Specification work on "parser" with a pass verdict
     Then Divlab has merged the member's Specification work on "parser"
     And the only task ready for "parser" is a Test task
 
+  @sandbox
   Scenario: Work several members submit at once is all merged
     Given a project with modules "parser", "lexer" and "printer"
     When members submit Specification work on "parser", "lexer" and "printer" at once, each with a pass verdict
@@ -28,6 +30,7 @@ Feature: Divlab merges the work members submit
     Then Divlab has not merged the member's Specification work on "parser"
     And the member is told their work must say which task it was for
 
+  @sandbox
   Scenario: Work from a member who does not hold its task is not merged, and they are told why
     Given a project with a module "parser"
     And a member's Architecture work on "parser" was accepted with a pass verdict
@@ -75,7 +78,6 @@ Feature: Divlab merges the work members submit
     And no task is ready for "parser"
 
   # Not in the sandbox: the real Action cannot be stopped between merging and recording on cue.
-  @sandbox-wip
   Scenario: A merge Divlab was interrupted in is finished by its next run
     Given a project with a module "parser"
     And Divlab was interrupted just after merging a member's Specification work on "parser"
@@ -84,7 +86,6 @@ Feature: Divlab merges the work members submit
     And no PDC coordinator is alerted that work reached main without Divlab merging it
 
   # Not in the sandbox: GitHub cannot be made to put off a merge on cue.
-  @sandbox-wip
   Scenario: Work GitHub would not yet merge is merged by Divlab's hourly check
     Given a project with a module "parser"
     And GitHub would not yet merge a member's Specification work on "parser" when Divlab asked
@@ -93,7 +94,6 @@ Feature: Divlab merges the work members submit
     And the only task ready for "parser" is a Test task
 
   # Not in the sandbox: the real Action cannot be stopped between recording and acting on cue.
-  @sandbox-wip
   Scenario: A decision Divlab recorded but did not act on is acted on by its next run, once
     Given a project with a module "parser"
     And Divlab was interrupted just after recording its decision on a member's Specification work on "parser"
@@ -102,7 +102,6 @@ Feature: Divlab merges the work members submit
     Then the only task ready for "parser" is a Test task
 
   # Not in the sandbox: the real Action cannot be stopped between recording and acting on cue.
-  @sandbox-wip
   Scenario: The task the work was for is closed by Divlab's next run, if it stopped first
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
@@ -110,6 +109,7 @@ Feature: Divlab merges the work members submit
     When Divlab next acts on the project
     Then the only task ready for "parser" is a Coding task
 
+  @sandbox
   Scenario: Work that changes files outside its role's scope is not merged
     Coding writes a module's code, never its tests: whoever writes the code must not be able to
     change what checks it.

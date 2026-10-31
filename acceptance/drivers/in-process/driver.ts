@@ -56,6 +56,7 @@ import {
   workFiles,
 } from "../scenario-words.ts";
 import { DIVLAB_ACCOUNT, FakeGitHub, Interrupted, MergePutOff } from "./fake-github.ts";
+import { recording, SYSTEM_CALLS } from "./sandbox-coverage.ts";
 
 /** Where the Programme Architect's contracts are, a folder each (decision 0014). */
 const CONTRACTS = "programme/contracts/";
@@ -66,6 +67,8 @@ const START = "2026-10-22T09:00:00Z";
 
 export class InProcessDriver implements Driver {
   private readonly github = new FakeGitHub();
+  /** The fake as Divlab and the CLI are given it: what they call is noted (decision 0018). */
+  private readonly system = recording(this.github, SYSTEM_CALLS);
   /** Divlab's clock: it moves only when a scenario says time passes. */
   private now = new Date(START);
   private readonly clock = () => this.now;
@@ -80,25 +83,25 @@ export class InProcessDriver implements Driver {
     // Divlab first looks at main.
     const listing = modules.map((module) => `  - name: ${module}\n`).join("");
     this.github.mergeFile(project, MODULES_FILE, `modules:\n${listing}`);
-    if (!options.unprotected) await setUpProject(project, this.github);
-    for (const module of modules) await startModule(project, module, this.github);
+    if (!options.unprotected) await setUpProject(project, this.system);
+    for (const module of modules) await startModule(project, module, this.system);
   }
 
   async startProject(project: string): Promise<void> {
     this.github.repositories.set(project, []);
-    await setUpProject(project, this.github);
-    await startProject(project, this.github);
+    await setUpProject(project, this.system);
+    await startProject(project, this.system);
   }
 
   async startProjectWithoutToolchain(project: string, modules: string[]): Promise<string> {
     this.github.repositories.set(project, modules);
     this.github.declareNoToolchain(project);
     try {
-      await setUpProject(project, this.github);
+      await setUpProject(project, this.system);
     } catch (error) {
       return error instanceof Error ? error.message : String(error);
     }
-    for (const module of modules) await startModule(project, module, this.github);
+    for (const module of modules) await startModule(project, module, this.system);
     return "";
   }
 
@@ -115,8 +118,8 @@ export class InProcessDriver implements Driver {
    * protection. The run's kind is all that is read of `run`.
    */
   private async afterRun(project: string, run: Run): Promise<void> {
-    if (checksProtection(run)) await checkProtection(project, this.github, this.github);
-    await checkMain(project, this.github, this.github, this.github, this.clock, DIVLAB_ACCOUNT);
+    if (checksProtection(run)) await checkProtection(project, this.system, this.system);
+    await checkMain(project, this.system, this.system, this.system, this.clock, DIVLAB_ACCOUNT);
   }
 
   /** The commits PDC coordinators were alerted reached main without Divlab. */
@@ -132,7 +135,7 @@ export class InProcessDriver implements Driver {
   async mergeDirectly(work: AcceptedWork): Promise<void> {
     const { path, text } = feedbackSignalFile(work);
     this.github.mergeFile(work.project, path, text);
-    await onMerge(work.project, this.github, this.github, this.github, this.clock);
+    await onMerge(work.project, this.system, this.system, this.system, this.clock);
     await this.afterRun(work.project, { merge: true });
   }
 
@@ -174,7 +177,7 @@ export class InProcessDriver implements Driver {
   }
 
   async divlabActsAgain(project: string): Promise<void> {
-    await onMerge(project, this.github, this.github, this.github, this.clock);
+    await onMerge(project, this.system, this.system, this.system, this.clock);
     await this.afterRun(project, { merge: true });
   }
 
@@ -227,9 +230,9 @@ export class InProcessDriver implements Driver {
     await onPullRequest(
       work.project,
       pullRequest,
-      this.github,
-      this.github,
-      this.github,
+      this.system,
+      this.system,
+      this.system,
       this.clock,
     );
     await this.afterRun(work.project, { pullRequest: "" });
@@ -250,7 +253,7 @@ export class InProcessDriver implements Driver {
       };
     });
     for (const { project, pullRequest } of opened) {
-      await onPullRequest(project, pullRequest, this.github, this.github, this.github, this.clock);
+      await onPullRequest(project, pullRequest, this.system, this.system, this.system, this.clock);
       await this.afterRun(project, { pullRequest: "" });
     }
   }
@@ -314,7 +317,7 @@ export class InProcessDriver implements Driver {
       askToClaim: async (where, issue) =>
         this.github.comment(where, issue, member, CLAIM, this.clock().toISOString()),
     });
-    await onClaim(project, { task: id, member }, this.github, this.github, this.clock, this.github);
+    await onClaim(project, { task: id, member }, this.system, this.system, this.clock, this.system);
     await this.afterRun(project, { claim: { task: "", member: "" } });
   }
 
@@ -331,10 +334,10 @@ export class InProcessDriver implements Driver {
       await onClaim(
         task.project,
         { task: id, member },
-        this.github,
-        this.github,
+        this.system,
+        this.system,
         this.clock,
-        this.github,
+        this.system,
       );
       await this.afterRun(task.project, { claim: { task: "", member: "" } });
     }
@@ -446,7 +449,7 @@ export class InProcessDriver implements Driver {
     const pullRequest = this.github.pullRequestFor(project, feedbackSignal);
     this.github.giveReview(pullRequest, member, "changes requested");
     const { head } = await this.github.pullRequest(project, pullRequest);
-    await onChecked(project, head, this.github, this.github, this.github, this.clock);
+    await onChecked(project, head, this.system, this.system, this.system, this.clock);
     await this.afterRun(project, { checked: "" });
   }
 
@@ -458,7 +461,7 @@ export class InProcessDriver implements Driver {
     const pullRequest = this.github.pullRequestFor(project, feedbackSignal);
     this.github.giveReview(pullRequest, member, "approved");
     const { head } = await this.github.pullRequest(project, pullRequest);
-    await onChecked(project, head, this.github, this.github, this.github, this.clock);
+    await onChecked(project, head, this.system, this.system, this.system, this.clock);
     await this.afterRun(project, { checked: "" });
   }
 
@@ -471,15 +474,15 @@ export class InProcessDriver implements Driver {
     const offers = await askForWork(member, {
       names: async () => [...this.github.repositories.keys()],
       readyTasks: async (project) =>
-        (await this.github.readyTasks(project)).map((task) => ({
+        (await this.system.readyTasks(project)).map((task) => ({
           id: task.id,
           role: task.role,
           module: task.module,
           underWay: underWay(task),
           posted: task.posted,
         })),
-      log: (project) => this.github.read(project),
-      governanceFile: () => this.github.governanceFile(),
+      log: (project) => this.system.read(project),
+      governanceFile: () => this.system.governanceFile(),
     });
     return offers.map(({ role, module }) => ({ role: roleName(role), module }));
   }
@@ -495,9 +498,9 @@ export class InProcessDriver implements Driver {
           .tasksHeld(project)
           .filter((task) => task.claimedBy === holder)
           .map(({ id, role, module }) => ({ id, role, module })),
-      log: (project) => this.github.read(project),
+      log: (project) => this.system.read(project),
       pullRequestsOpenBy: async (project, holder) =>
-        this.github.pullRequestsOpenBy(project, holder),
+        this.system.pullRequestsOpenBy(project, holder),
     });
     return held.map(({ role, module, leaseRunsOut, pullRequest }) => ({
       role: roleName(role),
@@ -522,11 +525,11 @@ export class InProcessDriver implements Driver {
 
   async prepare(task: { project: string; role: string; module: string }, member: string) {
     const id = this.openTaskId(task);
-    const held = await this.github.task(task.project, id);
+    const held = await this.system.task(task.project, id);
     const modules =
       held?.inputsAt === undefined
         ? undefined
-        : await this.github.modulesAt(task.project, held.inputsAt);
+        : await this.system.modulesAt(task.project, held.inputsAt);
     const plan = preparation("anarres-project", task.project, held, member, modules);
     if ("refused" in plan) throw new Error(plan.refused);
     if (held === undefined) throw new Error(`No task ${id} in ${task.project}`);
@@ -537,8 +540,8 @@ export class InProcessDriver implements Driver {
       member,
       {
         pullRequestsOpenBy: async (project, author) =>
-          this.github.pullRequestsOpenBy(project, author),
-        changedFiles: (project, pullRequest) => this.github.changedFiles(project, pullRequest),
+          this.system.pullRequestsOpenBy(project, author),
+        changedFiles: (project, pullRequest) => this.system.changedFiles(project, pullRequest),
       },
       (path, text) => folder.push({ path, text }),
     );
@@ -615,7 +618,7 @@ export class InProcessDriver implements Driver {
   async contributionHistory(member: string): Promise<{ role: string; module: string }[]> {
     const done = await contributions(member, {
       names: async () => [...this.github.repositories.keys()],
-      log: (project) => this.github.read(project),
+      log: (project) => this.system.read(project),
     });
     return done.map(({ role, module }) => ({ role: roleName(role), module }));
   }
@@ -625,7 +628,7 @@ export class InProcessDriver implements Driver {
   }
 
   async divlabChecksLeases(project: string): Promise<void> {
-    await onLeaseCheck(project, this.github, this.github, this.clock, this.github);
+    await onLeaseCheck(project, this.system, this.system, this.clock, this.system);
     await this.afterRun(project, { leases: true });
   }
 
@@ -642,16 +645,16 @@ export class InProcessDriver implements Driver {
         branch: async () => {},
         putFile: async (_fork, _branch, path, text) => void onBranch.push({ path, text }),
         openPullRequest: async (project) => {
-          const pullRequest = this.github.openPullRequest(project, onBranch, {
+          const pullRequest = this.system.openPullRequest(project, onBranch, {
             author: work.member,
             task: id,
           });
           await onPullRequest(
             project,
             pullRequest,
-            this.github,
-            this.github,
-            this.github,
+            this.system,
+            this.system,
+            this.system,
             this.clock,
           );
           await this.afterRun(project, { pullRequest: "" });
@@ -674,9 +677,9 @@ export class InProcessDriver implements Driver {
     await onPullRequest(
       work.project,
       pullRequest,
-      this.github,
-      this.github,
-      this.github,
+      this.system,
+      this.system,
+      this.system,
       this.clock,
     );
     await this.afterRun(work.project, { pullRequest: "" });
@@ -686,7 +689,7 @@ export class InProcessDriver implements Driver {
   async testsFinish(work: AcceptedWork, passed: boolean): Promise<void> {
     const pullRequest = this.github.pullRequestFor(work.project, work.feedbackSignal);
     const commit = this.github.finishTests(pullRequest, passed);
-    await onChecked(work.project, commit, this.github, this.github, this.github, this.clock);
+    await onChecked(work.project, commit, this.system, this.system, this.system, this.clock);
     await this.afterRun(work.project, { checked: "" });
   }
 
@@ -696,9 +699,9 @@ export class InProcessDriver implements Driver {
     await onPullRequest(
       work.project,
       pullRequest,
-      this.github,
-      this.github,
-      this.github,
+      this.system,
+      this.system,
+      this.system,
       this.clock,
     );
     await this.afterRun(work.project, { pullRequest: "" });
@@ -729,7 +732,7 @@ export class InProcessDriver implements Driver {
   async release(task: { project: string; role: string; module: string }, member: string) {
     const id = this.openTaskId(task);
     this.github.comment(task.project, id, member, "/release", this.clock().toISOString());
-    await onRelease(task.project, { task: id, member }, this.github, this.github, this.clock);
+    await onRelease(task.project, { task: id, member }, this.system, this.system, this.clock);
     await this.afterRun(task.project, { release: { task: "", member: "" } });
   }
 

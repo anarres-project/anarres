@@ -2,6 +2,7 @@ Feature: A member finds work
   So that a member spends their spare allowance only on work they may do, asking for work offers
   them the ready tasks their trust level and the conflict-of-interest rules let them take.
 
+  @sandbox
   Scenario: A member is offered the ready tasks they may take
     Given a project with modules "parser" and "lexer"
     And a member's Coding work on "parser" was accepted with a pass verdict
@@ -22,6 +23,7 @@ Feature: A member finds work
       | Test          | lexer  |
       | Test          | tokens |
 
+  @sandbox
   Scenario: A member's work submitted through the plugin is merged
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict

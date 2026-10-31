@@ -5,6 +5,7 @@ Feature: Divlab posts the next task
   A module's pipeline runs Architecture, Specification, Test, Coding, Reviewer,
   then Security & Quality.
 
+  @sandbox
   Scenario Outline: Passed work makes the next role's task ready
     Given a project with a module "parser"
     When a member's <role> work on "parser" is accepted with a pass verdict
@@ -15,7 +16,6 @@ Feature: Divlab posts the next task
       | Architecture  | Specification      |
 
     # The rest of the table: in-process only, as one row shows the rule against GitHub.
-    @in-process-only
     Examples:
       | role          | next role          |
       | Specification | Test               |

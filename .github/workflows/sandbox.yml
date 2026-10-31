@@ -35,9 +35,6 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      # Scenarios that pass in-process but cannot run in the sandbox yet, listed so none is forgotten.
-      - name: Scenarios not yet run in the sandbox
-        run: grep -rn -B1 -A1 "@sandbox-wip" features || echo "None"
       - run: npm run test:acceptance:sandbox
         env:
           ANARRES_SANDBOX_ORG: ${{ vars.ANARRES_SANDBOX_ORG }}

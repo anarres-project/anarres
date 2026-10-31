@@ -2,6 +2,7 @@ Feature: Work whose inputs changed after its task was posted is revised
   So that no role builds on work made from inputs that have since changed, Divlab merges such work
   and gives it back to the same role, with the new inputs (decision 0015).
 
+  @sandbox
   Scenario: Work whose requirement slice changed after its task was posted goes back to its role
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
@@ -29,6 +30,7 @@ Feature: Work whose inputs changed after its task was posted is revised
     When Alice submits Test work on "parser" with a pass verdict
     Then the only task ready for "parser" is an Architecture task
 
+  @sandbox
   Scenario: A revised contract sends a module that is done back to Architecture at once
     Given a new project is started
     And a member's Programme Architect work for the programme was accepted, listing the modules "parser", "lexer" and "ledger", with a contract "tokens" that "lexer" provides and "parser" uses, and a contract "entries" that "ledger" provides
@@ -71,7 +73,6 @@ Feature: Work whose inputs changed after its task was posted is revised
 
   # In-process only: the sandbox would write over 300 files for it. That GitHub lists at most 300
   # files of a comparison is checked against its answer in the GitHub adapter's unit tests.
-  @in-process-only
   Scenario: Work whose inputs cannot be checked, as too much changed since its task was posted, goes back to its role
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict

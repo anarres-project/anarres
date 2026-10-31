@@ -15,7 +15,6 @@ Feature: Divlab sends failed work back to the role that can fix it
       | Test          | Specification       |
 
     # The rest of the table: in-process only, as one row shows the rule against GitHub.
-    @in-process-only
     Examples:
       | role          | revising role       |
       | Coding        | Specification       |
@@ -32,14 +31,12 @@ Feature: Divlab sends failed work back to the role that can fix it
       | Architecture  |
 
     # The rest of the table: in-process only, as one row shows the rule against GitHub.
-    @in-process-only
     Examples:
       | role          |
       | Specification |
       | Coding        |
 
     # A review or security check finding the architecture at fault (Bernard, 2026-10-29).
-    @in-process-only
     Examples:
       | role               |
       | Reviewer           |
@@ -60,7 +57,6 @@ Feature: Divlab sends failed work back to the role that can fix it
       | Reviewer           |
 
     # The rest of the table: in-process only, as one row shows the rule against GitHub.
-    @in-process-only
     Examples:
       | role               |
       | Security & Quality |
@@ -75,7 +71,6 @@ Feature: Divlab sends failed work back to the role that can fix it
       | Reviewer           |
 
     # The rest of the table: in-process only, as one row shows the rule against GitHub.
-    @in-process-only
     Examples:
       | role               |
       | Security & Quality |
@@ -95,7 +90,6 @@ Feature: Divlab sends failed work back to the role that can fix it
       | Architecture       |
 
     # The rest of the table: in-process only, as one row shows the rule against GitHub.
-    @in-process-only
     Examples:
       | role               |
       | Specification      |
@@ -125,7 +119,6 @@ Feature: Divlab sends failed work back to the role that can fix it
       | Specification | an upstream ambiguity | an architecture impediment | Programme Architect |
 
     # The rest of the table: in-process only, as one row shows the rule against GitHub.
-    @in-process-only
     Examples:
       | role          | first                 | second                     | revising role       |
       | Coding        | test failures         | an architecture impediment | Architecture        |
@@ -151,12 +144,12 @@ Feature: Divlab sends failed work back to the role that can fix it
       | Test          | an architecture impediment   |
 
     # The rest of the table: in-process only, as one row shows the rule against GitHub.
-    @in-process-only
     Examples:
       | role          | problem                      |
       | Test          | test failures                |
       | Specification | an implementation impediment |
 
+  @sandbox
   Scenario: A revision task carries the feedback signal that sent the work back
     Given a project with a module "parser"
     When a member's Test work on "parser" is accepted with a fail verdict, reporting an upstream ambiguity

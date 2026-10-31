@@ -3,6 +3,7 @@ Feature: Divlab records the project's state as its work is merged
   with each merge: for now its tests, how many there are and how many pass, from the project's own
   test report (concept §15, decision 0012).
 
+  @sandbox
   Scenario: Divlab records how many of the project's tests pass as its Test and Coding work is merged
     Given a project of its own with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict

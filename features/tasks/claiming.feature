@@ -2,6 +2,7 @@ Feature: Members claim tasks
   So that no two members do the same work, a member claims a ready task before starting it,
   and holds it under a lease for a limited time.
 
+  @sandbox
   Scenario: A member claims a ready task
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
@@ -23,6 +24,7 @@ Feature: Members claim tasks
     Then the Test task for "parser" is claimed by Alice
     And Bob is told the task has already been claimed
 
+  @sandbox
   Scenario: Of two claims made together, the first made wins, whichever Divlab hears of first
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
@@ -37,6 +39,7 @@ Feature: Members claim tasks
     When Alice releases the Test task for "parser"
     Then a Test task for "parser" is ready to claim
 
+  @sandbox
   Scenario: Only the member holding a task can give it back
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict
@@ -60,6 +63,7 @@ Feature: Members claim tasks
     When Alice claims the finished Test task for "parser"
     Then Alice is told it is not a task anyone can claim
 
+  @sandbox
   Scenario: An alert to PDC coordinators cannot be claimed
     Given a project with a module "parser"
     And a member's Coding work on "parser" has been sent back for test failures 3 times

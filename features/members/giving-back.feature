@@ -3,6 +3,7 @@ Feature: A member gives a task back from their machine
   partial work, and Divlab posts a continuation for whoever takes it next (decision 0008). A task
   with nothing done is simply given back.
 
+  @sandbox
   Scenario: A member gives back a task they have done nothing on, and it is ready for others
     Given a project with a module "parser"
     And a member's Specification work on "parser" was accepted with a pass verdict

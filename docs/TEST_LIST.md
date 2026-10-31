@@ -311,8 +311,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] preparing an integration task fetches only its role's inputs (core's read scopes, so no
         new code: a scenario for Integration Test, which fails with the contracts taken out of
         its scope); the hook judges them by the same scopes;
-  - [ ] the sandbox shows them (Bernard, 2026-10-31; the journey written and passing in-process,
-        waiting on its first sandbox run): one journey scenario in a project of its
+  - [ ] the sandbox shows them (Bernard, 2026-10-31; the journey written, passing in-process and
+        tagged `@sandbox`, waiting on its first sandbox run): one journey scenario in a project of its
         own, two small modules through to integration, Integration Specification, a failing
         Integration Test sent back, then Integration Review completing the programme; the other
         integration scenarios stay in-process only.
@@ -1083,3 +1083,13 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   never a side effect of a member's contribution (Bernard, 2026-10-21: revisit if real projects
   need more).
 - (add new cases here, then place them)
+
+## The sandbox runs the scenarios chosen for it (decision 0018)
+
+- [x] the coverage check's pieces, test-first: which adapter methods were not reached, less the
+      exceptions; recording the system's calls on the fake; the adapter's methods the fake
+      stands in for;
+- [x] the 40 scenarios of the decision tagged `@sandbox`, and the one the check showed was
+      needed; `@sandbox-wip` and `@in-process-only` gone; the sandbox profile runs `@sandbox`;
+- [x] the gate runs the `@sandbox` scenarios in-process and fails naming what none reaches;
+- [ ] the first sandbox run of the 41: its time, against the 70 minutes before.

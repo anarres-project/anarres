@@ -1,6 +1,6 @@
 # 0018: The sandbox runs the scenarios chosen for it
 
-**Status:** Proposed, 2026-10-31, for Bernard to decide.
+**Status:** Accepted, 2026-10-31 (Bernard).
 
 ## Context
 
@@ -51,19 +51,29 @@ in a new way, until it hits its limit.
   Otherwise it runs in-process only: new routing rules, refusal reasons and eligibility cases
   are core's, proved on every commit. The commit adding a `@sandbox` tag says which item earns
   it.
-- **Coverage the pipeline checks.** The sandbox run records which of the GitHub adapter's
-  public methods its scenarios called, as it already counts its requests. At the end of the
-  run a check compares them with every public method the adapter has, and fails, naming each
-  one no scenario called. So a new adapter method with no `@sandbox` scenario reaching it, or a
-  trim that drops the last scenario taking a path, fails the run instead of going unseen. This
-  makes item 1 a check, not a memory; items 2 to 5 stay judgements, rarer and easier to see. A
-  method that cannot be reached in the sandbox (one the lease scenarios need 24 hours for, say)
-  is named in the check's list of exceptions with the reason, in one place.
+- **Coverage the pipeline checks.** The blocking gate runs the `@sandbox` scenarios in-process
+  as well, with the fake GitHub recording which of its port methods Divlab and the CLI call (not
+  the harness's own calls). A check then compares them with the GitHub adapter's methods that
+  the fake stands in for, and fails, naming each one no `@sandbox` scenario reached. It is the
+  same scenarios and the same Divlab code as the sandbox runs, so it shows what the sandbox
+  reaches, on every commit and at no cost to GitHub's allowance. So a new adapter method with no
+  `@sandbox` scenario reaching it, or a trim that drops the last scenario taking a path, fails
+  the gate instead of going unseen. This makes item 1 a check, not a memory; items 2 to 5 stay
+  judgements. A method the sandbox cannot reach (one the lease scenarios need 24 hours for, say)
+  is named in the check's list of exceptions with its reason, in one place. What it cannot see
+  is a path only real GitHub takes, such as a merge GitHub puts off; item 3 covers those.
+  (Bernard, 2026-10-31: in-process, as the calls Divlab makes in the sandbox happen inside its
+  Action runs, where the sandbox driver cannot see them.)
 - **The tags are where the list lives.** The list below is this proposal's starting point; once
   the tags are in, the feature files are the record, and `docs/SANDBOX.md` says what each group
   shows.
 
 ## Proposed list (about 40 of the 109)
+
+*As built: these 40, and "A change reaching main without Divlab, feedback signal or not, is
+noticed", which the coverage check's first run showed was the only one reaching Divlab's alert
+of a change it did not make: 41. The methods the sandbox cannot reach are listed with their
+reasons in `SANDBOX_UNREACHABLE`. From here the tags in the feature files are the record.*
 
 Each with the path it shows. Everything not listed runs in-process only.
 
@@ -136,5 +146,5 @@ Each with the path it shows. Everything not listed runs in-process only.
   `@in-process-only` (their comments kept where they explain something), the sandbox profile,
   the run's first step (which today lists the `@sandbox-wip` scenarios), and `docs/SANDBOX.md`,
   which gains the checklist. The coverage check is harness code, built test-first: recording the
-  calls in the sandbox driver, listing the adapter's public methods, and the end-of-run
-  comparison. No production code changes.
+  system's calls on the fake, listing the adapter's methods the fake stands in for, and the
+  comparison after the `@sandbox` scenarios run in-process. No production code changes.
