@@ -209,7 +209,7 @@ const words = (id: string) => id.replaceAll("_", " ");
 const ids = (words: string) => words.replaceAll(" ", "_");
 
 /** A modules.yaml listing the modules, each with the contracts it provides and uses. */
-function modulesYaml(modules: string[], contracts: Contract[] = []): string {
+export function modulesYaml(modules: string[], contracts: Contract[] = []): string {
   const list = (key: string, names: string[]) =>
     names.length === 0 ? "" : `    ${key}:\n${names.map((name) => `      - ${name}\n`).join("")}`;
   const entry = (module: string) =>

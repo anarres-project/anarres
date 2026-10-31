@@ -66,6 +66,12 @@ export class Anarres {
 
   /** A project of its own, whose main branch was left unprotected: a misconfiguration. */
   /** A new project of its own, started as whoever starts a project starts it. */
+  async ownProjectWithModules(...modules: string[]): Promise<void> {
+    this.project = this.ownProject("own");
+    this.modules.push(...modules.map((module) => this.aliases.of(module)));
+    await this.driver.createProjectOfItsOwn(this.project, this.modules);
+  }
+
   async newProjectStarted(): Promise<void> {
     this.project = this.ownProject("new");
     await this.driver.startProject(this.project);

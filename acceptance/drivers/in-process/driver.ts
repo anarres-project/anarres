@@ -425,6 +425,10 @@ export class InProcessDriver implements Driver {
     this.github.spoilReviewList(project);
   }
 
+  async createProjectOfItsOwn(project: string, modules: string[]): Promise<void> {
+    await this.createProject(project, modules);
+  }
+
   async spoilModulesList(project: string): Promise<void> {
     this.github.mergeFile(project, MODULES_FILE, "modules: [unclosed");
   }

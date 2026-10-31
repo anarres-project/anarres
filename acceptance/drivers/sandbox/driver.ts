@@ -25,7 +25,7 @@ import {
   taskFolder,
   taskRecord,
 } from "@anarres/cli";
-import { PROGRAMME, TRUST_LEVELS, trustAllows, writeScope } from "@anarres/core";
+import { MODULES_FILE, PROGRAMME, TRUST_LEVELS, trustAllows, writeScope } from "@anarres/core";
 import {
   type LogEvent,
   type RoutingEvent,
@@ -49,6 +49,7 @@ import {
   FAILS_ON_PURPOSE,
   feedbackSignalFile,
   inScenarioWords,
+  modulesYaml,
   moduleWorkIn,
   otherFiles,
   PASSES_ON_PURPOSE,
@@ -163,9 +164,16 @@ export class SandboxDriver implements Driver {
     this.expectedFor(project).ready += modules.length;
   }
 
+  async createProjectOfItsOwn(project: string, modules: string[]): Promise<void> {
+    this.projectOfScenario = project;
+    await this.makeProject(project, { modules });
+    for (const module of modules) await startModule(project, module, this.asDivlab);
+    this.expectedFor(project).ready += modules.length;
+  }
+
   private async makeProject(
     project: string,
-    options: { unprotected?: boolean; withoutToolchain?: boolean },
+    options: { unprotected?: boolean; withoutToolchain?: boolean; modules?: string[] },
   ): Promise<void> {
     await this.github.call("POST", `orgs/${this.org}/repos`, {
       name: project,
@@ -210,6 +218,14 @@ export class SandboxDriver implements Driver {
       await this.github.call("PUT", `repos/${this.org}/${project}/contents/${SANDBOX_TESTS}`, {
         message: "The sandbox project's tests",
         content: Buffer.from(SANDBOX_TESTS_SCRIPT).toString("base64"),
+      });
+    }
+    // A project of its own begins with its modules listed, as the Programme Architect's work
+    // would have left main, before Divlab protects it.
+    if (options.modules) {
+      await this.github.call("PUT", `repos/${this.org}/${project}/contents/${MODULES_FILE}`, {
+        message: "The project's modules",
+        content: Buffer.from(modulesYaml(options.modules)).toString("base64"),
       });
     }
     run.expected.set(project, {

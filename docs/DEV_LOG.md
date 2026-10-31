@@ -1342,6 +1342,14 @@ governance scenarios run alone.
   REFACTOR: none further
   ```
   The scenario passed and lost `@wip`. Gate 937 and 162.
+- The integration journey for the sandbox (Bernard, 2026-10-31). Written `@wip` from a new
+  project and the Programme Architect's work, it failed dishonestly: no unnamed member was left
+  for Integration Review, as one member takes one role in the programme, and the sandbox has
+  three accounts. So it starts from a project of its own already listing its two modules, as
+  the Programme Architect's work would have left main: the sandbox driver writes modules.yaml
+  before Divlab protects main, the in-process driver as it does for every project. It then
+  passed in-process and lost `@wip`; the third account is made trusted for Integration Review,
+  so it is `@governance`. Its first sandbox run is the next push's.
 
 ---
 

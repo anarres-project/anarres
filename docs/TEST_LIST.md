@@ -311,7 +311,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] preparing an integration task fetches only its role's inputs (core's read scopes, so no
         new code: a scenario for Integration Test, which fails with the contracts taken out of
         its scope); the hook judges them by the same scopes;
-  - [ ] the sandbox shows them (Bernard, 2026-10-31): one journey scenario in a project of its
+  - [ ] the sandbox shows them (Bernard, 2026-10-31; the journey written and passing in-process,
+        waiting on its first sandbox run): one journey scenario in a project of its
         own, two small modules through to integration, Integration Specification, a failing
         Integration Test sent back, then Integration Review completing the programme; the other
         integration scenarios stay in-process only.

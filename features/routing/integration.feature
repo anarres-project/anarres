@@ -137,3 +137,19 @@ Feature: The integration pipeline
     When a member's Integration Specification work for the programme is accepted with a pass verdict
     Then PDC coordinators have been alerted that the project's list of its modules cannot be read
     And no task is ready for the programme
+
+  # The sandbox's integration journey, in a project of its own (decision 0017). Integration
+  # Review needs a trusted member, so the third account is made one: it changes the governance
+  # file, and runs alone.
+  @governance
+  Scenario: The integration pipeline runs from the last module done to the programme done
+    Given a project of its own with modules "parser" and "lexer"
+    And a member's Security & Quality work on "lexer" was accepted with a pass verdict
+    And a member's Security & Quality work on "parser" was accepted with a pass verdict
+    And a member's Integration Specification work for the programme was accepted with a pass verdict
+    And a member's Integration Test work for the programme was accepted with a fail verdict, its tests finding a defect in "parser"
+    And a member's Security & Quality work on "parser" was accepted with a pass verdict
+    And a member's Integration Test work for the programme was accepted with a pass verdict
+    When a member's Integration Review work for the programme is accepted with a pass verdict
+    Then the programme is done
+    And no task is ready for the programme

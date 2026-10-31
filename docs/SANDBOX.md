@@ -135,6 +135,14 @@ The scenarios are in `features/`, one file per capability. Today:
 - `tasks/claiming`: a member claims a ready task by commenting on it.
 - `projects/protected-main`: only Divlab changes a project's main branch; the tripwire; the alert
   when main is not protected.
+- `routing/integration`: one journey in a project of its own, set up with two modules listed in
+  its modules.yaml, from the last module done through Integration Specification, a failing
+  Integration Test sent back to the module at fault, that module done again, Integration Test
+  again and Integration Review to the programme done (decision 0017). The other integration
+  scenarios run in-process only (`@sandbox-wip`): a worker's scenarios share one project, so
+  none is ever its last module, and a project of their own each would cost the run more time
+  than it has (Bernard, 2026-10-31). The journey makes the third account trusted for
+  Integration Review, so it is `@governance` and runs alone.
 
 ## What it proves beyond the in-process run
 

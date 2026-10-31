@@ -89,6 +89,11 @@ export interface Driver {
     modules: string[],
     options?: { unprotected?: boolean },
   ): Promise<void>;
+  /**
+   * A project of its own, set up with the modules' modules.yaml on main, as the Programme
+   * Architect's work would have left it, and each module started.
+   */
+  createProjectOfItsOwn(project: string, modules: string[]): Promise<void>;
   /** A new project is set up and started, as whoever starts a project does (decision 0013). */
   startProject(project: string): Promise<void>;
   /**

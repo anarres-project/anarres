@@ -10,6 +10,13 @@ defineParameterType({
   transformer: (impediment: string) => impediment,
 });
 
+Given(
+  "a project of its own with modules {string} and {string}",
+  function (this: AnarresWorld, first: string, second: string) {
+    return this.anarres.ownProjectWithModules(first, second);
+  },
+);
+
 Given("a project with a module {string}", function (this: AnarresWorld, module: string) {
   return this.anarres.projectWithModules(module);
 });
