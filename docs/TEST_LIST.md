@@ -281,7 +281,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           read → a PDC coordinator (`unlisted_module_at_fault`, naming it; unit);
     - [x] the recorded work's `moduleAtFaultUnlisted` read back only as yes, as `lastModule`;
     - [ ] refactor: the two reads of main's modules.yaml in acting on a pull request, one;
-    - [ ] the coordinator's alert says why in words of its own, not "no rule covers";
+    - [x] the coordinator's alert says why in words of its own, not "no rule covers";
     - [ ] the plugin's Integration Test instructions say how to name the module at fault;
   - [ ] a module reopened after integration began: nothing more in integration is posted until
         every module is done again, then a new Integration Test task (Bernard, 2026-10-31):

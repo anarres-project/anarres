@@ -1204,6 +1204,15 @@ governance scenarios run alone.
   REFACTOR: the two yes-only fields read back by one table
   ```
   Gate 914 and 157.
+- The coordinator's alert for integration failures, in its own words:
+  ```
+  RED:      says an integration test found a defect in a module the project does not list
+            -> "title": "Escalation: no rule covers the Integration Test work on programme"
+  GREEN:    (227 passed)
+  RED:      says a failing integration test named no module at fault -> the same
+  GREEN:    (916 in the gate)
+  REFACTOR: the title and why chosen by one function, a case for each rule
+  ```
 
 ---
 

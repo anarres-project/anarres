@@ -10947,10 +10947,7 @@ function issueForAlert(alert) {
   const { module } = alert.work;
   const work = `the ${roleName(alert.work.fromRole)} work on ${module}`;
   const reported = alert.work.impediments.map((impediment) => impediment.type).join(", ") || "no problem";
-  const [title, why] = alert.reason.rule === "re_run_limit" ? [
-    `${roleName(alert.reason.role)} has been re-run more than three times on ${module}`,
-    `${roleName(alert.reason.role)} has already been re-run three times for this module, so Divlab has not sent it back again.`
-  ] : [`no rule covers ${work}`, "No routing rule covers that."];
+  const [title, why] = escalated(alert.reason, work, module);
   return {
     title: `Escalation: ${title}`,
     labels: ["escalation", `module:${module}`],
@@ -10964,6 +10961,27 @@ function issueForAlert(alert) {
       "```"
     ].join("\n")
   };
+}
+function escalated(reason, work, module) {
+  switch (reason.rule) {
+    case "re_run_limit":
+      return [
+        `${roleName(reason.role)} has been re-run more than three times on ${module}`,
+        `${roleName(reason.role)} has already been re-run three times for this module, so Divlab has not sent it back again.`
+      ];
+    case "unlisted_module_at_fault":
+      return [
+        `${work} names a module the project does not list`,
+        `It says the defect is in ${reason.module}, which main's modules.yaml does not list, so Divlab has sent it to no module.`
+      ];
+    case "no_module_at_fault":
+      return [
+        `${work} names no module at fault`,
+        "It does not say which module the defect is in, so Divlab has sent it to no module."
+      ];
+    default:
+      return [`no rule covers ${work}`, "No routing rule covers that."];
+  }
 }
 function roleName(id) {
   const role = Object.keys(ROLE_NAMES).find((role2) => role2 === id);

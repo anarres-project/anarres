@@ -480,6 +480,45 @@ describe("a PDC coordinator alert as a GitHub issue", () => {
     });
   });
 
+  it("says an integration test found a defect in a module the project does not list (0017)", () => {
+    const unlisted: RoutingEvent = {
+      ...unroutable,
+      work: {
+        ...unroutable.work,
+        fromRole: "integration-test",
+        module: "programme",
+        moduleAtFault: "parsr",
+        moduleAtFaultUnlisted: true,
+      },
+      decision: { alert: { reason: "unlisted_module_at_fault" } },
+      reason: { rule: "unlisted_module_at_fault", module: "parsr" },
+    };
+    expect(issueForAlert(unlisted)).toEqual({
+      title:
+        "Escalation: the Integration Test work on programme names a module the project does not list",
+      labels: ["escalation", "module:programme"],
+      body: expect.stringContaining(
+        "The Integration Test work on programme failed, reporting test_failures. It says the defect is in parsr, which main's modules.yaml does not list, so Divlab has sent it to no module.",
+      ),
+    });
+  });
+
+  it("says a failing integration test named no module at fault (0017)", () => {
+    const unnamed: RoutingEvent = {
+      ...unroutable,
+      work: { ...unroutable.work, fromRole: "integration-test", module: "programme" },
+      decision: { alert: { reason: "no_module_at_fault" } },
+      reason: { rule: "no_module_at_fault" },
+    };
+    expect(issueForAlert(unnamed)).toEqual({
+      title: "Escalation: the Integration Test work on programme names no module at fault",
+      labels: ["escalation", "module:programme"],
+      body: expect.stringContaining(
+        "The Integration Test work on programme failed, reporting test_failures. It does not say which module the defect is in, so Divlab has sent it to no module.",
+      ),
+    });
+  });
+
   it("carries the routing record for tools, after the words", () => {
     const { body } = issueForAlert(unroutable);
     const json = body.match(/```json\n([\s\S]*)\n```$/)?.[1];
