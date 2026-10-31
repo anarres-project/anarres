@@ -67,3 +67,4 @@ export {
   trustAllows,
   trustLevelOf,
 } from "./trust-levels.ts";
+export { type ReadyTask, withdrawnOnReopening } from "./withdrawing.ts";

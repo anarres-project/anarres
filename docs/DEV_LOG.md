@@ -1238,6 +1238,26 @@ governance scenarios run alone.
   close only the role's own open tasks in the programme, where the Programme Architect's work
   and integration go side by side; the scenario is red in its Then (the Integration
   Specification task still ready), the rest of the suite green. Gate 918 and 158.
+- Which tasks a reopening withdraws, in core:
+  ```
+  RED:      withdraws the ready integration task when the decision sends work to a module that
+            is done -> TypeError: withdrawnOnReopening is not a function; stubbed,
+            -> expected [] to deeply equal [ '12' ]
+  GREEN:    (1 passed), every ready task given back
+  RED:      withdraws nothing when the decision sends work only to modules not done
+            -> expected [ '12' ] to deeply equal []
+  GREEN:    (2 passed)
+  RED:      withdraws only integration tasks, leaving the modules' and the Programme Architect's
+            -> expected [ '11', '12', '13' ] to deeply equal [ '12' ]
+  GREEN:    (321 passed)
+  REFACTOR: none
+  ```
+  Slip: the second GREEN read the decision's tasks with branches for decisions without any,
+  which no test asked for; the coverage gate refused them (66.66% of branches). Their tests
+  ("withdraws nothing when the decision sends no work", an alert and a finished module) passed
+  first run, as the code was there. The second row first gave a decision an absent task list,
+  which the types do not allow (typecheck caught it after the commit; fixed before pushing): a
+  decision with tasks always lists them, so the list is read as it is. Gate 923.
 
 ---
 
