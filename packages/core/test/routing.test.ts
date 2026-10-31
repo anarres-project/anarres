@@ -187,6 +187,20 @@ describe("routing accepted work", () => {
     ).toEqual({ decision: { tasks: [] }, reason: { rule: "modules_unreadable" } });
   });
 
+  it("sends integration work finding a contract that does not work to the Programme Architect (0017)", () => {
+    expect(
+      route({
+        fromRole: "integration-test",
+        module: "programme",
+        verdict: "fail",
+        impediments: [{ type: "interface_impediment" }],
+        feedbackSignal: FEEDBACK,
+      }),
+    ).toEqual({
+      tasks: [{ role: "programme-architect", module: "programme", feedbackSignal: FEEDBACK }],
+    });
+  });
+
   it("makes an Integration Test task ready when Integration Specification passes (decision 0017)", () => {
     expect(
       route({

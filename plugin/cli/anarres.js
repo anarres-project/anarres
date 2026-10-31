@@ -9281,6 +9281,11 @@ var MODULE_PIPELINE = [
   "reviewer",
   "security-and-quality"
 ];
+var INTEGRATION_PIPELINE = [
+  "integration-specification",
+  "integration-test",
+  "integration-review"
+];
 var FIRST_ROLE = MODULE_PIPELINE[0];
 var FAILURE_ROUTES = [
   { from: "architecture", reporting: "upstream_ambiguity", to: "programme-architect" },
@@ -9299,7 +9304,7 @@ var FAILURE_ROUTES = [
   { from: "security-and-quality", to: "coding" },
   // The missed behaviour becomes a module scenario, then a failing test, then code (0017).
   { from: "integration-test", reporting: "test_failures", to: "specification" },
-  ...MODULE_PIPELINE.map((from) => ({
+  ...[...MODULE_PIPELINE, ...INTEGRATION_PIPELINE].map((from) => ({
     from,
     reporting: "interface_impediment",
     to: "programme-architect"

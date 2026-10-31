@@ -294,6 +294,18 @@ Then(
   },
 );
 
+When(
+  "a member's {role} work for the programme is accepted with a {verdict} verdict, reporting {impediment}",
+  function (this: AnarresWorld, role: string, verdict: string, impediment: string) {
+    return this.anarres.memberHasWorkAccepted({
+      role,
+      module: "programme",
+      verdict,
+      impediments: [impediment],
+    });
+  },
+);
+
 Given(
   "a member's {role} work for the programme was accepted with a {verdict} verdict, its tests finding a defect in {string}",
   function (this: AnarresWorld, role: string, verdict: string, module: string) {

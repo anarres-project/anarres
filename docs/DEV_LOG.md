@@ -1387,6 +1387,16 @@ governance scenarios run alone.
   run, the first of the `@sandbox` scenarios only: 46 of 46 (41 scenarios, outlines counted by
   row), 307 steps, in 37 minutes, CI green. The integration journey passed on real GitHub at
   its first run.
+- Integration's contract problems. Acceptance: "Integration work finding a contract that does
+  not work goes to the Programme Architect", `@wip`, red in its Then (nothing ready: no rule
+  covered it, so a coordinator was alerted).
+  ```
+  RED:      sends integration work finding a contract that does not work to the Programme
+            Architect -> expected { Object (alert) } to deeply equal { tasks: [ { …(3) } ] }
+  GREEN:    (332 passed): the interface impediment row covers the integration roles too
+  REFACTOR: none
+  ```
+  The scenario passed and lost `@wip`; in-process only, routing being core's (decision 0018).
 
 ---
 

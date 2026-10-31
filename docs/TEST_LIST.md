@@ -285,7 +285,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           considered and left, as they never both run, and reading it for all work would cost
           a request on every pull request;
     - [x] the coordinator's alert says why in words of its own, not "no rule covers";
-    - [ ] an `interface_impediment` from integration work goes to the Programme Architect, as
+    - [x] an `interface_impediment` from integration work goes to the Programme Architect, as
           from a module's roles;
     - [ ] the plugin's Integration Test instructions say how to name the module at fault (waits
           on the plugin's role instructions, written with them: Bernard, 2026-10-31);

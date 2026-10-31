@@ -9492,7 +9492,7 @@ var FAILURE_ROUTES = [
   { from: "security-and-quality", to: "coding" },
   // The missed behaviour becomes a module scenario, then a failing test, then code (0017).
   { from: "integration-test", reporting: "test_failures", to: "specification" },
-  ...MODULE_PIPELINE.map((from) => ({
+  ...[...MODULE_PIPELINE, ...INTEGRATION_PIPELINE].map((from) => ({
     from,
     reporting: "interface_impediment",
     to: "programme-architect"

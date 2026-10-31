@@ -141,3 +141,11 @@ Feature: The integration pipeline
     When a member's Integration Review work for the programme is accepted with a pass verdict
     Then the programme is done
     And no task is ready for the programme
+
+  Scenario: Integration work finding a contract that does not work goes to the Programme Architect
+    Given a project with modules "parser" and "lexer"
+    And a member's Security & Quality work on "lexer" was accepted with a pass verdict
+    And a member's Security & Quality work on "parser" was accepted with a pass verdict
+    And a member's Integration Specification work for the programme was accepted with a pass verdict
+    When a member's Integration Test work for the programme is accepted with a fail verdict, reporting an interface impediment
+    Then the only task ready is a Programme Architect task for the programme
