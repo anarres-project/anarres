@@ -176,6 +176,20 @@ describe("routing accepted work", () => {
     ).toEqual({ alert: { reason: "no_module_at_fault" } });
   });
 
+  it("alerts a PDC coordinator when a failing integration test names a module the project does not list", () => {
+    expect(
+      route({
+        fromRole: "integration-test",
+        module: "programme",
+        verdict: "fail",
+        impediments: [{ type: "test_failures" }],
+        moduleAtFault: "parsr",
+        moduleAtFaultUnlisted: true,
+        feedbackSignal: FEEDBACK,
+      }),
+    ).toEqual({ alert: { reason: "unlisted_module_at_fault" } });
+  });
+
   it("completes the module when its Security & Quality check passes conditionally", () => {
     expect(
       route({

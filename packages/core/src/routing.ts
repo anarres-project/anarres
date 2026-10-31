@@ -20,6 +20,8 @@ export type AcceptedWork = {
   inputsUnchecked?: true;
   /** For Integration Test work: the module its tests found a defect in (decision 0017). */
   moduleAtFault?: string;
+  /** The module at fault is not one main's modules.yaml lists, as Divlab found (0017). */
+  moduleAtFaultUnlisted?: true;
   /** Security & Quality's work on the last of the programme's modules not yet done (0017). */
   lastModule?: true;
   /** The contracts the module provides or uses revised after the task was posted (0015). */
@@ -66,7 +68,15 @@ export const FIRST_ROLE: Role = MODULE_PIPELINE[0];
 export type RoutingDecision =
   | { tasks: Task[] }
   | { moduleDone: true; tasks?: Task[] }
-  | { alert: { reason: "no_matching_rule" | "re_run_limit" | "no_module_at_fault" } };
+  | {
+      alert: {
+        reason:
+          | "no_matching_rule"
+          | "re_run_limit"
+          | "no_module_at_fault"
+          | "unlisted_module_at_fault";
+      };
+    };
 
 /** The rule that decided a routing decision. */
 export type Reason =
@@ -79,6 +89,7 @@ export type Reason =
   | { rule: "research_returned" }
   | { rule: "no_matching_rule" }
   | { rule: "no_module_at_fault" }
+  | { rule: "unlisted_module_at_fault"; module: string }
   | { rule: "re_run_limit"; role: Role }
   | { rule: "inputs_changed"; inputs: string[] }
   | { rule: "inputs_unchecked" }
@@ -173,6 +184,12 @@ function revise(work: AcceptedWork): Ruling {
     return {
       decision: { alert: { reason: "no_module_at_fault" } },
       reason: { rule: "no_module_at_fault" },
+    };
+  }
+  if (work.moduleAtFaultUnlisted) {
+    return {
+      decision: { alert: { reason: "unlisted_module_at_fault" } },
+      reason: { rule: "unlisted_module_at_fault", module: work.moduleAtFault as string },
     };
   }
   const module = work.moduleAtFault ?? work.module;

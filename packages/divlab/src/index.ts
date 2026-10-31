@@ -1070,6 +1070,13 @@ export async function onPullRequest(
       work = { ...work, lastModule: true };
     }
   }
+  // A defect an integration test finds goes back to the module at fault, if the project has it.
+  if (signal.moduleAtFault !== undefined) {
+    const listed = readModules((await pullRequests.modulesOnMain(project)) ?? "");
+    if ("unreadable" in listed || !listed.modules.includes(signal.moduleAtFault)) {
+      work = { ...work, moduleAtFaultUnlisted: true };
+    }
+  }
   // Work on a module PDC coordinators name is merged only once a person approves it (0016).
   const governance = await pullRequests.governanceFile();
   const history = membersParts(governance, events);
@@ -1152,6 +1159,7 @@ function hasTaskOpen(events: LogEvent[], module: string): boolean {
 type RoutedWork = FeedbackSignal & {
   modulesToStart?: string[];
   lastModule?: true;
+  moduleAtFaultUnlisted?: true;
   inputsChanged?: string[];
   inputsUnchecked?: true;
   contractsRevised?: string[];

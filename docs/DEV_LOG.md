@@ -1184,6 +1184,19 @@ governance scenarios run alone.
   REFACTOR: none
   ```
   The impediment is `test_failures`, as Coding's. Gate 909 and 157.
+- A module at fault the project does not list:
+  ```
+  RED:      routing > alerts a PDC coordinator when a failing integration test names a module
+            the project does not list -> expected { tasks: [ { …(3) } ] } to deeply equal { Object (alert) }
+  GREEN:    (315 passed)
+  RED:      alerts PDC coordinators when a failing integration test names a module main's
+            modules.yaml does not list -> expected [] to deeply equal [ { …(2) } ]
+  GREEN:    (248 passed)
+  ```
+  Slip: that GREEN also covered an unreadable modules.yaml, which no test had asked for. Taken
+  out, its own test ("… names a module and main's modules.yaml cannot be read") failed, Divlab
+  crashing on the unreadable list (TypeError); put back, green (249). REFACTOR: none. Gate 912
+  and 157.
 
 ---
 

@@ -9394,6 +9394,12 @@ function revise(work) {
       reason: { rule: "no_module_at_fault" }
     };
   }
+  if (work.moduleAtFaultUnlisted) {
+    return {
+      decision: { alert: { reason: "unlisted_module_at_fault" } },
+      reason: { rule: "unlisted_module_at_fault", module: work.moduleAtFault }
+    };
+  }
   const module = work.moduleAtFault ?? work.module;
   const task = { role: owner2, module, feedbackSignal: work.feedbackSignal };
   return {
@@ -10193,6 +10199,12 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     }
     if (!("unreadable" in listed) && listed.modules.every((module) => module === signal.module || done.has(module))) {
       work = { ...work, lastModule: true };
+    }
+  }
+  if (signal.moduleAtFault !== void 0) {
+    const listed = readModules(await pullRequests.modulesOnMain(project2) ?? "");
+    if ("unreadable" in listed || !listed.modules.includes(signal.moduleAtFault)) {
+      work = { ...work, moduleAtFaultUnlisted: true };
     }
   }
   const governance = await pullRequests.governanceFile();

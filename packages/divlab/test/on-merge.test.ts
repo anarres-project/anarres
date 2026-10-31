@@ -1,6 +1,7 @@
 import type { Role } from "@anarres/core";
 import { describe, expect, it } from "vitest";
 import {
+  type CoordinatorAlert,
   type EventLog,
   type LogEvent,
   type NotAccepted,
@@ -804,6 +805,56 @@ describe("acting on a pull request", () => {
     await onPullRequest("ledger", "7", spoiled, finishing, log, clock);
     expect(alerted).toEqual([
       { project: "ledger", reason: expect.stringContaining("modules.yaml") },
+    ]);
+  });
+
+  it("alerts PDC coordinators when a failing integration test names a module main's modules.yaml does not list (0017)", async () => {
+    const alerts: CoordinatorAlert[] = [];
+    const integrationFails = {
+      path: "feedback/FB-1.md",
+      text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: integration-test\n  module: programme\n  verdict: fail\n  module_at_fault: parsr\n  impediments:\n    - type: test_failures\n---\n',
+    };
+    const listed: PullRequests = {
+      ...submitting([], [integrationFails]),
+      modulesOnMain: async () => "modules:\n  - name: lexer\n  - name: parser\n",
+    };
+    const integrating: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "integration-test", module: "programme", claimedBy: "alice" }),
+      close: async () => {},
+      post: async () => {},
+      alertCoordinators: async (alert) => {
+        alerts.push(alert);
+      },
+    };
+    await onPullRequest("ledger", "7", listed, integrating, log, clock);
+    expect(alerts.map(({ reason }) => reason)).toEqual([
+      { rule: "unlisted_module_at_fault", module: "parsr" },
+    ]);
+  });
+
+  it("alerts PDC coordinators when a failing integration test names a module and main's modules.yaml cannot be read", async () => {
+    const alerts: CoordinatorAlert[] = [];
+    const integrationFails = {
+      path: "feedback/FB-1.md",
+      text: '---\nfeedback_signal:\n  task_id: "1"\n  from_role: integration-test\n  module: programme\n  verdict: fail\n  module_at_fault: parser\n  impediments:\n    - type: test_failures\n---\n',
+    };
+    const spoiled: PullRequests = {
+      ...submitting([], [integrationFails]),
+      modulesOnMain: async () => "modules: [unclosed",
+    };
+    const integrating: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "integration-test", module: "programme", claimedBy: "alice" }),
+      close: async () => {},
+      post: async () => {},
+      alertCoordinators: async (alert) => {
+        alerts.push(alert);
+      },
+    };
+    await onPullRequest("ledger", "7", spoiled, integrating, log, clock);
+    expect(alerts.map(({ reason }) => reason)).toEqual([
+      { rule: "unlisted_module_at_fault", module: "parser" },
     ]);
   });
 
