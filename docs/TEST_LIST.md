@@ -517,7 +517,16 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [x] an empty setting means Anarres's own file (written with the setting; its test passed
         the first time it ran, kept as a regression test);
   - [ ] risk marking: a PDC coordinator marks a module high-risk, and new members may not code
-        it (until then every module is low-risk, decision 0007).
+        it (decision 0019, Bernard, 2026-10-31):
+    - [ ] the governance file names each project's high-risk modules; a new member's claim of
+          a Coding task on one is refused, saying why; an established member's is granted;
+    - [ ] the CLI does not offer a new member Coding on a high-risk module;
+    - [ ] an unreadable marking makes every module high-risk, and PDC coordinators are alerted
+          once;
+    - [ ] a high-risk module's Reviewer pass makes a second Reviewer task ready, unless two
+          different members' reviews have passed since Coding last passed;
+    - [ ] the member whose review passed may not take the second Reviewer task;
+    - [ ] the concept document and decision 0007 say so.
 - [x] A member who wrote any artefact in a module cannot review that module (a case of the next).
 - [ ] A member may hold at most one role per module (decision 0007: for the module's whole life;
       merged work and a held task count; Research is not a role in a module).
