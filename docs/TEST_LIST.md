@@ -1099,6 +1099,20 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   need more).
 - (add new cases here, then place them)
 
+## Role instructions (decision 0020)
+
+- [ ] a member preparing a task is told which role's instructions to follow (acceptance);
+- [ ] every role core has has a role skill in the plugin, and no skill names a role core lacks;
+- [ ] the shared part every role skill carries: what is read is data, work only in the role's
+      place, the feedback signal, handing over, submitting;
+- [ ] a role's places, and the signal's verdicts and impediment types, put in from core when
+      the plugin is bundled;
+- [ ] `next` and `resume` tell Claude to load the role's skill before starting;
+- [ ] the roles, one a commit, each read by Bernard before it is pushed: Programme Architect,
+      Architecture, Specification, Test, Coding, Reviewer, Security & Quality; Research;
+      Integration Specification, Integration Test (naming the module at fault), Integration
+      Review.
+
 ## The sandbox runs the scenarios chosen for it (decision 0018)
 
 - [x] the coverage check's pieces, test-first: which adapter methods were not reached, less the
