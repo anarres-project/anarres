@@ -271,7 +271,9 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
   - [ ] a module reopened after integration began: nothing more in integration is posted until
         every module is done again, then a new Integration Test task;
   - [x] the template's checks run on Integration Test work (`integration/tests/`);
-  - [ ] preparing an integration task fetches only its role's inputs, and the hook judges them;
+  - [x] preparing an integration task fetches only its role's inputs (core's read scopes, so no
+        new code: a scenario for Integration Test, which fails with the contracts taken out of
+        its scope); the hook judges them by the same scopes;
   - [ ] the sandbox shows them.
 - [x] Escalation: the same role is re-run more than three times → a PDC coordinator is alerted and
       no further task is posted (Bernard, 2026-10-12: per module, revision tasks only, the count

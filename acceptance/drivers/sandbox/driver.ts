@@ -1342,6 +1342,18 @@ export class SandboxDriver implements Driver {
     return moduleWorkIn(paths);
   }
 
+  /** The kinds of integration work in the prepared task's folder: the folders of `integration/`. */
+  async integrationWorkFetched(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<string[]> {
+    const id = this.preparedIssues.get(`${member} ${task.role} ${task.module}`);
+    if (id === undefined || this.machine === undefined) return [];
+    const folder = taskFolder({ project: task.project, task: id });
+    const integration = join(this.machine, folder, "integration");
+    return existsSync(integration) ? readdirSync(integration).sort() : [];
+  }
+
   /** The contracts in the prepared task's folder: the folders of `programme/contracts/`. */
   async contractsFetched(
     task: { project: string; role: string; module: string },

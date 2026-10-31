@@ -123,6 +123,15 @@ const MODULE_WORK: Record<string, string> = {
 };
 
 /** The modules' work among a project's files: each file's module, and its kind of work. */
+/** The kinds of the programme's integration work among fetched paths: `integration/<kind>/…`. */
+export function integrationKindsIn(paths: readonly string[]): string[] {
+  const kinds = paths.flatMap((path) => {
+    const [top, kind, file] = path.split("/");
+    return top === "integration" && kind !== undefined && file !== undefined ? [kind] : [];
+  });
+  return [...new Set(kinds)].sort();
+}
+
 export function moduleWorkIn(paths: readonly string[]): { module: string; kind: string }[] {
   return paths.flatMap((path) => {
     const [top, module, folder] = path.split("/");

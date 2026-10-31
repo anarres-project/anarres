@@ -173,6 +173,11 @@ export interface Driver {
     task: { project: string; role: string; module: string },
     member: string,
   ): Promise<{ module: string; kind: string }[]>;
+  /** The kinds of the programme's integration work (specifications, tests, reviews) fetched. */
+  integrationWorkFetched(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<string[]>;
   /** The feedback signals among the files the member's plugin fetched when it prepared the task. */
   feedbackSignalsFetched(
     task: { project: string; role: string; module: string },

@@ -1103,6 +1103,12 @@ governance scenarios run alone.
   GREEN:    `integration/tests/**` joins the paths.
   Two integration scenarios then failed: the harness's integration work changed no file, so
   Integration Test was refused; it writes each integration role's artefact now. Gate 895 and 153.
+- Preparing an integration task. Acceptance: "A member preparing an Integration Test task has
+  the integration specifications and the contracts, and none of the modules' work", `@wip`; it
+  passed first run, as `prepare` and the hook read core's scopes and Integration Test's were
+  driven already. With the contracts taken out of its read scope it failed in its Then, so it
+  depends on them; it lost `@wip` (`@sandbox-wip`, as the integration scenarios). The drivers
+  say which kinds of integration work were fetched. Gate 895 and 154.
 
 ---
 

@@ -46,6 +46,7 @@ import type {
 import {
   feedbackSignalFile,
   inScenarioWords,
+  integrationKindsIn,
   moduleWorkIn,
   otherFiles,
   roleId,
@@ -542,6 +543,14 @@ export class InProcessDriver implements Driver {
   ): Promise<{ module: string; kind: string }[]> {
     const fetched = this.fetched.get(`${member} ${task.project}#${this.openTaskId(task)}`) ?? [];
     return moduleWorkIn(fetched);
+  }
+
+  async integrationWorkFetched(
+    task: { project: string; role: string; module: string },
+    member: string,
+  ): Promise<string[]> {
+    const fetched = this.fetched.get(`${member} ${task.project}#${this.openTaskId(task)}`) ?? [];
+    return integrationKindsIn(fetched);
   }
 
   async contractsFetched(

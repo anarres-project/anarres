@@ -100,6 +100,20 @@ When(
   },
 );
 
+When(
+  "{word} prepares the {role} task for the programme",
+  function (this: AnarresWorld, member: string, role: string) {
+    return this.anarres.memberPrepares(member, { role, module: "programme" });
+  },
+);
+
+Then(
+  "{word} has the integration specifications and every contract to read, and none of the modules' work",
+  function (this: AnarresWorld, member: string) {
+    return this.anarres.memberHasIntegrationInputs(member, ["specifications"]);
+  },
+);
+
 Then(
   "{word} has the contract {string} to read, and not the contract {string}",
   function (this: AnarresWorld, member: string, contract: string, notContract: string) {

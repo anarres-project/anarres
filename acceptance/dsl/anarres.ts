@@ -921,6 +921,28 @@ export class Anarres {
   }
 
   /**
+   * The member's prepared integration task fetched those kinds of the programme's integration
+   * work, every contract the programme has, and none of its modules' work (decision 0017).
+   */
+  async memberHasIntegrationInputs(member: string, kinds: string[]) {
+    const work = this.lastPrepared.get(member);
+    assert.ok(work !== undefined, `expected ${member} to have prepared a task`);
+    const integration = await this.driver.integrationWorkFetched(work, this.member(member));
+    assert.deepEqual(integration, kinds, `expected ${member} to have the integration ${kinds}`);
+    const contracts = await this.driver.contractsFetched(work, this.member(member));
+    const every = (this.programme?.contracts ?? []).map((contract) =>
+      this.aliases.of(contract.name),
+    );
+    assert.deepEqual(
+      [...contracts].sort(),
+      [...every].sort(),
+      `expected ${member} to have every contract`,
+    );
+    const modules = await this.driver.moduleWorkFetched(work, this.member(member));
+    assert.deepEqual(modules, [], `expected ${member} to have none of the modules' work`);
+  }
+
+  /**
    * The member's prepared task fetched those kinds of a module's work, and nothing of another
    * module's, if one is named.
    */

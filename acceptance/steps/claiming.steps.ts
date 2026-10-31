@@ -16,6 +16,13 @@ Then(
 );
 
 Given(
+  "{word} has claimed the {role} task for the programme",
+  function (this: AnarresWorld, member: string, role: string) {
+    return this.anarres.memberHasClaimed(member, { role, module: "programme" });
+  },
+);
+
+Given(
   "{word} has claimed the {role} task for {string}",
   function (this: AnarresWorld, member: string, role: string, module: string) {
     return this.anarres.memberHasClaimed(member, { role, module });
