@@ -272,11 +272,14 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         carrying the integration signal; an `interface_impediment` goes to the Programme
         Architect (Bernard, 2026-10-31: the feedback signal gains an optional field naming one
         module, checked against main's modules.yaml):
-    - [ ] the feedback signal schema accepts an optional module at fault, and refuses one that
-          is not a module name;
-    - [ ] Integration Test failing with a known module named → that module's Specification;
-    - [ ] with no module named, or one modules.yaml does not list → a PDC coordinator, saying
-          why, never a guess;
+    - [x] the feedback signal schema accepts an optional module at fault, and refuses one that
+          is not a plain name;
+    - [x] Integration Test failing, reporting test failures, with a module named → that
+          module's Specification, carrying the signal (in-process);
+    - [x] with no module named → a PDC coordinator (`no_module_at_fault`), never a guess;
+    - [ ] with a module named that main's modules.yaml does not list → a PDC coordinator;
+    - [ ] the coordinator's alert says why in words of its own, not "no rule covers";
+    - [ ] the plugin's Integration Test instructions say how to name the module at fault;
   - [ ] a module reopened after integration began: nothing more in integration is posted until
         every module is done again, then a new Integration Test task (Bernard, 2026-10-31):
     - [ ] a contract revision leaves integration work already claimed to finish: decision

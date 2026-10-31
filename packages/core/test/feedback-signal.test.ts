@@ -37,6 +37,41 @@ describe("reading a feedback signal", () => {
     expect(readFeedbackSignal(signal)).toMatchObject({ partial: true });
   });
 
+  it("gives the module an integration test found a defect in (decision 0017)", () => {
+    const signal = [
+      "---",
+      "feedback_signal:",
+      "  from_role: integration-test",
+      "  module: programme",
+      "  verdict: fail",
+      "  module_at_fault: parser",
+      "  impediments:",
+      "    - type: test_failures",
+      "---",
+      "",
+    ].join("\n");
+    expect(readFeedbackSignal(signal)).toMatchObject({ moduleAtFault: "parser" });
+  });
+
+  it.each(['"parser [see](https://example.test)"', "[parser, lexer]"])(
+    "is unreadable when the module at fault is not a plain name: %s",
+    (atFault) => {
+      const signal = [
+        "---",
+        "feedback_signal:",
+        "  from_role: integration-test",
+        "  module: programme",
+        "  verdict: fail",
+        `  module_at_fault: ${atFault}`,
+        "---",
+        "",
+      ].join("\n");
+      expect(readFeedbackSignal(signal)).toEqual({
+        unreadable: "its feedback signal's module_at_fault is not a plain name",
+      });
+    },
+  );
+
   it("reads a signal written with Windows line endings the same", () => {
     const signal = [
       "---",

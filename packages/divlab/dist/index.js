@@ -8999,6 +8999,10 @@ function readFeedbackSignal(text) {
   if (!impediments.every((impediment) => isPlainName(impediment.type))) {
     return { unreadable: "its feedback signal's impediments are not each a plain name" };
   }
+  const atFault = header.module_at_fault;
+  if (atFault !== void 0 && !(typeof atFault === "string" && isPlainName(atFault))) {
+    return { unreadable: "its feedback signal's module_at_fault is not a plain name" };
+  }
   const task = header.task_id;
   if (task !== void 0 && typeof task !== "string" && !Number.isInteger(task)) {
     return {
@@ -9013,7 +9017,8 @@ function readFeedbackSignal(text) {
       type: impediment.type
     })),
     ...task === void 0 ? {} : { task: String(task) },
-    ...header.status === "partial" ? { partial: true } : {}
+    ...header.status === "partial" ? { partial: true } : {},
+    ...atFault === void 0 ? {} : { moduleAtFault: atFault }
   };
 }
 function readSignalFile(path) {
@@ -9383,7 +9388,14 @@ function revise(work) {
   const matched = failureRoute(work);
   if (!matched) return NO_RULE_COVERS_IT;
   const owner2 = matched.to;
-  const task = { role: owner2, module: work.module, feedbackSignal: work.feedbackSignal };
+  if (work.module === PROGRAMME && owner2 === "specification" && work.moduleAtFault === void 0) {
+    return {
+      decision: { alert: { reason: "no_module_at_fault" } },
+      reason: { rule: "no_module_at_fault" }
+    };
+  }
+  const module = work.moduleAtFault ?? work.module;
+  const task = { role: owner2, module, feedbackSignal: work.feedbackSignal };
   return {
     decision: { tasks: [owner2 === "research" ? { ...task, researchFor: work.fromRole } : task] },
     reason: matched.reporting === void 0 ? { rule: "failed" } : { rule: "reported", impediment: matched.reporting }
@@ -9461,6 +9473,8 @@ var FAILURE_ROUTES = [
   { from: "security-and-quality", reporting: "architecture_impediment", to: "architecture" },
   { from: "reviewer", to: "coding" },
   { from: "security-and-quality", to: "coding" },
+  // The missed behaviour becomes a module scenario, then a failing test, then code (0017).
+  { from: "integration-test", reporting: "test_failures", to: "specification" },
   ...MODULE_PIPELINE.map((from) => ({
     from,
     reporting: "interface_impediment",

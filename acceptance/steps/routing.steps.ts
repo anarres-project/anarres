@@ -280,6 +280,26 @@ Then(
   },
 );
 
+When(
+  "a member's {role} work for the programme is accepted with a {verdict} verdict, its tests finding a defect in {string}",
+  function (this: AnarresWorld, role: string, verdict: string, module: string) {
+    return this.anarres.memberHasWorkAccepted({
+      role,
+      module: "programme",
+      verdict,
+      impediments: ["test failures"],
+      moduleAtFault: module,
+    });
+  },
+);
+
+Then(
+  "the {role} task for {string} carries the feedback signal from the {role} work for the programme",
+  function (this: AnarresWorld, role: string, module: string, fromRole: string) {
+    return this.anarres.taskCarriesFeedbackFrom({ role, module }, fromRole, "programme");
+  },
+);
+
 Then("the module {string} is done", function (this: AnarresWorld, module: string) {
   return this.anarres.moduleIsDone(module);
 });

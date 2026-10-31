@@ -151,6 +151,31 @@ describe("routing accepted work", () => {
     ).toEqual({ moduleDone: true });
   });
 
+  it("sends the module an integration test found a defect in back to Specification (decision 0017)", () => {
+    expect(
+      route({
+        fromRole: "integration-test",
+        module: "programme",
+        verdict: "fail",
+        impediments: [{ type: "test_failures" }],
+        moduleAtFault: "parser",
+        feedbackSignal: FEEDBACK,
+      }),
+    ).toEqual({ tasks: [{ role: "specification", module: "parser", feedbackSignal: FEEDBACK }] });
+  });
+
+  it("alerts a PDC coordinator when a failing integration test names no module at fault, never guessing", () => {
+    expect(
+      route({
+        fromRole: "integration-test",
+        module: "programme",
+        verdict: "fail",
+        impediments: [{ type: "test_failures" }],
+        feedbackSignal: FEEDBACK,
+      }),
+    ).toEqual({ alert: { reason: "no_module_at_fault" } });
+  });
+
   it("completes the module when its Security & Quality check passes conditionally", () => {
     expect(
       route({

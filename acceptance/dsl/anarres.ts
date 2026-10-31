@@ -196,6 +196,7 @@ export class Anarres {
       contracts?: Contract[];
       slicesChanged?: string[];
       contractsRevised?: string[];
+      moduleAtFault?: string;
     },
     named?: string,
   ) {
@@ -490,9 +491,12 @@ export class Anarres {
     }
   }
 
-  async taskCarriesFeedbackFrom(task: Work, fromRole: string) {
+  /** `fromModule`: where the work that sent the task was done, if not the task's own module. */
+  async taskCarriesFeedbackFrom(task: Work, fromRole: string, fromModule?: string) {
     const expected = this.aliased(task);
-    const feedbackSignal = this.feedbackSignals.get(workOn({ ...expected, role: fromRole }));
+    const from =
+      fromModule === undefined ? expected : this.aliased({ ...task, module: fromModule });
+    const feedbackSignal = this.feedbackSignals.get(workOn({ ...from, role: fromRole }));
     assert.deepEqual(
       await this.readyTasks((t) => t.role === expected.role && t.module === expected.module),
       [{ ...expected, feedbackSignal }],
@@ -1180,15 +1184,18 @@ export class Anarres {
       contracts,
       slicesChanged: slices,
       contractsRevised: revised,
+      moduleAtFault: atFault,
     } = work as {
       modulesListed?: string[];
       contracts?: Contract[];
       slicesChanged?: string[];
       contractsRevised?: string[];
+      moduleAtFault?: string;
     };
     return {
       ...work,
       module,
+      ...(atFault === undefined ? {} : { moduleAtFault: this.aliases.of(atFault) }),
       ...(listed === undefined ? {} : { modulesListed: listed.map((m) => this.aliases.of(m)) }),
       ...(slices === undefined ? {} : { slicesChanged: slices.map((m) => this.aliases.of(m)) }),
       ...(revised === undefined

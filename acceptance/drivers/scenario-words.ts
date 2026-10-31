@@ -26,6 +26,7 @@ export function feedbackSignalFile(work: AcceptedWork, task?: string) {
     `  module: ${work.moduleNotPlain ? `"${work.module} [see](https://example.test)"` : work.module}`,
     ...(work.partial ? ["  status: partial"] : []),
     ...(work.withoutVerdict ? [] : [`  verdict: ${ids(work.verdict)}`]),
+    ...(work.moduleAtFault === undefined ? [] : [`  module_at_fault: ${work.moduleAtFault}`]),
     ...(work.impediments.length === 0
       ? []
       : ["  impediments:", ...work.impediments.map((name) => `    - type: ${ids(name)}`)]),

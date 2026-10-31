@@ -6,6 +6,8 @@ export type AcceptedWork = {
   feedbackSignal: string;
   verdict: string;
   impediments: string[];
+  /** The module the member's integration tests found a defect in (decision 0017). */
+  moduleAtFault?: string;
   /** The member's work leaves its feedback signal out. */
   withoutFeedbackSignal?: boolean;
   /** The member's feedback signal names its module in more than a plain name. */

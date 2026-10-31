@@ -10,6 +10,8 @@ export type FeedbackSignal = {
   task?: string;
   /** Handed over part done, its member out of allowance (decision 0008). */
   partial?: true;
+  /** The module an integration test found a defect in (decision 0017). */
+  moduleAtFault?: string;
 };
 
 /**
@@ -66,6 +68,10 @@ export function readFeedbackSignal(text: string): FeedbackSignal | Unreadable {
   if (!impediments.every((impediment) => isPlainName(impediment.type))) {
     return { unreadable: "its feedback signal's impediments are not each a plain name" };
   }
+  const atFault = header.module_at_fault;
+  if (atFault !== undefined && !(typeof atFault === "string" && isPlainName(atFault))) {
+    return { unreadable: "its feedback signal's module_at_fault is not a plain name" };
+  }
   const task = header.task_id;
   if (task !== undefined && typeof task !== "string" && !Number.isInteger(task)) {
     return {
@@ -81,6 +87,7 @@ export function readFeedbackSignal(text: string): FeedbackSignal | Unreadable {
     })),
     ...(task === undefined ? {} : { task: String(task) }),
     ...(header.status === "partial" ? { partial: true } : {}),
+    ...(atFault === undefined ? {} : { moduleAtFault: atFault }),
   };
 }
 

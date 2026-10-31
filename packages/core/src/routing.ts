@@ -18,6 +18,8 @@ export type AcceptedWork = {
   inputsChanged?: string[];
   /** Too much changed on main since the task was posted to tell whether its inputs did (0015). */
   inputsUnchecked?: true;
+  /** For Integration Test work: the module its tests found a defect in (decision 0017). */
+  moduleAtFault?: string;
   /** Security & Quality's work on the last of the programme's modules not yet done (0017). */
   lastModule?: true;
   /** The contracts the module provides or uses revised after the task was posted (0015). */
@@ -64,7 +66,7 @@ export const FIRST_ROLE: Role = MODULE_PIPELINE[0];
 export type RoutingDecision =
   | { tasks: Task[] }
   | { moduleDone: true; tasks?: Task[] }
-  | { alert: { reason: "no_matching_rule" | "re_run_limit" } };
+  | { alert: { reason: "no_matching_rule" | "re_run_limit" | "no_module_at_fault" } };
 
 /** The rule that decided a routing decision. */
 export type Reason =
@@ -76,6 +78,7 @@ export type Reason =
   | { rule: "failed" }
   | { rule: "research_returned" }
   | { rule: "no_matching_rule" }
+  | { rule: "no_module_at_fault" }
   | { rule: "re_run_limit"; role: Role }
   | { rule: "inputs_changed"; inputs: string[] }
   | { rule: "inputs_unchecked" }
@@ -164,7 +167,16 @@ function revise(work: AcceptedWork): Ruling {
   const matched = failureRoute(work);
   if (!matched) return NO_RULE_COVERS_IT;
   const owner = matched.to;
-  const task = { role: owner, module: work.module, feedbackSignal: work.feedbackSignal };
+  // A defect an integration test finds goes back to the module at fault (decision 0017), and
+  // without one named, to a PDC coordinator: Divlab never guesses which.
+  if (work.module === PROGRAMME && owner === "specification" && work.moduleAtFault === undefined) {
+    return {
+      decision: { alert: { reason: "no_module_at_fault" } },
+      reason: { rule: "no_module_at_fault" },
+    };
+  }
+  const module = work.moduleAtFault ?? work.module;
+  const task = { role: owner, module, feedbackSignal: work.feedbackSignal };
   return {
     decision: { tasks: [owner === "research" ? { ...task, researchFor: work.fromRole } : task] },
     reason:
@@ -271,6 +283,8 @@ const FAILURE_ROUTES: readonly FailureRoute[] = [
   { from: "security-and-quality", reporting: "architecture_impediment", to: "architecture" },
   { from: "reviewer", to: "coding" },
   { from: "security-and-quality", to: "coding" },
+  // The missed behaviour becomes a module scenario, then a failing test, then code (0017).
+  { from: "integration-test", reporting: "test_failures", to: "specification" },
   ...MODULE_PIPELINE.map((from) => ({
     from,
     reporting: "interface_impediment",

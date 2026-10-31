@@ -1161,6 +1161,29 @@ governance scenarios run alone.
   why", `@wip @sandbox-wip`. It passed first run, the check gate having been driven by unit
   tests in 2ee4227 (the scenario came after them, as logged then). With Integration Test taken
   out of the gate it failed in its Then, so it depends on it; restored, it lost `@wip`.
+- A defect an integration test finds (decision 0017 as amended). Acceptance: "An integration
+  test finding a defect sends the module at fault back to Specification", `@wip @sandbox-wip`,
+  red in its Then (no Specification task for parser). Cycles:
+  ```
+  RED:      gives the module an integration test found a defect in
+            -> expected { fromRole: 'integration-test', …(3) } to match object { moduleAtFault: 'parser' }
+  GREEN:    (44 passed)
+  RED:      is unreadable when the module at fault is not a plain name (two rows)
+            -> expected { fromRole: 'integration-test', …(4) } to deeply equal { Object (unreadable) }
+  GREEN:    (312 passed)
+  RED:      sends the module an integration test found a defect in back to Specification
+            -> expected { Object (alert) } to deeply equal { tasks: [ { …(3) } ] }
+  GREEN:    (313 passed)
+  ```
+  The scenario then passed and lost `@wip`; Divlab carries the signal's fields into the work
+  already. That left work naming no module sent to Specification for the programme, a guess:
+  ```
+  RED:      alerts a PDC coordinator when a failing integration test names no module at fault
+            -> expected { tasks: [ { …(3) } ] } to deeply equal { Object (alert) }
+  GREEN:    (314 passed)
+  REFACTOR: none
+  ```
+  The impediment is `test_failures`, as Coding's. Gate 909 and 157.
 
 ---
 
