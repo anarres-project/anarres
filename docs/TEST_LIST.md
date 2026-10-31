@@ -525,8 +525,10 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           `eligibility`, which Divlab and the CLI share);
     - [x] an unreadable marking makes every module high-risk, and PDC coordinators are alerted
           once (`@sandbox`: its alert is a path no other sandbox scenario takes);
-    - [ ] a high-risk module's Reviewer pass makes a second Reviewer task ready, unless two
-          different members' reviews have passed since Coding last passed;
+    - [x] a high-risk module's Reviewer pass makes a second Reviewer task ready, unless two
+          different members' reviews have passed since Coding last passed (in-process; linked
+          accounts are one member; the recorded work's `highRisk` and `reviewsPassed` read
+          back only as yes and as a count);
     - [ ] the member whose review passed may not take the second Reviewer task;
     - [ ] the concept document and decision 0007 say so.
 - [x] A member who wrote any artefact in a module cannot review that module (a case of the next).

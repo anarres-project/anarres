@@ -1072,6 +1072,84 @@ describe("acting on a pull request", () => {
     });
   });
 
+  it("asks for a second review when a high-risk module's first review passes (0019)", async () => {
+    const posted: PostedTask[] = [];
+    const reviewPasses = {
+      path: "feedback/FB-3.md",
+      text: '---\nfeedback_signal:\n  task_id: "3"\n  from_role: reviewer\n  module: parser\n  verdict: pass\n---\n',
+    };
+    const highRisk: PullRequests = {
+      ...submitting([], [reviewPasses]),
+      governanceFile: async () => ({
+        members: { alice: { level: "established" } },
+        highRisk: { ledger: ["parser"] },
+      }),
+    };
+    const coded: EventLog = {
+      read: async () => [
+        {
+          project: "ledger",
+          member: "carol",
+          work: {
+            fromRole: "coding",
+            module: "parser",
+            verdict: "pass",
+            impediments: [],
+            feedbackSignal: "feedback/FB-1.md",
+          },
+          decision: { tasks: [{ role: "reviewer", module: "parser" }] },
+          reason: { rule: "passed" },
+        },
+      ],
+      append: async () => {},
+    };
+    const reviewing: TaskBoard = {
+      ...heldAs("reviewer"),
+      post: async (task) => {
+        posted.push(task);
+      },
+    };
+    await onPullRequest("ledger", "7", highRisk, reviewing, coded, clock);
+    expect(posted.map(({ role }) => role)).toEqual(["reviewer"]);
+  });
+
+  it("sends a high-risk module on to Security & Quality once a second member's review passes (0019)", async () => {
+    const posted: PostedTask[] = [];
+    const reviewPasses = {
+      path: "feedback/FB-3.md",
+      text: '---\nfeedback_signal:\n  task_id: "3"\n  from_role: reviewer\n  module: parser\n  verdict: pass\n---\n',
+    };
+    const highRisk: PullRequests = {
+      ...submitting([], [reviewPasses]),
+      governanceFile: async () => ({
+        members: { alice: { level: "established" } },
+        highRisk: { ledger: ["parser"] },
+      }),
+    };
+    const passed = (fromRole: string, member: string, feedbackSignal: string): LogEvent => ({
+      project: "ledger",
+      member,
+      work: { fromRole, module: "parser", verdict: "pass", impediments: [], feedbackSignal },
+      decision: { tasks: [] },
+      reason: { rule: "passed" },
+    });
+    const bobReviewed: EventLog = {
+      read: async () => [
+        passed("coding", "carol", "feedback/FB-1.md"),
+        passed("reviewer", "bob", "feedback/FB-2.md"),
+      ],
+      append: async () => {},
+    };
+    const reviewing: TaskBoard = {
+      ...heldAs("reviewer"),
+      post: async (task) => {
+        posted.push(task);
+      },
+    };
+    await onPullRequest("ledger", "7", highRisk, reviewing, bobReviewed, clock);
+    expect(posted.map(({ role }) => role)).toEqual(["security-and-quality"]);
+  });
+
   it("starts no integration while another module is not done", async () => {
     const posted: PostedTask[] = [];
     const securityPasses = {

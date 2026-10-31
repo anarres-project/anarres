@@ -26,6 +26,11 @@ export type AcceptedWork = {
   lastModule?: true;
   /** For integration work: the modules not done again since they were reopened (decision 0017). */
   modulesReopened?: string[];
+  /** For Reviewer work: the module is high-risk (decision 0019). */
+  highRisk?: true;
+  /** For Reviewer work: how many different members' reviews have passed since Coding last
+   * passed, this one included (decision 0019). */
+  reviewsPassed?: number;
   /** For integration work: main's modules.yaml could not be read, so who is done is unknown. */
   modulesUnreadable?: true;
   /** The programme's integration had begun before a module was reopened (decision 0017). */
@@ -97,6 +102,7 @@ export type Reason =
   | { rule: "no_module_at_fault" }
   | { rule: "integration_held"; modules: string[] }
   | { rule: "modules_unreadable" }
+  | { rule: "second_review" }
   | { rule: "unlisted_module_at_fault"; module: string }
   | { rule: "re_run_limit"; role: Role }
   | { rule: "inputs_changed"; inputs: string[] }
@@ -260,6 +266,13 @@ function startModules(work: AcceptedWork, modules: string[]): Ruling {
 }
 
 function advance(work: AcceptedWork): Ruling {
+  // A high-risk module's code is reviewed by two different members (decision 0019).
+  if (work.fromRole === "reviewer" && work.highRisk && (work.reviewsPassed ?? 0) < 2) {
+    return {
+      decision: { tasks: [{ role: "reviewer", module: work.module }] },
+      reason: { rule: "second_review" },
+    };
+  }
   const integrating = (INTEGRATION_PIPELINE as readonly string[]).indexOf(work.fromRole);
   if (integrating >= 0) {
     // Nothing further in integration until every module is done again (decision 0017), nor

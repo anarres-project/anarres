@@ -9463,6 +9463,12 @@ function startModules(work, modules) {
   };
 }
 function advance(work) {
+  if (work.fromRole === "reviewer" && work.highRisk && (work.reviewsPassed ?? 0) < 2) {
+    return {
+      decision: { tasks: [{ role: "reviewer", module: work.module }] },
+      reason: { rule: "second_review" }
+    };
+  }
   const integrating = INTEGRATION_PIPELINE.indexOf(work.fromRole);
   if (integrating >= 0) {
     if (work.modulesUnreadable) {
@@ -9571,7 +9577,8 @@ var WORK_FIELDS = [
 ];
 var YES_FIELDS = [
   ["lastModule", "it completed the last module"],
-  ["moduleAtFaultUnlisted", "its module at fault is unlisted"]
+  ["moduleAtFaultUnlisted", "its module at fault is unlisted"],
+  ["highRisk", "its module is high-risk"]
 ];
 function readRoutingRecord(value) {
   if (!isObject(value) || !isObject(value.work) || !isObject(value.decision) || !isObject(value.reason)) {
@@ -9610,6 +9617,10 @@ function unreadableWork(work) {
     if (value !== void 0 && value !== true) {
       return { unreadable: `its work says ${says} in something other than yes` };
     }
+  }
+  const { reviewsPassed } = work;
+  if (reviewsPassed !== void 0 && !(Number.isSafeInteger(reviewsPassed) && reviewsPassed >= 0)) {
+    return { unreadable: "its work does not give how many reviews passed as a count" };
   }
   return void 0;
 }
@@ -10280,6 +10291,11 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
   }
   const governance = await pullRequests.governanceFile();
   const history = membersParts(governance, events);
+  if (role === "reviewer" && !failed(signal) && !signal.partial && isHighRisk(governance, project2, signal.module)) {
+    const reviewers = reviewersSinceCoding(events, signal.module, governance);
+    reviewers.add(memberFor(governance, author));
+    work = { ...work, highRisk: true, reviewsPassed: reviewers.size };
+  }
   const approved = approvalsStanding(await pullRequests.reviews(project2, pullRequest)).some(
     ({ reviewer, commit }) => commit === head && approvalCounts(governance, reviewer, { author, module: signal.module }, history)
   );
@@ -10331,6 +10347,17 @@ async function alertIfUnreadable(project2, onMain, listed, board) {
       `The project's modules.yaml on main cannot be read: ${listed.unreadable}`
     );
   }
+}
+function reviewersSinceCoding(events, module, governance) {
+  const records = routingDecisions(events).filter((event) => event.work.module === module);
+  const coded = records.findLastIndex(
+    (event) => event.work.fromRole === "coding" && !failed(event.work)
+  );
+  return new Set(
+    records.slice(coded + 1).filter((event) => event.work.fromRole === "reviewer" && !failed(event.work)).flatMap(
+      (event) => event.member === void 0 ? [] : [memberFor(governance, event.member)]
+    )
+  );
 }
 function modulesDone(events) {
   const done = /* @__PURE__ */ new Set();

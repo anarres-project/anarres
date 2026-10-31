@@ -386,6 +386,10 @@ export class Anarres {
     const member = this.member(name);
     const { role, module } = this.aliased(work);
     if (named === undefined) await this.driver.trustFor(member, role);
+    // Coding on a high-risk module needs an established member (decision 0019).
+    if (named === undefined && role === "Coding" && this.highRisk.has(module)) {
+      await this.driver.setTrustLevel(member, "established");
+    }
     const held = await this.driver.claimedTasks(this.project);
     if (
       held.some((task) => task.role === role && task.module === module && task.member === member)
@@ -714,7 +718,11 @@ export class Anarres {
     await this.driver.requireReview(this.project, this.aliases.of(module));
   }
 
+  /** The modules the scenario's PDC coordinators marked high-risk, aliased. */
+  private readonly highRisk = new Set<string>();
+
   async coordinatorsMarkHighRisk(module: string) {
+    this.highRisk.add(this.aliases.of(module));
     await this.driver.markHighRisk(this.project, this.aliases.of(module));
   }
 

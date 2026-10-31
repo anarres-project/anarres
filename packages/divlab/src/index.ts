@@ -1119,6 +1119,17 @@ export async function onPullRequest(
   // Work on a module PDC coordinators name is merged only once a person approves it (0016).
   const governance = await pullRequests.governanceFile();
   const history = membersParts(governance, events);
+  // A high-risk module's code is reviewed by two different members (decision 0019).
+  if (
+    role === "reviewer" &&
+    !failed(signal) &&
+    !signal.partial &&
+    isHighRisk(governance, project, signal.module)
+  ) {
+    const reviewers = reviewersSinceCoding(events, signal.module, governance);
+    reviewers.add(memberFor(governance, author));
+    work = { ...work, highRisk: true, reviewsPassed: reviewers.size };
+  }
   // An approval is of the commit reviewed: only one of the commit Divlab merges counts.
   const approved = approvalsStanding(await pullRequests.reviews(project, pullRequest)).some(
     ({ reviewer, commit }) =>
@@ -1202,6 +1213,8 @@ type RoutedWork = FeedbackSignal & {
   moduleAtFaultUnlisted?: true;
   modulesReopened?: string[];
   modulesUnreadable?: true;
+  highRisk?: true;
+  reviewsPassed?: number;
   inputsChanged?: string[];
   inputsUnchecked?: true;
   contractsRevised?: string[];
@@ -1230,6 +1243,29 @@ async function alertIfUnreadable(
       `The project's modules.yaml on main cannot be read: ${listed.unreadable}`,
     );
   }
+}
+
+/**
+ * The members whose reviews of the module have passed since its Coding work last passed, as
+ * Divlab's records say; linked accounts are one member (decision 0007).
+ */
+function reviewersSinceCoding(
+  events: readonly LogEvent[],
+  module: string,
+  governance: unknown,
+): Set<string> {
+  const records = routingDecisions(events).filter((event) => event.work.module === module);
+  const coded = records.findLastIndex(
+    (event) => event.work.fromRole === "coding" && !failed(event.work),
+  );
+  return new Set(
+    records
+      .slice(coded + 1)
+      .filter((event) => event.work.fromRole === "reviewer" && !failed(event.work))
+      .flatMap((event) =>
+        event.member === undefined ? [] : [memberFor(governance, event.member)],
+      ),
+  );
 }
 
 /** The modules done, as Divlab's decisions say, until a later one sent them work (0017). */

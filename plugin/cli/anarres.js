@@ -9358,7 +9358,8 @@ var WORK_FIELDS = [
 ];
 var YES_FIELDS = [
   ["lastModule", "it completed the last module"],
-  ["moduleAtFaultUnlisted", "its module at fault is unlisted"]
+  ["moduleAtFaultUnlisted", "its module at fault is unlisted"],
+  ["highRisk", "its module is high-risk"]
 ];
 function readRoutingRecord(value) {
   if (!isObject(value) || !isObject(value.work) || !isObject(value.decision) || !isObject(value.reason)) {
@@ -9397,6 +9398,10 @@ function unreadableWork(work) {
     if (value !== void 0 && value !== true) {
       return { unreadable: `its work says ${says} in something other than yes` };
     }
+  }
+  const { reviewsPassed } = work;
+  if (reviewsPassed !== void 0 && !(Number.isSafeInteger(reviewsPassed) && reviewsPassed >= 0)) {
+    return { unreadable: "its work does not give how many reviews passed as a count" };
   }
   return void 0;
 }

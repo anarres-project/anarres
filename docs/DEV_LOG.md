@@ -1456,6 +1456,33 @@ governance scenarios run alone.
   failed on decision 0018's coverage check, as it should: the alert's two adapter methods were
   reached by no `@sandbox` scenario. This one reaches them (checklist item 1), so it is tagged
   `@sandbox`, and lost `@wip`.
+- Two reviewers for a high-risk module. Acceptance: "A high-risk module's code needs a second
+  review before its security check", `@wip @governance`. Its first red was the harness's: the
+  unnamed member arranging the Coding work was new, so its claim on the high-risk module was
+  refused; the DSL now makes that member established when the scenario marked the module
+  high-risk. Then red in its Then (Security & Quality, not Reviewer).
+  ```
+  RED:      makes a second Reviewer task ready when a high-risk module's first review passes
+            -> expected { …(2) } to deeply equal { …(2) }
+  GREEN:    (344 passed): `second_review`
+  ```
+  "goes on to Security & Quality once two members' reviews pass" passed first run, the rule
+  being general; "asks for another review when the reviews passed are not counted" too, the
+  coverage gate asking for that branch: both kept. In Divlab, "sends a high-risk module on to
+  Security & Quality once a second member's review passes" passed first run for no good reason
+  (Divlab did not yet say the module was high-risk), so the driving test was the first review:
+  ```
+  RED:      asks for a second review when a high-risk module's first review passes
+            -> expected [ 'security-and-quality' ] to deeply equal [ 'reviewer' ]
+  GREEN:    (261 passed): Divlab counts the different members whose reviews passed since
+            Coding last passed, from its records, linked accounts as one
+  RED:      the recorded work's `highRisk` as anything but yes, and `reviewsPassed` as anything
+            but a count -> unreadable expected (slip: two tests red at once)
+  GREEN:    (969 in the gate; a negative count's row added for the branch the gate asked for)
+  REFACTOR: none
+  ```
+  The scenario passed and lost `@wip`. In-process only: routing is core's, and the governance
+  file is read as the sandbox already shows (decision 0018).
 
 ---
 

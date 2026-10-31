@@ -68,3 +68,11 @@ Feature: Who may take a task
     And Alice's Coding work on "parser" was accepted with a pass verdict
     When Alice's second account claims the Reviewer task for "parser"
     Then Alice's second account is told a member takes only one role in a module
+
+  @governance
+  Scenario: A high-risk module's code needs a second review before its security check
+    Given a project with a module "parser"
+    And PDC coordinators mark "parser" as high-risk
+    And a member's Coding work on "parser" was accepted with a pass verdict
+    When a member's Reviewer work on "parser" is accepted with a pass verdict
+    Then the only task ready for "parser" is a Reviewer task

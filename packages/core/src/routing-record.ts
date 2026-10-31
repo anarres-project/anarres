@@ -63,6 +63,7 @@ const WORK_FIELDS = [
 const YES_FIELDS = [
   ["lastModule", "it completed the last module"],
   ["moduleAtFaultUnlisted", "its module at fault is unlisted"],
+  ["highRisk", "its module is high-risk"],
 ] as const;
 
 /** A record read back from the event log, checked before routing relies on it. */
@@ -128,6 +129,13 @@ function unreadableWork(
     if (value !== undefined && value !== true) {
       return { unreadable: `its work says ${says} in something other than yes` };
     }
+  }
+  const { reviewsPassed } = work as { reviewsPassed?: unknown };
+  if (
+    reviewsPassed !== undefined &&
+    !(Number.isSafeInteger(reviewsPassed) && (reviewsPassed as number) >= 0)
+  ) {
+    return { unreadable: "its work does not give how many reviews passed as a count" };
   }
   return undefined;
 }

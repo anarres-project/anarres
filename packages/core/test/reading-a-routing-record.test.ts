@@ -109,6 +109,24 @@ describe("reading back the work Divlab recorded as about to merge", () => {
     },
   );
 
+  it.each(["true", 1])(
+    "is unreadable when it says the module is high-risk as anything but yes: %j",
+    (highRisk) => {
+      expect(readMergedWork({ ...WORK, highRisk })).toEqual({
+        unreadable: "its work says its module is high-risk in something other than yes",
+      });
+    },
+  );
+
+  it.each(["2", -1])(
+    "is unreadable when it gives how many reviews passed as anything but a count: %j",
+    (reviewsPassed) => {
+      expect(readMergedWork({ ...WORK, reviewsPassed })).toEqual({
+        unreadable: "its work does not give how many reviews passed as a count",
+      });
+    },
+  );
+
   it("is unreadable when it gives no verdict, rather than routed as passed", () => {
     const { verdict: _, ...withoutVerdict } = WORK;
     expect(readMergedWork(withoutVerdict)).toEqual({

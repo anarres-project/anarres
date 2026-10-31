@@ -276,6 +276,50 @@ describe("routing accepted work", () => {
     ).toEqual({ alert: { reason: "unlisted_module_at_fault" } });
   });
 
+  it("makes a second Reviewer task ready when a high-risk module's first review passes (0019)", () => {
+    expect(
+      rule({
+        fromRole: "reviewer",
+        module: "parser",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        highRisk: true,
+        reviewsPassed: 1,
+      }),
+    ).toEqual({
+      decision: { tasks: [{ role: "reviewer", module: "parser" }] },
+      reason: { rule: "second_review" },
+    });
+  });
+
+  it("goes on to Security & Quality once two members' reviews of a high-risk module pass (0019)", () => {
+    expect(
+      route({
+        fromRole: "reviewer",
+        module: "parser",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        highRisk: true,
+        reviewsPassed: 2,
+      }),
+    ).toEqual({ tasks: [{ role: "security-and-quality", module: "parser" }] });
+  });
+
+  it("asks for another review of a high-risk module when the reviews passed are not counted", () => {
+    expect(
+      route({
+        fromRole: "reviewer",
+        module: "parser",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        highRisk: true,
+      }),
+    ).toEqual({ tasks: [{ role: "reviewer", module: "parser" }] });
+  });
+
   it("completes the module when its Security & Quality check passes conditionally", () => {
     expect(
       route({
