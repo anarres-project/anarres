@@ -280,11 +280,19 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
     - [x] with a module named that main's modules.yaml does not list, or when it cannot be
           read → a PDC coordinator (`unlisted_module_at_fault`, naming it; unit);
     - [x] the recorded work's `moduleAtFaultUnlisted` read back only as yes, as `lastModule`;
-    - [ ] refactor: the two reads of main's modules.yaml in acting on a pull request, one;
+    - [x] refactor: the two reads of main's modules.yaml in acting on a pull request, one:
+          considered and left, as they never both run, and reading it for all work would cost
+          a request on every pull request;
     - [x] the coordinator's alert says why in words of its own, not "no rule covers";
-    - [ ] the plugin's Integration Test instructions say how to name the module at fault;
+    - [ ] the plugin's Integration Test instructions say how to name the module at fault (waits
+          on the plugin's role instructions, which do not exist yet);
   - [ ] a module reopened after integration began: nothing more in integration is posted until
         every module is done again, then a new Integration Test task (Bernard, 2026-10-31):
+    - [x] the module at fault done again → an Integration Test task, not Integration
+          Specification (in-process);
+    - [ ] a module is done only until a later decision sends it work again, so with two
+          reopened (a contract revision), the first done again starts nothing;
+    - [ ] integration work finishing while a module is reopened posts nothing further;
     - [ ] a contract revision leaves integration work already claimed to finish: decision
           0017's hold, not decision 0015's stale mark, applies to integration work;
     - [ ] an integration task posted but unclaimed when a module reopens is withdrawn;

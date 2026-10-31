@@ -8,6 +8,7 @@ import {
   type FeedbackSignal,
   FIRST_ROLE,
   failed,
+  INTEGRATION_PIPELINE,
   isRole,
   leaseHasRunOut,
   MODULES_FILE,
@@ -1068,6 +1069,11 @@ export async function onPullRequest(
       listed.modules.every((module) => module === signal.module || done.has(module))
     ) {
       work = { ...work, lastModule: true };
+      // Integration begun before, it runs its tests again rather than starting over.
+      const integrating: readonly string[] = INTEGRATION_PIPELINE;
+      if (routingDecisions(events).some((event) => integrating.includes(event.work.fromRole))) {
+        work = { ...work, integrationBegun: true };
+      }
     }
   }
   // A defect an integration test finds goes back to the module at fault, if the project has it.
@@ -1159,6 +1165,7 @@ function hasTaskOpen(events: LogEvent[], module: string): boolean {
 type RoutedWork = FeedbackSignal & {
   modulesToStart?: string[];
   lastModule?: true;
+  integrationBegun?: true;
   moduleAtFaultUnlisted?: true;
   inputsChanged?: string[];
   inputsUnchecked?: true;

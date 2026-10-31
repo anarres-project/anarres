@@ -24,6 +24,8 @@ export type AcceptedWork = {
   moduleAtFaultUnlisted?: true;
   /** Security & Quality's work on the last of the programme's modules not yet done (0017). */
   lastModule?: true;
+  /** The programme's integration had begun before a module was reopened (decision 0017). */
+  integrationBegun?: true;
   /** The contracts the module provides or uses revised after the task was posted (0015). */
   contractsRevised?: string[];
   /** For the Programme Architect's work: its revised contracts, and the modules they send back
@@ -56,7 +58,7 @@ const MODULE_PIPELINE = [
 ] as const satisfies readonly Role[];
 
 /** The programme's integration pipeline, once every module is done (decision 0017). */
-const INTEGRATION_PIPELINE = [
+export const INTEGRATION_PIPELINE = [
   "integration-specification",
   "integration-test",
   "integration-review",
@@ -261,10 +263,10 @@ function advance(work: AcceptedWork): Ruling {
   }
   const next = (MODULE_PIPELINE as readonly string[]).indexOf(work.fromRole) + 1;
   if (next === MODULE_PIPELINE.length) {
-    // The last module done starts the programme's integration pipeline (decision 0017).
-    const integration = work.lastModule
-      ? { tasks: [{ role: "integration-specification" as const, module: PROGRAMME }] }
-      : {};
+    // The last module done starts the programme's integration pipeline (decision 0017); done
+    // again after integration began, it runs the integration tests again.
+    const first: Role = work.integrationBegun ? "integration-test" : "integration-specification";
+    const integration = work.lastModule ? { tasks: [{ role: first, module: PROGRAMME }] } : {};
     return {
       decision: { moduleDone: true, ...integration },
       reason: { rule: "pipeline_complete" },

@@ -9002,6 +9002,10 @@ function readFeedbackSignal(text) {
   if (!impediments.every((impediment) => isPlainName(impediment.type))) {
     return { unreadable: "its feedback signal's impediments are not each a plain name" };
   }
+  const atFault = header.module_at_fault;
+  if (atFault !== void 0 && !(typeof atFault === "string" && isPlainName(atFault))) {
+    return { unreadable: "its feedback signal's module_at_fault is not a plain name" };
+  }
   const task = header.task_id;
   if (task !== void 0 && typeof task !== "string" && !Number.isInteger(task)) {
     return {
@@ -9016,7 +9020,8 @@ function readFeedbackSignal(text) {
       type: impediment.type
     })),
     ...task === void 0 ? {} : { task: String(task) },
-    ...header.status === "partial" ? { partial: true } : {}
+    ...header.status === "partial" ? { partial: true } : {},
+    ...atFault === void 0 ? {} : { moduleAtFault: atFault }
   };
 }
 
@@ -9292,6 +9297,8 @@ var FAILURE_ROUTES = [
   { from: "security-and-quality", reporting: "architecture_impediment", to: "architecture" },
   { from: "reviewer", to: "coding" },
   { from: "security-and-quality", to: "coding" },
+  // The missed behaviour becomes a module scenario, then a failing test, then code (0017).
+  { from: "integration-test", reporting: "test_failures", to: "specification" },
   ...MODULE_PIPELINE.map((from) => ({
     from,
     reporting: "interface_impediment",
@@ -9310,6 +9317,10 @@ var WORK_FIELDS = [
   ["fromRole", "role"],
   ["module", "module"],
   ["verdict", "verdict"]
+];
+var YES_FIELDS = [
+  ["lastModule", "it completed the last module"],
+  ["moduleAtFaultUnlisted", "its module at fault is unlisted"]
 ];
 function readRoutingRecord(value) {
   if (!isObject(value) || !isObject(value.work) || !isObject(value.decision) || !isObject(value.reason)) {
@@ -9338,6 +9349,12 @@ function unreadableWork(work) {
   const { modulesToStart } = work;
   if (modulesToStart !== void 0 && !(Array.isArray(modulesToStart) && modulesToStart.every((module) => typeof module === "string" && isPlainName(module)))) {
     return { unreadable: "its work names the modules it started in more than plain names" };
+  }
+  for (const [field, says] of YES_FIELDS) {
+    const value = work[field];
+    if (value !== void 0 && value !== true) {
+      return { unreadable: `its work says ${says} in something other than yes` };
+    }
   }
   return void 0;
 }
@@ -10107,10 +10124,7 @@ function issueForAlert(alert) {
   const { module } = alert.work;
   const work = `the ${roleName(alert.work.fromRole)} work on ${module}`;
   const reported = alert.work.impediments.map((impediment) => impediment.type).join(", ") || "no problem";
-  const [title, why] = alert.reason.rule === "re_run_limit" ? [
-    `${roleName(alert.reason.role)} has been re-run more than three times on ${module}`,
-    `${roleName(alert.reason.role)} has already been re-run three times for this module, so Divlab has not sent it back again.`
-  ] : [`no rule covers ${work}`, "No routing rule covers that."];
+  const [title, why] = escalated(alert.reason, work, module);
   return {
     title: `Escalation: ${title}`,
     labels: ["escalation", `module:${module}`],
@@ -10124,6 +10138,27 @@ function issueForAlert(alert) {
       "```"
     ].join("\n")
   };
+}
+function escalated(reason, work, module) {
+  switch (reason.rule) {
+    case "re_run_limit":
+      return [
+        `${roleName(reason.role)} has been re-run more than three times on ${module}`,
+        `${roleName(reason.role)} has already been re-run three times for this module, so Divlab has not sent it back again.`
+      ];
+    case "unlisted_module_at_fault":
+      return [
+        `${work} names a module the project does not list`,
+        `It says the defect is in ${reason.module}, which main's modules.yaml does not list, so Divlab has sent it to no module.`
+      ];
+    case "no_module_at_fault":
+      return [
+        `${work} names no module at fault`,
+        "It does not say which module the defect is in, so Divlab has sent it to no module."
+      ];
+    default:
+      return [`no rule covers ${work}`, "No routing rule covers that."];
+  }
 }
 function roleName(id) {
   const role = Object.keys(ROLE_NAMES).find((role2) => role2 === id);
@@ -10232,6 +10267,16 @@ function issueForUnreadableReviewList() {
     body: "Divlab cannot read the governance file's list of modules whose work needs a reviewer's approval (decision 0016), so until it can, all work in this project waits for a reviewer's approval. Fix the list, then close this issue; Divlab alerts again if it finds the list unreadable later."
   };
 }
+function issueForUnreadableModules(reason) {
+  return {
+    title: "Escalation: the project's modules.yaml cannot be read",
+    labels: ["escalation", UNREADABLE_MODULES],
+    body: `Divlab cannot read the project's modules.yaml on main, so it cannot tell whether every module is done, and will not start the integration pipeline (decision 0017) until it can. Fix modules.yaml through the Programme Architect's work, then close this issue. Why Divlab cannot read it:
+
+${quoted(reason)}`
+  };
+}
+var UNREADABLE_MODULES = "unreadable-modules";
 var UNREADABLE_REVIEW_LIST = "unreadable-review-list";
 var UNPROTECTED_MAIN = "unprotected-main";
 var CHANGE_NOT_BY_DIVLAB = "change-not-by-divlab";
@@ -10394,6 +10439,12 @@ var GitHubAdapter = class {
       `${this.repo(project)}/issues?labels=${label}&state=open&per_page=1`
     );
     return open.length > 0;
+  }
+  async alertUnreadableModules(project, reason) {
+    await this.openIssue(project, issueForUnreadableModules(reason));
+  }
+  async unreadableModulesAlertOpen(project) {
+    return this.alertOpen(project, UNREADABLE_MODULES);
   }
   async alertUnreadableReviewList(project) {
     await this.openIssue(project, issueForUnreadableReviewList());

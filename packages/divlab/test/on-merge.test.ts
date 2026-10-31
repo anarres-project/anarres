@@ -762,6 +762,60 @@ describe("acting on a pull request", () => {
     ]);
   });
 
+  it("runs the integration tests again when the last module is done again after integration began (0017)", async () => {
+    const posted: PostedTask[] = [];
+    const securityPasses = {
+      path: "feedback/FB-3.md",
+      text: '---\nfeedback_signal:\n  task_id: "3"\n  from_role: security-and-quality\n  module: parser\n  verdict: pass\n---\n',
+    };
+    const listed: PullRequests = {
+      ...submitting([], [securityPasses]),
+      modulesOnMain: async () => "modules:\n  - name: lexer\n  - name: parser\n",
+    };
+    const done = (module: string, feedbackSignal: string): LogEvent => ({
+      project: "ledger",
+      work: {
+        fromRole: "security-and-quality",
+        module,
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal,
+      },
+      decision: { moduleDone: true },
+      reason: { rule: "pipeline_complete" },
+    });
+    const integrationBegan: EventLog = {
+      read: async () => [
+        done("lexer", "feedback/FB-0.md"),
+        done("parser", "feedback/FB-1.md"),
+        {
+          project: "ledger",
+          work: {
+            fromRole: "integration-specification",
+            module: "programme",
+            verdict: "pass",
+            impediments: [],
+            feedbackSignal: "feedback/FB-2.md",
+          },
+          decision: { tasks: [{ role: "integration-test", module: "programme" }] },
+          reason: { rule: "passed" },
+        },
+      ],
+      append: async () => {},
+    };
+    const finishing: TaskBoard = {
+      ...heldAs("security-and-quality"),
+      markModuleDone: async () => {},
+      post: async (task) => {
+        posted.push(task);
+      },
+    };
+    await onPullRequest("ledger", "7", listed, finishing, integrationBegan, clock);
+    expect(posted.map(({ role, module }) => ({ role, module }))).toEqual([
+      { role: "integration-test", module: "programme" },
+    ]);
+  });
+
   it("starts no integration while another module is not done", async () => {
     const posted: PostedTask[] = [];
     const securityPasses = {

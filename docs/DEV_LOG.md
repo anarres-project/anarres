@@ -1213,6 +1213,23 @@ governance scenarios run alone.
   GREEN:    (916 in the gate)
   REFACTOR: the title and why chosen by one function, a case for each rule
   ```
+- CI failed on deedb08: the CLI bundle in `plugin/cli` was out of step with its source, the
+  commits since e58fe9e having staged `packages`, `acceptance`, `features` and `docs` but not
+  `plugin`. The gate builds the bundle but does not check it is committed; CI does. Fixed by
+  committing the rebuilt bundle with the next change; from now on every commit stages `plugin`
+  too, and `git status` is checked clean before pushing.
+- Reopening, first slice. Acceptance: "Once the module at fault is done again, integration runs
+  its tests again", `@wip @sandbox-wip`, red in its Then (an Integration Specification task, not
+  Integration Test). Cycles:
+  ```
+  RED:      routing > runs the integration tests again when the last module is done again after
+            integration began -> "role": "integration-specification" for "integration-test"
+  GREEN:    (318 passed)
+  RED:      acting on a pull request > runs the integration tests again … -> the same
+  GREEN:    (250 passed)
+  REFACTOR: core exports the integration pipeline, so Divlab asks it which roles are integration's
+  ```
+  The scenario passed and lost `@wip`. Gate 918 and 157.
 
 ---
 

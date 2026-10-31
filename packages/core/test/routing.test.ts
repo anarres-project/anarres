@@ -115,6 +115,23 @@ describe("routing accepted work", () => {
     });
   });
 
+  it("runs the integration tests again when the last module is done again after integration began (0017)", () => {
+    expect(
+      route({
+        fromRole: "security-and-quality",
+        module: "parser",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+        lastModule: true,
+        integrationBegun: true,
+      }),
+    ).toEqual({
+      moduleDone: true,
+      tasks: [{ role: "integration-test", module: "programme" }],
+    });
+  });
+
   it("makes an Integration Test task ready when Integration Specification passes (decision 0017)", () => {
     expect(
       route({

@@ -79,3 +79,14 @@ Feature: The integration pipeline
     When a member's Integration Test work for the programme is accepted with a fail verdict, its tests finding a defect in "parser"
     Then the only task ready for "parser" is a Specification task
     And the Specification task for "parser" carries the feedback signal from the Integration Test work for the programme
+
+  # Not in the sandbox yet, as the first scenario.
+  @sandbox-wip
+  Scenario: Once the module at fault is done again, integration runs its tests again
+    Given a project with modules "parser" and "lexer"
+    And a member's Security & Quality work on "lexer" was accepted with a pass verdict
+    And a member's Security & Quality work on "parser" was accepted with a pass verdict
+    And a member's Integration Specification work for the programme was accepted with a pass verdict
+    And a member's Integration Test work for the programme was accepted with a fail verdict, its tests finding a defect in "parser"
+    When a member's Security & Quality work on "parser" is accepted with a pass verdict
+    Then the only task ready is an Integration Test task for the programme

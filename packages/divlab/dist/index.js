@@ -9451,7 +9451,8 @@ function advance(work) {
   }
   const next = MODULE_PIPELINE.indexOf(work.fromRole) + 1;
   if (next === MODULE_PIPELINE.length) {
-    const integration = work.lastModule ? { tasks: [{ role: "integration-specification", module: PROGRAMME }] } : {};
+    const first = work.integrationBegun ? "integration-test" : "integration-specification";
+    const integration = work.lastModule ? { tasks: [{ role: first, module: PROGRAMME }] } : {};
     return {
       decision: { moduleDone: true, ...integration },
       reason: { rule: "pipeline_complete" }
@@ -10203,6 +10204,10 @@ async function onPullRequest(project2, pullRequest, pullRequests, board, log, cl
     }
     if (!("unreadable" in listed) && listed.modules.every((module) => module === signal.module || done.has(module))) {
       work = { ...work, lastModule: true };
+      const integrating = INTEGRATION_PIPELINE;
+      if (routingDecisions(events).some((event) => integrating.includes(event.work.fromRole))) {
+        work = { ...work, integrationBegun: true };
+      }
     }
   }
   if (signal.moduleAtFault !== void 0) {

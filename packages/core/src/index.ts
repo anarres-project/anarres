@@ -37,6 +37,7 @@ export {
   type AcceptedWork,
   FIRST_ROLE,
   failed,
+  INTEGRATION_PIPELINE,
   type RoutingDecision,
   route,
   rule,
