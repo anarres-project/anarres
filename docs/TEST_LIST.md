@@ -253,9 +253,12 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         Divlab adds;
   - [x] Integration Specification's name, trust level (new), and its read (requirements,
         contracts) and write (`integration/specifications/`) scopes in core;
-  - [ ] Integration Test's and Integration Review's;
-  - [ ] Integration Specification passing → Integration Test; Integration Test passing (its
-        check green) → Integration Review; Integration Review passing → the programme is done;
+  - [x] Integration Test's (new; reads requirements, contracts, integration specifications;
+        writes `integration/tests/`) and Integration Review's (trusted; reads those and the
+        integration tests; writes `integration/reviews/`);
+  - [x] Integration Specification passing → Integration Test → Integration Review; Integration
+        Review passing → the programme is done, marked done as a module is (in-process);
+  - [ ] Integration Test passing needs its check green, as Coding's does;
   - [ ] who may take them: Specification's and Test's levels, and trusted for Integration Review;
         nobody reviews integration work they wrote;
   - [ ] a failing integration test naming a module sends that module back to Specification,

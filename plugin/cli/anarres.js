@@ -9033,7 +9033,9 @@ var WRITE_SCOPES = {
   // Research's brief is for the module its task names (Bernard, 2026-10-29).
   research: (module) => `research-briefs/${module}/`,
   // The programme's integration pipeline (decision 0017).
-  "integration-specification": () => `${INTEGRATION}specifications/`
+  "integration-specification": () => `${INTEGRATION}specifications/`,
+  "integration-test": () => `${INTEGRATION}tests/`,
+  "integration-review": () => `${INTEGRATION}reviews/`
 };
 var INTEGRATION = "integration/";
 function outsideScope(role, module, paths) {
@@ -9076,7 +9078,18 @@ var READ_SCOPES = {
   // Research reads its module's briefs, not the module's work (Bernard, 2026-10-29).
   research: (module) => [writeScope("research", module)],
   // The whole programme's requirements and every contract between its modules (decision 0017).
-  "integration-specification": () => ["requirements/", CONTRACTS]
+  "integration-specification": () => ["requirements/", CONTRACTS],
+  "integration-test": () => [
+    "requirements/",
+    CONTRACTS,
+    writeScope("integration-specification", PROGRAMME)
+  ],
+  "integration-review": () => [
+    "requirements/",
+    CONTRACTS,
+    writeScope("integration-specification", PROGRAMME),
+    writeScope("integration-test", PROGRAMME)
+  ]
 };
 function readScope(role, module, task = {}) {
   return [
@@ -9109,7 +9122,9 @@ var ROLE_NAMES = {
   reviewer: "Reviewer",
   "security-and-quality": "Security & Quality",
   research: "Research",
-  "integration-specification": "Integration Specification"
+  "integration-specification": "Integration Specification",
+  "integration-test": "Integration Test",
+  "integration-review": "Integration Review"
 };
 var isRole = (value) => typeof value === "string" && Object.hasOwn(ROLE_NAMES, value);
 
@@ -9120,8 +9135,11 @@ var LEVEL_NEEDED = {
   test: "new",
   coding: "new",
   research: "new",
-  // As a module's Specification (decision 0017).
+  // As a module's Specification and Test (decision 0017).
   "integration-specification": "new",
+  "integration-test": "new",
+  // As a module's Reviewer, and trusted: it judges the whole programme (decision 0017).
+  "integration-review": "trusted",
   architecture: "established",
   reviewer: "established",
   "security-and-quality": "trusted",

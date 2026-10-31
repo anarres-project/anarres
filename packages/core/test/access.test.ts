@@ -39,6 +39,8 @@ describe("what a role's work may change (concept §6)", () => {
     ["security-and-quality", "modules/parser/reviews/security-1.md"],
     ["research", "research-briefs/parser/tokenisers.md"],
     ["integration-specification", "integration/specifications/checkout.md"],
+    ["integration-test", "integration/tests/checkout.test.ts"],
+    ["integration-review", "integration/reviews/review-1.md"],
   ])("lets %s write %s, and nothing in another role's place", (role, inScope) => {
     expect(outsideScope(role, "parser", [inScope])).toEqual([]);
     expect(outsideScope(role, "parser", ["modules/parser/elsewhere/x.md"])).toEqual([
@@ -117,6 +119,25 @@ describe("what a role's work may read (concept §6)", () => {
       "integration-specification",
       ["requirements/r1.md", "programme/contracts/tokens/c.md"],
       ["modules/parser/specifications/a.md", "programme/slices/parser/s.md"],
+    ],
+    [
+      "integration-test",
+      [
+        "requirements/r1.md",
+        "programme/contracts/tokens/c.md",
+        "integration/specifications/checkout.md",
+      ],
+      ["modules/parser/src/x.ts", "modules/parser/tests/t.ts"],
+    ],
+    [
+      "integration-review",
+      [
+        "requirements/r1.md",
+        "programme/contracts/tokens/c.md",
+        "integration/specifications/checkout.md",
+        "integration/tests/checkout.test.ts",
+      ],
+      ["modules/parser/src/x.ts", "programme/slices/parser/s.md"],
     ],
   ])("lets %s read %j and not %j", (role, readable, unreadable) => {
     expect(readable.every((path) => mayRead(role, "parser", path))).toBe(true);

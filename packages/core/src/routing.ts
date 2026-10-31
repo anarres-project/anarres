@@ -51,6 +51,13 @@ const MODULE_PIPELINE = [
   "security-and-quality",
 ] as const satisfies readonly Role[];
 
+/** The programme's integration pipeline, once every module is done (decision 0017). */
+const INTEGRATION_PIPELINE = [
+  "integration-specification",
+  "integration-test",
+  "integration-review",
+] as const satisfies readonly Role[];
+
 /** The role a module starts with: the first of its pipeline (decision 0013). */
 export const FIRST_ROLE: Role = MODULE_PIPELINE[0];
 
@@ -214,6 +221,15 @@ function startModules(work: AcceptedWork, modules: string[]): Ruling {
 }
 
 function advance(work: AcceptedWork): Ruling {
+  const integrating = (INTEGRATION_PIPELINE as readonly string[]).indexOf(work.fromRole);
+  if (integrating >= 0) {
+    const role = INTEGRATION_PIPELINE[integrating + 1];
+    // Integration Review passing completes the programme, done as a module is.
+    if (role === undefined) {
+      return { decision: { moduleDone: true }, reason: { rule: "pipeline_complete" } };
+    }
+    return { decision: { tasks: [{ role, module: work.module }] }, reason: { rule: "passed" } };
+  }
   const next = (MODULE_PIPELINE as readonly string[]).indexOf(work.fromRole) + 1;
   if (next === MODULE_PIPELINE.length) {
     // The last module done starts the programme's integration pipeline (decision 0017).

@@ -1050,6 +1050,12 @@ export class Anarres {
     assert.ok(done.includes(this.aliases.of(module)), `expected ${module} to be done`);
   }
 
+  /** The whole programme is done, as a module is, once Integration Review passes (0017). */
+  async programmeIsDone() {
+    const done = await this.driver.doneModules(this.project);
+    assert.ok(done.includes(PROGRAMME), "expected the programme to be done");
+  }
+
   async moduleIsNotDone(module: string) {
     const done = await this.driver.doneModules(this.project);
     assert.ok(!done.includes(this.aliases.of(module)), `expected ${module} not to be done`);

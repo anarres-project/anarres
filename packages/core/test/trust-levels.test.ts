@@ -28,6 +28,10 @@ describe("what a member's trust level lets them take (concept §11, decision 000
     ["programme-architect", "trusted", "established"],
     // As a module's Specification (decision 0017).
     ["integration-specification", "new", undefined],
+    // As a module's Test (decision 0017).
+    ["integration-test", "new", undefined],
+    // As a module's Reviewer, and trusted (decision 0017).
+    ["integration-review", "trusted", "established"],
   ])("lets %s be taken from %s up, not by %s", (role, lowest, below) => {
     expect(trustAllows(lowest, role)).toBe(true);
     expect(trustAllows("pdc-coordinator", role)).toBe(true);

@@ -16,3 +16,34 @@ Feature: The integration pipeline
     Given a project with modules "parser" and "lexer"
     When a member's Security & Quality work on "parser" is accepted with a pass verdict
     Then no task is ready for the programme
+
+  # Not in the sandbox yet, as the first scenario.
+  @sandbox-wip
+  Scenario: Integration Specification passing makes an Integration Test task ready
+    Given a project with modules "parser" and "lexer"
+    And a member's Security & Quality work on "lexer" was accepted with a pass verdict
+    And a member's Security & Quality work on "parser" was accepted with a pass verdict
+    When a member's Integration Specification work for the programme is accepted with a pass verdict
+    Then the only task ready is an Integration Test task for the programme
+
+  # Not in the sandbox yet, as the first scenario.
+  @sandbox-wip
+  Scenario: Integration Test passing makes an Integration Review task ready
+    Given a project with modules "parser" and "lexer"
+    And a member's Security & Quality work on "lexer" was accepted with a pass verdict
+    And a member's Security & Quality work on "parser" was accepted with a pass verdict
+    And a member's Integration Specification work for the programme was accepted with a pass verdict
+    When a member's Integration Test work for the programme is accepted with a pass verdict
+    Then the only task ready is an Integration Review task for the programme
+
+  # Not in the sandbox yet, as the first scenario.
+  @sandbox-wip
+  Scenario: Integration Review passing completes the programme
+    Given a project with modules "parser" and "lexer"
+    And a member's Security & Quality work on "lexer" was accepted with a pass verdict
+    And a member's Security & Quality work on "parser" was accepted with a pass verdict
+    And a member's Integration Specification work for the programme was accepted with a pass verdict
+    And a member's Integration Test work for the programme was accepted with a pass verdict
+    When a member's Integration Review work for the programme is accepted with a pass verdict
+    Then the programme is done
+    And no task is ready for the programme

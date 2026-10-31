@@ -1062,6 +1062,31 @@ governance scenarios run alone.
   module, so completing it now starts integration too; it has two modules now, keeping it about
   one module completing, and a record's outcome can say both. The scenario passed and is
   `@sandbox-wip` (the sandbox's shared projects). Gate 880 and 150.
+- The integration pipeline's order. Acceptance: "Integration Specification passing makes an
+  Integration Test task ready", `@wip`, red in its Then: the work went to Architecture, as
+  `advance` took any role outside the module pipeline for one before its first.
+  RED/GREEN: Integration Test's name, trust level (new), write scope (`integration/tests/`) and
+            read scope (requirements, contracts, integration specifications), each red at run
+            time first (`undefined`, `is not a function`), 293 to 296 passed.
+  RED:      makes an Integration Test task ready when Integration Specification passes ->
+            the Architecture task
+  GREEN:    the same (297 passed): integration has an order of its own. A branch for the
+            pipeline's end went in ahead of its test; the coverage gate refused it, and the next
+            cycles drove it.
+  RED/GREEN: Integration Review's name, trust level (trusted; with none stated an established
+            member could take it), write and read scopes, 298 to 301 passed.
+  RED:      makes an Integration Review task ready when Integration Test passes -> expected
+            { tasks: [] }
+  GREEN:    the same (302 passed).
+  RED:      completes the programme when Integration Review passes -> expected { tasks: [] } to
+            deeply equal { moduleDone: true }
+  GREEN:    the same (303 passed): the programme is done as a module is.
+  The first scenario passed and lost `@wip`. Two more, "Integration Test passing makes an
+  Integration Review task ready" and "Integration Review passing completes the programme", were
+  written after the unit cycles, not before (an outside-in slip): they passed first run, and
+  with Integration Review taken out of the order both failed in their Then, so they depend on
+  it. All `@sandbox-wip`, as the first. Protocol slip: one step held the trust level's GREEN
+  and the write scope's test. Gate 891 and 153.
 
 ---
 

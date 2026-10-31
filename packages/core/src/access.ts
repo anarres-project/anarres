@@ -20,6 +20,8 @@ const WRITE_SCOPES: Record<Role, (module: string) => string> = {
   research: (module) => `research-briefs/${module}/`,
   // The programme's integration pipeline (decision 0017).
   "integration-specification": () => `${INTEGRATION}specifications/`,
+  "integration-test": () => `${INTEGRATION}tests/`,
+  "integration-review": () => `${INTEGRATION}reviews/`,
 };
 
 /** Where the programme's integration pipeline keeps its work (decision 0017). */
@@ -89,6 +91,17 @@ const READ_SCOPES: Record<Role, (module: string, contracts: readonly string[]) =
   research: (module) => [writeScope("research", module)],
   // The whole programme's requirements and every contract between its modules (decision 0017).
   "integration-specification": () => ["requirements/", CONTRACTS],
+  "integration-test": () => [
+    "requirements/",
+    CONTRACTS,
+    writeScope("integration-specification", PROGRAMME),
+  ],
+  "integration-review": () => [
+    "requirements/",
+    CONTRACTS,
+    writeScope("integration-specification", PROGRAMME),
+    writeScope("integration-test", PROGRAMME),
+  ],
 };
 
 /** The places a role's work may read, for the module named in its task, a continuation or not. */

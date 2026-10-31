@@ -29,6 +29,20 @@ Given(
 );
 
 When(
+  "a member's {role} work for the programme is accepted with a {verdict} verdict",
+  function (this: AnarresWorld, role: string, verdict: string) {
+    return this.anarres.memberHasWorkAccepted({ role, module: "programme", verdict });
+  },
+);
+
+Given(
+  "a member's {role} work for the programme was accepted with a {verdict} verdict",
+  function (this: AnarresWorld, role: string, verdict: string) {
+    return this.anarres.memberHasWorkAccepted({ role, module: "programme", verdict });
+  },
+);
+
+When(
   "a member's {role} work on {string} is accepted with a {verdict} verdict",
   function (this: AnarresWorld, role: string, module: string, verdict: string) {
     return this.anarres.memberHasWorkAccepted({ role, module, verdict });
@@ -583,6 +597,10 @@ Then(
     return this.anarres.memberIsToldWhy("is not for the module and role its task is for");
   },
 );
+
+Then("the programme is done", function (this: AnarresWorld) {
+  return this.anarres.programmeIsDone();
+});
 
 Then("no task is ready for the programme", function (this: AnarresWorld) {
   return this.anarres.noTaskReadyForTheProgramme();

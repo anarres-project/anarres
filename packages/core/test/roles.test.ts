@@ -14,6 +14,14 @@ describe("role names", () => {
     expect(ROLE_NAMES["integration-specification"]).toBe("Integration Specification");
   });
 
+  it("names the Integration Test role as members know it (decision 0017)", () => {
+    expect(ROLE_NAMES["integration-test"]).toBe("Integration Test");
+  });
+
+  it("names the Integration Review role as members know it (decision 0017)", () => {
+    expect(ROLE_NAMES["integration-review"]).toBe("Integration Review");
+  });
+
   it("names the Research role as members know it", () => {
     expect(ROLE_NAMES.research).toBe("Research");
   });

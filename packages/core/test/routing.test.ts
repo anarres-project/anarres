@@ -115,6 +115,42 @@ describe("routing accepted work", () => {
     });
   });
 
+  it("makes an Integration Test task ready when Integration Specification passes (decision 0017)", () => {
+    expect(
+      route({
+        fromRole: "integration-specification",
+        module: "programme",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+      }),
+    ).toEqual({ tasks: [{ role: "integration-test", module: "programme" }] });
+  });
+
+  it("makes an Integration Review task ready when Integration Test passes (decision 0017)", () => {
+    expect(
+      route({
+        fromRole: "integration-test",
+        module: "programme",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+      }),
+    ).toEqual({ tasks: [{ role: "integration-review", module: "programme" }] });
+  });
+
+  it("completes the programme when Integration Review passes (decision 0017)", () => {
+    expect(
+      route({
+        fromRole: "integration-review",
+        module: "programme",
+        verdict: "pass",
+        impediments: [],
+        feedbackSignal: FEEDBACK,
+      }),
+    ).toEqual({ moduleDone: true });
+  });
+
   it("completes the module when its Security & Quality check passes conditionally", () => {
     expect(
       route({

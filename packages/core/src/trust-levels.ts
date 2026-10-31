@@ -10,8 +10,11 @@ const LEVEL_NEEDED: Record<Role, TrustLevel> = {
   test: "new",
   coding: "new",
   research: "new",
-  // As a module's Specification (decision 0017).
+  // As a module's Specification and Test (decision 0017).
   "integration-specification": "new",
+  "integration-test": "new",
+  // As a module's Reviewer, and trusted: it judges the whole programme (decision 0017).
+  "integration-review": "trusted",
   architecture: "established",
   reviewer: "established",
   "security-and-quality": "trusted",
