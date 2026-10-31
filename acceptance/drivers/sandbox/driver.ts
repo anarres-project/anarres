@@ -1087,6 +1087,24 @@ export class SandboxDriver implements Driver {
     });
   }
 
+  /** The project's entry in the high-risk list names a module not plainly: it cannot be read. */
+  async spoilHighRiskList(project: string): Promise<void> {
+    this.reviewNamed.add(project);
+    await this.changeGovernanceFile((file) => {
+      file.highRisk = { ...(file.highRisk ?? {}), [project]: ["not/plainly"] };
+    });
+  }
+
+  /** Divlab runs after the claim it answered, so give the last run time to look and alert. */
+  async unreadableHighRiskListAlerts(project: string): Promise<number> {
+    const deadline = Date.now() + 60_000;
+    for (;;) {
+      const alerts = await this.issues(project, "unreadable-high-risk-list", "all");
+      if (alerts.length > 0 || Date.now() > deadline) return alerts.length;
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+    }
+  }
+
   /** The project's entry in the list names a module not plainly, so the list cannot be read. */
   async spoilReviewList(project: string): Promise<void> {
     this.reviewNamed.add(project);

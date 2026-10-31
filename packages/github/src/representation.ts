@@ -474,6 +474,18 @@ export function issueForUnreadableModules(reason: string): NewIssue {
 /** The label on Divlab's alert that a project's modules.yaml cannot be read. */
 export const UNREADABLE_MODULES = "unreadable-modules";
 
+/** The open issue is Divlab's record that it has alerted: closing it re-arms the alert. */
+export function issueForUnreadableHighRiskList(): NewIssue {
+  return {
+    title: "Escalation: the list of high-risk modules cannot be read",
+    labels: ["escalation", UNREADABLE_HIGH_RISK_LIST],
+    body: "Divlab cannot read the governance file's list of high-risk modules (decision 0019), so until it can, every module in this project is treated as high-risk: new members may not take its Coding tasks. Fix the list, then close this issue; Divlab alerts again if it finds the list unreadable later.",
+  };
+}
+
+/** The label on Divlab's alert that the list of high-risk modules cannot be read. */
+export const UNREADABLE_HIGH_RISK_LIST = "unreadable-high-risk-list";
+
 /** The label on Divlab's alert that the list of modules needing review cannot be read. */
 export const UNREADABLE_REVIEW_LIST = "unreadable-review-list";
 

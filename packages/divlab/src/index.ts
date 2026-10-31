@@ -8,6 +8,7 @@ import {
   type FeedbackSignal,
   FIRST_ROLE,
   failed,
+  highRiskListUnreadable,
   INTEGRATION_PIPELINE,
   isHighRisk,
   isRole,
@@ -122,6 +123,10 @@ export interface TaskBoard {
   unprotectedMainAlertOpen(project: string): Promise<boolean>;
   /** PDC coordinators are told that the governance file's list of modules needing review cannot be read. */
   alertUnreadableReviewList(project: string): Promise<void>;
+  /** PDC coordinators are told the governance file's list of high-risk modules cannot be read. */
+  alertUnreadableHighRiskList(project: string): Promise<void>;
+  /** Whether such an alert is still open: coordinators close it once the list is fixed. */
+  unreadableHighRiskListAlertOpen(project: string): Promise<boolean>;
   /** PDC coordinators are told that main's modules.yaml cannot be read, and why. */
   alertUnreadableModules(project: string, reason: string): Promise<void>;
   /** Whether PDC coordinators' alert that modules.yaml cannot be read is still open. */
@@ -300,7 +305,15 @@ export async function onClaim(
   }
   // A member the conflict-of-interest rules bar from the task is told why (decision 0007).
   const events = await log.read(project);
-  const mayClaim = eligibility(await members.governanceFile(), project, events);
+  const governance = await members.governanceFile();
+  // Held as high-risk for want of a list that can be read, until a coordinator fixes it (0019).
+  if (
+    highRiskListUnreadable(governance) &&
+    !(await board.unreadableHighRiskListAlertOpen(project))
+  ) {
+    await board.alertUnreadableHighRiskList(project);
+  }
+  const mayClaim = eligibility(governance, project, events);
   const allowed = (account: string) => mayClaim(account, task);
   const asker = allowed(claim.member);
   if (asker !== "allowed") {

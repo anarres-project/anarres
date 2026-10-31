@@ -523,8 +523,8 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
           (in-process; the governance file is read as the sandbox already shows);
     - [x] the CLI does not offer a new member Coding on a high-risk module (the same
           `eligibility`, which Divlab and the CLI share);
-    - [ ] an unreadable marking makes every module high-risk, and PDC coordinators are alerted
-          once;
+    - [x] an unreadable marking makes every module high-risk, and PDC coordinators are alerted
+          once (`@sandbox`: its alert is a path no other sandbox scenario takes);
     - [ ] a high-risk module's Reviewer pass makes a second Reviewer task ready, unless two
           different members' reviews have passed since Coding last passed;
     - [ ] the member whose review passed may not take the second Reviewer task;

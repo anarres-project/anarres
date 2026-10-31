@@ -9336,6 +9336,9 @@ function isHighRisk(file, project2, module) {
   const named = modulesNamed(file, "highRisk");
   return named === "unreadable" || (named.get(project2) ?? []).includes(module);
 }
+function highRiskListUnreadable(file) {
+  return modulesNamed(file, "highRisk") === "unreadable";
+}
 
 // ../core/src/routing.ts
 var MODULE_PIPELINE = [
@@ -9793,7 +9796,11 @@ async function onClaim(project2, claim, board, log, clock, members) {
     return;
   }
   const events = await log.read(project2);
-  const mayClaim = eligibility(await members.governanceFile(), project2, events);
+  const governance = await members.governanceFile();
+  if (highRiskListUnreadable(governance) && !await board.unreadableHighRiskListAlertOpen(project2)) {
+    await board.alertUnreadableHighRiskList(project2);
+  }
+  const mayClaim = eligibility(governance, project2, events);
   const allowed = (account) => mayClaim(account, task);
   const asker = allowed(claim.member);
   if (asker !== "allowed") {
@@ -11173,6 +11180,14 @@ ${quoted(reason)}`
   };
 }
 var UNREADABLE_MODULES = "unreadable-modules";
+function issueForUnreadableHighRiskList() {
+  return {
+    title: "Escalation: the list of high-risk modules cannot be read",
+    labels: ["escalation", UNREADABLE_HIGH_RISK_LIST],
+    body: "Divlab cannot read the governance file's list of high-risk modules (decision 0019), so until it can, every module in this project is treated as high-risk: new members may not take its Coding tasks. Fix the list, then close this issue; Divlab alerts again if it finds the list unreadable later."
+  };
+}
+var UNREADABLE_HIGH_RISK_LIST = "unreadable-high-risk-list";
 var UNREADABLE_REVIEW_LIST = "unreadable-review-list";
 var UNPROTECTED_MAIN = "unprotected-main";
 var CHANGE_NOT_BY_DIVLAB = "change-not-by-divlab";
@@ -11341,6 +11356,12 @@ var GitHubAdapter = class {
   }
   async unreadableModulesAlertOpen(project2) {
     return this.alertOpen(project2, UNREADABLE_MODULES);
+  }
+  async alertUnreadableHighRiskList(project2) {
+    await this.openIssue(project2, issueForUnreadableHighRiskList());
+  }
+  async unreadableHighRiskListAlertOpen(project2) {
+    return this.alertOpen(project2, UNREADABLE_HIGH_RISK_LIST);
   }
   async alertUnreadableReviewList(project2) {
     await this.openIssue(project2, issueForUnreadableReviewList());

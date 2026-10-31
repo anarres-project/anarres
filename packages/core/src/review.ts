@@ -85,3 +85,8 @@ export function isHighRisk(file: unknown, project: string, module: string): bool
   const named = modulesNamed(file, "highRisk");
   return named === "unreadable" || (named.get(project) ?? []).includes(module);
 }
+
+/** Whether the governance file's list of high-risk modules cannot be read (decision 0019). */
+export function highRiskListUnreadable(file: unknown): boolean {
+  return modulesNamed(file, "highRisk") === "unreadable";
+}

@@ -10320,6 +10320,14 @@ ${quoted(reason)}`
   };
 }
 var UNREADABLE_MODULES = "unreadable-modules";
+function issueForUnreadableHighRiskList() {
+  return {
+    title: "Escalation: the list of high-risk modules cannot be read",
+    labels: ["escalation", UNREADABLE_HIGH_RISK_LIST],
+    body: "Divlab cannot read the governance file's list of high-risk modules (decision 0019), so until it can, every module in this project is treated as high-risk: new members may not take its Coding tasks. Fix the list, then close this issue; Divlab alerts again if it finds the list unreadable later."
+  };
+}
+var UNREADABLE_HIGH_RISK_LIST = "unreadable-high-risk-list";
 var UNREADABLE_REVIEW_LIST = "unreadable-review-list";
 var UNPROTECTED_MAIN = "unprotected-main";
 var CHANGE_NOT_BY_DIVLAB = "change-not-by-divlab";
@@ -10488,6 +10496,12 @@ var GitHubAdapter = class {
   }
   async unreadableModulesAlertOpen(project) {
     return this.alertOpen(project, UNREADABLE_MODULES);
+  }
+  async alertUnreadableHighRiskList(project) {
+    await this.openIssue(project, issueForUnreadableHighRiskList());
+  }
+  async unreadableHighRiskListAlertOpen(project) {
+    return this.alertOpen(project, UNREADABLE_HIGH_RISK_LIST);
   }
   async alertUnreadableReviewList(project) {
     await this.openIssue(project, issueForUnreadableReviewList());

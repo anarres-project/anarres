@@ -33,6 +33,8 @@ const board: TaskBoard = {
   alertUnreadableModules: untouched,
   unreadableModulesAlertOpen: untouched,
   readyTasks: untouched,
+  alertUnreadableHighRiskList: untouched,
+  unreadableHighRiskListAlertOpen: untouched,
   unreadableReviewListAlertOpen: untouched,
   markModuleDone: untouched,
   task: untouched,
@@ -379,6 +381,46 @@ describe("who may claim a task (decision 0007)", () => {
     expect(refused.map((refusal) => refusal.reason)).toEqual([
       "Divlab did not give you this task: a Coding task on a high-risk module needs an established member, and you are new",
     ]);
+  });
+
+  it("tells PDC coordinators when it cannot read which modules are high-risk (0019)", async () => {
+    const alerted: string[] = [];
+    const codingTask: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "coding", module: "parser" }),
+      refuseMember: async () => {},
+      alertUnreadableHighRiskList: async (project) => {
+        alerted.push(project);
+      },
+      unreadableHighRiskListAlertOpen: async () => false,
+    };
+    const spoiled: Members = {
+      governanceFile: async () => ({ members: {}, highRisk: { ledger: ["par/ser"] } }),
+    };
+    const log: EventLog = { read: async () => [], append: async () => {} };
+    const clock = () => new Date("2026-10-23T09:00:00Z");
+    await onClaim("ledger", { task: "12", member: "alice" }, codingTask, log, clock, spoiled);
+    expect(alerted).toEqual(["ledger"]);
+  });
+
+  it("does not tell PDC coordinators again while that alert is open", async () => {
+    const alerted: string[] = [];
+    const codingTask: TaskBoard = {
+      ...board,
+      task: async () => ({ role: "coding", module: "parser" }),
+      refuseMember: async () => {},
+      alertUnreadableHighRiskList: async (project) => {
+        alerted.push(project);
+      },
+      unreadableHighRiskListAlertOpen: async () => true,
+    };
+    const spoiled: Members = {
+      governanceFile: async () => ({ members: {}, highRisk: { ledger: ["par/ser"] } }),
+    };
+    const log: EventLog = { read: async () => [], append: async () => {} };
+    const clock = () => new Date("2026-10-23T09:00:00Z");
+    await onClaim("ledger", { task: "12", member: "alice" }, codingTask, log, clock, spoiled);
+    expect(alerted).toEqual([]);
   });
 
   it("refuses a member whose trust level is too low for the task, saying why", async () => {

@@ -718,6 +718,18 @@ export class Anarres {
     await this.driver.markHighRisk(this.project, this.aliases.of(module));
   }
 
+  async highRiskListCannotBeRead() {
+    await this.driver.spoilHighRiskList(this.project);
+  }
+
+  async coordinatorsAlertedOnceOfUnreadableHighRiskList() {
+    assert.equal(
+      await this.driver.unreadableHighRiskListAlerts(this.project),
+      1,
+      "expected one alert that the list of high-risk modules cannot be read",
+    );
+  }
+
   async reviewListCannotBeRead() {
     await this.driver.spoilReviewList(this.project);
   }

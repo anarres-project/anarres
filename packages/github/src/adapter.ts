@@ -44,6 +44,7 @@ import {
   issueForNotAccepted,
   issueForTask,
   issueForUnprotectedMain,
+  issueForUnreadableHighRiskList,
   issueForUnreadableModules,
   issueForUnreadableReviewList,
   issueNumber,
@@ -61,6 +62,7 @@ import {
   rulesetProtectingMain,
   taskFromIssue,
   UNPROTECTED_MAIN,
+  UNREADABLE_HIGH_RISK_LIST,
   UNREADABLE_MODULES,
   UNREADABLE_REVIEW_LIST,
 } from "./representation.ts";
@@ -202,6 +204,14 @@ export class GitHubAdapter
 
   async unreadableModulesAlertOpen(project: string): Promise<boolean> {
     return this.alertOpen(project, UNREADABLE_MODULES);
+  }
+
+  async alertUnreadableHighRiskList(project: string): Promise<void> {
+    await this.openIssue(project, issueForUnreadableHighRiskList());
+  }
+
+  async unreadableHighRiskListAlertOpen(project: string): Promise<boolean> {
+    return this.alertOpen(project, UNREADABLE_HIGH_RISK_LIST);
   }
 
   async alertUnreadableReviewList(project: string): Promise<void> {

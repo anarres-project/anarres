@@ -631,6 +631,26 @@ export class FakeGitHub
   }
 
   /** The project's entry names a module not plainly: the list cannot be read. */
+  spoilHighRiskList(project: string): void {
+    this.highRisk[project] = ["not/plainly"];
+  }
+
+  /** Alerts that the list of high-risk modules cannot be read, by project. */
+  private readonly unreadableHighRiskListAlerted: string[] = [];
+
+  async alertUnreadableHighRiskList(project: string): Promise<void> {
+    this.unreadableHighRiskListAlerted.push(project);
+  }
+
+  async unreadableHighRiskListAlertOpen(project: string): Promise<boolean> {
+    return this.unreadableHighRiskListAlerted.includes(project);
+  }
+
+  unreadableHighRiskListAlerts(project: string): number {
+    return this.unreadableHighRiskListAlerted.filter((alerted) => alerted === project).length;
+  }
+
+  /** The project's entry names a module not plainly: the list cannot be read. */
   spoilReviewList(project: string): void {
     this.review[project] = ["not/plainly"];
   }

@@ -28,6 +28,7 @@ export { type Rankable, rankOffers, underWay } from "./offers.ts";
 export {
   approvalCounts,
   approvalsStanding,
+  highRiskListUnreadable,
   isHighRisk,
   needsReview,
   type Review,

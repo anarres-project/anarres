@@ -36,6 +36,20 @@ Given("{word} is an established member", function (this: AnarresWorld, member: s
   return this.anarres.memberIsTrusted(member, "established");
 });
 
+Given(
+  "the list of modules PDC coordinators mark high-risk cannot be read",
+  function (this: AnarresWorld) {
+    return this.anarres.highRiskListCannotBeRead();
+  },
+);
+
+Then(
+  "PDC coordinators have been alerted once that the list of high-risk modules cannot be read",
+  function (this: AnarresWorld) {
+    return this.anarres.coordinatorsAlertedOnceOfUnreadableHighRiskList();
+  },
+);
+
 Given("PDC coordinators mark {string} as high-risk", function (this: AnarresWorld, module: string) {
   return this.anarres.coordinatorsMarkHighRisk(module);
 });

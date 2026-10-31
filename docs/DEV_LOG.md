@@ -1433,6 +1433,29 @@ governance scenarios run alone.
   ```
   "is allowed to an established member for Coding on a high-risk module" passed first run, a
   regression test. The scenario passed and lost `@wip`.
+- An unreadable high-risk list. Acceptance: "Divlab treats every module as high-risk, and alerts
+  PDC coordinators once, when it cannot read which are", `@wip @governance`, red at the alert
+  (Alice's refusal already held: the list unreadable makes every module high-risk).
+  ```
+  RED:      whether the list of high-risk modules cannot be read
+            -> TypeError: highRiskListUnreadable is not a function; stubbed, -> expected false to be true
+  GREEN:    (343 passed)
+  RED:      onClaim > tells PDC coordinators when it cannot read which modules are high-risk
+            -> expected [] to deeply equal [ 'ledger' ]
+  GREEN:    (258 passed)
+  RED:      the alert as a GitHub issue -> TypeError; stubbed, -> expected { title: '', … }
+  GREEN:    (75 passed)
+  RED:      the adapter opens it -> TypeError; stubbed, -> expected [] to deeply equal [ { …(3) } ]
+  GREEN:    (43 passed)
+  RED:      the adapter's alert is open while its issue is -> TypeError; stubbed, -> expected false to be true
+  GREEN:    (44 passed)
+  REFACTOR: none
+  ```
+  Slip: the once-only check went in with the alert, before a test asked for it; its test ("does
+  not tell PDC coordinators again while that alert is open") passed first run. The gate then
+  failed on decision 0018's coverage check, as it should: the alert's two adapter methods were
+  reached by no `@sandbox` scenario. This one reaches them (checklist item 1), so it is tagged
+  `@sandbox`, and lost `@wip`.
 
 ---
 

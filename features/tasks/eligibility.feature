@@ -41,6 +41,17 @@ Feature: Who may take a task
     Then Alice is told a Coding task on a high-risk module needs an established member
     And a Coding task for "parser" is ready to claim
 
+  @governance @sandbox
+  Scenario: Divlab treats every module as high-risk, and alerts PDC coordinators once, when it cannot read which are
+    Given a project with modules "parser" and "lexer"
+    And the list of modules PDC coordinators mark high-risk cannot be read
+    And a member's Test work on "parser" was accepted with a pass verdict
+    And a member's Test work on "lexer" was accepted with a pass verdict
+    When Alice claims the Coding task for "parser"
+    And Bob claims the Coding task for "lexer"
+    Then Alice is told a Coding task on a high-risk module needs an established member
+    And PDC coordinators have been alerted once that the list of high-risk modules cannot be read
+
   @governance
   Scenario: An established member can take a Reviewer task
     Given a project with a module "parser"

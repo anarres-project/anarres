@@ -38,6 +38,8 @@ function project(protectedMain: boolean, alertOpen = false) {
     alertUnreadableModules: untouched,
     unreadableModulesAlertOpen: untouched,
     readyTasks: untouched,
+    alertUnreadableHighRiskList: untouched,
+    unreadableHighRiskListAlertOpen: untouched,
     unreadableReviewListAlertOpen: untouched,
   };
   return { alerts, repositories, board };

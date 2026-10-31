@@ -428,6 +428,14 @@ export class InProcessDriver implements Driver {
     this.github.markHighRisk(project, module);
   }
 
+  async spoilHighRiskList(project: string): Promise<void> {
+    this.github.spoilHighRiskList(project);
+  }
+
+  async unreadableHighRiskListAlerts(project: string): Promise<number> {
+    return this.github.unreadableHighRiskListAlerts(project);
+  }
+
   async spoilReviewList(project: string): Promise<void> {
     this.github.spoilReviewList(project);
   }

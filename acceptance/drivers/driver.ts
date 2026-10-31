@@ -239,6 +239,10 @@ export interface Driver {
   requireReview(project: string, module: string): Promise<void>;
   /** PDC coordinators name the project's module in the governance file as high-risk (0019). */
   markHighRisk(project: string, module: string): Promise<void>;
+  /** The governance file's list of high-risk modules stops being readable. */
+  spoilHighRiskList(project: string): Promise<void>;
+  /** How many times PDC coordinators were alerted that the high-risk list cannot be read. */
+  unreadableHighRiskListAlerts(project: string): Promise<number>;
   /** The governance file's list of modules needing review stops being readable. */
   spoilReviewList(project: string): Promise<void>;
   /** How many times PDC coordinators were alerted that the list cannot be read. */

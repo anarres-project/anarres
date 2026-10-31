@@ -17,6 +17,8 @@ const board: TaskBoard = {
   alertUnreadableModules: untouched,
   unreadableModulesAlertOpen: untouched,
   readyTasks: untouched,
+  alertUnreadableHighRiskList: untouched,
+  unreadableHighRiskListAlertOpen: untouched,
   unreadableReviewListAlertOpen: untouched,
   markModuleDone: untouched,
   task: untouched,

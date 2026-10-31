@@ -3,6 +3,7 @@ import {
   GitHubAdapter,
   issueForClaimedWithoutClaim,
   issueForTask,
+  issueForUnreadableHighRiskList,
   issueForUnreadableModules,
   issueForUnreadableReviewList,
 } from "../src/index.ts";
@@ -452,6 +453,43 @@ describe("alerting PDC coordinators to a task shown as claimed without a claim",
     };
     await adapter.alertClaimedWithoutClaim(alert);
     expect(opened).toEqual([issueForClaimedWithoutClaim(alert)]);
+  });
+});
+
+describe("alerting PDC coordinators that the list of high-risk modules cannot be read", () => {
+  it("opens an issue in the project saying so", async () => {
+    const opened: unknown[] = [];
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string, body?: unknown) => {
+        if (method === "POST" && path === "repos/commons/ledger/issues") {
+          opened.push(body);
+          return { status: 201, data: { number: 33 } as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    await adapter.alertUnreadableHighRiskList("ledger");
+    expect(opened).toEqual([issueForUnreadableHighRiskList()]);
+  });
+
+  it("is open while an issue under its label is open in the project", async () => {
+    const adapter = new GitHubAdapter({
+      owner: "commons",
+      token: "test",
+      request: async <T>(_token: string, method: string, path: string) => {
+        if (
+          method === "GET" &&
+          path ===
+            "repos/commons/ledger/issues?labels=unreadable-high-risk-list&state=open&per_page=1"
+        ) {
+          return { status: 200, data: [{ number: 33 }] as T };
+        }
+        return { status: 404, data: { message: `not answered: ${method} ${path}` } as T };
+      },
+    });
+    expect(await adapter.unreadableHighRiskListAlertOpen("ledger")).toBe(true);
   });
 });
 

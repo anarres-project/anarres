@@ -12,6 +12,7 @@ export {
   issueForNotAccepted,
   issueForTask,
   issueForUnprotectedMain,
+  issueForUnreadableHighRiskList,
   issueForUnreadableModules,
   issueForUnreadableReviewList,
   issueNumber,

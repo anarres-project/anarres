@@ -20,6 +20,7 @@ import {
   issueForNotAccepted,
   issueForTask,
   issueForUnprotectedMain,
+  issueForUnreadableHighRiskList,
   issueForUnreadableModules,
   issueForUnreadableReviewList,
   issueNumber,
@@ -657,6 +658,16 @@ describe("an alert that the list of modules needing review cannot be read, as a 
       title: "Escalation: the list of modules needing review cannot be read",
       labels: ["escalation", "unreadable-review-list"],
       body: "Divlab cannot read the governance file's list of modules whose work needs a reviewer's approval (decision 0016), so until it can, all work in this project waits for a reviewer's approval. Fix the list, then close this issue; Divlab alerts again if it finds the list unreadable later.",
+    });
+  });
+});
+
+describe("an alert that the list of high-risk modules cannot be read, as a GitHub issue", () => {
+  it("tells PDC coordinators every module is held as high-risk, under a label that marks it until they close it", () => {
+    expect(issueForUnreadableHighRiskList()).toEqual({
+      title: "Escalation: the list of high-risk modules cannot be read",
+      labels: ["escalation", "unreadable-high-risk-list"],
+      body: "Divlab cannot read the governance file's list of high-risk modules (decision 0019), so until it can, every module in this project is treated as high-risk: new members may not take its Coding tasks. Fix the list, then close this issue; Divlab alerts again if it finds the list unreadable later.",
     });
   });
 });

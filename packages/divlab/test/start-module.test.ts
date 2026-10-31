@@ -32,6 +32,8 @@ function boardKeepingPosts() {
     alertUnreadableModules: untouched,
     unreadableModulesAlertOpen: untouched,
     readyTasks: untouched,
+    alertUnreadableHighRiskList: untouched,
+    unreadableHighRiskListAlertOpen: untouched,
     unreadableReviewListAlertOpen: untouched,
   };
   return { posted, board };
