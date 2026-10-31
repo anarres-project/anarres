@@ -57,3 +57,14 @@ Feature: The integration pipeline
     When a member's Security & Quality work on "parser" is accepted with a pass verdict
     Then PDC coordinators have been alerted that the project's list of its modules cannot be read
     And no task is ready for the programme
+
+  # Not in the sandbox yet, as the first scenario.
+  @sandbox-wip
+  Scenario: Integration Test work whose tests fail is not merged, and the member is told why
+    Given a project with modules "parser" and "lexer"
+    And a member's Security & Quality work on "lexer" was accepted with a pass verdict
+    And a member's Security & Quality work on "parser" was accepted with a pass verdict
+    And a member's Integration Specification work for the programme was accepted with a pass verdict
+    When a member submits Integration Test work for the programme whose tests fail
+    Then Divlab has not merged the member's Integration Test work for the programme
+    And the member is told the project's tests failed on their work

@@ -263,7 +263,7 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         Review passing → the programme is done, marked done as a module is (in-process);
   - [x] Integration Test passing needs its check green, as Coding's does, and work changing no
         integration test is refused, saying so (unit);
-  - [ ] an acceptance scenario: Integration Test work whose tests fail is not merged;
+  - [x] an acceptance scenario: Integration Test work whose tests fail is not merged;
   - [x] who may take them: Specification's and Test's levels, and trusted for Integration Review;
         nobody reviews integration work they wrote: the programme counts as one module, so a
         member takes one role among the Programme Architect and the three integration roles

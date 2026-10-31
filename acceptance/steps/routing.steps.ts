@@ -513,6 +513,25 @@ When(
   },
 );
 
+When(
+  "a member submits {role} work for the programme whose tests fail",
+  function (this: AnarresWorld, role: string) {
+    return this.anarres.memberSubmitsWork({
+      role,
+      module: "programme",
+      verdict: "pass",
+      testsFail: true,
+    });
+  },
+);
+
+Then(
+  "Divlab has not merged the member's {role} work for the programme",
+  function (this: AnarresWorld, role: string) {
+    return this.anarres.divlabHasNotMerged({ role, module: "programme" });
+  },
+);
+
 Then("the member is told the project's tests failed on their work", function (this: AnarresWorld) {
   return this.anarres.memberIsToldWhy("project's tests failed on this work");
 });

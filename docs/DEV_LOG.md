@@ -1157,6 +1157,10 @@ governance scenarios run alone.
   REFACTOR: none
   ```
   Gate 904 and 155.
+- Acceptance: "Integration Test work whose tests fail is not merged, and the member is told
+  why", `@wip @sandbox-wip`. It passed first run, the check gate having been driven by unit
+  tests in 2ee4227 (the scenario came after them, as logged then). With Integration Test taken
+  out of the gate it failed in its Then, so it depends on it; restored, it lost `@wip`.
 
 ---
 
