@@ -45,3 +45,15 @@ and what happens when a module reopens.
 - The template's checks run on Integration Test work too, as on Coding and module Test work.
 - How a failing integration test names the module at fault is part of the feedback signal: the
   first slice will say how.
+
+## Amendment, 2026-10-31 (Bernard: each recommendation)
+
+- **Naming the module at fault:** the feedback signal gains an optional field naming one module.
+  Divlab checks it against main's modules.yaml. A failure naming no module, or one the project
+  does not list, goes to a PDC coordinator, saying why; Divlab never guesses.
+- **A contract revised while integration work is under way:** this decision's hold wins over
+  decision 0015's stale mark. Claimed integration work finishes as it is; once every module is
+  done again, a new Integration Test task covers what the revision changed.
+- **An integration task posted but unclaimed when a module reopens** is withdrawn.
+- **Eligibility** stands as read: the programme counts as one module, so a member holds one role
+  among the Programme Architect and the three integration roles.

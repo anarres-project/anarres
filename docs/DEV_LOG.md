@@ -1109,6 +1109,13 @@ governance scenarios run alone.
   driven already. With the contracts taken out of its read scope it failed in its Then, so it
   depends on them; it lost `@wip` (`@sandbox-wip`, as the integration scenarios). The drivers
   say which kinds of integration work were fetched. Gate 895 and 154.
+- The e58fe9e and 3d75d60 sandbox runs: 108 of 108 each, in 70 and 69 minutes.
+- Bernard, 2026-10-31, amending decision 0017: the feedback signal gains an optional field naming
+  one module at fault, checked against modules.yaml, and a failure naming none, or one the
+  project does not list, goes to a PDC coordinator; a contract revised during integration leaves
+  claimed integration work to finish (0017's hold, not 0015's stale mark); an integration task
+  posted but unclaimed when a module reopens is withdrawn; one role per member among the
+  Programme Architect and the integration roles, as read. Test list updated.
 
 ---
 

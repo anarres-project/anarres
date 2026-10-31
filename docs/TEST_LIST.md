@@ -267,9 +267,18 @@ Still to finish the skeleton's pipeline (not behaviour, but the route to product
         (decision 0007's rule as it stands; regression tests); module work bars none of them;
   - [ ] a failing integration test naming a module sends that module back to Specification,
         carrying the integration signal; an `interface_impediment` goes to the Programme
-        Architect;
+        Architect (Bernard, 2026-10-31: the feedback signal gains an optional field naming one
+        module, checked against main's modules.yaml):
+    - [ ] the feedback signal schema accepts an optional module at fault, and refuses one that
+          is not a module name;
+    - [ ] Integration Test failing with a known module named → that module's Specification;
+    - [ ] with no module named, or one modules.yaml does not list → a PDC coordinator, saying
+          why, never a guess;
   - [ ] a module reopened after integration began: nothing more in integration is posted until
-        every module is done again, then a new Integration Test task;
+        every module is done again, then a new Integration Test task (Bernard, 2026-10-31):
+    - [ ] a contract revision leaves integration work already claimed to finish: decision
+          0017's hold, not decision 0015's stale mark, applies to integration work;
+    - [ ] an integration task posted but unclaimed when a module reopens is withdrawn;
   - [x] the template's checks run on Integration Test work (`integration/tests/`);
   - [x] preparing an integration task fetches only its role's inputs (core's read scopes, so no
         new code: a scenario for Integration Test, which fails with the contracts taken out of
